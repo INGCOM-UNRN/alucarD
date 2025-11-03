@@ -72,9 +72,21 @@
 - [x] test_renderers.py - 20+ tests de renderers
 - [x] test_config.py - 6 tests de configuración
 - [x] test_integration.py - 7 tests de integración
+- [x] test_nested_categories.py - 23 tests de categorías anidadas
 - [x] conftest.py - Fixtures globales
 - [x] pytest.ini - Configuración de pytest
 - [x] run_tests.sh - Script de ejecución
 - [x] requirements-dev.txt - Dependencias de desarrollo
 - [x] tests/README.md - Documentación de tests
-- [x] **100% de cobertura de código**
+- [x] **113 tests totales - 70% de cobertura**
+
+## Categorías Anidadas
+- [x] normalizar_categoria() - Normalización de categorías
+- [x] categoria_coincide() - Matching jerárquico
+- [x] Wildcard /* (un nivel)
+- [x] Wildcard /** (recursivo)
+- [x] Case-insensitive
+- [x] Compatible con Moodle
+- [x] CATEGORIAS.md - Documentación completa
+- [x] banco_jerarquico.txt - Ejemplos
+- [x] definicion_jerarquica.yaml - Casos de uso
