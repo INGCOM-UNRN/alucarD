@@ -2,6 +2,7 @@
 Utilidades para procesamiento de markdown con syntax highlighting
 """
 import re
+import unicodedata
 import markdown
 from markdown.extensions import fenced_code, codehilite
 from pygments import highlight
@@ -10,6 +11,28 @@ from pygments.formatters import HtmlFormatter
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+def normalizar_fullwidth(text: str) -> str:
+    """
+    Normaliza caracteres fullwidth a su equivalente ASCII tradicional.
+    Los caracteres fullwidth son comunes en texto copiado de ciertas fuentes
+    y pueden causar problemas en el resaltado de sintaxis.
+    
+    Args:
+        text: Texto que puede contener caracteres fullwidth
+        
+    Returns:
+        Texto con caracteres normalizados
+    """
+    if not text:
+        return ""
+    
+    # Normalizar usando NFKC (Normalization Form KC - Compatibility Decomposition)
+    # Esto convierte caracteres fullwidth a su equivalente halfwidth/ASCII
+    normalized = unicodedata.normalize('NFKC', text)
+    
+    return normalized
 
 
 def markdown_to_html(text: str) -> str:
@@ -60,6 +83,9 @@ def process_code_blocks_manual(text: str) -> str:
     Returns:
         Texto con bloques de código convertidos a HTML
     """
+    # Normalizar caracteres fullwidth antes de procesar
+    text = normalizar_fullwidth(text)
+    
     # Pattern para bloques de código con lenguaje especificado: ```language\ncode\n```
     pattern_with_lang = r'```(\w+)\n(.*?)```'
     

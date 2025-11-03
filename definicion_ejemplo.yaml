@@ -12,7 +12,7 @@ configuracion_examen:
   mezclar_preguntas_dentro_seccion: true
   mezclar_opciones_dentro_pregunta: true
   generar_clave_profesor: true
-  incluir_metadata_debug: false
+  incluir_metadata_debug: true
 
 secciones_examen:
   - nombre: "Sección 1 - Preguntas de Ejemplo"

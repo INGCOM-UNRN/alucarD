@@ -5,7 +5,8 @@ import pytest
 from generador_examenes.core.markdown_utils import (
     markdown_to_html,
     process_code_blocks_manual,
-    detect_and_convert_format
+    detect_and_convert_format,
+    normalizar_fullwidth
 )
 
 
@@ -196,3 +197,107 @@ def test_markdown_preserves_newlines():
     # Con la extensión nl2br, los saltos deben convertirse a <br>
     assert 'Línea 1' in html
     assert 'Línea 2' in html
+
+
+def test_normalizar_fullwidth_empty():
+    """Test normalización de texto vacío"""
+    assert normalizar_fullwidth("") == ""
+    assert normalizar_fullwidth(None) == ""
+
+
+def test_normalizar_fullwidth_parentheses():
+    """Test normalización de paréntesis fullwidth"""
+    # Paréntesis fullwidth: （ ）
+    text_fullwidth = "（x + y）"
+    expected = "(x + y)"
+    result = normalizar_fullwidth(text_fullwidth)
+    assert result == expected
+
+
+def test_normalizar_fullwidth_numbers():
+    """Test normalización de números fullwidth"""
+    # Números fullwidth: ０１２３
+    text_fullwidth = "０１２３"
+    expected = "0123"
+    result = normalizar_fullwidth(text_fullwidth)
+    assert result == expected
+
+
+def test_normalizar_fullwidth_operators():
+    """Test normalización de operadores fullwidth"""
+    # Operadores fullwidth: ＋ － ＊ ／
+    text_fullwidth = "ｘ ＋ ｙ"
+    expected = "x + y"
+    result = normalizar_fullwidth(text_fullwidth)
+    assert result == expected
+
+
+def test_normalizar_fullwidth_in_code_block():
+    """Test normalización de fullwidth en bloque de código"""
+    # Código con paréntesis fullwidth
+    text_fullwidth = """```python
+def func（x）：
+    return x ＋ １
+```"""
+    html = process_code_blocks_manual(text_fullwidth)
+    
+    # El código normalizado debe estar presente
+    assert 'highlight' in html
+    # Los caracteres deben haberse normalizado
+    assert '（' not in html or '(' in html
+    
+
+def test_normalizar_fullwidth_mixed_content():
+    """Test normalización de contenido mixto (ASCII y fullwidth)"""
+    text_fullwidth = "normal text （fullwidth） more text"
+    expected = "normal text (fullwidth) more text"
+    result = normalizar_fullwidth(text_fullwidth)
+    assert result == expected
+
+
+def test_process_code_blocks_with_unknown_language():
+    """Test procesamiento de bloques con lenguaje desconocido"""
+    text = """```unknownlang
+some code here
+```"""
+    html = process_code_blocks_manual(text)
+    
+    # Debe procesar igual aunque no reconozca el lenguaje
+    assert 'highlight' in html
+    assert 'some code here' in html
+
+
+def test_detect_and_convert_format_without_hint():
+    """Test detección sin pista de formato (None)"""
+    text = "Simple text"
+    html = detect_and_convert_format(text, None)
+    
+    # Sin pista y sin bloques de código, debe devolver tal cual
+    assert html == text
+
+
+def test_process_code_blocks_guess_lexer_fallback():
+    """Test procesamiento con fallback a TextLexer cuando guess falla"""
+    # Código que es difícil de adivinar el lenguaje
+    text = """```unknownlanguage
+aaa bbb ccc
+ddd eee fff
+```"""
+    html = process_code_blocks_manual(text)
+    
+    # Debe procesar incluso si no reconoce el lenguaje
+    assert 'highlight' in html
+    assert 'aaa' in html
+
+
+def test_process_code_blocks_no_language_guess_fails():
+    """Test procesamiento sin lenguaje especificado y guess falla"""
+    # Texto muy ambiguo sin lenguaje especificado
+    text = """```
+qqqqqq wwwwww eeeeee
+```"""
+    html = process_code_blocks_manual(text)
+    
+    # Debe usar TextLexer por defecto
+    assert 'highlight' in html
+    assert 'qqqqqq' in html
