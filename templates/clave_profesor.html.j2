@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="{{ definicion.idioma }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ i18n.answer_key }} - {{ definicion.nombre_examen }}</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 2cm;
+            line-height: 1.6;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 1em;
+            margin-bottom: 1.5em;
+        }
+        .header h1 {
+            margin: 0.2em 0;
+            font-size: 1.8em;
+            color: #c00;
+        }
+        .header h2 {
+            margin: 0.2em 0;
+            font-size: 1.3em;
+        }
+        .header .info {
+            margin: 0.3em 0;
+            font-size: 0.95em;
+        }
+        .confidential {
+            background-color: #fee;
+            padding: 1em;
+            margin-bottom: 1.5em;
+            border: 2px solid #c00;
+            text-align: center;
+            font-weight: bold;
+            color: #c00;
+        }
+        .section {
+            margin-bottom: 2em;
+        }
+        .section-title {
+            background-color: #333;
+            color: white;
+            padding: 0.5em;
+            margin-bottom: 1em;
+            font-size: 1.2em;
+        }
+        .question {
+            margin-bottom: 1.5em;
+            border-left: 3px solid #ddd;
+            padding-left: 1em;
+        }
+        .question-header {
+            font-weight: bold;
+            margin-bottom: 0.5em;
+        }
+        .question-text {
+            margin-bottom: 0.8em;
+            color: #333;
+        }
+        .correct-answer {
+            background-color: #dfd;
+            padding: 0.5em;
+            margin-top: 0.5em;
+            border-left: 4px solid #0a0;
+        }
+        .options {
+            margin-left: 1.5em;
+        }
+        .option {
+            margin-bottom: 0.4em;
+            padding: 0.3em;
+        }
+        .option.correct {
+            background-color: #dfd;
+            font-weight: bold;
+        }
+        @media print {
+            body {
+                margin: 1.5cm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ i18n.answer_key }}</h1>
+        <h2>{{ definicion.nombre_examen }}</h2>
+        <div class="info"><strong>{{ i18n.institution }}:</strong> {{ definicion.institucion }}</div>
+        <div class="info"><strong>{{ i18n.subject }}:</strong> {{ definicion.materia }}</div>
+        <div class="info"><strong>{{ i18n.topic }}:</strong> {{ tema + 1 }}</div>
+    </div>
+
+    <div class="confidential">
+        {{ i18n.for_teacher }} - CONFIDENCIAL
+    </div>
+
+    {% for seccion in secciones %}
+    <div class="section">
+        <div class="section-title">{{ i18n.section }}: {{ seccion.nombre }}</div>
+
+        {% for pregunta in seccion.preguntas %}
+        <div class="question">
+            <div class="question-header">
+                {{ i18n.question }} {{ loop.index }}
+                ({{ pregunta.puntaje }} {% if pregunta.puntaje == 1 %}{{ i18n.point }}{% else %}{{ i18n.points }}{% endif %})
+            </div>
+            <div class="question-text">{{ pregunta.enunciado_html | safe }}</div>
+            
+            {% if pregunta.tipo == 'seleccion_multiple' %}
+            <div class="options">
+                {% for opcion in pregunta.opciones %}
+                <div class="option {% if opcion.es_correcta %}correct{% endif %}">
+                    {% if opcion.es_correcta %}✓{% endif %} {{ opcion.texto_html | safe }}
+                </div>
+                {% endfor %}
+            </div>
+            {% elif pregunta.tipo == 'verdadero_falso' %}
+            <div class="correct-answer">
+                <strong>{{ i18n.correct_answer }}:</strong>
+                {% for opcion in pregunta.opciones %}
+                    {% if opcion.es_correcta %}{{ opcion.texto_html | safe }}{% endif %}
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="correct-answer">
+                <strong>{{ i18n.correct_answer }}:</strong>
+                {% for opcion in pregunta.opciones %}
+                    {% if opcion.es_correcta %}{{ opcion.texto_html | safe }}{% endif %}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if pregunta.retroalimentacion_general %}
+            <div style="margin-top: 0.5em; font-style: italic; color: #666;">
+                {{ pregunta.retroalimentacion_general }}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+</body>
+</html>
