@@ -1,5 +1,19 @@
 # Pendiente
 
+## ✅ Completado en esta sesión (2025-11-03)
+- [x] Solucionar error de `uv sync` (pyproject.toml)
+- [x] Corregir error de validación YAML (pool → pools)
+- [x] Verificar funcionalidad `--init`
+- [x] Llevar cobertura de parsers al 100%
+- [x] Llevar cobertura de core/logic al 100%
+- [x] Documentar guía UV completa
+- [x] Crear ejemplos avanzados
+- [x] Implementar soporte para categorías anidadas
+
+## Mejoras generales
+- [ ] Mejorar los __str__ para que las salidas por los logs tengan mas información útil.
+- [ ] Aumentar cobertura de __main__.py (actualmente 60%)
+
 ## Funcionalidades Adicionales (Opcionales)
 - [ ] Validación más robusta de pools vacíos
 - [ ] Soporte para más tipos de preguntas (emparejamiento, numérica)
@@ -13,3 +27,8 @@
 ## Documentación Adicional (Opcional)
 - [ ] Tutorial de creación de plugins personalizados
 - [ ] Documentación de API para extensiones
+
+## Notas
+- Cobertura general: **85%**
+- Cobertura crítica (parsers + logic): **100%**
+- Tests: 162 pasando, 2 skipped (PDF requiere deps de sistema)
