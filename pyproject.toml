@@ -1,3 +1,7 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "generador-examenes"
 version = "5.0.0"
@@ -41,29 +45,5 @@ dev = [
 [project.scripts]
 generador-examenes = "generador_examenes.__main__:main"
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
 [tool.hatch.build.targets.wheel]
 packages = ["generador_examenes"]
-
-# Compatibilidad con Poetry (opcional)
-[tool.poetry]
-name = "generador-examenes"
-version = "5.0.0"
-description = "Generador de exámenes basado en plantillas, YAML y bancos Moodle/GIFT."
-authors = ["alucarD Team <team@alucard.dev>"]
-readme = "README.md"
-packages = [{include = "generador_examenes"}]
-
-[tool.poetry.dependencies]
-python = "^3.10"
-pydantic = "^2.0"
-pyyaml = "^6.0"
-jinja2 = "^3.1"
-weasyprint = "^60.0"
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^7.0"
-pytest-cov = "^4.0"
