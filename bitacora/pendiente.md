@@ -1,36 +1,33 @@
 # Pendiente
 
 ## Core
-- [ ] core/models.py - Modelos Pydantic
-- [ ] core/logic.py - Lógica de orquestación
+- [ ] core/logic.py - Lógica de orquestación:
+  - [ ] cargar_bancos()
+  - [ ] procesar_imagenes()
+  - [ ] construir_pool_examen()
+  - [ ] mezclar_examen()
 
 ## Parsers
-- [ ] parsers/base.py - BaseParser ABC
-- [ ] parsers/gift_parser.py - Parser GIFT
-- [ ] parsers/moodle_parser.py - Parser Moodle XML
+- [ ] parsers/gift_parser.py - Parser GIFT completo
+- [ ] parsers/moodle_parser.py - Parser Moodle XML completo
+- [ ] Registro de plugins en parsers/__init__.py
 
 ## Generators
-- [ ] generators/base.py - BaseRenderer ABC
-- [ ] generators/html_renderer.py - Renderer HTML
-- [ ] generators/pdf_renderer.py - Renderer PDF
-
-## Config
-- [ ] config/logging_config.py - Configuración logging
-
-## Templates
-- [ ] templates/base_examen.html.j2
-- [ ] templates/clave_profesor.html.j2
-
-## i18n
-- [ ] i18n/en.json
-- [ ] i18n/es.json
+- [ ] generators/html_renderer.py - Renderer HTML completo
+- [ ] generators/pdf_renderer.py - Renderer PDF con WeasyPrint
+- [ ] Registro de plugins en generators/__init__.py
 
 ## Tests
-- [ ] tests/test_parsers.py
-- [ ] tests/test_logic.py
-- [ ] tests/bancos_ejemplo/banco_test.xml
-- [ ] tests/bancos_ejemplo/banco_test.txt
+- [ ] tests/test_parsers.py - Tests unitarios de parsers
+- [ ] tests/test_logic.py - Tests de lógica
+- [ ] tests/test_models.py - Tests de modelos Pydantic
+- [ ] tests/bancos_ejemplo/banco_test.xml - Banco de ejemplo XML
+- [ ] tests/bancos_ejemplo/banco_test.txt - Banco de ejemplo GIFT
 
 ## Main
-- [ ] __main__.py - Punto de entrada CLI
-- [ ] pyproject.toml - Configuración del proyecto
+- [ ] Implementar flujo completo en __main__.py
+- [ ] Implementar modo --init para crear ejemplos
+
+## Ejemplos
+- [ ] Crear archivo de ejemplo definicion.yaml
+- [ ] Crear bancos de ejemplo funcionales

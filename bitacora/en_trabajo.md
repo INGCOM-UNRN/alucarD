@@ -1,3 +1,4 @@
 # En Trabajo
 
-- Creando archivos base del proyecto
+- Esqueleto del proyecto completado
+- Siguiente fase: Implementación de parsers y lógica core
