@@ -1,0 +1,77 @@
+// Banco de preguntas de ejemplo en formato GIFT
+// Para testing del sistema alucarD
+
+::Pregunta 1::¿Cuál es la capital de Francia? {
+=París
+~Londres
+~Berlín
+~Madrid
+} [tags: geografia, facil] [category: Geografia]
+
+::Pregunta 2::Python es un lenguaje de programación interpretado. {T} [tags: programacion, python]
+
+::Pregunta 3::¿Qué resultado devuelve 2 + 2 en Python? {
+=4
+~22
+~"22"
+~Error
+} [tags: programacion, basico]
+
+::Pregunta 4::Java es un lenguaje interpretado. {F} [tags: programacion, java]
+
+::Pregunta 5::¿Cuál de los siguientes NO es un lenguaje de programación? {
+=Microsoft Word
+~Python
+~Java
+~C++
+} [tags: programacion, facil]
+
+::Pregunta 6::¿En qué año se independizó México? {
+=1810
+~1910
+~1521
+~1821
+} [tags: historia, mexico]
+
+::Pregunta 7::HTML significa HyperText Markup Language. {T} [tags: web, html]
+
+::Pregunta 8::¿Cuál es el océano más grande del mundo? {
+=Pacífico
+~Atlántico
+~Índico
+~Ártico
+} [tags: geografia, oceanografia]
+
+::Pregunta 9::¿Qué símbolo se usa en Python para comentarios de una línea? {
+=#
+~//
+~/* */
+~--
+} [tags: programacion, python, basico]
+
+::Pregunta 10::CSS se utiliza para dar estilo a páginas web. {T} [tags: web, css]
+
+::Pregunta 11::¿Cuántos continentes hay en el mundo? {
+=7
+~5
+~6
+~8
+} [tags: geografia, general]
+
+::Pregunta 12::Una variable en Python debe empezar con un número. {F} [tags: programacion, python]
+
+::Pregunta 13::¿Cuál es el resultado de 10 / 2 en Python? {
+=5.0
+~5
+~2
+~0.5
+} [tags: programacion, python, matematicas]
+
+::Pregunta 14::¿Qué protocolo se usa para navegar en la web? {
+=HTTP
+~FTP
+~SMTP
+~SSH
+} [tags: redes, web]
+
+::Pregunta 15::JSON significa JavaScript Object Notation. {T} [tags: programacion, json]

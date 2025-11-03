@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<quiz>
+  <question type="multichoice">
+    <name>
+      <text>Pregunta XML 1</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[¿Cuál es el lenguaje de marcado estándar para crear páginas web?]]></text>
+    </questiontext>
+    <defaultgrade>1.0</defaultgrade>
+    <generalfeedback format="html">
+      <text>HTML (HyperText Markup Language) es el estándar.</text>
+    </generalfeedback>
+    <answer fraction="100">
+      <text>HTML</text>
+      <feedback><text>Correcto</text></feedback>
+    </answer>
+    <answer fraction="0">
+      <text>CSS</text>
+      <feedback><text>CSS es para estilos</text></feedback>
+    </answer>
+    <answer fraction="0">
+      <text>JavaScript</text>
+      <feedback><text>JavaScript es para interactividad</text></feedback>
+    </answer>
+    <answer fraction="0">
+      <text>XML</text>
+      <feedback><text>XML es para datos estructurados</text></feedback>
+    </answer>
+    <tags>
+      <tag><text>web</text></tag>
+      <tag><text>html</text></tag>
+    </tags>
+  </question>
+
+  <question type="truefalse">
+    <name>
+      <text>Pregunta XML 2</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[SQL es un lenguaje de consulta estructurado para bases de datos.]]></text>
+    </questiontext>
+    <defaultgrade>1.0</defaultgrade>
+    <answer fraction="100">
+      <text>true</text>
+      <feedback><text>Correcto, SQL significa Structured Query Language</text></feedback>
+    </answer>
+    <answer fraction="0">
+      <text>false</text>
+      <feedback><text>Incorrecto</text></feedback>
+    </answer>
+    <tags>
+      <tag><text>bases_datos</text></tag>
+      <tag><text>sql</text></tag>
+    </tags>
+  </question>
+
+  <question type="multichoice">
+    <name>
+      <text>Pregunta XML 3</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[¿Qué significa POO en programación?]]></text>
+    </questiontext>
+    <defaultgrade>2.0</defaultgrade>
+    <answer fraction="100">
+      <text>Programación Orientada a Objetos</text>
+      <feedback><text>Correcto</text></feedback>
+    </answer>
+    <answer fraction="0">
+      <text>Programación Orientada a Operaciones</text>
+      <feedback><text>Incorrecto</text></feedback>
+    </answer>
+    <answer fraction="0">
+      <text>Proceso Óptimo de Operación</text>
+      <feedback><text>Incorrecto</text></feedback>
+    </answer>
+    <answer fraction="0">
+      <text>Paradigma Optimizado Operacional</text>
+      <feedback><text>Incorrecto</text></feedback>
+    </answer>
+    <tags>
+      <tag><text>programacion</text></tag>
+      <tag><text>poo</text></tag>
+    </tags>
+  </question>
+
+  <question type="truefalse">
+    <name>
+      <text>Pregunta XML 4</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[Git es un sistema de control de versiones distribuido.]]></text>
+    </questiontext>
+    <defaultgrade>1.0</defaultgrade>
+    <answer fraction="100">
+      <text>true</text>
+      <feedback><text>Correcto</text></feedback>
+    </answer>
+    <answer fraction="0">
+      <text>false</text>
+      <feedback><text>Incorrecto</text></feedback>
+    </answer>
+    <tags>
+      <tag><text>git</text></tag>
+      <tag><text>control_versiones</text></tag>
+    </tags>
+  </question>
+
+  <question type="multichoice">
+    <name>
+      <text>Pregunta XML 5</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[¿Cuál de los siguientes es un framework de Python?]]></text>
+    </questiontext>
+    <defaultgrade>1.0</defaultgrade>
+    <answer fraction="100">
+      <text>Django</text>
+      <feedback><text>Correcto</text></feedback>
+    </answer>
+    <answer fraction="0">
+      <text>React</text>
+      <feedback><text>React es de JavaScript</text></feedback>
+    </answer>
+    <answer fraction="0">
+      <text>Laravel</text>
+      <feedback><text>Laravel es de PHP</text></feedback>
+    </answer>
+    <answer fraction="0">
+      <text>Spring</text>
+      <feedback><text>Spring es de Java</text></feedback>
+    </answer>
+    <tags>
+      <tag><text>python</text></tag>
+      <tag><text>frameworks</text></tag>
+    </tags>
+  </question>
+</quiz>

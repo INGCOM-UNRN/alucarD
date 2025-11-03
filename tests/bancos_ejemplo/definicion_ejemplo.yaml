@@ -1,0 +1,43 @@
+nombre_examen: "Examen de Introducción a la Programación"
+institucion: "Universidad Ejemplo"
+materia: "Programación 101"
+fecha: "2024-01-15"
+duracion_minutos: 90
+instrucciones_generales: |
+  - Lee cuidadosamente cada pregunta antes de responder
+  - Marca claramente tus respuestas
+  - No se permite el uso de calculadoras o dispositivos electrónicos
+  - Tiempo total: 90 minutos
+idioma: "es"
+
+configuracion_examen:
+  mezclar_preguntas_dentro_seccion: true
+  mezclar_opciones_dentro_pregunta: true
+  generar_clave_profesor: true
+
+secciones_examen:
+  - nombre: "Sección A - Conceptos Básicos"
+    instrucciones: "Responde las siguientes preguntas de selección múltiple"
+    pools:
+      - categoria: null
+        tipos: ["seleccion_multiple"]
+        etiquetas: ["programacion", "basico"]
+        cantidad: 5
+        accion_si_insuficiente: "usar_todas"
+        puntaje_fijo_por_pregunta: 2.0
+  
+  - nombre: "Sección B - Verdadero o Falso"
+    instrucciones: "Indica si las siguientes afirmaciones son verdaderas o falsas"
+    pools:
+      - tipos: ["verdadero_falso"]
+        cantidad: 5
+        accion_si_insuficiente: "usar_todas"
+        puntaje_fijo_por_pregunta: 1.0
+  
+  - nombre: "Sección C - Conocimientos Web"
+    instrucciones: "Preguntas sobre desarrollo web"
+    pools:
+      - etiquetas: ["web", "html", "css"]
+        cantidad: 3
+        accion_si_insuficiente: "advertir"
+        puntaje_fijo_por_pregunta: 2.0
