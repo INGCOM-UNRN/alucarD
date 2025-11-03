@@ -90,3 +90,25 @@
 - [x] CATEGORIAS.md - Documentación completa
 - [x] banco_jerarquico.txt - Ejemplos
 - [x] definicion_jerarquica.yaml - Casos de uso
+
+## Ejemplos Avanzados
+- [x] EJEMPLOS_AVANZADOS.md - Guía completa (34 KB)
+- [x] 10 casos de uso avanzados detallados:
+  1. [x] Exámenes multi-nivel con ponderación
+  2. [x] Examen adaptativo por dificultad
+  3. [x] Preguntas fijadas y aleatorias
+  4. [x] Multi-materia con categorías anidadas
+  5. [x] Filtrado complejo combinado
+  6. [x] Generación masiva automatizada
+  7. [x] Múltiples bancos integrados
+  8. [x] Parcial universitario completo
+  9. [x] Final comprehensivo
+  10. [x] Pipeline de producción automatizado
+- [x] Scripts de automatización:
+  - [x] Bash para generación masiva
+  - [x] Makefile completo
+  - [x] Python para distribución
+  - [x] Scripts de validación y backup
+- [x] Sección de troubleshooting
+- [x] Mejores prácticas
+- [x] Recursos adicionales

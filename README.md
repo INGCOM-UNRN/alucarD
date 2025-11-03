@@ -89,6 +89,18 @@ make test-coverage
 
 Ver [tests/README.md](tests/README.md) para más detalles.
 
+## Documentación
+
+- 📖 [README.md](README.md) - Este archivo
+- 🚀 [QUICKSTART_UV.md](QUICKSTART_UV.md) - Inicio rápido (3 pasos)
+- 📚 [INSTALACION.md](INSTALACION.md) - Guía de instalación
+- 💡 [EJEMPLOS.md](EJEMPLOS.md) - Ejemplos básicos de uso
+- 🎓 [EJEMPLOS_AVANZADOS.md](EJEMPLOS_AVANZADOS.md) - 10 casos de uso avanzados
+- 📁 [CATEGORIAS.md](CATEGORIAS.md) - Guía de categorías anidadas
+- 🔧 [GUIA_UV.md](GUIA_UV.md) - Guía completa de UV
+- 📋 [RESUMEN_PROYECTO.md](RESUMEN_PROYECTO.md) - Documentación técnica
+- 🧪 [tests/README.md](tests/README.md) - Documentación de tests
+
 ## Estado del Proyecto
 
 ✅ **Implementación completada** - 100% funcional con tests completos. Consulta `bitacora/` para ver el progreso.

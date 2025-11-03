@@ -155,6 +155,36 @@ secciones_examen:
 
 Ver **CATEGORIAS.md** para documentación completa de categorías anidadas.
 
+---
+
+## 📚 ¿Necesitas Más Ejemplos?
+
+Este archivo muestra ejemplos básicos. Para casos de uso avanzados, consulta:
+
+### 🎓 [EJEMPLOS_AVANZADOS.md](EJEMPLOS_AVANZADOS.md)
+
+Incluye 10 casos de uso completos:
+
+1. **Exámenes Multi-nivel** - Con ponderación diferenciada (básico 30%, intermedio 40%, avanzado 30%)
+2. **Examen Adaptativo** - Progresa en dificultad por fases
+3. **Preguntas Fijadas + Aleatorias** - Combina obligatorias y selección aleatoria
+4. **Multi-materia Complejo** - Categorías anidadas avanzadas
+5. **Filtrado Complejo** - Múltiples filtros combinados
+6. **Generación Masiva** - Scripts para generar 100+ versiones
+7. **Múltiples Bancos** - Frontend + Backend + BD + DevOps
+8. **Parcial Universitario** - 5 secciones temáticas con puntajes
+9. **Final Comprehensivo** - Examen completo de 180 minutos
+10. **Pipeline Automatizado** - Makefile + scripts de distribución
+
+**Incluye también:**
+- Scripts de Bash para automatización
+- Makefile completo
+- Scripts Python para distribución
+- Troubleshooting y mejores prácticas
+- Scripts de backup y validación
+
+---
+
 ## Formato GIFT (banco_preguntas.txt)
 
 ```

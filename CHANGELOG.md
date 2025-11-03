@@ -11,10 +11,22 @@
 - 📝 CATEGORIAS.md - Documentación completa de categorías
 - 🧪 23 tests nuevos para categorías anidadas
 - 📄 Ejemplos: banco_jerarquico.txt y definicion_jerarquica.yaml
+- 🎓 **EJEMPLOS_AVANZADOS.md** - Guía completa con 10 casos de uso:
+  - Exámenes multi-nivel con ponderación
+  - Exámenes adaptativos por dificultad
+  - Preguntas fijadas y aleatorias combinadas
+  - Multi-materia con categorías complejas
+  - Filtrado avanzado
+  - Generación masiva automatizada
+  - Múltiples bancos
+  - Pipeline de producción con Makefile
+  - Scripts de distribución y backup
+  - Troubleshooting y mejores prácticas
 
 ### Cambiado
 - 🔧 Filtrado de categorías usa `categoria_coincide()` para jerarquías
 - 📈 Cobertura de tests aumentada a 70%
+- 📚 README.md actualizado con sección de documentación completa
 
 ## [5.0.0] - 2025-01-03
 
