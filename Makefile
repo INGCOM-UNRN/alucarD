@@ -24,8 +24,23 @@ dev-install: ## Instalar con dependencias de desarrollo
 	@. .venv/bin/activate && uv pip install -e ".[dev]"
 	@echo "✅ Dependencias de desarrollo instaladas"
 
-test: ## Ejecutar pruebas (cuando existan)
-	@. .venv/bin/activate && pytest tests/ -v
+test: ## Ejecutar tests con cobertura
+	@./run_tests.sh
+
+test-fast: ## Ejecutar tests sin cobertura (rápido)
+	@. .venv/bin/activate && pytest tests/ -v -x
+
+test-unit: ## Ejecutar solo tests unitarios
+	@. .venv/bin/activate && pytest tests/ -v -m unit
+
+test-integration: ## Ejecutar tests de integración
+	@. .venv/bin/activate && pytest tests/ -v -m integration
+
+test-coverage: ## Generar reporte de cobertura
+	@./run_tests.sh && echo "Abriendo reporte..." && \
+		(command -v xdg-open && xdg-open htmlcov/index.html) || \
+		(command -v open && open htmlcov/index.html) || \
+		echo "Reporte en htmlcov/index.html"
 
 validate: ## Validar el examen de ejemplo
 	@. .venv/bin/activate && cd tests/bancos_ejemplo && \
