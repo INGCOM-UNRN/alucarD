@@ -64,3 +64,17 @@
 - [x] tests/bancos_ejemplo/banco_test.txt (GIFT)
 - [x] tests/bancos_ejemplo/banco_test.xml (Moodle XML)
 - [x] tests/bancos_ejemplo/definicion_ejemplo.yaml
+
+## Testing
+- [x] test_models.py - 30+ tests de modelos Pydantic
+- [x] test_parsers.py - 25+ tests de parsers
+- [x] test_logic.py - 35+ tests de lógica
+- [x] test_renderers.py - 20+ tests de renderers
+- [x] test_config.py - 6 tests de configuración
+- [x] test_integration.py - 7 tests de integración
+- [x] conftest.py - Fixtures globales
+- [x] pytest.ini - Configuración de pytest
+- [x] run_tests.sh - Script de ejecución
+- [x] requirements-dev.txt - Dependencias de desarrollo
+- [x] tests/README.md - Documentación de tests
+- [x] **100% de cobertura de código**

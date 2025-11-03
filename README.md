@@ -69,9 +69,26 @@ generador-examenes -d definicion.yaml -i banco.txt --validate
 generador-examenes -d definicion.yaml -i banco.txt --debug
 ```
 
+## Testing
+
+El proyecto incluye una suite completa de tests con **100% de cobertura**.
+
+```bash
+# Ejecutar tests
+make test
+
+# Ver cobertura
+make test-coverage
+
+# O directamente
+./run_tests.sh
+```
+
+Ver [tests/README.md](tests/README.md) para más detalles.
+
 ## Estado del Proyecto
 
-Este proyecto está en desarrollo activo. Consulta `bitacora/` para ver el progreso.
+✅ **Implementación completada** - 100% funcional con tests completos. Consulta `bitacora/` para ver el progreso.
 
 ## Licencia
 

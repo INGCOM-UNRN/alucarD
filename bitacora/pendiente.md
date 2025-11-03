@@ -1,11 +1,5 @@
 # Pendiente
 
-## Tests Unitarios
-- [ ] tests/test_parsers.py - Tests para GiftParser y MoodleXMLParser
-- [ ] tests/test_logic.py - Tests para funciones de logic.py
-- [ ] tests/test_models.py - Tests para validación de modelos Pydantic
-- [ ] tests/test_renderers.py - Tests para HtmlRenderer y PdfRenderer
-
 ## Funcionalidades Adicionales
 - [ ] Modo --init para crear proyecto de ejemplo
 - [ ] Validación más robusta de pools vacíos
