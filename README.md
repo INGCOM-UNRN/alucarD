@@ -28,15 +28,31 @@ generador_examenes/
 
 ## Instalación
 
+### Opción 1: Setup Automático con UV (Recomendado ⚡)
+
 ```bash
-# Clonar repositorio
+# Linux/macOS
+./setup.sh
+
+# Windows PowerShell
+.\setup.ps1
+```
+
+Ver **QUICKSTART_UV.md** para inicio rápido o **GUIA_UV.md** para guía completa.
+
+### Opción 2: Poetry
+
+```bash
 git clone <repo-url>
 cd alucard
-
-# Instalar con Poetry
 poetry install
+```
 
-# O con pip
+### Opción 3: pip
+
+```bash
+git clone <repo-url>
+cd alucard
 pip install -e .
 ```
 
