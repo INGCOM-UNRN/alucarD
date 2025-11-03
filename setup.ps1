@@ -68,7 +68,12 @@ Write-Host ""
 Write-Host "⬇️  Instalando dependencias..." -ForegroundColor Yellow
 Write-Host "   Esto puede tardar un momento..." -ForegroundColor Gray
 try {
-    uv pip install -e . --quiet
+    # Preferir uv sync si pyproject.toml tiene [project]
+    if (Select-String -Path "pyproject.toml" -Pattern "\[project\]" -Quiet) {
+        uv sync --quiet
+    } else {
+        uv pip install -e . --quiet
+    }
     Write-Host "✅ Dependencias instaladas correctamente" -ForegroundColor Green
 } catch {
     Write-Host "❌ Error instalando dependencias" -ForegroundColor Red

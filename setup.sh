@@ -90,7 +90,13 @@ echo ""
 # Instalar dependencias
 echo "⬇️  Instalando dependencias..."
 echo "   Esto puede tardar un momento..."
-uv pip install -e . --quiet
+
+# Preferir uv sync si pyproject.toml tiene [project]
+if grep -q "\[project\]" pyproject.toml 2>/dev/null; then
+    uv sync --quiet
+else
+    uv pip install -e . --quiet
+fi
 
 if [ $? -eq 0 ]; then
     echo "✅ Dependencias instaladas correctamente"

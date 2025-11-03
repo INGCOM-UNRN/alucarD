@@ -16,6 +16,11 @@ setup: ## Configurar entorno con UV (ejecuta setup.sh)
 
 install: ## Instalar dependencias con UV
 	@uv venv
+	@. .venv/bin/activate && uv sync
+	@echo "✅ Dependencias instaladas"
+
+install-pip: ## Instalar con pip (alternativa)
+	@uv venv
 	@. .venv/bin/activate && uv pip install -e .
 	@echo "✅ Dependencias instaladas"
 

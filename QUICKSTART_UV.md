@@ -5,11 +5,14 @@ Instala y ejecuta **alucarD** en 3 pasos (menos de 2 minutos).
 ## Linux / macOS
 
 ```bash
-# 1. Setup automático
+# 1. Setup automático (instala UV si no existe)
 ./setup.sh
 
 # 2. Activar entorno
 source .venv/bin/activate
+
+# Alternativa: Si ya tienes UV instalado
+# uv venv && source .venv/bin/activate && uv sync
 
 # 3. Generar primer examen
 cd tests/bancos_ejemplo

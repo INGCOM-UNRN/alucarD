@@ -53,10 +53,13 @@ source .venv/bin/activate
 ### 3. Instalar Dependencias
 
 ```bash
-# Opción 1: Instalar desde pyproject.toml (recomendado)
+# Opción 1: Con uv sync (recomendado - más rápido)
+uv sync
+
+# Opción 2: Instalar desde pyproject.toml
 uv pip install -e .
 
-# Opción 2: Instalar dependencias específicas
+# Opción 3: Instalar dependencias específicas
 uv pip install pydantic pyyaml jinja2 weasyprint
 ```
 
@@ -206,7 +209,7 @@ cd alucard
 # UV instala todo automáticamente
 uv venv
 source .venv/bin/activate
-uv pip install -e .
+uv sync  # Instala dependencias y crea lockfile
 
 # Listo!
 generador-examenes --help
@@ -334,6 +337,25 @@ source .venv/bin/activate
 | Gestión deps | ✅ Automática | ✅ Automática | 🔧 Manual |
 | Compatible pip | ✅ 100% | ⚠️ Limitado | ✅ Nativo |
 
+## Lockfile (uv.lock)
+
+UV genera automáticamente un archivo `uv.lock` que garantiza instalaciones reproducibles:
+
+```bash
+# El lockfile se genera automáticamente con:
+uv sync
+
+# Se versionan en git para asegurar que todos usen las mismas versiones
+git add uv.lock
+git commit -m "chore: actualizar lockfile"
+```
+
+**Ventajas del lockfile:**
+- ✅ Instalaciones reproducibles 100% determinísticas
+- ✅ Todos los desarrolladores usan las mismas versiones
+- ✅ Builds consistentes en CI/CD
+- ✅ Previene problemas de "funciona en mi máquina"
+
 ## Ventajas de UV para este Proyecto
 
 1. **Velocidad**: Instalación 10-100x más rápida que pip
@@ -341,6 +363,7 @@ source .venv/bin/activate
 3. **Portabilidad**: Fácil de compartir entre computadoras
 4. **Compatible**: Funciona con `pyproject.toml` y `requirements.txt`
 5. **Moderno**: Aprovecha las mejores prácticas de Python moderno
+6. **Lockfile**: Instalaciones reproducibles con uv.lock
 
 ## Comandos Rápidos de Referencia
 
