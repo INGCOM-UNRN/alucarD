@@ -31,7 +31,11 @@
 - [ ] Soporte completo para retroalimentación en GIFT
 - [ ] Manejo de preguntas con imágenes embebidas en XML
 - [x] Soporte para formato markdown indicado como [markdown] en GIFT o format="markdown" en XML
-- [ ] Soporte para otros formatos: moodle_auto_format, html directo (agregado a pendiente futuro)
+- [x] Normalización de caracteres fullwidth en bloques de código (implementado con unicodedata.normalize)
+- [ ] Soporte para otros formatos de texto en preguntas:
+  - [ ] moodle_auto_format: detección automática de formato por Moodle
+  - [ ] html directo: HTML sin procesar
+  - [ ] plain text: texto plano sin formato
 
 ## Documentación Adicional (Opcional)
 - [ ] Tutorial de creación de plugins personalizados
