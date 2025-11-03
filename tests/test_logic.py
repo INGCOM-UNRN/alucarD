@@ -163,6 +163,33 @@ class TestProcesarImagenes:
         logic.procesar_imagenes(banco, tmp_path)
         # No debe modificar
         assert banco["p1"].enunciado_html == original
+    
+    def test_imagen_error_lectura(self, tmp_path):
+        """Debe manejar error al leer imagen (ej: sin permisos)"""
+        # Crear archivo de imagen sin permisos de lectura
+        img_path = tmp_path / "test.png"
+        img_path.write_bytes(b'\x89PNG\r\n\x1a\n')
+        import os
+        os.chmod(img_path, 0o000)  # Sin permisos
+        
+        banco = {
+            "p1": Pregunta(
+                id="p1",
+                tipo="seleccion_multiple",
+                nombre="Test",
+                categoria="Cat",
+                enunciado_html='<img src="test.png">'
+            )
+        }
+        
+        # Debe manejar el error sin fallar
+        try:
+            logic.procesar_imagenes(banco, tmp_path)
+            # Debe mantener src original en caso de error
+            assert 'src="test.png"' in banco["p1"].enunciado_html
+        finally:
+            # Restaurar permisos para limpieza
+            os.chmod(img_path, 0o644)
 
 
 class TestConstruirPoolExamen:
