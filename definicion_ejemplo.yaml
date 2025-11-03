@@ -19,4 +19,4 @@ secciones_examen:
     instrucciones: "Selecciona la respuesta correcta"
     pools:
       - cantidad: 5
-        tipos: ["multichoice"]
+        tipos: ["seleccion_multiple"]
