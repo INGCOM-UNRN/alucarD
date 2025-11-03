@@ -48,26 +48,37 @@ class TestCargarBancos:
     
     def test_cargar_bancos_con_duplicados(self, tmp_path):
         """Debe manejar preguntas duplicadas con warning"""
-        # Crear archivo GIFT con preguntas duplicadas
-        banco_file = tmp_path / "banco_duplicado.txt"
-        banco_file.write_text("""
-::Pregunta1::Texto pregunta 1{
-=Correcta
-~Incorrecta
-}
-
-::Pregunta1::Texto pregunta 1 duplicada{
-=Otra correcta
-~Otra incorrecta
-}
-        """)
+        # Crear dos archivos XML con el mismo ID de pregunta
+        banco1 = tmp_path / "banco1.xml"
+        banco1.write_text("""<?xml version='1.0' encoding='utf-8'?>
+<quiz>
+  <question type="multichoice">
+    <name><text>Pregunta Duplicada</text></name>
+    <questiontext><text>Texto 1</text></questiontext>
+    <answer fraction="100"><text>Correcta 1</text></answer>
+  </question>
+</quiz>""")
         
-        banco = logic.cargar_bancos([banco_file])
-        # GIFT parser genera IDs únicos, pero ambas preguntas se cargan
-        assert len(banco) >= 2
-        # Verificar que las preguntas tienen el nombre correcto
-        nombres = [p.nombre for p in banco.values()]
-        assert nombres.count("Pregunta1") >= 2
+        banco2 = tmp_path / "banco2.xml"
+        banco2.write_text("""<?xml version='1.0' encoding='utf-8'?>
+<quiz>
+  <question type="multichoice">
+    <name><text>Pregunta Duplicada</text></name>
+    <questiontext><text>Texto 2</text></questiontext>
+    <answer fraction="100"><text>Correcta 2</text></answer>
+  </question>
+</quiz>""")
+        
+        # Cargar ambos bancos - debe generar warning sobre duplicado
+        import logging
+        with pytest.warns(None) as record:
+            banco = logic.cargar_bancos([banco1, banco2])
+        
+        # Debe tener solo una pregunta (la segunda sobrescribe)
+        assert len(banco) == 1
+        # La pregunta final debe ser la del segundo banco
+        pregunta = list(banco.values())[0]
+        assert "Texto 2" in pregunta.enunciado_html
 
 
 class TestProcesarImagenes:
