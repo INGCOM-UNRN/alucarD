@@ -944,3 +944,124 @@ class TestMoodleXMLParserExceptions:
         # Solo debe incluir la respuesta válida
         assert len(pregunta.opciones) == 1
         assert pregunta.opciones[0].texto_html == "Válida"
+
+
+class TestGiftParserMarkdown:
+    """Tests para formato markdown en GIFT"""
+    
+    def test_parse_gift_con_markdown(self, tmp_path):
+        """Debe parsear pregunta GIFT con formato markdown"""
+        contenido = """
+::Pregunta Markdown::[markdown]¿Qué hace esta función?
+```python
+def suma(a, b):
+    return a + b
+```
+{
+=Suma dos números
+~Resta dos números
+}
+"""
+        archivo = tmp_path / "test_markdown.txt"
+        archivo.write_text(contenido, encoding='utf-8')
+        
+        parser = GiftParser()
+        preguntas = parser.parse(archivo)
+        
+        assert len(preguntas) == 1
+        pregunta = list(preguntas.values())[0]
+        
+        # Verificar que el enunciado contiene código con highlighting
+        assert 'highlight' in pregunta.enunciado_html or 'def' in pregunta.enunciado_html
+    
+    def test_parse_gift_markdown_opciones(self, tmp_path):
+        """Debe parsear opciones con formato markdown"""
+        contenido = """
+::Test Opciones Markdown::[markdown]Pregunta {
+=`codigo` correcto
+~**texto** incorrecto
+}
+"""
+        archivo = tmp_path / "test_markdown_opts.txt"
+        archivo.write_text(contenido, encoding='utf-8')
+        
+        parser = GiftParser()
+        preguntas = parser.parse(archivo)
+        
+        assert len(preguntas) == 1
+        pregunta = list(preguntas.values())[0]
+        
+        # Verificar que las opciones fueron convertidas
+        assert len(pregunta.opciones) == 2
+        # Debe contener tags HTML del markdown
+        assert '<code>' in pregunta.opciones[0].texto_html or 'codigo' in pregunta.opciones[0].texto_html
+
+
+class TestMoodleXMLParserMarkdown:
+    """Tests para formato markdown en Moodle XML"""
+    
+    def test_parse_xml_con_markdown(self, tmp_path):
+        """Debe parsear pregunta XML con formato markdown"""
+        contenido = """<?xml version="1.0" encoding="UTF-8"?>
+<quiz>
+  <question type="multichoice">
+    <name><text>Pregunta Markdown</text></name>
+    <questiontext format="markdown">
+      <text><![CDATA[¿Qué devuelve `x + 1`?]]></text>
+    </questiontext>
+    <answer fraction="100" format="markdown">
+      <text><![CDATA[El valor de **x más uno**]]></text>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[El valor de `x`]]></text>
+    </answer>
+  </question>
+</quiz>
+"""
+        archivo = tmp_path / "test_markdown.xml"
+        archivo.write_text(contenido, encoding='utf-8')
+        
+        parser = MoodleXMLParser()
+        preguntas = parser.parse(archivo)
+        
+        assert len(preguntas) == 1
+        pregunta = list(preguntas.values())[0]
+        
+        # Verificar que el enunciado contiene código convertido
+        assert '<code>' in pregunta.enunciado_html
+        
+        # Verificar que las opciones fueron convertidas
+        assert len(pregunta.opciones) == 2
+        assert '<strong>' in pregunta.opciones[0].texto_html or 'más uno' in pregunta.opciones[0].texto_html
+    
+    def test_parse_xml_markdown_code_block(self, tmp_path):
+        """Debe parsear bloques de código en formato markdown XML"""
+        contenido = """<?xml version="1.0" encoding="UTF-8"?>
+<quiz>
+  <question type="multichoice">
+    <name><text>Código</text></name>
+    <questiontext format="markdown">
+      <text><![CDATA[¿Qué imprime este código?
+```python
+x = 5
+print(x * 2)
+```
+]]></text>
+    </questiontext>
+    <answer fraction="100">
+      <text>10</text>
+    </answer>
+  </question>
+</quiz>
+"""
+        archivo = tmp_path / "test_code.xml"
+        archivo.write_text(contenido, encoding='utf-8')
+        
+        parser = MoodleXMLParser()
+        preguntas = parser.parse(archivo)
+        
+        assert len(preguntas) == 1
+        pregunta = list(preguntas.values())[0]
+        
+        # Verificar que contiene syntax highlighting
+        assert 'highlight' in pregunta.enunciado_html or 'print' in pregunta.enunciado_html
