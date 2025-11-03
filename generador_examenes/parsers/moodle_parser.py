@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Dict
 from generador_examenes.core.models import Pregunta, Opcion
 from generador_examenes.parsers.base import BaseParser
+from generador_examenes.core.markdown_utils import detect_and_convert_format
 
 
 logger = logging.getLogger(__name__)
@@ -79,11 +80,14 @@ class MoodleXMLParser(BaseParser):
         name_elem = question_elem.find('name/text')
         nombre = name_elem.text if name_elem is not None and name_elem.text else f"pregunta_{indice + 1}"
         
-        # Extraer enunciado
+        # Extraer enunciado con formato
         questiontext_elem = question_elem.find('questiontext/text')
+        questiontext_format = question_elem.find('questiontext')
+        format_attr = questiontext_format.get('format', 'html') if questiontext_format is not None else 'html'
+        
         enunciado = ""
         if questiontext_elem is not None and questiontext_elem.text:
-            enunciado = questiontext_elem.text
+            enunciado = detect_and_convert_format(questiontext_elem.text, format_attr)
         
         # Extraer categoría
         categoria = "General"
@@ -145,7 +149,9 @@ class MoodleXMLParser(BaseParser):
             if text_elem is None or not text_elem.text:
                 continue
             
-            texto = text_elem.text
+            # Obtener formato de la respuesta
+            format_attr = answer_elem.get('format', 'html')
+            texto = detect_and_convert_format(text_elem.text, format_attr)
             
             # Obtener fracción (>0 es correcta)
             fraction = float(answer_elem.get('fraction', '0'))
@@ -153,7 +159,11 @@ class MoodleXMLParser(BaseParser):
             
             # Obtener retroalimentación de la opción
             feedback_elem = answer_elem.find('feedback/text')
-            retroalimentacion = feedback_elem.text if feedback_elem is not None and feedback_elem.text else None
+            feedback_format_elem = answer_elem.find('feedback')
+            feedback_format = feedback_format_elem.get('format', 'html') if feedback_format_elem is not None else 'html'
+            retroalimentacion = None
+            if feedback_elem is not None and feedback_elem.text:
+                retroalimentacion = detect_and_convert_format(feedback_elem.text, feedback_format)
             
             opciones.append(Opcion(
                 texto_html=texto,
@@ -191,7 +201,9 @@ class MoodleXMLParser(BaseParser):
             if text_elem is None or not text_elem.text:
                 continue
             
-            texto = text_elem.text
+            # Obtener formato de la respuesta
+            format_attr = answer_elem.get('format', 'html')
+            texto = detect_and_convert_format(text_elem.text, format_attr)
             
             # En respuesta corta, todas las respuestas con fracción > 0 son correctas
             fraction = float(answer_elem.get('fraction', '0'))

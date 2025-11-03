@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Dict
 from generador_examenes.core.models import Pregunta, Opcion
 from generador_examenes.parsers.base import BaseParser
+from generador_examenes.core.markdown_utils import detect_and_convert_format
 
 
 logger = logging.getLogger(__name__)
@@ -98,6 +99,13 @@ class GiftParser(BaseParser):
             etiquetas = [tag.strip() for tag in tags_match.group(1).split(',')]
             bloque = bloque[:tags_match.start()] + bloque[tags_match.end():]
         
+        # Extraer formato [markdown] o [html]
+        formato = 'plain'
+        format_match = re.search(r'\[(markdown|html|moodle_auto_format)\]', bloque, re.IGNORECASE)
+        if format_match:
+            formato = format_match.group(1).lower()
+            bloque = bloque[:format_match.start()] + bloque[format_match.end():]
+        
         # Extraer categoría [category: nombre]
         categoria = "General"
         cat_match = re.search(r'\[category:\s*(.+?)\]', bloque, re.IGNORECASE)
@@ -112,6 +120,8 @@ class GiftParser(BaseParser):
             return None
         
         enunciado = match.group(1).strip()
+        # Convertir el enunciado según el formato
+        enunciado = detect_and_convert_format(enunciado, formato)
         opciones_str = match.group(2).strip()
         
         # Determinar tipo de pregunta y parsear opciones
@@ -122,7 +132,7 @@ class GiftParser(BaseParser):
         elif '=' in opciones_str or '~' in opciones_str:
             # Selección múltiple
             tipo = "seleccion_multiple"
-            opciones = self._parsear_seleccion_multiple(opciones_str)
+            opciones = self._parsear_seleccion_multiple(opciones_str, formato)
         elif opciones_str.startswith('#'):
             # Numérica
             tipo = "numerica"
@@ -130,7 +140,7 @@ class GiftParser(BaseParser):
         else:
             # Respuesta corta o ensayo
             tipo = "respuesta_corta"
-            opciones = self._parsear_respuesta_corta(opciones_str)
+            opciones = self._parsear_respuesta_corta(opciones_str, formato)
         
         pregunta = Pregunta(
             id=f"gift_{indice + 1}_{nombre.replace(' ', '_')}",
@@ -145,7 +155,7 @@ class GiftParser(BaseParser):
         
         return pregunta
     
-    def _parsear_seleccion_multiple(self, opciones_str: str) -> list[Opcion]:
+    def _parsear_seleccion_multiple(self, opciones_str: str, formato: str = 'plain') -> list[Opcion]:
         """Parsea opciones de selección múltiple"""
         opciones = []
         
@@ -164,8 +174,10 @@ class GiftParser(BaseParser):
                 es_correcta = (marcador == '=')
                 
                 if texto:
+                    # Convertir el texto según el formato
+                    texto_html = detect_and_convert_format(texto, formato)
                     opciones.append(Opcion(
-                        texto_html=texto,
+                        texto_html=texto_html,
                         es_correcta=es_correcta
                     ))
         
@@ -180,7 +192,7 @@ class GiftParser(BaseParser):
             Opcion(texto_html="Falso", es_correcta=not es_verdadero)
         ]
     
-    def _parsear_respuesta_corta(self, opciones_str: str) -> list[Opcion]:
+    def _parsear_respuesta_corta(self, opciones_str: str, formato: str = 'plain') -> list[Opcion]:
         """Parsea opciones de respuesta corta"""
         opciones = []
         
@@ -190,15 +202,18 @@ class GiftParser(BaseParser):
         for respuesta in respuestas:
             texto = respuesta.strip()
             if texto:
+                # Convertir el texto según el formato
+                texto_html = detect_and_convert_format(texto, formato)
                 opciones.append(Opcion(
-                    texto_html=texto,
+                    texto_html=texto_html,
                     es_correcta=True
                 ))
         
         # Si no hay respuestas marcadas, considerar todo el contenido
         if not opciones:
+            texto_html = detect_and_convert_format(opciones_str.strip(), formato)
             opciones.append(Opcion(
-                texto_html=opciones_str.strip(),
+                texto_html=texto_html,
                 es_correcta=True
             ))
         
