@@ -91,6 +91,27 @@
 - [x] banco_jerarquico.txt - Ejemplos
 - [x] definicion_jerarquica.yaml - Casos de uso
 
+## Cobertura de Tests - Parsers
+- [x] Tests parsers al 100% efectivo (99.6% con método abstracto)
+- [x] gift_parser.py: 100% (107/107 líneas)
+- [x] moodle_parser.py: 100% (106/106 líneas)
+- [x] __init__.py: 100% (18/18 líneas)
+- [x] base.py: 91% (10/11 líneas, falta método abstracto)
+- [x] 53 tests totales (+35 nuevos)
+- [x] Tests para casos edge:
+  - [x] Manejo de excepciones
+  - [x] Bloques vacíos y malformados
+  - [x] Archivos corruptos
+  - [x] Respuestas vacías
+  - [x] Opciones sin texto
+  - [x] Categorías anidadas
+  - [x] Retroalimentación
+  - [x] Todos los tipos de preguntas
+- [x] Tests con monkeypatch para excepciones
+- [x] Tests con tmp_path para archivos temporales
+- [x] Validación robusta de entrada
+- [x] Logging apropiado
+
 ## Ejemplos Avanzados
 - [x] EJEMPLOS_AVANZADOS.md - Guía completa (34 KB)
 - [x] 10 casos de uso avanzados detallados:
