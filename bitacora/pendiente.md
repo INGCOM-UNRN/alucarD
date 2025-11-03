@@ -1,5 +1,9 @@
 # Pendiente
 
+## Funcionalidad para implementar
+
+- [ ] Crear una página para la configuración fina de la generación, para elegir y tener una vista previa de las opciones de visualizacion de cada pregunta (layout), la página debe dar tener un botón para descargar la configuracion necesaria para fusionarlo a la configuracion en la generación del cuestionario 
+
 ## ✅ Completado en esta sesión (2025-11-03)
 - [x] Solucionar error de `uv sync` (pyproject.toml)
 - [x] Corregir error de validación YAML (pool → pools)
@@ -9,6 +13,9 @@
 - [x] Documentar guía UV completa
 - [x] Crear ejemplos avanzados
 - [x] Implementar soporte para categorías anidadas
+- [x] Implementar formato markdown con syntax highlighting
+- [x] Cobertura 100% en parsers (gift_parser, moodle_parser)
+- [x] Cobertura 83% en markdown_utils
 
 ## Mejoras generales
 - [ ] Mejorar los __str__ para que las salidas por los logs tengan mas información útil.
@@ -23,8 +30,8 @@
 ## Mejoras de Parsers (Opcionales)
 - [ ] Soporte completo para retroalimentación en GIFT
 - [ ] Manejo de preguntas con imágenes embebidas en XML
-- [ ] Soporte para formato markdown indicado como [markdown] en GIFT o format="markdown" en XML
-- [ ] Soporte para otros formatos: moodle_auto_format, html directo
+- [x] Soporte para formato markdown indicado como [markdown] en GIFT o format="markdown" en XML
+- [ ] Soporte para otros formatos: moodle_auto_format, html directo (agregado a pendiente futuro)
 
 ## Documentación Adicional (Opcional)
 - [ ] Tutorial de creación de plugins personalizados
