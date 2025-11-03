@@ -23,6 +23,8 @@
 ## Mejoras de Parsers (Opcionales)
 - [ ] Soporte completo para retroalimentación en GIFT
 - [ ] Manejo de preguntas con imágenes embebidas en XML
+- [ ] Soporte para formato markdown indicado como [markdown] en GIFT o format="markdown" en XML
+- [ ] Soporte para otros formatos: moodle_auto_format, html directo
 
 ## Documentación Adicional (Opcional)
 - [ ] Tutorial de creación de plugins personalizados
