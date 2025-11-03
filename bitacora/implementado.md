@@ -35,3 +35,32 @@
 
 ## Bitácora
 - [x] Sistema de seguimiento de progreso
+
+## Parsers
+- [x] parsers/gift_parser.py - Parser GIFT completo
+- [x] parsers/moodle_parser.py - Parser Moodle XML completo
+- [x] Registro de plugins en parsers/__init__.py
+
+## Generators
+- [x] generators/html_renderer.py - Renderer HTML completo
+- [x] generators/pdf_renderer.py - Renderer PDF con WeasyPrint
+- [x] Registro de plugins en generators/__init__.py
+
+## Core Logic
+- [x] core/logic.py - Funciones de orquestación:
+  - [x] cargar_bancos()
+  - [x] procesar_imagenes()
+  - [x] construir_pool_examen()
+  - [x] mezclar_examen()
+  - [x] calcular_puntaje_total()
+
+## Main
+- [x] Flujo completo implementado en __main__.py
+- [x] Modo validación (--validate)
+- [x] Generación multi-tema
+- [x] Soporte multi-formato
+
+## Ejemplos
+- [x] tests/bancos_ejemplo/banco_test.txt (GIFT)
+- [x] tests/bancos_ejemplo/banco_test.xml (Moodle XML)
+- [x] tests/bancos_ejemplo/definicion_ejemplo.yaml

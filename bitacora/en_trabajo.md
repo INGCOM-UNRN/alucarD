@@ -1,4 +1,4 @@
 # En Trabajo
 
-- Esqueleto del proyecto completado
-- Siguiente fase: Implementación de parsers y lógica core
+- Sistema core completado y funcional
+- Preparando para pruebas funcionales
