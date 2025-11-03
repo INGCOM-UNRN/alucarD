@@ -121,6 +121,40 @@ secciones_examen:
         accion_si_insuficiente: "usar_todas"
 ```
 
+## Ejemplo con Categorías Anidadas
+
+```yaml
+nombre_examen: "Examen de Matemáticas por Jerarquía"
+institucion: "Universidad XYZ"
+materia: "Matemáticas"
+
+configuracion_examen:
+  mezclar_preguntas_dentro_seccion: true
+  generar_clave_profesor: true
+
+secciones_examen:
+  - nombre: "Álgebra Completo"
+    instrucciones: "Todas las preguntas de álgebra"
+    pools:
+      # Incluye Álgebra y todas sus subcategorías
+      - categoria: "Matemáticas/Álgebra"
+        cantidad: 10
+  
+  - nombre: "Solo Geometría Básica"
+    pools:
+      # Solo subcategorías directas de Geometría
+      - categoria: "Matemáticas/Geometría/*"
+        cantidad: 5
+  
+  - nombre: "Todo Matemáticas"
+    pools:
+      # Todas las categorías bajo Matemáticas (cualquier nivel)
+      - categoria: "Matemáticas/**"
+        cantidad: 15
+```
+
+Ver **CATEGORIAS.md** para documentación completa de categorías anidadas.
+
 ## Formato GIFT (banco_preguntas.txt)
 
 ```

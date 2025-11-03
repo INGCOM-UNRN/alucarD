@@ -18,6 +18,91 @@ from generador_examenes.parsers import obtener_parser
 logger = logging.getLogger(__name__)
 
 
+def normalizar_categoria(categoria: str) -> str:
+    """
+    Normaliza una categoría para comparación consistente.
+    
+    Convierte separadores (/, \\) a formato estándar y elimina espacios.
+    
+    Args:
+        categoria: Categoría a normalizar (ej: "$course$/Math/Algebra")
+        
+    Returns:
+        Categoría normalizada (ej: "$course$/math/algebra")
+    """
+    if not categoria:
+        return ""
+    
+    # Convertir backslashes a forward slashes
+    categoria = categoria.replace("\\", "/")
+    
+    # Eliminar espacios extras alrededor de slashes
+    categoria = re.sub(r'\s*/\s*', '/', categoria)
+    
+    # Eliminar espacios al inicio y final
+    categoria = categoria.strip()
+    
+    # Normalizar a minúsculas para comparación case-insensitive
+    categoria = categoria.lower()
+    
+    # Eliminar slashes duplicados
+    categoria = re.sub(r'/+', '/', categoria)
+    
+    # Eliminar slash final si existe
+    categoria = categoria.rstrip('/')
+    
+    return categoria
+
+
+def categoria_coincide(pregunta_cat: str, filtro_cat: str) -> bool:
+    """
+    Verifica si una categoría de pregunta coincide con un filtro.
+    
+    Soporta:
+    - Coincidencia exacta: "Math/Algebra" == "Math/Algebra"
+    - Subcategorías: "Math/Algebra/Linear" coincide con filtro "Math/Algebra"
+    - Wildcards: "Math/*" coincide con cualquier subcategoría de Math
+    
+    Args:
+        pregunta_cat: Categoría de la pregunta
+        filtro_cat: Categoría del filtro
+        
+    Returns:
+        True si hay coincidencia
+    """
+    if not filtro_cat:
+        return True
+    
+    # Normalizar ambas categorías
+    pregunta_norm = normalizar_categoria(pregunta_cat)
+    filtro_norm = normalizar_categoria(filtro_cat)
+    
+    # Coincidencia exacta
+    if pregunta_norm == filtro_norm:
+        return True
+    
+    # Si el filtro termina en /*, permite solo UN nivel de subcategorías
+    if filtro_norm.endswith('/*'):
+        prefijo = filtro_norm[:-2]  # Quitar /*
+        if pregunta_norm.startswith(prefijo + '/'):
+            # Verificar que solo haya un nivel más (sin más slashes)
+            resto = pregunta_norm[len(prefijo)+1:]  # Lo que viene después del prefijo/
+            return '/' not in resto
+        return False
+    
+    # Si el filtro termina en **, permite cualquier nivel de subcategorías
+    if filtro_norm.endswith('/**'):
+        prefijo = filtro_norm[:-3]  # Quitar /**
+        return pregunta_norm.startswith(prefijo + '/') or pregunta_norm == prefijo
+    
+    # Verificar si la pregunta es subcategoría del filtro
+    # Ej: pregunta "Math/Algebra/Linear" coincide con filtro "Math/Algebra"
+    if pregunta_norm.startswith(filtro_norm + '/'):
+        return True
+    
+    return False
+
+
 def cargar_bancos(rutas_bancos: List[Path]) -> Dict[str, Pregunta]:
     """
     Carga múltiples bancos de preguntas y los combina en uno solo
@@ -188,9 +273,9 @@ def _filtrar_preguntas_pool(pool: PoolConfig, banco: Dict[str, Pregunta]) -> Lis
         logger.debug(f"Pool: {len(fijadas)} preguntas fijadas")
         return fijadas
     
-    # Filtro 2: Categoría
+    # Filtro 2: Categoría (soporta categorías anidadas)
     if pool.categoria:
-        candidatas = [p for p in candidatas if p.categoria == pool.categoria]
+        candidatas = [p for p in candidatas if categoria_coincide(p.categoria, pool.categoria)]
         logger.debug(f"Filtro categoría '{pool.categoria}': {len(candidatas)} candidatas")
     
     # Filtro 3: Tipos

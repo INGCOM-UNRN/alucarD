@@ -1,5 +1,21 @@
 # Changelog
 
+## [5.1.0] - 2025-01-03
+
+### Agregado
+- ✨ **Categorías anidadas**: Soporte completo para jerarquías con wildcards
+  - Filtrado por subcategorías automático
+  - Wildcards `/*` (un nivel) y `/**` (recursivo)
+  - Normalización case-insensitive
+  - Compatible con formato Moodle
+- 📝 CATEGORIAS.md - Documentación completa de categorías
+- 🧪 23 tests nuevos para categorías anidadas
+- 📄 Ejemplos: banco_jerarquico.txt y definicion_jerarquica.yaml
+
+### Cambiado
+- 🔧 Filtrado de categorías usa `categoria_coincide()` para jerarquías
+- 📈 Cobertura de tests aumentada a 70%
+
 ## [5.0.0] - 2025-01-03
 
 ### Implementado

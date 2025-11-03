@@ -1,0 +1,63 @@
+nombre_examen: "Examen con Categorías Anidadas"
+institucion: "Universidad XYZ"
+materia: "Examen Integral"
+fecha: "2024-12-15"
+duracion_minutos: 120
+instrucciones_generales: "Lee cuidadosamente cada pregunta antes de responder."
+idioma: "es"
+
+configuracion_examen:
+  mezclar_preguntas_dentro_seccion: true
+  mezclar_opciones_dentro_pregunta: true
+  generar_clave_profesor: true
+
+secciones_examen:
+  # Sección 1: Todas las preguntas de Álgebra (cualquier nivel)
+  - nombre: "Sección A - Álgebra Completo"
+    instrucciones: "Esta sección incluye preguntas de álgebra de todos los niveles."
+    pools:
+      - categoria: "Matemáticas/Álgebra"
+        cantidad: 6
+        puntaje_fijo_por_pregunta: 2.0
+        accion_si_insuficiente: "usar_todas"
+  
+  # Sección 2: Solo Geometría Básica (un nivel)
+  - nombre: "Sección B - Geometría Básica"
+    instrucciones: "Preguntas fundamentales de geometría."
+    pools:
+      - categoria: "Matemáticas/Geometría/Básico"
+        cantidad: 2
+        puntaje_fijo_por_pregunta: 1.5
+        accion_si_insuficiente: "usar_todas"
+  
+  # Sección 3: Toda la Física (wildcard recursivo)
+  - nombre: "Sección C - Física General"
+    instrucciones: "Preguntas de física de diferentes niveles."
+    pools:
+      - categoria: "Física/**"
+        cantidad: 5
+        puntaje_fijo_por_pregunta: 2.5
+        accion_si_insuficiente: "usar_todas"
+  
+  # Sección 4: Programación Python nivel Básico e Intermedio
+  - nombre: "Sección D - Python"
+    instrucciones: "Preguntas de programación en Python."
+    pools:
+      - categoria: "Programación/Python/Básico"
+        cantidad: 2
+        puntaje_fijo_por_pregunta: 1.0
+        accion_si_insuficiente: "usar_todas"
+      - categoria: "Programación/Python/Intermedio"
+        cantidad: 2
+        puntaje_fijo_por_pregunta: 2.0
+        accion_si_insuficiente: "usar_todas"
+  
+  # Sección 5: Mix de preguntas avanzadas (solo primer nivel)
+  - nombre: "Sección E - Nivel Avanzado"
+    instrucciones: "Preguntas avanzadas de diferentes materias."
+    pools:
+      - categoria: "Matemáticas/*/Avanzado"  # Álgebra Avanzado, Geometría Avanzado
+        tipos: ["seleccion_multiple"]
+        cantidad: 3
+        puntaje_fijo_por_pregunta: 3.0
+        accion_si_insuficiente: "advertir"

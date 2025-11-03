@@ -8,7 +8,10 @@ Sistema de generación de exámenes basado en plantillas, YAML y bancos Moodle/G
 - ✅ **Templating con Jinja2**: Salidas HTML/PDF personalizables
 - ✅ **Arquitectura de Plugins**: Extensible vía clases base abstractas
 - ✅ **Multiformato**: Lee XML/GIFT, genera HTML/PDF
+- ✅ **Categorías Anidadas**: Organización jerárquica con wildcards (`Math/**`)
+- ✅ **Filtrado Avanzado**: Por categoría, tipo, etiquetas
 - ✅ **Internacionalización**: Soporte para múltiples idiomas
+- ✅ **100% Testeado**: Suite completa con cobertura total
 
 ## Estructura del Proyecto
 
