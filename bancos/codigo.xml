@@ -1,0 +1,1505 @@
+<?xml version='1.0' encoding='utf-8'?>
+<quiz>
+  <question type="category">
+    <category>
+      <text>$course$/top/programacion1_gen_codigo/basicos</text>
+    </category>
+    <info format="moodle_auto_format">
+      <text />
+    </info>
+    <idnumber />
+  </question>
+  <question type="multichoice">
+    <name>
+      <text><![CDATA[Bucles - El 'Gotcha' del for sin Llaves y 'a la Python' - 1]]></text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[Analiza el siguiente código. ¿Cuál es el valor final de 'acumulador'?
+```c
+＃include ＜stdio.h＞↵
+＃include ＜stdlib.h＞↵
+// ------------------------------------↵
+↵
+int main() ｛↵
+    int acumulador ＝ 0;↵
+    int i;↵
+    for (int i ＝ 0; i ＜ 6; i++);↵
+        acumulador ＝ acumulador + i;↵
+        acumulador ＝ acumulador * 2;↵
+    printf("%d", acumulador);↵
+    ↵
+    return EXIT_SUCCESS;↵
+｝
+```
+¿Qué valor se imprime en la consola?]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text><![CDATA[`12`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`7`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Error de compilación.]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`11`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Bucle infinito.]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`114`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`22`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`15`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Comportamiento indefinido.]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <idnumber />
+  </question>
+  <question type="multichoice">
+    <name>
+      <text><![CDATA[Bucles - El 'Gotcha' del for sin Llaves y 'a la Python' - 2]]></text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[Analiza el siguiente código. ¿Cuál es el valor final de 'acumulador'?
+```c
+＃include ＜stdio.h＞↵
+＃include ＜stdlib.h＞↵
+// ------------------------------------↵
+↵
+int main() ｛↵
+    int acumulador ＝ 0;↵
+    int i;↵
+    for (int i ＝ 0; i ＜ 7; i++);↵
+        acumulador ＝ acumulador + i;↵
+        acumulador ＝ acumulador * 3;↵
+    printf("%d", acumulador);↵
+    ↵
+    return EXIT_SUCCESS;↵
+｝
+```
+¿Qué valor se imprime en la consola?]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text><![CDATA[`21`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`15`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`25`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`1629`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`14`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Error de compilación.]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Bucle infinito.]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Comportamiento indefinido.]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <idnumber />
+  </question>
+  <question type="multichoice">
+    <name>
+      <text><![CDATA[Bucles - El 'Gotcha' del for sin Llaves y 'a la Python' - 3]]></text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[Analiza el siguiente código. ¿Cuál es el valor final de 'acumulador'?
+```c
+＃include ＜stdio.h＞↵
+＃include ＜stdlib.h＞↵
+// ------------------------------------↵
+↵
+int main() ｛↵
+    int acumulador ＝ 0;↵
+    int i;↵
+    for (int i ＝ 0; i ＜ 4; i++);↵
+        acumulador ＝ acumulador + i;↵
+        acumulador ＝ acumulador * 3;↵
+    printf("%d", acumulador);↵
+    ↵
+    return EXIT_SUCCESS;↵
+｝
+```
+¿Qué valor se imprime en la consola?]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text><![CDATA[`12`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Comportamiento indefinido.]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`9`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Bucle infinito.]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`6`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Error de compilación.]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`54`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`22`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`11`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <idnumber />
+  </question>
+  <question type="multichoice">
+    <name>
+      <text><![CDATA[Bucles - El 'Gotcha' del for sin Llaves y 'a la Python' - 4]]></text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[Analiza el siguiente código. ¿Cuál es el valor final de 'acumulador'?
+```c
+＃include ＜stdio.h＞↵
+＃include ＜stdlib.h＞↵
+// ------------------------------------↵
+↵
+int main() ｛↵
+    int acumulador ＝ 0;↵
+    int i;↵
+    for (int i ＝ 0; i ＜ 7; i++);↵
+        acumulador ＝ acumulador + i;↵
+        acumulador ＝ acumulador * 2;↵
+    printf("%d", acumulador);↵
+    ↵
+    return EXIT_SUCCESS;↵
+｝
+```
+¿Qué valor se imprime en la consola?]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text><![CDATA[`14`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Bucle infinito.]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`12`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`13`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Comportamiento indefinido.]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Error de compilación.]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`23`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`240`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`21`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <idnumber />
+  </question>
+  <question type="multichoice">
+    <name>
+      <text><![CDATA[Bucles - El 'Gotcha' del for sin Llaves y 'a la Python' - 5]]></text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[Analiza el siguiente código. ¿Cuál es el valor final de 'acumulador'?
+```c
+＃include ＜stdio.h＞↵
+＃include ＜stdlib.h＞↵
+// ------------------------------------↵
+↵
+int main() ｛↵
+    int acumulador ＝ 0;↵
+    int i;↵
+    for (int i ＝ 0; i ＜ 4; i++);↵
+        acumulador ＝ acumulador + i;↵
+        acumulador ＝ acumulador * 2;↵
+    printf("%d", acumulador);↵
+    ↵
+    return EXIT_SUCCESS;↵
+｝
+```
+¿Qué valor se imprime en la consola?]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text><![CDATA[`8`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`1`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`6`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Error de compilación.]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Bucle infinito.]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Comportamiento indefinido.]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`22`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`2`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`5`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <idnumber />
+  </question>
+  <question type="multichoice">
+    <name>
+      <text><![CDATA[Suma de dos números con scanf - 1]]></text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[Analiza el siguiente código que lee dos números y los suma:
+```c
+＃include ＜stdio.h＞↵
+int main() ｛↵
+    int a, b;↵
+    scanf("%d", &a);↵
+    scanf("%d", &b);↵
+    printf("%d\n", a + b);↵
+    return 0;↵
+｝
+```
+¿Qué valor imprime el programa?
+
+#### Entrada (stdin):
+```
+4
+17
+```]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text><![CDATA[`21`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`68`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`11`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`17`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`14`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`30`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`28`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`23`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`-13`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`4`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <idnumber />
+  </question>
+  <question type="multichoice">
+    <name>
+      <text><![CDATA[Suma de dos números con scanf - 2]]></text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[Analiza el siguiente código que lee dos números y los suma:
+```c
+＃include ＜stdio.h＞↵
+int main() ｛↵
+    int a, b;↵
+    scanf("%d", &a);↵
+    scanf("%d", &b);↵
+    printf("%d\n", a + b);↵
+    return 0;↵
+｝
+```
+¿Qué valor imprime el programa?
+
+#### Entrada (stdin):
+```
+9
+3
+```]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text><![CDATA[`12`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`13`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`6`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`7`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`9`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`4`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`22`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`21`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`27`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`11`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <idnumber />
+  </question>
+  <question type="multichoice">
+    <name>
+      <text><![CDATA[Suma de dos números con scanf - 3]]></text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[Analiza el siguiente código que lee dos números y los suma:
+```c
+＃include ＜stdio.h＞↵
+int main() ｛↵
+    int a, b;↵
+    scanf("%d", &a);↵
+    scanf("%d", &b);↵
+    printf("%d\n", a + b);↵
+    return 0;↵
+｝
+```
+¿Qué valor imprime el programa?
+
+#### Entrada (stdin):
+```
+1
+14
+```]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text><![CDATA[`15`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`10`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`23`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`14`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`8`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`12`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`22`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`-13`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`1`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`18`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <idnumber />
+  </question>
+  <question type="multichoice">
+    <name>
+      <text><![CDATA[Suma de dos números con scanf - 4]]></text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[Analiza el siguiente código que lee dos números y los suma:
+```c
+＃include ＜stdio.h＞↵
+int main() ｛↵
+    int a, b;↵
+    scanf("%d", &a);↵
+    scanf("%d", &b);↵
+    printf("%d\n", a + b);↵
+    return 0;↵
+｝
+```
+¿Qué valor imprime el programa?
+
+#### Entrada (stdin):
+```
+9
+13
+```]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text><![CDATA[`22`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`28`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`-4`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`32`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`9`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`27`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`20`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`18`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`117`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`24`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <idnumber />
+  </question>
+  <question type="multichoice">
+    <name>
+      <text><![CDATA[Suma de dos números con scanf - 5]]></text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[Analiza el siguiente código que lee dos números y los suma:
+```c
+＃include ＜stdio.h＞↵
+int main() ｛↵
+    int a, b;↵
+    scanf("%d", &a);↵
+    scanf("%d", &b);↵
+    printf("%d\n", a + b);↵
+    return 0;↵
+｝
+```
+¿Qué valor imprime el programa?
+
+#### Entrada (stdin):
+```
+5
+18
+```]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text><![CDATA[`23`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`17`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`16`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`28`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`5`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`26`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`31`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`90`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`-13`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[`22`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <idnumber />
+  </question>
+  <question type="category">
+    <category>
+      <text>$course$/top/programacion1_gen_codigo/secure_strings</text>
+    </category>
+    <info format="moodle_auto_format">
+      <text />
+    </info>
+    <idnumber />
+  </question>
+  <question type="multichoice">
+    <name>
+      <text><![CDATA[Cadenas Seguras - fgets con límite de buffer - 1]]></text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[Analiza el siguiente código que usa fgets para leer entrada de forma segura:
+```c
+＃include ＜stdio.h＞↵
+int main() ｛↵
+    char buf［15］;↵
+    // fgets lee hasta buffer_size-1 caracteres + '\0'↵
+    // Es seguro porque respeta el límite del buffer↵
+    if (fgets(buf, sizeof(buf), stdin) !＝ NULL) ｛↵
+        printf("OK\n");↵
+    ｝↵
+    return 0;↵
+｝
+```
+¿Qué imprime el programa con la entrada dada?
+
+#### Entrada (stdin):
+```
+Hola
+```]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text><![CDATA[`OK`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[El texto ingresado]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Error de compilación]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Segmentation fault]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Comportamiento indefinido]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[No imprime nada]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Buffer overflow]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Error de lectura]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <idnumber />
+  </question>
+  <question type="multichoice">
+    <name>
+      <text><![CDATA[Cadenas Seguras - fgets con límite de buffer - 2]]></text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[Analiza el siguiente código que usa fgets para leer entrada de forma segura:
+```c
+＃include ＜stdio.h＞↵
+int main() ｛↵
+    char buf［10］;↵
+    // fgets lee hasta buffer_size-1 caracteres + '\0'↵
+    // Es seguro porque respeta el límite del buffer↵
+    if (fgets(buf, sizeof(buf), stdin) !＝ NULL) ｛↵
+        printf("OK\n");↵
+    ｝↵
+    return 0;↵
+｝
+```
+¿Qué imprime el programa con la entrada dada?
+
+#### Entrada (stdin):
+```
+Hola
+```]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text><![CDATA[`OK`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[No imprime nada]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Error de lectura]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Segmentation fault]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Comportamiento indefinido]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Error de compilación]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Buffer overflow]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[El texto ingresado]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <idnumber />
+  </question>
+  <question type="multichoice">
+    <name>
+      <text><![CDATA[Cadenas Seguras - fgets con límite de buffer - 3]]></text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[Analiza el siguiente código que usa fgets para leer entrada de forma segura:
+```c
+＃include ＜stdio.h＞↵
+int main() ｛↵
+    char buf［8］;↵
+    // fgets lee hasta buffer_size-1 caracteres + '\0'↵
+    // Es seguro porque respeta el límite del buffer↵
+    if (fgets(buf, sizeof(buf), stdin) !＝ NULL) ｛↵
+        printf("OK\n");↵
+    ｝↵
+    return 0;↵
+｝
+```
+¿Qué imprime el programa con la entrada dada?
+
+#### Entrada (stdin):
+```
+Hola
+```]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text><![CDATA[`OK`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Error de compilación]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Comportamiento indefinido]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[El texto ingresado]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Error de lectura]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[No imprime nada]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Segmentation fault]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Buffer overflow]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <idnumber />
+  </question>
+  <question type="multichoice">
+    <name>
+      <text><![CDATA[Cadenas Seguras - fgets con límite de buffer - 4]]></text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[Analiza el siguiente código que usa fgets para leer entrada de forma segura:
+```c
+＃include ＜stdio.h＞↵
+int main() ｛↵
+    char buf［11］;↵
+    // fgets lee hasta buffer_size-1 caracteres + '\0'↵
+    // Es seguro porque respeta el límite del buffer↵
+    if (fgets(buf, sizeof(buf), stdin) !＝ NULL) ｛↵
+        printf("OK\n");↵
+    ｝↵
+    return 0;↵
+｝
+```
+¿Qué imprime el programa con la entrada dada?
+
+#### Entrada (stdin):
+```
+Hola
+```]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text><![CDATA[`OK`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Error de compilación]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[El texto ingresado]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Buffer overflow]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Error de lectura]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Segmentation fault]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Comportamiento indefinido]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[No imprime nada]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <idnumber />
+  </question>
+  <question type="multichoice">
+    <name>
+      <text><![CDATA[Cadenas Seguras - fgets con límite de buffer - 5]]></text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[Analiza el siguiente código que usa fgets para leer entrada de forma segura:
+```c
+＃include ＜stdio.h＞↵
+int main() ｛↵
+    char buf［14］;↵
+    // fgets lee hasta buffer_size-1 caracteres + '\0'↵
+    // Es seguro porque respeta el límite del buffer↵
+    if (fgets(buf, sizeof(buf), stdin) !＝ NULL) ｛↵
+        printf("OK\n");↵
+    ｝↵
+    return 0;↵
+｝
+```
+¿Qué imprime el programa con la entrada dada?
+
+#### Entrada (stdin):
+```
+Hola
+```]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text><![CDATA[`OK`]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Comportamiento indefinido]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Error de lectura]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[No imprime nada]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Buffer overflow]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Segmentation fault]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[Error de compilación]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text><![CDATA[El texto ingresado]]></text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <idnumber />
+  </question>
+</quiz>

@@ -1,0 +1,3506 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<quiz>
+<!-- question: 0  -->
+  <question type="category">
+    <category>
+      <text>$course$/top/programacion_1</text>
+    </category>
+    <info format="moodle_auto_format">
+      <text></text>
+    </info>
+    <idnumber></idnumber>
+  </question>
+
+<!-- question: 0  -->
+  <question type="category">
+    <category>
+      <text>$course$/top/programacion_1/algoritmia</text>
+    </category>
+    <info format="moodle_auto_format">
+      <text></text>
+    </info>
+    <idnumber></idnumber>
+  </question>
+
+<!-- question: 0  -->
+  <question type="category">
+    <category>
+      <text>$course$/top/programacion_1/algoritmia/algoritmos</text>
+    </category>
+    <info format="moodle_auto_format">
+      <text></text>
+    </info>
+    <idnumber></idnumber>
+  </question>
+
+<!-- question: 0  -->
+  <question type="category">
+    <category>
+      <text>$course$/top/programacion_1/algoritmia/algoritmos/binaria</text>
+    </category>
+    <info format="moodle_auto_format">
+      <text></text>
+    </info>
+    <idnumber></idnumber>
+  </question>
+
+<!-- question: 1813452  -->
+  <question type="multichoice">
+    <name>
+      <text>algoritmos de búsqueda, búsqueda binaria, complejidad algorítmica</text>
+    </name>
+    <questiontext format="markdown">
+      <text>La búsqueda binaria es un algoritmo eficiente para encontrar un elemento en un arreglo ordenado.
+¿Cuál es una característica fundamental de la búsqueda binaria?</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Debe estar ordenado previamente</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Puede estar desordenado</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Debe tener un número par de elementos</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Debe tener un número impar de elementos</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Debe contener solo números enteros</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Debe contener solo elementos únicos</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813453  -->
+  <question type="multichoice">
+    <name>
+      <text>algoritmos de búsqueda, búsqueda secuencial, complejidad algorítmica</text>
+    </name>
+    <questiontext format="markdown">
+      <text>¿Cuál de las siguientes afirmaciones es correcta sobre la búsqueda secuencial en un arreglo no ordenado?</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Tiene una complejidad de tiempo promedio de O(n)</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Siempre es más rápida que la búsqueda binaria</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Requiere que la lista esté ordenada</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Tiene una complejidad de tiempo promedio de O(log n)</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Solo funciona con listas de números enteros</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Necesita acceso aleatorio a los elementos de la lista</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813454  -->
+  <question type="multichoice">
+    <name>
+      <text>algoritmos de búsqueda, programación, C</text>
+    </name>
+    <questiontext format="markdown">
+      <text>Una característica distintiva de la búsqueda binaria es:</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Su capacidad para descartar la mitad de los elementos restantes en cada paso</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Su habilidad para encontrar múltiples ocurrencias de un elemento simultáneamente</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Su independencia del orden de los elementos en la lista</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Su necesidad de realizar siempre n/2 comparaciones</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Su uso exclusivo en bases de datos relacionales</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Su incapacidad para manejar listas con números negativos</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813455  -->
+  <question type="multichoice">
+    <name>
+      <text>algoritmos eficientes, búsqueda binaria, programación, C</text>
+    </name>
+    <questiontext format="markdown">
+      <text>La búsqueda binaria se caracteriza principalmente por:</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Dividir repetidamente el espacio de búsqueda a la mitad</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Examinar cada elemento de la lista secuencialmente</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Utilizar una función hash para localizar elementos</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Requerir múltiples pasadas sobre toda la lista</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Funcionar mejor en listas no ordenadas</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Tener una complejidad temporal lineal</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813456  -->
+  <question type="multichoice">
+    <name>
+      <text>búsqueda binaria, algoritmos de búsqueda, complejidad logarítmica, C</text>
+    </name>
+    <questiontext format="markdown">
+      <text>¿Cuál es la principal característica de la búsqueda binaria?</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Tiene una complejidad temporal de O(log n) en el peor caso</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Funciona en cualquier tipo de lista, ordenada o no</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Tiene una complejidad temporal de O(n) en el peor caso</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Requiere una estructura de datos de árbol para funcionar</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Siempre encuentra el elemento buscado en el primer intento</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Tiene un uso de memoria proporcional al tamaño de la lista</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813457  -->
+  <question type="multichoice">
+    <name>
+      <text>búsqueda en arreglos, eficiencia algorítmica, C</text>
+    </name>
+    <questiontext format="markdown">
+      <text>¿Qué condición es esencial para que la búsqueda binaria funcione correctamente?</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>La lista o arreglo debe estar ordenado</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>La lista debe contener únicamente números enteros</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>El tamaño de la lista debe ser una potencia de 2</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Se requiere memoria adicional proporcional al tamaño de la lista</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>La lista debe implementarse como una estructura de árbol</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Todos los elementos de la lista deben ser únicos</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813458  -->
+  <question type="multichoice">
+    <name>
+      <text>complejidad algorítmica, búsqueda binaria, análisis de eficiencia</text>
+    </name>
+    <questiontext format="markdown">
+      <text>En términos de eficiencia, la búsqueda binaria se caracteriza por:</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Reducir el número de comparaciones necesarias en comparación con la búsqueda lineal</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Requerir siempre exactamente log2(n) comparaciones</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Tener el mismo rendimiento que la búsqueda lineal en el peor caso</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Funcionar más rápido en listas no ordenadas</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Necesitar recorrer toda la lista al menos una vez</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Tener una complejidad espacial de O(n)</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 0  -->
+  <question type="category">
+    <category>
+      <text>$course$/top/programacion_1/algoritmia/algoritmos/secuencial</text>
+    </category>
+    <info format="moodle_auto_format">
+      <text></text>
+    </info>
+    <idnumber></idnumber>
+  </question>
+
+<!-- question: 1813507  -->
+  <question type="multichoice">
+    <name>
+      <text>algoritmos básicos, búsqueda secuencial, programación, C</text>
+    </name>
+    <questiontext format="markdown">
+      <text>La búsqueda secuencial se caracteriza principalmente por:</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Examinar cada elemento de la lista uno por uno hasta encontrar el objetivo</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Dividir la lista en mitades en cada paso</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Utilizar una función hash para localizar elementos</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Requerir que la lista esté previamente ordenada</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Tener una complejidad logarítmica</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Funcionar solo en arreglos de tamaño par</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813508  -->
+  <question type="multichoice">
+    <name>
+      <text>algoritmos de búsqueda, programación, C</text>
+    </name>
+    <questiontext format="markdown">
+      <text>Una característica distintiva de la búsqueda secuencial es:</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Su simplicidad de implementación y comprensión</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Su capacidad para encontrar el elemento más rápidamente en listas ordenadas</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Su uso exclusivo en bases de datos relacionales</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Su necesidad de una estructura de datos compleja para funcionar</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Su incapacidad para manejar listas con elementos duplicados</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Su rendimiento superior en listas de gran tamaño</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813509  -->
+  <question type="multichoice">
+    <name>
+      <text>búsqueda en arreglos, eficiencia algorítmica, C</text>
+    </name>
+    <questiontext format="markdown">
+      <text>¿Qué ventaja ofrece la búsqueda secuencial sobre otros métodos de búsqueda?</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Funciona en secuencias ordenadas y no ordenadas por igual</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Es siempre más rápida que la búsqueda binaria</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Tiene una complejidad temporal de O(1) en todos los casos</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Requiere menos memoria que otros algoritmos de búsqueda</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Solo necesita examinar la mitad de la lista en el peor caso</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Puede encontrar múltiples elementos simultáneamente</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813510  -->
+  <question type="multichoice">
+    <name>
+      <text>búsqueda secuencial, algoritmos de búsqueda, complejidad lineal, C</text>
+    </name>
+    <questiontext format="markdown">
+      <text>¿Cuál es la principal característica de la búsqueda secuencial?</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Tiene una complejidad temporal de O(n) en el peor caso</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Requiere que la lista esté ordenada</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Tiene una complejidad temporal de O(log n) en el peor caso</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Solo funciona con números enteros</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Siempre encuentra el elemento en la primera mitad de la lista</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Necesita una estructura de datos auxiliar para funcionar</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813511  -->
+  <question type="multichoice">
+    <name>
+      <text>complejidad algorítmica, búsqueda secuencial, análisis de eficiencia</text>
+    </name>
+    <questiontext format="markdown">
+      <text>En términos de eficiencia, la búsqueda secuencial se caracteriza por:</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Tener un rendimiento proporcional al tamaño de la lista</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Ser más eficiente en listas grandes que la búsqueda binaria</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Tener un tiempo de ejecución constante independiente del tamaño de la lista</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Mejorar su rendimiento cuando la lista está ordenada de forma descendente</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Requerir menos comparaciones que la búsqueda binaria en promedio</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Tener una complejidad espacial de O(log n)</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 0  -->
+  <question type="category">
+    <category>
+      <text>$course$/top/programacion_1/algoritmia/algoritmos/divide</text>
+    </category>
+    <info format="moodle_auto_format">
+      <text></text>
+    </info>
+    <idnumber></idnumber>
+  </question>
+
+<!-- question: 1813516  -->
+  <question type="multichoice">
+    <name>
+      <text>algoritmos clásicos, estrategias de resolución, C</text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[¿Cuál de los siguientes algoritmos es un ejemplo clásico de la aplicación del enfoque "divide y vencerás"?]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>La búsqueda binaria en un arreglo ordenado</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>El algoritmo de ordenamiento de burbuja</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>La búsqueda secuencial en una lista enlazada</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>El algoritmo de Dijkstra para encontrar el camino más corto</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>El método de eliminación de Gauss para resolver sistemas de ecuaciones</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>El algoritmo de cifrado RSA para criptografía</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813517  -->
+  <question type="multichoice">
+    <name>
+      <text>algoritmos clásicos, estrategias de resolución, C</text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[En el paradigma de "divide y vencerás", ¿cuáles son las tres fases principales y en qué orden se ejecutan?]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Fase de división, fase de conquista (resolución), fase de combinación</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Fase de análisis, fase de implementación, fase de pruebas</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Fase de inicialización, fase de procesamiento, fase de finalización</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Fase de diseño, fase de codificación, fase de depuración</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Fase de entrada de datos, fase de cálculo, fase de salida de resultados</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Fase de declaración, fase de asignación, fase de liberación</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813518  -->
+  <question type="multichoice">
+    <name>
+      <text>algoritmos, diseño, programación estructurada, C</text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[¿Cuál de las siguientes afirmaciones describe mejor el concepto de "divide y vencerás" en el contexto de la programación?]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Es un paradigma de diseño algorítmico basado en la resolución recursiva de un problema dividiéndolo en subproblemas más simples</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Es una técnica para optimizar el uso de memoria en programas complejos</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Es un método para paralelizar la ejecución de código en múltiples procesadores</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Es una estrategia para reducir el tiempo de compilación de programas extensos</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Es un enfoque para simplificar la sintaxis de lenguajes de programación</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Es una técnica para mejorar la legibilidad del código fuente</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813519  -->
+  <question type="multichoice">
+    <name>
+      <text>algoritmos, diseño, programación estructurada, C</text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[¿Cuáles son los pasos fundamentales del enfoque "divide y vencerás" en el diseño de algoritmos?]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Dividir el problema, resolver subproblemas recursivamente, combinar las soluciones</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Inicializar variables, ejecutar bucles anidados, optimizar el código</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Definir funciones, implementar estructuras de datos, depurar el programa</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Analizar requisitos, diseñar la interfaz, implementar la lógica de negocio</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Declarar variables globales, crear funciones auxiliares, manejar excepciones</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Compilar el código, ejecutar pruebas unitarias, desplegar la aplicación</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813520  -->
+  <question type="multichoice">
+    <name>
+      <text>diseño de algoritmos, estrategias de programación, C</text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[¿Cuál es el principio fundamental del enfoque "divide y vencerás" en el diseño de algoritmos?]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Descomponer un problema en subproblemas más pequeños, resolverlos recursivamente y combinar las soluciones</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Utilizar siempre estructuras de datos avanzadas para mejorar el rendimiento</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Implementar múltiples hilos de ejecución para procesar tareas en paralelo</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Minimizar el uso de funciones recursivas para evitar el desbordamiento de pila</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Optimizar el código a nivel de ensamblador para mejorar la velocidad de ejecución</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Reducir la complejidad del código eliminando todas las estructuras condicionales</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813521  -->
+  <question type="multichoice">
+    <name>
+      <text>diseño de algoritmos, estrategias de programación, C</text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[¿Qué secuencia describe correctamente las etapas del paradigma "divide y vencerás"?]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Descomposición del problema, resolución recursiva de subproblemas, fusión de soluciones</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Definición de variables, implementación de bucles, optimización de memoria</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Creación de funciones, manejo de excepciones, depuración de código</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Análisis de complejidad, implementación iterativa, pruebas de rendimiento</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Diseño de interfaces, codificación de lógica, documentación del código</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Inicialización de estructuras, procesamiento de datos, liberación de recursos</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813522  -->
+  <question type="multichoice">
+    <name>
+      <text>eficiencia algorítmica, recursividad, C, resolución de problemas</text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[En el ámbito de la eficiencia algorítmica, "divide y vencerás" se caracteriza principalmente por:]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Resolver problemas complejos dividiéndolos en subproblemas más pequeños y combinando sus soluciones</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Aumentar la velocidad de ejecución mediante la eliminación de bucles</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Reducir el uso de memoria al evitar la creación de variables temporales</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Optimizar el código fuente para mejorar su rendimiento en tiempo de compilación</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Simplificar la estructura de datos utilizadas en el programa</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Minimizar el número de llamadas a funciones externas</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813523  -->
+  <question type="multichoice">
+    <name>
+      <text>recursividad, eficiencia algorítmica, C, resolución de problemas</text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[En el contexto de "divide y vencerás", ¿cuál es el orden correcto de los pasos a seguir?]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>1. Dividir, 2. Conquistar, 3. Combinar</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>1. Combinar, 2. Dividir, 3. Conquistar</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>1. Conquistar, 2. Dividir, 3. Combinar</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>1. Analizar, 2. Codificar, 3. Probar</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>1. Diseñar, 2. Implementar, 3. Optimizar</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>1. Inicializar, 2. Procesar, 3. Finalizar</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813524  -->
+  <question type="multichoice">
+    <name>
+      <text>recursividad, técnicas de programación, C, optimización</text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[En el contexto de la programación en C, el enfoque "divide y vencerás" se asocia comúnmente con:]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>El uso de recursividad para resolver problemas dividiéndolos en casos más simples</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>La implementación de bucles anidados para procesar datos multidimensionales</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>El uso exclusivo de variables globales para mejorar el rendimiento</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>La eliminación de todas las estructuras de control iterativas</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>La utilización de punteros para manipular directamente la memoria</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>La compilación condicional para adaptar el código a diferentes plataformas</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813525  -->
+  <question type="multichoice">
+    <name>
+      <text>recursividad, técnicas de programación, C, optimización</text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[En la implementación de un algoritmo de "divide y vencerás", ¿cuál es la secuencia correcta de operaciones?]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Dividir el problema en subproblemas, resolver recursivamente cada subproblema, combinar las soluciones parciales</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Definir el caso base, implementar la recursión, optimizar la pila de llamadas</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Crear un arreglo dinámico, ordenar sus elementos, buscar el elemento deseado</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Inicializar punteros, asignar memoria dinámicamente, liberar la memoria al final</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Abrir archivos de entrada, procesar los datos, escribir los resultados</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Declarar estructuras, implementar funciones de manipulación, crear la interfaz de usuario</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 0  -->
+  <question type="category">
+    <category>
+      <text>$course$/top/programacion_1/algoritmia/algoritmos/codigo</text>
+    </category>
+    <info format="moodle_auto_format">
+      <text></text>
+    </info>
+    <idnumber></idnumber>
+  </question>
+
+<!-- question: 1813536  -->
+  <question type="multichoice">
+    <name>
+      <text>algoritmos, fibonacci, iteración, eficiencia</text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[Analiza la siguiente implementación de Fibonacci e indica a qué clase de complejidad pertenece
+```c
+unsigned long long fibonacci(int n) {
+  if (n <= 1) {
+    return n;
+  }
+  unsigned long long a = 0, b = 1, temp;
+  for (int i = 2; i <= n; i++) {
+    temp = a + b;
+    a = b;
+    b = temp;
+  }
+  return b;
+}
+```
+¿Cuál es la complejidad temporal y espacial de este algoritmo? Justifica tu respuesta.]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>La complejidad temporal es O(n) y la espacial es O(1).</text>
+      <feedback format="markdown">
+        <text>El bucle se ejecuta n-1 veces y usa un número constante de variables.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>La complejidad temporal es O(log n) y la espacial es O(1).</text>
+      <feedback format="markdown">
+        <text>Incorrecto, el bucle no reduce el problema a la mitad en cada iteración.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>La complejidad temporal es O(2^n) y la espacial es O(1).</text>
+      <feedback format="markdown">
+        <text>Incorrecto, este algoritmo iterativo evita el crecimiento exponencial.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>La complejidad temporal es O(n^2) y la espacial es O(1).</text>
+      <feedback format="markdown">
+        <text>Incorrecto, no hay bucles anidados que justifiquen una complejidad cuadrática.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>La complejidad temporal es O(n) y la espacial es O(log n).</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>La complejidad temporal es O(n) y la espacial es O(n).</text>
+      <feedback format="markdown">
+        <text>Incorrecto, no se utiliza memoria adicional proporcional a n.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>La complejidad temporal es O(1) y la espacial es O(1).</text>
+      <feedback format="markdown">
+        <text>Incorrecto, el tiempo de ejecución depende claramente de n.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>La complejidad temporal es O(1) y la espacial es O(n).</text>
+      <feedback format="markdown">
+        <text>Incorrecto, el tiempo depende del lazo hasta n y el espacio se mantiene constante.</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813537  -->
+  <question type="multichoice">
+    <name>
+      <text>análisis de complejidad, algoritmos, notación Big O, eficiencia</text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[Analiza el siguiente fragmento de código y determina su orden de complejidad (Big O).
+_Asuman que la función `printf` tiene un costo de `1`_
+```c
+void funcion(int n) {
+  int suma = 0;
+  for (int i = 1; i <= n; i++) {
+    suma = suma + i;
+  }
+  printf("%d", suma);
+}
+```]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>O(n).</text>
+      <feedback format="markdown">
+        <text>Tiene un solo bucle que itera n veces, realizando una operación constante en cada iteración.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(n^2).</text>
+      <feedback format="markdown">
+        <text>Incorrecto, no hay bucles anidados que justifiquen esta complejidad.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(log n).</text>
+      <feedback format="markdown">
+        <text>Incorrecto, no hay operaciones que reduzcan el problema a la mitad en cada paso.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(1).</text>
+      <feedback format="markdown">
+        <text>Incorrecto, el tiempo de ejecución depende claramente del valor de n.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(n log n).</text>
+      <feedback format="markdown">
+        <text>Incorrecto, no hay operaciones logarítmicas combinadas con el bucle lineal.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(2^n).</text>
+      <feedback format="markdown">
+        <text>Incorrecto, no hay crecimiento exponencial en este algoritmo.</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813538  -->
+  <question type="multichoice">
+    <name>
+      <text>análisis de complejidad, algoritmos, notación Big O, eficiencia</text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[Determina el orden de complejidad (Big O) del siguiente fragmento de código.
+_Asuman que la función `printf` tiene un costo de `1`_
+```c
+void funcion(int n) {
+  for (int i = 1; i <= n; i++) {
+    for (int j = 1; j <= n; j++) {
+      printf("%d ", i * j);
+    }
+  }
+}
+```]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>O(n^2).</text>
+      <feedback format="markdown">
+        <text>Tiene dos bucles anidados, cada uno iterando n veces, resultando en n*n operaciones.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(n).</text>
+      <feedback format="markdown">
+        <text>Incorrecto, subestima la complejidad de los bucles anidados.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(n log n).</text>
+      <feedback format="markdown">
+        <text>Incorrecto, no hay operaciones logarítmicas en este algoritmo.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(2^n).</text>
+      <feedback format="markdown">
+        <text>Incorrecto, el crecimiento es cuadrático, no exponencial.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(log n).</text>
+      <feedback format="markdown">
+        <text>Incorrecto, la complejidad es mucho mayor que logarítmica.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(n!).</text>
+      <feedback format="markdown">
+        <text>Incorrecto, el crecimiento factorial es mucho más rápido que el observado aquí.</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813539  -->
+  <question type="multichoice">
+    <name>
+      <text>análisis de complejidad, algoritmos, notación Big O, eficiencia, bucles anidados</text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[Determina la complejidad temporal (Big O) del siguiente algoritmo.
+_Asuman que la función `printf` tiene un costo de `1`_
+```c
+void funcion(int n) {
+  for (int i = 1; i <= n; i++) {
+    for (int j = 1; j <= i; j++) {
+      for (int k = 1; k <= j; k++) {
+        printf("%d ", i * j * k);
+      }
+    }
+  }
+}
+```]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>O(n^3).</text>
+      <feedback format="markdown">
+        <text>Aunque los bucles internos no siempre llegan a n, en el peor caso (y en promedio) el número total de operaciones es proporcional a n^3.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(n^2).</text>
+      <feedback format="markdown">
+        <text>Incorrecto, subestima la complejidad al no considerar el tercer bucle.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(n log n).</text>
+      <feedback format="markdown">
+        <text>Incorrecto, la complejidad es mucho mayor debido a los bucles anidados.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(2^n).</text>
+      <feedback format="markdown">
+        <text>Incorrecto, sobrestima la complejidad; el crecimiento no es exponencial.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(n!).</text>
+      <feedback format="markdown">
+        <text>Incorrecto, aunque la complejidad es alta, no llega a ser factorial.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(n^4).</text>
+      <feedback format="markdown">
+        <text>Incorrecto, sobrestima la complejidad real del algoritmo.</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813540  -->
+  <question type="multichoice">
+    <name>
+      <text>análisis de complejidad, algoritmos, notación Big O, eficiencia, búsqueda</text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[Analiza el siguiente algoritmo e identifica su complejidad temporal (Big O).
+```c
+int funcion(int arr[], int l, int r, int x) {
+  if (r >= l) {
+    int mid = l + (r - l) / 2;
+    if (arr[mid] == x) {
+      return mid;
+    }
+    if (arr[mid] > x) {
+      return funcion(arr, l, mid - 1, x);
+    }
+    return funcion(arr, mid + 1, r, x);
+  }
+  return -1;
+}
+```]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>O(log n).</text>
+      <feedback format="markdown">
+        <text>Es una implementación recursiva de búsqueda binaria. En cada llamada, el tamaño del problema se reduce a la mitad.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(n).</text>
+      <feedback format="markdown">
+        <text>Incorrecto, sobreestima la complejidad de la búsqueda binaria.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(n^2).</text>
+      <feedback format="markdown">
+        <text>Incorrecto, la búsqueda binaria es mucho más eficiente que esto.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(2^n).</text>
+      <feedback format="markdown">
+        <text>Incorrecto, la complejidad es mucho menor que exponencial.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(1).</text>
+      <feedback format="markdown">
+        <text>Incorrecto, aunque es muy eficiente, el tiempo sí depende de n.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(n log n).</text>
+      <feedback format="markdown">
+        <text>Incorrecto, esta complejidad es típica de algoritmos de ordenamiento eficientes, no de búsqueda.</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813541  -->
+  <question type="multichoice">
+    <name>
+      <text>análisis de complejidad, algoritmos, notación Big O, eficiencia, recursividad</text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[Analiza la complejidad temporal (Big O) de la siguiente función recursiva.
+```c
+int funcion(int n) {
+  if (n <= 1) {
+    return n;
+  }
+  return funcion(n - 1) + funcion(n - 2);
+}
+```]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>O(2^n).</text>
+      <feedback format="markdown">
+        <text>Es una implementación recursiva de Fibonacci con llamadas redundantes, generando un árbol de recursión con crecimiento exponencial.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(n).</text>
+      <feedback format="markdown">
+        <text>Incorrecto, subestima significativamente la complejidad de las llamadas recursivas múltiples.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(n^2).</text>
+      <feedback format="markdown">
+        <text>Incorrecto, aunque es una complejidad alta, no captura el crecimiento exponencial.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(log n).</text>
+      <feedback format="markdown">
+        <text>Incorrecto, la recursión no reduce el problema a la mitad en cada llamada.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(n log n).</text>
+      <feedback format="markdown">
+        <text>Incorrecto, no refleja el patrón de crecimiento exponencial.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(n!).</text>
+      <feedback format="markdown">
+        <text>Incorrecto, aunque el crecimiento es rápido, no llega a ser factorial.</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813542  -->
+  <question type="multichoice">
+    <name>
+      <text>análisis de complejidad, programación dinámica, complejidad espacial</text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[¿Cuál es la complejidad temporal de la siguiente implementación de Fibonacci?
+```
+int fibonacci(int *fib, int n) {
+  fib[0] = 0;
+  fib[1] = 1;
+  for (int i = 2; i <= n; i++) {
+    fib[i] = fib[i - 1] + fib[i - 2];
+  }
+  return fib[i];
+}
+```]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>O(n)</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(1)</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(log n)</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(n^2)</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(2^n)</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(n log n)</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813543  -->
+  <question type="multichoice">
+    <name>
+      <text>análisis de complejidad, programación dinámica, complejidad espacial</text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[¿Cuál es la complejidad espacial de la siguiente implementación de Fibonacci?
+```
+int fibonacci(int *fib, int n) {
+  fib[0] = 0;
+  fib[1] = 1;
+  int i = 2;
+  for (; i <= n; i++) {
+    fib[i] = fib[i - 1] + fib[i - 2];
+  }
+  return fib[i];
+}
+```]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>O(n)</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(1)</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(log n)</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(n^2)</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(2^n)</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>O(n log n)</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 0  -->
+  <question type="category">
+    <category>
+      <text>$course$/top/programacion_1/algoritmia/algoritmos/que_es</text>
+    </category>
+    <info format="moodle_auto_format">
+      <text></text>
+    </info>
+    <idnumber></idnumber>
+  </question>
+
+<!-- question: 1813544  -->
+  <question type="multichoice">
+    <name>
+      <text>algoritmos, diseño de software, C, eficiencia</text>
+    </name>
+    <questiontext format="markdown">
+      <text>En el contexto del desarrollo de software, un algoritmo se considera:</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Un plan detallado y preciso para resolver un problema computacional</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Un lenguaje de programación de bajo nivel</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Una herramienta para compilar código fuente</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Un método para conectar bases de datos</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Una técnica para crear animaciones en programas</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Un protocolo de seguridad para redes informáticas</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813545  -->
+  <question type="multichoice">
+    <name>
+      <text>algoritmos, programación, C, conceptos básicos</text>
+    </name>
+    <questiontext format="markdown">
+      <text>En el contexto de la programación, ¿qué es un algoritmo?</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Una secuencia finita y ordenada de pasos para resolver un problema o realizar una tarea</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Un lenguaje de programación de alto nivel</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Una estructura de datos compleja</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Un tipo de variable utilizada en C</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Un método para optimizar el código fuente</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Una herramienta de depuración de programas</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813546  -->
+  <question type="multichoice">
+    <name>
+      <text>ciencia de datos, algoritmos, C, resolución de problemas</text>
+    </name>
+    <questiontext format="markdown">
+      <text>En el campo de la ciencia de datos, un algoritmo se entiende como:</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Una serie de pasos computacionales que transforman datos de entrada en una salida deseada</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Un tipo de gráfico para visualizar grandes conjuntos de datos</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Una función matemática para análisis estadístico</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Un método para normalizar bases de datos</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Una técnica para limpiar datos inconsistentes</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Un protocolo para intercambiar información entre servidores</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813547  -->
+  <question type="multichoice">
+    <name>
+      <text>ciencias de la computación, algoritmos, C, lógica</text>
+    </name>
+    <questiontext format="markdown">
+      <text>¿Qué caracteriza principalmente a un algoritmo en programación?</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Es un procedimiento paso a paso para resolver un problema de manera eficiente y sin ambigüedades</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Es un tipo de dato exclusivo del lenguaje C</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Es una función que siempre retorna un valor booleano</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Es un método para crear interfaces gráficas de usuario</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Es una técnica para eliminar errores de sintaxis en el código</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Es un sistema para organizar archivos en el disco duro</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813548  -->
+  <question type="multichoice">
+    <name>
+      <text>diseño de software, algoritmos, C, resolución de problemas</text>
+    </name>
+    <questiontext format="markdown">
+      <text>¿Cuál de las siguientes definiciones describe mejor lo que es un algoritmo?</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Un conjunto de instrucciones precisas que especifican cómo realizar una tarea o resolver un problema</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Un programa compilado y listo para ejecutar</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Una función matemática compleja</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Un método para encriptar datos sensibles</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Una técnica para comprimir archivos</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Un protocolo de comunicación entre computadoras</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813549  -->
+  <question type="multichoice">
+    <name>
+      <text>fundamentos de computación, algoritmos, C</text>
+    </name>
+    <questiontext format="markdown">
+      <text>En términos simples, un algoritmo puede describirse como:</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Un conjunto de reglas que definen una secuencia de operaciones para resolver un problema específico</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Un compilador avanzado para lenguajes de programación</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Una base de datos relacional</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Un método para encriptar comunicaciones en red</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Una técnica para comprimir imágenes digitales</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Un protocolo de transferencia de archivos</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813550  -->
+  <question type="multichoice">
+    <name>
+      <text>fundamentos de programación, algoritmos, C</text>
+    </name>
+    <questiontext format="markdown">
+      <text>En el ámbito de la informática, un algoritmo se define como:</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Una serie de pasos lógicos y bien definidos para llevar a cabo una tarea específica</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Un conjunto de librerías estándar en C</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Una colección de variables y constantes</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Un tipo especial de bucle en programación</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Un método para convertir código fuente en código máquina</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Una técnica para optimizar el uso de memoria en programas</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813551  -->
+  <question type="multichoice">
+    <name>
+      <text>inteligencia artificial, algoritmos, C, computación</text>
+    </name>
+    <questiontext format="markdown">
+      <text>En el contexto de la inteligencia artificial, ¿qué es un algoritmo?</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Un procedimiento computacional bien definido que toma algún valor como entrada y produce algún valor como salida</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Un tipo de red neuronal artificial</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Una base de conocimientos para sistemas expertos</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Un método para generar lenguaje natural</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Una técnica para reconocimiento de patrones visuales</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Un protocolo para entrenar modelos de aprendizaje profundo</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813552  -->
+  <question type="multichoice">
+    <name>
+      <text>programación estructurada, algoritmos, C, lógica computacional</text>
+    </name>
+    <questiontext format="markdown">
+      <text>¿Cuál de las siguientes opciones define correctamente lo que es un algoritmo?</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Una secuencia finita de instrucciones bien definidas para realizar una tarea o resolver un problema</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Un tipo de bucle infinito en programación</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Una estructura de control exclusiva de C++</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Un método para crear interfaces de línea de comandos</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Una técnica para optimizar el rendimiento del hardware</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Un sistema operativo de código abierto</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813553  -->
+  <question type="multichoice">
+    <name>
+      <text>teoría de la computación, algoritmos, C, complejidad</text>
+    </name>
+    <questiontext format="markdown">
+      <text>Desde la perspectiva de la teoría de la computación, un algoritmo se define como:</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Una secuencia finita de instrucciones, cada una de las cuales tiene un significado claro y puede ser ejecutada en un tiempo finito</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Un lenguaje formal para describir problemas computacionales</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Una máquina de Turing universal</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Un método para demostrar la complejidad de problemas NP-completos</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Una técnica para reducir el espacio de búsqueda en problemas de optimización</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Un protocolo para verificar la correctitud de programas</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 0  -->
+  <question type="category">
+    <category>
+      <text>$course$/top/programacion_1/algoritmia/algoritmos/caracteristicas</text>
+    </category>
+    <info format="moodle_auto_format">
+      <text></text>
+    </info>
+    <idnumber></idnumber>
+  </question>
+
+<!-- question: 1813554  -->
+  <question type="multichoice">
+    <name>
+      <text>algoritmos, características, programación, C</text>
+    </name>
+    <questiontext format="markdown">
+      <text>¿Cuáles son los atributos fundamentales que debe poseer un algoritmo bien diseñado?</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Precisión, definición, finitud</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Complejidad, recursividad, paralelismo</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Modularidad, herencia, encapsulamiento</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Portabilidad, escalabilidad, mantenibilidad</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Abstracción, cohesión, acoplamiento</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Eficiencia, robustez, usabilidad</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813555  -->
+  <question type="multichoice">
+    <name>
+      <text>atributos de algoritmos, ciencias de la computación, C</text>
+    </name>
+    <questiontext format="markdown">
+      <text>En el campo de las ciencias de la computación, ¿qué características definen a un algoritmo bien formulado?</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Finitud, definición precisa, entradas y salidas bien especificadas, efectividad, generalidad</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Complejidad computacional, eficiencia en tiempo y espacio, optimización</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Abstracción de datos, encapsulamiento de funciones, herencia de propiedades</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Portabilidad entre sistemas, escalabilidad de recursos, mantenibilidad del código</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Seguridad de la información, confiabilidad en la ejecución, integridad de datos</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Usabilidad por diferentes usuarios, accesibilidad universal, adaptabilidad</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813556  -->
+  <question type="multichoice">
+    <name>
+      <text>atributos de algoritmos, programación, C</text>
+    </name>
+    <questiontext format="markdown">
+      <text>¿Qué propiedades debe tener un algoritmo para ser considerado correcto y completo?</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Finitud, definición precisa, entradas y salidas bien definidas, efectividad</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Complejidad temporal y espacial, optimización, paralelismo</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Modularidad, cohesión alta, acoplamiento bajo, reusabilidad</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Portabilidad, escalabilidad, mantenibilidad, adaptabilidad</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Seguridad, confiabilidad, disponibilidad, integridad</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Usabilidad, accesibilidad, internacionalización, localización</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813557  -->
+  <question type="multichoice">
+    <name>
+      <text>características de algoritmos, diseño de software, C</text>
+    </name>
+    <questiontext format="markdown">
+      <text>En el diseño de software, ¿cuáles son los atributos esenciales que definen un algoritmo bien estructurado?</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Finitud, definición, efectividad, entrada definida, salida esperada</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Eficiencia, complejidad, optimización, recursividad, iteración</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Abstracción, encapsulamiento, herencia, polimorfismo, modularidad</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Portabilidad, escalabilidad, mantenibilidad, reusabilidad, flexibilidad</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Seguridad, confiabilidad, disponibilidad, integridad, confidencialidad</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Usabilidad, accesibilidad, internacionalización, localización, adaptabilidad</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813558  -->
+  <question type="multichoice">
+    <name>
+      <text>características de algoritmos, diseño de software, C</text>
+    </name>
+    <questiontext format="markdown">
+      <text>En el diseño de software, ¿qué atributos son cruciales para que un algoritmo sea considerado completo y correcto?</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Finitud, definición precisa, entradas bien especificadas, salidas esperadas, efectividad en la resolución</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Complejidad temporal y espacial, eficiencia en la ejecución, optimización de recursos</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Modularidad en el diseño, cohesión alta entre componentes, acoplamiento bajo</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Portabilidad entre diferentes plataformas, escalabilidad para grandes volúmenes de datos</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Seguridad contra ataques externos, confiabilidad en la ejecución, disponibilidad constante</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Usabilidad para diferentes tipos de usuarios, accesibilidad universal, facilidad de aprendizaje</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813559  -->
+  <question type="multichoice">
+    <name>
+      <text>diseño de algoritmos, propiedades, C</text>
+    </name>
+    <questiontext format="markdown">
+      <text>En el contexto del diseño de algoritmos, ¿cuáles son las características esenciales que todo algoritmo debe tener?</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Entrada definida, salida definida, finitud, efectividad, generalidad</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Velocidad, memoria, precisión, complejidad, adaptabilidad</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Modularidad, reusabilidad, escalabilidad, mantenibilidad, portabilidad</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Recursividad, iteración, condicionales, variables, funciones</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Abstracción, encapsulamiento, herencia, polimorfismo, modularidad</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Eficiencia, robustez, usabilidad, seguridad, interoperabilidad</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813560  -->
+  <question type="multichoice">
+    <name>
+      <text>fundamentos de algoritmos, C, ciencias de la computación</text>
+    </name>
+    <questiontext format="markdown">
+      <text>En el estudio de algoritmos, ¿cuáles son las características fundamentales que los definen?</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Finitud, definición, entrada, salida, efectividad</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Velocidad, memoria, precisión, complejidad, adaptabilidad</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Abstracción, modularidad, encapsulamiento, herencia, polimorfismo</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Eficiencia, robustez, usabilidad, portabilidad, mantenibilidad</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Seguridad, confiabilidad, disponibilidad, escalabilidad, rendimiento</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Recursividad, iteración, selección, secuencia, modularidad</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813561  -->
+  <question type="multichoice">
+    <name>
+      <text>propiedades de algoritmos, C, programación estructurada</text>
+    </name>
+    <questiontext format="markdown">
+      <text>¿Qué atributos son cruciales para que un conjunto de instrucciones sea considerado un algoritmo válido?</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Definición, finitud, entrada, salida, efectividad</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Complejidad, eficiencia, optimización, recursión, iteración</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Modularidad, cohesión, acoplamiento, abstracción, encapsulamiento</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Portabilidad, escalabilidad, mantenibilidad, reusabilidad, flexibilidad</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Seguridad, confiabilidad, disponibilidad, integridad, confidencialidad</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Usabilidad, accesibilidad, internacionalización, localización, adaptabilidad</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813562  -->
+  <question type="multichoice">
+    <name>
+      <text>propiedades de algoritmos, programación estructurada, C</text>
+    </name>
+    <questiontext format="markdown">
+      <text>En el contexto de la programación estructurada, ¿cuáles son los atributos esenciales de un algoritmo bien diseñado?</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Finitud, definición clara, entradas especificadas, salidas definidas, efectividad</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Recursividad, iteración, estructuras de control, modularidad</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Abstracción de datos, ocultamiento de información, herencia, polimorfismo</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Eficiencia en tiempo de ejecución, optimización de memoria, complejidad baja</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Seguridad contra vulnerabilidades, robustez ante errores, confiabilidad</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Facilidad de uso, interfaz amigable, documentación clara, mantenibilidad</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 1813563  -->
+  <question type="multichoice">
+    <name>
+      <text>propiedades fundamentales de algoritmos, C, computación</text>
+    </name>
+    <questiontext format="markdown">
+      <text>¿Cuáles son las propiedades fundamentales que todo algoritmo debe poseer para ser considerado válido?</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="markdown">
+      <text>Finitud, definición precisa, entradas especificadas, salidas esperadas, efectividad</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Velocidad de ejecución, uso eficiente de memoria, precisión numérica</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Modularidad, cohesión, acoplamiento bajo, reutilización de código</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Portabilidad entre plataformas, escalabilidad, facilidad de mantenimiento</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Seguridad contra ataques, confiabilidad en la ejecución, disponibilidad</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="markdown">
+      <text>Facilidad de uso, accesibilidad para diferentes usuarios, internacionalización</text>
+      <feedback format="markdown">
+        <text></text>
+      </feedback>
+    </answer>
+  </question>
+
+</quiz>
