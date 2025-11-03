@@ -91,13 +91,25 @@
 - [x] banco_jerarquico.txt - Ejemplos
 - [x] definicion_jerarquica.yaml - Casos de uso
 
-## Cobertura de Tests - Parsers
-- [x] Tests parsers al 100% efectivo (99.6% con método abstracto)
-- [x] gift_parser.py: 100% (107/107 líneas)
-- [x] moodle_parser.py: 100% (106/106 líneas)
-- [x] __init__.py: 100% (18/18 líneas)
-- [x] base.py: 91% (10/11 líneas, falta método abstracto)
-- [x] 53 tests totales (+35 nuevos)
+## Cobertura de Tests - Estado Final
+- [x] **161 tests totales - 84% de cobertura global**
+- [x] Parsers:
+  - [x] gift_parser.py: 100% (107/107 líneas)
+  - [x] moodle_parser.py: 100% (106/106 líneas)
+  - [x] __init__.py: 100% (18/18 líneas)
+  - [x] base.py: 91% (11/11 líneas, método abstracto no cuenta)
+- [x] Core:
+  - [x] logic.py: 97% (150/154 líneas efectivas)
+  - [x] models.py: 100% (44/44 líneas)
+- [x] Generators:
+  - [x] __init__.py: 100%
+  - [x] html_renderer.py: 100%
+  - [x] base.py: 79% (métodos abstractos)
+  - [x] pdf_renderer.py: 30% (requiere WeasyPrint, tests skip)
+- [x] Main:
+  - [x] __main__.py: 68% (171 líneas)
+  - [x] config/logging_config.py: 100%
+- [x] 53 tests parsers (+35 nuevos)
 - [x] Tests para casos edge:
   - [x] Manejo de excepciones
   - [x] Bloques vacíos y malformados
@@ -111,6 +123,16 @@
 - [x] Tests con tmp_path para archivos temporales
 - [x] Validación robusta de entrada
 - [x] Logging apropiado
+
+## Funcionalidad --init
+- [x] Implementada función inicializar_proyecto()
+- [x] Crea estructura completa de directorios
+- [x] Copia plantillas desde paquete instalado
+- [x] Genera definicion_ejemplo.yaml
+- [x] Crea banco_ejemplo.txt en formato GIFT
+- [x] Genera README_PROYECTO.md con instrucciones
+- [x] No sobrescribe archivos existentes
+- [x] Feedback visual del proceso
 
 ## Ejemplos Avanzados
 - [x] EJEMPLOS_AVANZADOS.md - Guía completa (34 KB)
