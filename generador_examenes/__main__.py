@@ -72,9 +72,9 @@ configuracion_examen:
 secciones_examen:
   - nombre: "Sección 1 - Preguntas de Ejemplo"
     instrucciones: "Selecciona la respuesta correcta"
-    pool:
+    pools:
       - cantidad: 5
-        tipos: ["multichoice"]
+        tipos: ["seleccion_multiple"]
 """
         definicion_ejemplo.write_text(contenido_definicion, encoding='utf-8')
         logger.info(f"✓ Archivo creado: definicion_ejemplo.yaml")
