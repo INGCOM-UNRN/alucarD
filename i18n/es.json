@@ -1,0 +1,22 @@
+{
+  "exam_title": "Examen",
+  "institution": "Institución",
+  "subject": "Materia",
+  "date": "Fecha",
+  "duration": "Duración",
+  "minutes": "minutos",
+  "general_instructions": "Instrucciones Generales",
+  "student_name": "Nombre del Estudiante",
+  "student_id": "ID/Matrícula",
+  "section": "Sección",
+  "instructions": "Instrucciones",
+  "question": "Pregunta",
+  "points": "puntos",
+  "point": "punto",
+  "answer_key": "Clave de Respuestas",
+  "correct_answer": "Respuesta Correcta",
+  "for_teacher": "Para el Profesor",
+  "version": "Versión",
+  "topic": "Tema",
+  "total_points": "Puntaje Total"
+}

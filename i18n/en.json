@@ -1,0 +1,22 @@
+{
+  "exam_title": "Exam",
+  "institution": "Institution",
+  "subject": "Subject",
+  "date": "Date",
+  "duration": "Duration",
+  "minutes": "minutes",
+  "general_instructions": "General Instructions",
+  "student_name": "Student Name",
+  "student_id": "Student ID",
+  "section": "Section",
+  "instructions": "Instructions",
+  "question": "Question",
+  "points": "points",
+  "point": "point",
+  "answer_key": "Answer Key",
+  "correct_answer": "Correct Answer",
+  "for_teacher": "For Teacher",
+  "version": "Version",
+  "topic": "Topic",
+  "total_points": "Total Points"
+}
