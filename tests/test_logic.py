@@ -45,6 +45,29 @@ class TestCargarBancos:
         """Debe fallar con banco inexistente"""
         with pytest.raises(Exception):
             logic.cargar_bancos([Path("banco_inexistente.txt")])
+    
+    def test_cargar_bancos_con_duplicados(self, tmp_path):
+        """Debe manejar preguntas duplicadas con warning"""
+        # Crear archivo GIFT con preguntas duplicadas
+        banco_file = tmp_path / "banco_duplicado.txt"
+        banco_file.write_text("""
+::Pregunta1::Texto pregunta 1{
+=Correcta
+~Incorrecta
+}
+
+::Pregunta1::Texto pregunta 1 duplicada{
+=Otra correcta
+~Otra incorrecta
+}
+        """)
+        
+        banco = logic.cargar_bancos([banco_file])
+        # GIFT parser genera IDs únicos, pero ambas preguntas se cargan
+        assert len(banco) >= 2
+        # Verificar que las preguntas tienen el nombre correcto
+        nombres = [p.nombre for p in banco.values()]
+        assert nombres.count("Pregunta1") >= 2
 
 
 class TestProcesarImagenes:
@@ -97,6 +120,32 @@ class TestProcesarImagenes:
         logic.procesar_imagenes(banco, tmp_path)
         # Debe incluir un placeholder SVG
         assert "data:image/svg+xml" in banco["p1"].enunciado_html
+    
+    def test_procesar_imagenes_en_opciones(self, tmp_path):
+        """Debe procesar imágenes en opciones de respuesta"""
+        # Crear una imagen de prueba
+        img_path = tmp_path / "test.png"
+        img_path.write_bytes(b'\x89PNG\r\n\x1a\n' + b'\x00' * 100)
+        
+        banco = {
+            "p1": Pregunta(
+                id="p1",
+                tipo="seleccion_multiple",
+                nombre="Test",
+                categoria="Cat",
+                enunciado_html='<p>Pregunta</p>',
+                opciones=[
+                    Opcion(
+                        texto_html=f'<img src="{img_path.name}">',
+                        es_correcta=True
+                    )
+                ]
+            )
+        }
+        
+        logic.procesar_imagenes(banco, tmp_path)
+        # Debe convertir imagen en opción a base64
+        assert "data:image/png;base64," in banco["p1"].opciones[0].texto_html
     
     def test_imagen_ya_base64(self, tmp_path):
         """Debe dejar intactas imágenes ya en base64"""
@@ -284,6 +333,61 @@ class TestConstruirPoolExamen:
         with pytest.raises(ValueError) as exc_info:
             logic.construir_pool_examen(definicion, banco)
         assert "insuficiente" in str(exc_info.value).lower()
+    
+    def test_insuficientes_preguntas_advertir(self):
+        """Debe advertir con preguntas insuficientes y usar las disponibles"""
+        banco = {
+            "p1": Pregunta(id="p1", tipo="seleccion_multiple", nombre="P1",
+                          categoria="Cat", enunciado_html="Test 1"),
+            "p2": Pregunta(id="p2", tipo="verdadero_falso", nombre="P2",
+                          categoria="Cat", enunciado_html="Test 2"),
+        }
+        
+        pool = PoolConfig(cantidad=10, accion_si_insuficiente="advertir")
+        seccion = SeccionExamen(nombre="Sección A", pools=[pool])
+        config = ConfiguracionExamen()
+        
+        definicion = DefinicionExamen(
+            nombre_examen="Test",
+            institucion="Inst",
+            materia="Mat",
+            configuracion_examen=config,
+            secciones_examen=[seccion]
+        )
+        
+        # No debe fallar, solo advertir
+        resultado = logic.construir_pool_examen(definicion, banco)
+        preguntas = resultado['secciones'][0]['preguntas']
+        # Debe usar solo las 2 disponibles
+        assert len(preguntas) == 2
+    
+    def test_insuficientes_preguntas_usar_todas(self):
+        """Debe usar todas las disponibles cuando no hay suficientes"""
+        banco = {
+            "p1": Pregunta(id="p1", tipo="seleccion_multiple", nombre="P1",
+                          categoria="Cat", enunciado_html="Test 1"),
+            "p2": Pregunta(id="p2", tipo="verdadero_falso", nombre="P2",
+                          categoria="Cat", enunciado_html="Test 2"),
+            "p3": Pregunta(id="p3", tipo="ensayo", nombre="P3",
+                          categoria="Cat", enunciado_html="Test 3"),
+        }
+        
+        pool = PoolConfig(cantidad=10, accion_si_insuficiente="usar_todas")
+        seccion = SeccionExamen(nombre="Sección A", pools=[pool])
+        config = ConfiguracionExamen()
+        
+        definicion = DefinicionExamen(
+            nombre_examen="Test",
+            institucion="Inst",
+            materia="Mat",
+            configuracion_examen=config,
+            secciones_examen=[seccion]
+        )
+        
+        resultado = logic.construir_pool_examen(definicion, banco)
+        preguntas = resultado['secciones'][0]['preguntas']
+        # Debe usar todas las 3 disponibles
+        assert len(preguntas) == 3
     
     def test_puntaje_fijo(self):
         """Debe aplicar puntaje fijo"""
