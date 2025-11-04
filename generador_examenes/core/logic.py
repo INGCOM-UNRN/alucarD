@@ -251,7 +251,8 @@ def construir_pool_examen(
         secciones_examen.append({
             'nombre': seccion_def.nombre,
             'instrucciones': seccion_def.instrucciones,
-            'preguntas': preguntas_seccion
+            'preguntas': preguntas_seccion,
+            'layout': seccion_def.layout
         })
         
         puntaje_total = sum(p.puntaje for p in preguntas_seccion)

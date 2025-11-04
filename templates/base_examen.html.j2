@@ -103,13 +103,10 @@ body {
 }
 
 .section.layout-compact-2col .question-header {
-  grid-column: auto;
-  grid-row: auto;
+  /* Ya no usa grid */
 }
 
 .section.layout-compact-2col .question-text {
-  grid-column: auto;
-  grid-row: auto;
   margin-bottom: 0.5em;
 }
 
@@ -118,6 +115,9 @@ body {
   grid-template-columns: 1fr 1fr; /* 2 columnas */
   gap: 0.3em;
   margin-top: 0.5em;
+  /* Resetear propiedades del layout default */
+  grid-column: auto;
+  grid-row: auto;
 }
 
 .section.layout-compact-2col .option {
@@ -134,14 +134,10 @@ body {
 }
 
 .section.layout-compact-3col .question-header {
-  grid-column: auto;
-  grid-row: auto;
   font-size: 0.95em;
 }
 
 .section.layout-compact-3col .question-text {
-  grid-column: auto;
-  grid-row: auto;
   margin-bottom: 0.4em;
   font-size: 0.95em;
 }
@@ -151,6 +147,9 @@ body {
   grid-template-columns: 1fr 1fr 1fr; /* 3 columnas */
   gap: 0.2em;
   margin-top: 0.4em;
+  /* Resetear propiedades del layout default */
+  grid-column: auto;
+  grid-row: auto;
 }
 
 .section.layout-compact-3col .option {
