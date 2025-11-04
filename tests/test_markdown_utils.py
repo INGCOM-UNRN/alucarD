@@ -301,3 +301,38 @@ qqqqqq wwwwww eeeeee
     # Debe usar TextLexer por defecto
     assert 'highlight' in html
     assert 'qqqqqq' in html
+
+
+def test_normalizar_fullwidth_arrow_symbol():
+    """Test normalización del símbolo de flecha ↵ a salto de línea"""
+    text = "línea 1↵línea 2↵línea 3"
+    result = normalizar_fullwidth(text)
+    expected = "línea 1\nlínea 2\nlínea 3"
+    assert result == expected
+
+
+def test_markdown_code_with_fullwidth_and_arrows():
+    """Test código con caracteres fullwidth y símbolo ↵"""
+    text = """```c
+＃include ＜stdio.h＞↵
+int main（） ｛↵
+    printf（"Hello"）;↵
+｝
+```"""
+    html = markdown_to_html(text)
+    
+    # Los caracteres deben estar normalizados
+    assert 'highlight' in html
+    assert '#include' in html
+    # En HTML, < y > se codifican como &lt; y &gt;
+    assert ('&lt;stdio.h&gt;' in html or '<stdio.h>' in html)
+    assert 'printf' in html
+    # No debe contener caracteres fullwidth
+    assert '＃' not in html
+    assert '＜' not in html
+    assert '＞' not in html
+    assert '｛' not in html
+    assert '｝' not in html
+    assert '（' not in html
+    assert '）' not in html
+    assert '↵' not in html
