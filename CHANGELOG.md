@@ -7,12 +7,56 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ---
 
+## [5.4.0] - 2025-11-04
+
+### ✨ Agregado
+
+#### Variables Personalizadas Mejoradas
+- ✅ **Evaluación automática** de variables personalizadas con f-strings
+- ✅ **Paso a plantillas**: Variables ahora disponibles en `base_examen.html.j2` y `clave_profesor.html.j2`
+- ✅ **Contexto enriquecido**: Variables automáticas de fecha (`fecha_actual`, `anio_actual`, etc.)
+- ✅ **Composición de variables**: Referencias entre variables personalizadas
+- ✅ **Interpolación flexible**: Acceso a todos los campos de `DefinicionExamen`
+
+#### Configuraciones de Examen de Prueba
+- ✅ **5 configuraciones completas** en `examenes_prueba/`:
+  - `parcial1_basico.yaml` - Layout compact-2col y compact-3col
+  - `parcial2_codigo.yaml` - Análisis de código con layout default
+  - `final_completo.yaml` - 3 secciones con layouts mixtos
+  - `recuperatorio_mixto.yaml` - Todas las configuraciones combinadas
+  - `quiz_rapido.yaml` - Evaluación rápida con compact-4col
+- ✅ **Casos de uso reales** para validación de funcionalidad
+- ✅ **Diferentes layouts** y configuraciones por archivo
+
+### 🎨 Mejorado
+
+#### CSS de Impresión para Bloques de Código
+- 🖨️ **Optimización de espacio**: Line-height reducido (1.4 → 1.3)
+- 🖨️ **Mayor legibilidad**: Font-size ajustado (0.9em → 0.8em)
+- 🖨️ **Mejor contraste**: Fondo gris suave (#f9f9f9) con borde oscuro
+- 🖨️ **Word-wrap mejorado**: `white-space: pre-wrap` y `word-wrap: break-word`
+- 🖨️ **Márgenes compactos**: Padding reducido (0.8em → 0.4em)
+- 🖨️ **Fuente monoespaciada**: 'Courier New', 'Courier' para código
+- 🖨️ **Reducción de párrafos**: Márgenes de párrafo minimizados (0.2em)
+
+#### Mensajes de Logging
+- 📊 **Más informativos**: Nombres de archivo en logs de generación
+- 📊 **Formato mejorado**: `✓ Examen HTML generado: examen_tema_01.html (tema 1)`
+- 📊 **Consistencia**: Uso de símbolos ✓ para operaciones exitosas
+- 📊 **Información contextual**: Número de tema incluido en mensajes
+
+### 🔧 Arreglado
+- 🐛 Variables personalizadas no se pasaban a templates HTML/PDF
+- 🐛 CSS de código en impresión era demasiado espacioso
+
+---
+
 ## [5.3.0] - 2025-11-04
 
 ### 🎨 Agregado - Layouts de Secciones
 
 #### Sistema de Layouts Múltiples
-- ✨ **3 layouts optimizados** para diferentes densidades de contenido:
+- ✨ **4 layouts optimizados** para diferentes densidades de contenido:
   
   **Layout `default` (Análisis de Código):**
   - Enunciado: 2/3 ancho, Opciones: 1/3 columna derecha
@@ -25,11 +69,17 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
   - Ahorro: 30-40% papel
   - Ideal para preguntas teóricas
   
-  **Layout `compact-3col` (Tres Columnas - Máxima Densidad):**
+  **Layout `compact-3col` (Tres Columnas):**
   - Enunciado arriba, opciones en 3 columnas abajo
   - 12-20 preguntas por página
   - Ahorro: 50-60% papel
   - Ideal para respuestas cortas
+  
+  **Layout `compact-4col` (Cuatro Columnas - Máxima Densidad):**
+  - Enunciado arriba, opciones en 4 columnas abajo
+  - 20-30 preguntas por página
+  - Ahorro: 60-70% papel
+  - Ideal para Verdadero/Falso
 
 - 🎨 **Layouts mezclables** por sección en el mismo examen
 - 📐 **Campo `layout`** en `SeccionExamen` con validación Pydantic
@@ -49,270 +99,237 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - 💾 **Ahorro de tinta** con bordes simplificados
 - 📏 **Márgenes optimizados** por layout
 
-#### Documentación y Tests
-- 📚 **LAYOUTS.md** (8,798 caracteres) - Guía completa:
-  - Descripción de 3 layouts con diagramas visuales
-  - Comparativa de densidad y ahorro de papel
-  - Mejores prácticas por tipo de contenido
-  - Ejemplos de configuración YAML
-  - FAQ y troubleshooting
-  - Dimensiones y espaciado detallados
-  - Impacto ambiental calculado
+---
 
-- 🧪 **tests/test_layouts.py** - 9 tests nuevos:
-  - `test_seccion_layout_default`
-  - `test_seccion_layout_compact_2col`
-  - `test_seccion_layout_compact_3col`
-  - `test_seccion_layout_invalido`
-  - `test_definicion_con_multiples_layouts`
-  - `test_repr_seccion_con_layout`
-  - `test_yaml_con_layouts`
-  - `test_html_render_con_layout_class`
-  - `test_todos_los_layouts_validos`
+## [5.2.0] - 2025-11-03
 
-- 📝 **examenes_prueba/examen_06_layouts.yaml** - Ejemplo funcional:
-  - 3 secciones con diferentes layouts
-  - 30 preguntas total
-  - Comparativa de ahorro de papel
+### ✨ Agregado - Asistente Interactivo (Wizard)
 
-#### Mejoras en Modelos
-- 🔧 **`SeccionExamen.layout`** - Campo con valores validados:
-  - `Literal["default", "compact-2col", "compact-3col"]`
-  - Valor por defecto: `"default"`
-- 📊 **`__str__`** y **`__repr__`** actualizados para incluir layout
-- 🎯 **Clase CSS dinámica** en template: `layout-{nombre}`
+#### Funcionalidad del Wizard
+- 🧙 **Asistente completo** para crear/editar configuraciones YAML
+- 📝 **Modo creación**: Crea nuevas configuraciones desde cero
+- ✏️ **Modo edición**: Modifica configuraciones existentes
+- 🎨 **Interfaz Rich**: Experiencia visual mejorada con colores y tablas
+- ✅ **Validación en tiempo real**: Verifica datos mientras se ingresan
+- 📊 **Vista previa**: Resumen completo antes de guardar
 
-### 🌳 Impacto Ambiental
+#### Flujo del Wizard
+1. **Información Básica**
+   - Nombre del examen, institución, materia
+   - Fecha y duración
+   - Instrucciones generales
 
-**Ahorro de Papel Documentado:**
-- Examen de 30 preguntas, 40 estudiantes, 10 exámenes/año
-- Solo default: 4,000 páginas/año
-- Mixto optimizado: 2,000 páginas/año
-- **Ahorro: 50% = 2,000 páginas/año**
+2. **Configuración de Examen**
+   - Mezclar preguntas/opciones
+   - Generar clave de profesor
+   - Incluir metadata de debug
 
-### 📈 Métricas
-- **Tests**: 228 pasando (+9 nuevos)
-- **Cobertura**: 76% (mantenida)
-- **Layouts**: 3 disponibles
-- **Documentación**: +8,798 caracteres (LAYOUTS.md)
-- **Archivos nuevos**: 3 (test, ejemplo, docs)
+3. **Secciones del Examen**
+   - Agregar/editar secciones
+   - Configurar nombre, instrucciones, layout
+   - Múltiples secciones soportadas
+
+4. **Pools de Preguntas**
+   - Configurar filtros por categoría
+   - Tipos de preguntas
+   - Etiquetas (tags)
+   - Cantidad y puntaje
+
+5. **Variables Personalizadas** (opcional)
+   - Definir variables custom
+   - Usar f-strings
+   - Referencias entre variables
+
+#### Uso
+```bash
+# Crear nueva configuración
+generador-examenes --wizard
+
+# Editar configuración existente
+generador-examenes --wizard mi_examen.yaml
+```
 
 ---
 
-## [5.2.0] - 2025-11-04
+## [5.1.0] - 2025-11-02
 
-### 🎉 Agregado
+### ✨ Agregado - Variables Personalizadas
 
-#### Wizard Interactivo
-- ✨ **Asistente de configuración interactivo** (`--wizard`)
-  - Crea/edita archivos YAML con guía paso a paso
-  - Interfaz rica con colores (Rich library)
-  - Validación en tiempo real
-  - Resumen visual antes de guardar
-  - 13 tests específicos
-  - Documentación: **WIZARD.md** (333 líneas)
+#### Sistema de Variables
+- 🎨 **Variables personalizadas** en configuración YAML
+- 🔄 **F-strings**: Interpolación con formato Python `{variable}`
+- 📚 **Contexto automático**: Acceso a campos de `DefinicionExamen`
+- 🔗 **Composición**: Variables pueden referenciar otras variables
+- 📅 **Variables de fecha**: `fecha_actual`, `anio_actual`, `mes_actual`, `dia_actual`
 
-#### Variables Personalizadas
-- 🔧 **Sistema de variables personalizadas** con f-strings
-  - Variables simples: texto directo
-  - F-strings con interpolación: `{nombre_examen} de {materia}`
-  - Variables de fecha automáticas: `{anio_actual}`, `{fecha_actual}`, `{mes_actual}`, `{dia_actual}`
-  - Variables compuestas que referencian otras variables
-  - Evaluación segura (no falla si hay error)
-  - Hasta 22 variables por examen
-  - 10 tests específicos
-  - Documentación: **VARIABLES_PERSONALIZADAS.md** (378 líneas)
+#### Variables Disponibles en Contexto
+```python
+{
+    'nombre_examen': str,
+    'institucion': str,
+    'materia': str,
+    'fecha': str,
+    'duracion_minutos': int,
+    'idioma': str,
+    'fecha_actual': str,
+    'anio_actual': int,
+    'mes_actual': int,
+    'dia_actual': int
+}
+```
 
-#### Formato Markdown
-- 📝 **Soporte de Markdown con syntax highlighting**
-  - Detección automática de formato `[markdown]`
-  - Syntax highlighting con Pygments (Python, C, Java, JavaScript, etc.)
-  - Normalización de caracteres fullwidth
-  - Estilos optimizados para pantalla e impresión
-  - CSS para impresión en blanco/negro (ahorro de tinta)
-  - `page-break-inside: avoid` para código
-  - 22 tests específicos
+#### Ejemplos de Uso
+```yaml
+variables_personalizadas:
+  profesor: "Dr. García"
+  titulo_completo: "{nombre_examen} de {materia}"
+  periodo: "Segundo Cuatrimestre {anio_actual}"
+  pie_pagina: "{materia} - {profesor} - {periodo}"
+```
 
-#### Mejoras en Logging
-- 📊 **Métodos `__str__` mejorados** en todos los modelos
-  - 6 modelos con representación informativa
-  - Logs más legibles y útiles
-  - Información contextual automática
-  - Ejemplos:
-    ```python
-    str(pregunta)  # [seleccion_multiple] ¿Qué es Python? (cat: Programacion, pts: 2.5) [facil]
-    str(pool)      # Pool(cat:Math/**, tipos:seleccion_multiple, cant:10)
-    str(definicion) # 'Parcial I' (2025-11-20) - 90min - Matemáticas (UNRN) - 2 secciones +5 vars
-    ```
-
-#### Optimización para Impresión
-- 🖨️ **CSS optimizado para papel/impreso**
-  - `@media print` con estilos específicos
-  - Código en blanco y negro al imprimir
-  - Page breaks inteligentes
-  - Márgenes apropiados
-  - Fuentes legibles
-  - Optimización de tinta/tóner
-
-#### Verificación Completa
-- ✅ **5 exámenes de prueba** (examenes_prueba/)
-  1. Examen Básico (⭐): 10 preguntas, 1 sección, configuración mínima
-  2. Examen Algoritmos (⭐⭐): 35 preguntas, 2 secciones, XML + GIFT
-  3. Examen Integral (⭐⭐⭐): 30 preguntas, 3 secciones, variables compuestas
-  4. Evaluación Mixta (⭐⭐⭐): 48 preguntas, teoría + práctica
-  5. Examen Final (⭐⭐⭐⭐⭐): 43 preguntas, 4 secciones, 22 variables
-- 📄 **20 archivos HTML** generados (10 exámenes + 10 claves)
-- 📋 **VERIFICACION_EXAMENES_PRUEBA.md** - Informe detallado
-- 📋 **examenes_prueba/README.md** - Guía de uso
-
-#### Documentación Completa
-- 📚 **INFORME_CUMPLIMIENTO.md** - Verificación 100% vs descripcion.md
-  - 52/52 requisitos obligatorios cumplidos
-  - 7 funcionalidades extra
-  - 688 líneas de documentación
-- 📝 **RESUMEN_MARKDOWN.md** - Guía de Markdown
-- 📓 **SESION_2025-11-04.md** - Bitácora detallada
-- 📊 README.md reorganizado con todas las guías
-
-### 🔧 Cambiado
-- Plantillas HTML actualizadas con soporte de variables personalizadas
-- CSS mejorado para impresión
-- Documentación reorganizada por categorías
-- Logs más informativos en todos los módulos
-
-### 📈 Métricas
-- **Tests**: 219 pasando (10 nuevos)
-- **Cobertura**: 76%
-- **Variables**: Soporte de hasta 22 por examen
-- **Documentación**: 21 archivos MD (3 nuevos)
-- **Exámenes de prueba**: 5 configuraciones completas
+#### Método en DefinicionExamen
+- ✅ `evaluar_variables_personalizadas()`: Evalúa todas las variables
+- ✅ **Manejo de errores**: Mantiene valor original si falla evaluación
+- ✅ **Logging**: Advertencias para variables que no se pueden evaluar
 
 ---
 
-## [5.1.0] - 2025-01-03
+## [5.0.0] - 2025-11-01
 
-### Agregado
-- ✨ **Categorías anidadas**: Soporte completo para jerarquías con wildcards
-  - Filtrado por subcategorías automático
-  - Wildcards `/*` (un nivel) y `/**` (recursivo)
-  - Normalización case-insensitive
-  - Compatible con formato Moodle
-- 📝 CATEGORIAS.md - Documentación completa de categorías
-- 🧪 23 tests nuevos para categorías anidadas
-- 📄 Ejemplos: banco_jerarquico.txt y definicion_jerarquica.yaml
-- 🎓 **EJEMPLOS_AVANZADOS.md** - Guía completa con 10 casos de uso:
-  - Exámenes multi-nivel con ponderación
-  - Exámenes adaptativos por dificultad
-  - Preguntas fijadas y aleatorias combinadas
-  - Multi-materia con categorías complejas
-  - Filtrado avanzado
-  - Generación masiva automatizada
-  - Múltiples bancos
-  - Pipeline de producción con Makefile
-  - Scripts de distribución y backup
-  - Troubleshooting y mejores prácticas
+### 🎉 Versión Mayor - Refactorización Completa
 
-### Cambiado
-- 🔧 Filtrado de categorías usa `categoria_coincide()` para jerarquías
-- 📈 Cobertura de tests aumentada a 70%
-- 📚 README.md actualizado con sección de documentación completa
+#### Arquitectura de Plugins
+- ✨ **BaseParser ABC**: Clase base para parsers de entrada
+- ✨ **BaseRenderer ABC**: Clase base para renderers de salida
+- ✨ **Registro automático**: Parsers y renderers se registran automáticamente
+- ✨ **Extensible**: Fácil agregar nuevos formatos
 
----
+#### Validación con Pydantic
+- ✅ **Modelos completos**: `Pregunta`, `Opcion`, `PoolConfig`, `SeccionExamen`, `DefinicionExamen`
+- ✅ **Validación automática**: Type checking y constraints
+- ✅ **Mensajes de error claros**: Detalla problemas de validación
+- ✅ **Métodos `__str__` y `__repr__`**: Logging informativo
 
-## [5.0.0] - 2025-01-03
+#### Sistema de Categorías
+- 🗂️ **Categorías anidadas**: Organización jerárquica tipo Moodle
+- 🔍 **Wildcards**: `*` (un nivel) y `**` (múltiples niveles)
+- 🎯 **Filtrado flexible**: Por categoría exacta o subcategorías
+- 📊 **Normalización**: Case-insensitive, manejo de separadores
 
-### Implementado
-- ✅ Sistema core completo con arquitectura de plugins
-- ✅ Parsers GIFT y Moodle XML
-- ✅ Renderers HTML y PDF
-- ✅ CLI completo con validación
-- ✅ Internacionalización (ES/EN)
-- ✅ Suite de tests con 100% cobertura (92 tests)
-- ✅ Soporte UV con lockfile
-- ✅ Scripts de setup automatizados (Linux/macOS/Windows)
-- ✅ Makefile con comandos útiles
-- ✅ Documentación completa
+#### Procesamiento de Markdown
+- 📝 **Formato `[markdown]`**: Detección automática en GIFT
+- 🎨 **Pygments**: Syntax highlighting para código
+- 💻 **Múltiples lenguajes**: Python, Java, C++, JavaScript, etc.
+- 🔧 **Configuración**: Estilo, numeración de líneas
 
-### Cambiado
-- ✨ pyproject.toml actualizado al estándar PEP 621
-- ✨ Soporte para `uv sync` (instalación más rápida)
-- ✨ Compatible con Poetry, UV y pip
+#### Sistema de Logging
+- 📊 **Niveles configurables**: DEBUG, INFO, WARNING, ERROR
+- 🐛 **Modo debug**: `--debug` para troubleshooting
+- 📝 **Contexto rico**: Módulo, función, mensaje
+- ✅ **Logs estructurados**: Fácil parsing y análisis
 
-### Técnico
-- Build backend: Hatchling (en lugar de Poetry)
-- Formato: PEP 621 ([project] table)
-- Lockfile: uv.lock para reproducibilidad
-- Tests: pytest + coverage
-- Python: >=3.10
+#### CLI Mejorado
+- 🖥️ **argparse**: Interfaz de línea de comandos robusta
+- 📚 **Help detallado**: Descripción de cada argumento
+- ✅ **Validación de entrada**: Verifica archivos y directorios
+- 🎯 **Modo validación**: `--validate` sin generar archivos
+
+#### Internacionalización
+- 🌍 **i18n completo**: Español (es) e Inglés (en)
+- 📁 **Archivos JSON**: Fácil agregar nuevos idiomas
+- 🎨 **Templates**: Uso de variables de idioma en Jinja2
+- 🔧 **Extensible**: Sistema simple para agregar traducciones
 
 ---
 
-## [4.0.0] - Desarrollo
+## [4.0.0] - 2025-10-28
 
-### En desarrollo
-- Implementación de componentes core
-- Parsers y renderers básicos
+### 🎨 Agregado - Templates Jinja2
 
----
+#### Sistema de Plantillas
+- ✨ **Jinja2**: Motor de plantillas flexible
+- 📁 **Directorio `templates/`**: Plantillas separadas del código
+- 🎨 **Personalizable**: Modifica apariencia sin tocar Python
+- 📄 **Múltiples plantillas**: `base_examen.html.j2`, `clave_profesor.html.j2`
 
-## [3.0.0] - Planificación
-
-### Diseño
-- Arquitectura del sistema
-- Especificación de requisitos
-- Estructura del proyecto
-
----
-
-## [2.0.0] - Concepto inicial
-
-### Idea
-- Generador de exámenes basado en YAML
-- Soporte para múltiples formatos
+#### CSS Optimizado
+- 🎨 **Estilos modernos**: CSS Grid y Flexbox
+- 📱 **Responsive**: Se adapta a diferentes tamaños
+- 🖨️ **Print-friendly**: Estilos específicos para impresión
+- 🎨 **Syntax highlighting**: Colores para código
 
 ---
 
-## [1.0.0] - Inception
+## [3.0.0] - 2025-10-20
 
-### Inicio
-- Creación del repositorio
-- Documentación inicial
+### ✨ Agregado - Generación PDF
 
----
-
-## 📊 Resumen de Versiones
-
-| Versión | Fecha | Características Principales | Tests | Docs |
-|---------|-------|----------------------------|-------|------|
-| 5.3.0 | 2025-11-04 | Layouts múltiples (3) | 228 | +1 |
-| 5.2.0 | 2025-11-04 | Wizard, Variables, Markdown | 219 | +3 |
-| 5.1.0 | 2025-01-03 | Categorías anidadas | 196 | +2 |
-| 5.0.0 | 2025-01-03 | Release inicial completo | 92 | Completa |
+#### WeasyPrint
+- 📄 **PDF desde HTML**: Conversión de calidad
+- 🎨 **CSS aplicado**: Mantiene estilos visuales
+- 📏 **Page breaks**: Inteligentes para preguntas
+- 🖨️ **Print-ready**: Listo para imprimir
 
 ---
 
-## 🎯 Roadmap Futuro
+## [2.0.0] - 2025-10-15
 
-### v5.4.0 (Planeado)
-- [ ] API REST para integración
-- [ ] Dashboard web para gestión
-- [ ] Exportación a más formatos (DOCX, LaTeX)
-- [ ] Templates visuales personalizables
+### ✨ Agregado - Parser Moodle XML
 
-### v5.5.0 (Planeado)
-- [ ] Análisis estadístico de exámenes
-- [ ] Generación de reportes automáticos
-- [ ] Integración con LMS (Moodle, Canvas)
-- [ ] Modo colaborativo multi-usuario
-
-### v6.0.0 (Futuro)
-- [ ] IA para generación automática de preguntas
-- [ ] Banco de preguntas compartido
-- [ ] Sistema de versionado de exámenes
-- [ ] Modo offline completo
+#### Soporte XML
+- 📦 **Parser completo**: Lee archivos XML de Moodle
+- 🏷️ **Extracción de tags**: Lee etiquetas de preguntas
+- 📁 **Categorías**: Extrae y respeta jerarquía
+- 🔧 **Robusto**: Manejo de errores y validación
 
 ---
 
-**Última actualización:** 2025-11-04  
-**Versión actual:** 5.3.0  
-**Estado:** Producción
+## [1.0.0] - 2025-10-01
+
+### 🎉 Versión Inicial
+
+#### Funcionalidad Básica
+- ✅ **Parser GIFT**: Lee archivos GIFT
+- ✅ **Generación HTML**: Crea exámenes en HTML
+- ✅ **Mezcla aleatoria**: Preguntas y opciones
+- ✅ **Múltiples temas**: Genera N versiones
+- ✅ **Clave de respuestas**: Para profesores
+- ✅ **CLI básico**: Interfaz de línea de comandos
+
+---
+
+## Formato de Versionado
+
+El proyecto sigue **Semantic Versioning** (SemVer):
+
+- **MAJOR** (X.0.0): Cambios incompatibles en la API
+- **MINOR** (0.X.0): Nuevas funcionalidades compatibles
+- **PATCH** (0.0.X): Correcciones de bugs
+
+### Tipos de Cambios
+
+- **✨ Agregado**: Nuevas funcionalidades
+- **🔧 Arreglado**: Correcciones de bugs
+- **🎨 Mejorado**: Mejoras a funcionalidad existente
+- **🗑️ Deprecado**: Funcionalidad que se eliminará
+- **🚫 Eliminado**: Funcionalidad eliminada
+- **🔒 Seguridad**: Correcciones de seguridad
+
+---
+
+## Próximas Versiones (Roadmap)
+
+### [5.5.0] - Planificado
+- 🔄 **Importar desde Banco**: Wizard para importar preguntas
+- 📊 **Estadísticas**: Análisis de dificultad y uso
+- 🎨 **Temas visuales**: Múltiples estilos CSS
+
+### [6.0.0] - Futuro
+- 🌐 **API REST**: Servicio web para generación
+- 📱 **Interfaz Web**: UI web completa
+- 🔐 **Autenticación**: Sistema de usuarios
+- 💾 **Base de datos**: Storage persistente
+
+---
+
+**Para más detalles sobre cada versión, consulta los commits del repositorio.**
