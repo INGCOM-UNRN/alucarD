@@ -64,6 +64,25 @@
         }
         .option {
             margin-bottom: 0.4em;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5em;
+        }
+        .option-checkbox {
+            width: 1em;
+            height: 1em;
+            border: 2px solid #333;
+            background-color: white;
+            flex-shrink: 0;
+            margin-top: 0.2em;
+        }
+        .option-label {
+            font-weight: bold;
+            margin-right: 0.3em;
+            flex-shrink: 0;
+        }
+        .option-text {
+            flex: 1;
         }
         .answer-space {
             border-bottom: 1px solid #ccc;
@@ -129,16 +148,27 @@
             
             {% if pregunta.tipo == 'seleccion_multiple' %}
             <div class="options">
+                {% set letras = 'abcdefghijklmnopqrstuvwxyz' %}
                 {% for opcion in pregunta.opciones %}
                 <div class="option">
-                    <input type="radio" name="q{{ pregunta.id }}" disabled> {{ opcion.texto_html | safe }}
+                    <div class="option-checkbox"></div>
+                    <span class="option-label">{{ letras[loop.index0] }})</span>
+                    <div class="option-text">{{ opcion.texto_html | safe }}</div>
                 </div>
                 {% endfor %}
             </div>
             {% elif pregunta.tipo == 'verdadero_falso' %}
             <div class="options">
-                <div class="option"><input type="radio" name="q{{ pregunta.id }}" disabled> Verdadero</div>
-                <div class="option"><input type="radio" name="q{{ pregunta.id }}" disabled> Falso</div>
+                <div class="option">
+                    <div class="option-checkbox"></div>
+                    <span class="option-label">V)</span>
+                    <div class="option-text">Verdadero</div>
+                </div>
+                <div class="option">
+                    <div class="option-checkbox"></div>
+                    <span class="option-label">F)</span>
+                    <div class="option-text">Falso</div>
+                </div>
             </div>
             {% else %}
             <div class="answer-space"></div>
