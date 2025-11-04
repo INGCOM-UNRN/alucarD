@@ -1,22 +1,23 @@
-nombre_examen: "Parcial III"
-institucion: "UNRN Andina"
-materia: "Programación 1"
-fecha: "2025-11-11"
+nombre_examen: Parcial III
+institucion: UNRN Andina
+materia: Programación 1
+fecha: '2025-11-11'
 duracion_minutos: 60
-instrucciones_generales: |
-  Lee cuidadosamente cada pregunta antes de responder.
-  Marca la respuesta correcta en cada caso.
-idioma: "es"
+instrucciones_generales: 'Lee cuidadosamente cada pregunta antes de responder.
 
+  Marca la respuesta correcta en cada caso.
+
+  '
+idioma: es
 configuracion_examen:
   mezclar_preguntas_dentro_seccion: true
   mezclar_opciones_dentro_pregunta: true
   generar_clave_profesor: true
   incluir_metadata_debug: true
-
 secciones_examen:
-  - nombre: "Sección 1 - Preguntas de Ejemplo"
-    instrucciones: "Selecciona la respuesta correcta"
-    pools:
-      - cantidad: 5
-        tipos: ["seleccion_multiple"]
+- nombre: Sección 1 - Preguntas de Ejemplo
+  instrucciones: Selecciona la respuesta correcta
+  pools:
+  - cantidad: 5
+    tipos:
+    - seleccion_multiple
