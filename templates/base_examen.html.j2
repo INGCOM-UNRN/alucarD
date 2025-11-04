@@ -5,156 +5,215 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ definicion.nombre_examen }}</title>
     <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            margin: 2cm;
-            line-height: 1.6;
-        }
-        .header {
-            text-align: center;
-            border-bottom: 2px solid #333;
-            padding-bottom: 1em;
-            margin-bottom: 1.5em;
-        }
-        .header h1 {
-            margin: 0.2em 0;
-            font-size: 1.8em;
-        }
-        .header .info {
-            margin: 0.3em 0;
-            font-size: 0.95em;
-        }
-        .student-info {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 1.5em;
-            padding: 0.5em;
-            border: 1px solid #ccc;
-        }
-        .instructions {
-            background-color: #f5f5f5;
-            padding: 1em;
-            margin-bottom: 1.5em;
-            border-left: 4px solid #333;
-        }
-        .section {
-            page-break-inside: avoid;
-            margin-bottom: 2em;
-        }
-        .section-title {
-            background-color: #333;
-            color: white;
-            padding: 0.5em;
-            margin-bottom: 1em;
-            font-size: 1.2em;
-        }
-        .question {
-            margin-bottom: 1.5em;
-            page-break-inside: avoid;
-        }
-        .question-header {
-            font-weight: bold;
-            margin-bottom: 0.5em;
-        }
-        .question-text {
-            margin-bottom: 0.8em;
-        }
-        .options {
-            margin-left: 1.5em;
-        }
-        
-        .option {
-            margin-bottom: 0.4em;
-            display: flex;
-            align-items: flex-start;
-            gap: 0.5em;
-            align-items: center;
-        }
-        .option-checkbox {
-            width: 1em;
-            height: 1em;
-            border: 2px solid #333;
-            background-color: white;
-            flex-shrink: 0;
-            margin-top: 0.2em;
-        }
-        .option-label {
-            font-weight: bold;
-            margin-right: 0.3em;
-            flex-shrink: 0;
-        }
-        .option-text {
-            flex: 1;
-        }
-        .answer-space {
-            border-bottom: 1px solid #ccc;
-            min-height: 3em;
-            margin-top: 0.5em;
-        }
-        /* Estilos para bloques de código */
-        .highlight {
-            background-color: #f8f8f8;
-            border: 1px solid #ddd;
-            border-radius: 3px;
-            padding: 0.8em;
-            overflow-x: auto;
-            margin: 0.5em 0;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9em;
-            line-height: 1.4;
-        }
-        
-        pre {
-            margin: 0;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-        
-        code {
-            font-family: 'Courier New', monospace;
-            font-size: 0.9em;
-        }
-        
-        @media print {
-            body {
-                margin: 1.5cm;
-            }
-            .section {
-                page-break-before: always;
-            }
-            .section:first-of-type {
-                page-break-before: avoid;
-            }
-            
-            /* Simplificar bloques de código para impresión */
-            .highlight {
-                background-color: #ffffff !important;
-                border: 1px solid #000000 !important;
-                border-radius: 0 !important;
-                padding: 0.5em !important;
-                font-size: 0.85em !important;
-                page-break-inside: avoid;
-            }
-            
-            /* Remover colores de sintaxis y usar solo negro */
-            .highlight * {
-                background-color: transparent !important;
-                color: #000000 !important;
-                font-weight: normal !important;
-            }
-            
-            /* Mantener estructura pero sin colores */
-            .highlight pre {
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            
-            /* Asegurar que el código sea legible */
-            code {
-                font-size: 0.85em !important;
-                color: #000000 !important;
-            }
-        }
+/* CSS Refactorizado para el Cuestionario
+  - Se ha establecido el layout de CSS Grid como el predeterminado.
+  - Se han eliminado reglas duplicadas y contradictorias.
+*/
+
+body {
+  font-family: 'Arial', sans-serif;
+  margin: 2cm;
+  line-height: 1.6;
+}
+
+/* --- Encabezado y Meta-Info --- */
+
+.header {
+  text-align: center;
+  border-bottom: 2px solid #333;
+  padding-bottom: 1em;
+  margin-bottom: 1.5em;
+}
+
+.header h1 {
+  margin: 0.2em 0;
+  font-size: 1.8em;
+}
+
+.header .info {
+  margin: 0.3em 0;
+  font-size: 0.95em;
+}
+
+.student-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.5em;
+  padding: 0.5em;
+  border: 1px solid #ccc;
+}
+
+.instructions {
+  background-color: #f5f5f5;
+  padding: 1em;
+  margin-bottom: 1.5em;
+  border-left: 4px solid #333;
+}
+
+/* --- Secciones --- */
+
+.section {
+  page-break-inside: avoid;
+  margin-bottom: 2em;
+}
+
+.section-title {
+  background-color: #333;
+  color: white;
+  padding: 0.5em;
+  margin-bottom: 1em;
+  font-size: 1.2em;
+}
+
+/* --- Bloque de Pregunta (Layout con Grid) --- */
+
+.question {
+  display: grid;
+  /* Define 2 columnas: 2/3 para pregunta, 1/3 para opciones */
+  grid-template-columns: 2fr 1fr;
+  gap: 20px; /* Espacio entre la pregunta y las opciones */
+  
+  margin-bottom: 1.5em;
+  page-break-inside: avoid;
+
+  /* --- Líneas añadidas --- */
+  border: 1px solid #555; /* Borde gris oscuro para agrupar */
+  padding: 1em;            /* Espaciado interno */
+  border-radius: 5px;      /* Esquinas redondeadas (opcional) */
+}
+
+.question-header {
+  font-weight: bold;
+  margin-bottom: 0.5em;
+  grid-column: 1; /* Coloca en la primera columna */
+  grid-row: 1;    /* Coloca en la primera fila */
+}
+
+.question-text {
+  margin-bottom: 0.8em;
+  grid-column: 1; /* Coloca en la primera columna */
+  grid-row: 2;    /* Coloca en la segunda fila */
+}
+
+.options {
+  /* El 'margin-left: 1.5em' anterior ya no es necesario.
+    El 'gap' del grid .question se encarga del espaciado.
+  */
+  grid-column: 2;   /* Coloca en la segunda columna */
+  grid-row: 1 / 3;  /* Ocupa las filas 1 y 2 */
+  align-self: start;
+}
+
+/* --- Ítems de Opción (Layout con Flexbox) --- */
+
+.option {
+  display: flex;
+  align-items: center; /* Alinea verticalmente el checkbox, label y texto */
+  gap: 0.5em;
+  margin-bottom: 0.4em;
+  /* Se eliminó 'align-items: flex-start' que estaba duplicado */
+}
+
+.option-checkbox {
+  width: 1em;
+  height: 1em;
+  border: 2px solid #333;
+  background-color: white;
+  flex-shrink: 0;
+  /* Se eliminó 'margin-top: 0.2em'
+    'align-items: center' en .option ya lo centra verticalmente.
+  */
+}
+
+.option-label {
+  font-weight: bold;
+  margin-right: 0.3em;
+  flex-shrink: 0;
+}
+
+.option-text {
+  flex: 1;
+}
+
+/* --- Otros Elementos --- */
+
+.answer-space {
+  border-bottom: 1px solid #ccc;
+  min-height: 3em;
+  margin-top: 0.5em;
+}
+
+/* --- Estilos para Bloques de Código --- */
+
+.highlight {
+  background-color: #f8f8f8;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  padding: 0.8em;
+  overflow-x: auto;
+  margin: 0.5em 0;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+  line-height: 1.4;
+}
+
+pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+code {
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+}
+
+/* --- Estilos Específicos para Impresión --- */
+
+@media print {
+  body {
+    margin: 1.5cm;
+  }
+
+  .section {
+    page-break-before: always;
+  }
+
+  .section:first-of-type {
+    page-break-before: avoid;
+  }
+  
+  /* Simplificar bloques de código para impresión */
+  .highlight {
+    background-color: #ffffff !important;
+    border: 1px solid #000000 !important;
+    border-radius: 0 !important;
+    padding: 0.5em !important;
+    font-size: 0.85em !important;
+    page-break-inside: avoid;
+  }
+  
+  /* Remover colores de sintaxis y usar solo negro */
+  .highlight * {
+    background-color: transparent !important;
+    color: #000000 !important;
+    font-weight: normal !important;
+  }
+  
+  /* Mantener estructura pero sin colores */
+  .highlight pre {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  /* Asegurar que el código sea legible */
+  code {
+    font-size: 0.85em !important;
+    color: #000000 !important;
+  }
+}
+
+
     </style>
 </head>
 <body>
