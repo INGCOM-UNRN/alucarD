@@ -62,11 +62,13 @@
         .options {
             margin-left: 1.5em;
         }
+        
         .option {
             margin-bottom: 0.4em;
             display: flex;
             align-items: flex-start;
             gap: 0.5em;
+            align-items: center;
         }
         .option-checkbox {
             width: 1em;
@@ -89,6 +91,30 @@
             min-height: 3em;
             margin-top: 0.5em;
         }
+        /* Estilos para bloques de código */
+        .highlight {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            padding: 0.8em;
+            overflow-x: auto;
+            margin: 0.5em 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        code {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
         @media print {
             body {
                 margin: 1.5cm;
@@ -98,6 +124,35 @@
             }
             .section:first-of-type {
                 page-break-before: avoid;
+            }
+            
+            /* Simplificar bloques de código para impresión */
+            .highlight {
+                background-color: #ffffff !important;
+                border: 1px solid #000000 !important;
+                border-radius: 0 !important;
+                padding: 0.5em !important;
+                font-size: 0.85em !important;
+                page-break-inside: avoid;
+            }
+            
+            /* Remover colores de sintaxis y usar solo negro */
+            .highlight * {
+                background-color: transparent !important;
+                color: #000000 !important;
+                font-weight: normal !important;
+            }
+            
+            /* Mantener estructura pero sin colores */
+            .highlight pre {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            
+            /* Asegurar que el código sea legible */
+            code {
+                font-size: 0.85em !important;
+                color: #000000 !important;
             }
         }
     </style>

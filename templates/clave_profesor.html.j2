@@ -78,9 +78,79 @@
             background-color: #dfd;
             font-weight: bold;
         }
+        
+        /* Estilos para bloques de código */
+        .highlight {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            padding: 0.8em;
+            overflow-x: auto;
+            margin: 0.5em 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        code {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
         @media print {
             body {
                 margin: 1.5cm;
+            }
+            
+            /* Simplificar bloques de código para impresión */
+            .highlight {
+                background-color: #ffffff !important;
+                border: 1px solid #000000 !important;
+                border-radius: 0 !important;
+                padding: 0.5em !important;
+                font-size: 0.85em !important;
+                page-break-inside: avoid;
+            }
+            
+            /* Remover colores de sintaxis y usar solo negro */
+            .highlight * {
+                background-color: transparent !important;
+                color: #000000 !important;
+                font-weight: normal !important;
+            }
+            
+            /* Mantener estructura pero sin colores */
+            .highlight pre {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            
+            /* Asegurar que el código sea legible */
+            code {
+                font-size: 0.85em !important;
+                color: #000000 !important;
+            }
+            
+            /* Simplificar colores de respuestas correctas para impresión */
+            .correct-answer {
+                background-color: #f0f0f0 !important;
+                border-left-color: #000000 !important;
+            }
+            
+            .option.correct {
+                background-color: #f0f0f0 !important;
+            }
+            
+            .confidential {
+                background-color: #f0f0f0 !important;
+                border-color: #000000 !important;
+                color: #000000 !important;
             }
         }
     </style>
