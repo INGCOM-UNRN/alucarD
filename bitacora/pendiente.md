@@ -4,7 +4,7 @@
 
 - [ ] Crear una página para la configuración fina de la generación, para elegir y tener una vista previa de las opciones de visualizacion de cada pregunta (layout), la página debe dar tener un botón para descargar la configuracion necesaria para fusionarlo a la configuracion en la generación del cuestionario 
 
-## ✅ Completado en esta sesión (2025-11-03)
+## ✅ Completado en esta sesión (2025-11-04)
 - [x] Solucionar error de `uv sync` (pyproject.toml)
 - [x] Corregir error de validación YAML (pool → pools)
 - [x] Verificar funcionalidad `--init`
@@ -15,7 +15,8 @@
 - [x] Implementar soporte para categorías anidadas
 - [x] Implementar formato markdown con syntax highlighting
 - [x] Cobertura 100% en parsers (gift_parser, moodle_parser)
-- [x] Cobertura 83% en markdown_utils
+- [x] Cobertura 90% en markdown_utils
+- [x] Normalización de caracteres fullwidth en bloques de código (NFKC)
 
 ## Mejoras generales
 - [ ] Mejorar los __str__ para que las salidas por los logs tengan mas información útil.
@@ -42,6 +43,6 @@
 - [ ] Documentación de API para extensiones
 
 ## Notas
-- Cobertura general: **85%**
-- Cobertura crítica (parsers + logic): **100%**
-- Tests: 162 pasando, 2 skipped (PDF requiere deps de sistema)
+- Cobertura general: **86%**
+- Cobertura crítica (parsers + logic + markdown_utils): **100%/90%**
+- Tests: 194 pasando, 2 skipped (PDF requiere deps de sistema)
