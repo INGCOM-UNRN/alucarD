@@ -228,6 +228,14 @@ code {
         <div class="info"><strong>{{ i18n.duration }}:</strong> {{ definicion.duracion_minutos }} {{ i18n.minutes }}</div>
         {% endif %}
         <div class="info"><strong>{{ i18n.topic }}:</strong> {{ tema + 1 }}</div>
+        
+        {# Variables personalizadas disponibles #}
+        {% if variables and variables.get('profesor') %}
+        <div class="info"><strong>Profesor:</strong> {{ variables.profesor }}</div>
+        {% endif %}
+        {% if variables and variables.get('aula') %}
+        <div class="info"><strong>Aula:</strong> {{ variables.aula }}</div>
+        {% endif %}
     </div>
 
     <div class="student-info">

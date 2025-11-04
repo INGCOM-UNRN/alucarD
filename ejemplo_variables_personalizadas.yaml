@@ -1,0 +1,68 @@
+nombre_examen: "Examen Parcial II"
+institucion: "Universidad Nacional de Río Negro - Sede Andina"
+materia: "Programación 1"
+fecha: "2025-11-25"
+duracion_minutos: 120
+instrucciones_generales: |
+  Lee cuidadosamente cada pregunta antes de responder.
+  Marca la respuesta correcta en cada caso.
+  Tienes 120 minutos para completar el examen.
+idioma: "es"
+
+configuracion_examen:
+  mezclar_preguntas_dentro_seccion: true
+  mezclar_opciones_dentro_pregunta: true
+  generar_clave_profesor: true
+
+# Variables personalizadas que pueden usarse en las plantillas
+# Soportan f-strings con campos de la definición y otras variables
+variables_personalizadas:
+  # Variables simples
+  profesor: "Dr. Juan Pérez"
+  email_contacto: "juan.perez@unrn.edu.ar"
+  aula: "Aula 301"
+  departamento: "Informática"
+  
+  # Variables con f-strings usando campos de la definición
+  titulo_completo: "{nombre_examen} de {materia}"
+  ubicacion: "{institucion} - {aula}"
+  periodo_academico: "Segundo Cuatrimestre {anio_actual}"
+  
+  # Variables compuestas (referencian otras variables)
+  encabezado_principal: "{institucion} | {materia}"
+  informacion_contacto: "Profesor: {profesor} | Email: {email_contacto}"
+  
+  # Variables con fecha actual
+  fecha_generacion: "Generado el {fecha_actual}"
+  copyright: "© {anio_actual} {institucion}"
+  
+  # Variables para pie de página
+  pie_pagina: "{materia} - {profesor} - {periodo_academico}"
+  
+  # Notas adicionales
+  nota_importante: "Duración: {duracion_minutos} minutos | Fecha del examen: {fecha}"
+  firma_profesor: "_______________\n{profesor}\n{departamento}"
+
+secciones_examen:
+  - nombre: "Parte 1: Conceptos Teóricos"
+    instrucciones: "Selecciona la respuesta correcta para cada pregunta"
+    pools:
+      - categoria: "Programacion/Teoria/**"
+        tipos: ["seleccion_multiple"]
+        cantidad: 10
+        accion_si_insuficiente: advertir
+  
+  - nombre: "Parte 2: Análisis de Código"
+    instrucciones: "Analiza el código y responde las preguntas"
+    pools:
+      - categoria: "Programacion/Codigo/**"
+        tipos: ["seleccion_multiple", "verdadero_falso"]
+        cantidad: 8
+        accion_si_insuficiente: advertir
+  
+  - nombre: "Parte 3: Problemas Prácticos"
+    instrucciones: "Resuelve los siguientes problemas"
+    pools:
+      - etiquetas: ["practico", "aplicado"]
+        cantidad: 5
+        accion_si_insuficiente: usar_todas

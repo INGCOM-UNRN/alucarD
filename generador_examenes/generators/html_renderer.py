@@ -129,12 +129,18 @@ class HtmlRenderer(BaseRenderer):
         # Cargar plantilla
         template = self.env.get_template('clave_profesor.html.j2')
         
+        # Evaluar variables personalizadas
+        variables_personalizadas = {}
+        if hasattr(definicion, 'evaluar_variables_personalizadas'):
+            variables_personalizadas = definicion.evaluar_variables_personalizadas()
+        
         # Preparar contexto
         contexto = {
             'definicion': definicion,
             'secciones': examen_data.get('secciones', []),
             'tema': tema,
-            'i18n': i18n
+            'i18n': i18n,
+            'variables': variables_personalizadas
         }
         
         # Renderizar

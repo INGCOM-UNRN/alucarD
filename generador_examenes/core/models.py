@@ -77,12 +77,14 @@ class SeccionExamen(BaseModel):
     nombre: str
     instrucciones: Optional[str] = None
     pools: List[PoolConfig]
+    layout: Literal["default", "compact-2col", "compact-3col"] = "default"
     
     def __str__(self) -> str:
-        return f"Sección '{self.nombre}' ({len(self.pools)} pools)"
+        layout_str = f", layout:{self.layout}" if self.layout != "default" else ""
+        return f"Sección '{self.nombre}' ({len(self.pools)} pools{layout_str})"
     
     def __repr__(self) -> str:
-        return f"SeccionExamen(nombre='{self.nombre}', pools={len(self.pools)})"
+        return f"SeccionExamen(nombre='{self.nombre}', pools={len(self.pools)}, layout='{self.layout}')"
 
 
 class ConfiguracionExamen(BaseModel):
@@ -116,11 +118,58 @@ class DefinicionExamen(BaseModel):
     idioma: str = "es"
     configuracion_examen: ConfiguracionExamen
     secciones_examen: List[SeccionExamen]
+    variables_personalizadas: Dict[str, str] = Field(default_factory=dict)
     
     def __str__(self) -> str:
         fecha_str = f" ({self.fecha})" if self.fecha else ""
         duracion_str = f" - {self.duracion_minutos}min" if self.duracion_minutos else ""
-        return f"'{self.nombre_examen}'{fecha_str}{duracion_str} - {self.materia} ({self.institucion}) - {len(self.secciones_examen)} secciones"
+        vars_str = f" +{len(self.variables_personalizadas)} vars" if self.variables_personalizadas else ""
+        return f"'{self.nombre_examen}'{fecha_str}{duracion_str} - {self.materia} ({self.institucion}) - {len(self.secciones_examen)} secciones{vars_str}"
     
     def __repr__(self) -> str:
         return f"DefinicionExamen(nombre='{self.nombre_examen}', secciones={len(self.secciones_examen)})"
+    
+    def evaluar_variables_personalizadas(self) -> Dict[str, Any]:
+        """
+        Evalúa las variables personalizadas, procesando f-strings.
+        
+        Las variables pueden referenciar:
+        - Campos de la definición: {nombre_examen}, {institucion}, etc.
+        - Otras variables personalizadas ya evaluadas
+        - Variables de Python estándar: fecha actual, etc.
+        
+        Returns:
+            Diccionario con variables evaluadas
+        """
+        from datetime import datetime
+        
+        # Contexto base con campos de la definición
+        contexto = {
+            'nombre_examen': self.nombre_examen,
+            'institucion': self.institucion,
+            'materia': self.materia,
+            'fecha': self.fecha,
+            'duracion_minutos': self.duracion_minutos,
+            'idioma': self.idioma,
+            # Variables útiles
+            'fecha_actual': datetime.now().strftime('%Y-%m-%d'),
+            'anio_actual': datetime.now().year,
+            'mes_actual': datetime.now().month,
+            'dia_actual': datetime.now().day,
+        }
+        
+        # Evaluar variables personalizadas (orden de definición importa)
+        variables_evaluadas = {}
+        for key, valor_template in self.variables_personalizadas.items():
+            try:
+                # Evaluar f-string con contexto actual
+                valor_evaluado = valor_template.format(**contexto, **variables_evaluadas)
+                variables_evaluadas[key] = valor_evaluado
+            except (KeyError, ValueError) as e:
+                # Si falla, mantener el valor original
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"No se pudo evaluar variable '{key}': {e}. Usando valor original.")
+                variables_evaluadas[key] = valor_template
+        
+        return variables_evaluadas
