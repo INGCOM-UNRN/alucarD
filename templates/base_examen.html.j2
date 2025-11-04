@@ -334,18 +334,19 @@ code {
   
   /* Simplificar bloques de código para impresión */
   .highlight {
-    background-color: #ffffff !important;
-    border: 1px solid #000000 !important;
+    background-color: #f9f9f9 !important;
+    border: 1px solid #333 !important;
     border-radius: 0 !important;
-    padding: 0.5em !important;
-    font-size: 0.85em !important;
+    padding: 0.4em !important;
+    font-size: 0.8em !important;
     page-break-inside: avoid;
+    line-height: 1.3 !important;
   }
   
-  /* Remover colores de sintaxis y usar solo negro */
+  /* Remover colores de sintaxis y usar tonos de gris */
   .highlight * {
     background-color: transparent !important;
-    color: #000000 !important;
+    color: #000 !important;
     font-weight: normal !important;
   }
   
@@ -353,12 +354,21 @@ code {
   .highlight pre {
     margin: 0 !important;
     padding: 0 !important;
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
   }
   
-  /* Asegurar que el código sea legible */
+  /* Asegurar que el código sea legible y compacto */
   code {
-    font-size: 0.85em !important;
-    color: #000000 !important;
+    font-family: 'Courier New', 'Courier', monospace !important;
+    font-size: 0.8em !important;
+    color: #000 !important;
+    line-height: 1.2 !important;
+  }
+  
+  /* Reducir márgenes de párrafos dentro del código */
+  .highlight p {
+    margin: 0.2em 0 !important;
   }
 }
 

@@ -1,0 +1,54 @@
+nombre_examen: "Recuperatorio - Programación 1"
+institucion: "Universidad Nacional de Río Negro - Sede Andina"
+materia: "Programación 1"
+fecha: "2025-12-27"
+duracion_minutos: 150
+instrucciones_generales: |
+  EXAMEN RECUPERATORIO
+  
+  Este examen recupera los contenidos de ambos parciales.
+  - Secciones independientes con diferentes layouts.
+  - Tiempo total: 150 minutos.
+  - Se requiere 60% para aprobar.
+idioma: "es"
+
+configuracion_examen:
+  mezclar_preguntas_dentro_seccion: true
+  mezclar_opciones_dentro_pregunta: true
+  generar_clave_profesor: true
+
+variables_personalizadas:
+  profesor: "Prof. Ana Martínez"
+  email_contacto: "ana.martinez@unrn.edu.ar"
+  aula: "Aula 310"
+  comision: "Todas las comisiones"
+  periodo: "Recuperatorio - Segundo Cuatrimestre {anio_actual}"
+  nota_minima: "60% para aprobar"
+
+secciones_examen:
+  - nombre: "Sección A: Selección Múltiple Compacta"
+    instrucciones: "15 preguntas de opción múltiple"
+    layout: "compact-3col"
+    pools:
+      - tipos: ["seleccion_multiple"]
+        cantidad: 15
+        accion_si_insuficiente: usar_todas
+        puntaje_fijo_por_pregunta: 2.0
+  
+  - nombre: "Sección B: Análisis de Código"
+    instrucciones: "Analiza los fragmentos de código"
+    layout: "default"
+    pools:
+      - tipos: ["seleccion_multiple"]
+        cantidad: 8
+        accion_si_insuficiente: usar_todas
+        puntaje_fijo_por_pregunta: 5.0
+  
+  - nombre: "Sección C: Verificación Rápida"
+    instrucciones: "V o F - Respuestas rápidas"
+    layout: "compact-4col"
+    pools:
+      - tipos: ["verdadero_falso"]
+        cantidad: 20
+        accion_si_insuficiente: usar_todas
+        puntaje_fijo_por_pregunta: 1.0

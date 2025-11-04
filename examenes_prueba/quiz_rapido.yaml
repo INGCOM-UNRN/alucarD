@@ -1,0 +1,32 @@
+nombre_examen: "Quiz Rápido - Semana 8"
+institucion: "Universidad Nacional de Río Negro - Sede Andina"
+materia: "Programación 1"
+fecha: "2025-11-15"
+duracion_minutos: 30
+instrucciones_generales: |
+  Quiz de evaluación continua (30 minutos).
+  - Preguntas rápidas de conceptos básicos.
+  - Responde con lo primero que pienses.
+idioma: "es"
+
+configuracion_examen:
+  mezclar_preguntas_dentro_seccion: true
+  mezclar_opciones_dentro_pregunta: true
+  generar_clave_profesor: true
+
+variables_personalizadas:
+  profesor: "Prof. Luis Gómez"
+  semana: "Semana 8"
+  tema_evaluado: "Estructuras de Control"
+  tipo_evaluacion: "Quiz de Seguimiento"
+  peso_nota: "5% de la nota final"
+
+secciones_examen:
+  - nombre: "Preguntas Rápidas"
+    instrucciones: "10 preguntas - 3 minutos cada una"
+    layout: "compact-4col"
+    pools:
+      - tipos: ["seleccion_multiple", "verdadero_falso"]
+        cantidad: 10
+        accion_si_insuficiente: usar_todas
+        puntaje_fijo_por_pregunta: 1.0

@@ -80,6 +80,9 @@ class HtmlRenderer(BaseRenderer):
         # Cargar traducciones
         i18n = self._cargar_i18n(definicion.idioma)
         
+        # Evaluar variables personalizadas
+        variables = definicion.evaluar_variables_personalizadas()
+        
         # Cargar plantilla
         template = self.env.get_template('base_examen.html.j2')
         
@@ -88,7 +91,8 @@ class HtmlRenderer(BaseRenderer):
             'definicion': definicion,
             'secciones': examen_data.get('secciones', []),
             'tema': tema,
-            'i18n': i18n
+            'i18n': i18n,
+            'variables': variables
         }
         
         # Renderizar
@@ -99,7 +103,7 @@ class HtmlRenderer(BaseRenderer):
         with open(output_file, 'w', encoding='utf-8') as f:
             f.write(html_content)
         
-        logger.info(f"Examen HTML generado: {output_file}")
+        logger.info(f"✓ Examen HTML generado: {output_file.name} (tema {tema + 1})")
         return output_file
     
     def renderizar_clave(
@@ -126,13 +130,11 @@ class HtmlRenderer(BaseRenderer):
         # Cargar traducciones
         i18n = self._cargar_i18n(definicion.idioma)
         
+        # Evaluar variables personalizadas
+        variables = definicion.evaluar_variables_personalizadas()
+        
         # Cargar plantilla
         template = self.env.get_template('clave_profesor.html.j2')
-        
-        # Evaluar variables personalizadas
-        variables_personalizadas = {}
-        if hasattr(definicion, 'evaluar_variables_personalizadas'):
-            variables_personalizadas = definicion.evaluar_variables_personalizadas()
         
         # Preparar contexto
         contexto = {
@@ -140,7 +142,7 @@ class HtmlRenderer(BaseRenderer):
             'secciones': examen_data.get('secciones', []),
             'tema': tema,
             'i18n': i18n,
-            'variables': variables_personalizadas
+            'variables': variables
         }
         
         # Renderizar
@@ -151,5 +153,5 @@ class HtmlRenderer(BaseRenderer):
         with open(output_file, 'w', encoding='utf-8') as f:
             f.write(html_content)
         
-        logger.info(f"Clave HTML generada: {output_file}")
+        logger.info(f"✓ Clave HTML generada: {output_file.name} (tema {tema + 1})")
         return output_file

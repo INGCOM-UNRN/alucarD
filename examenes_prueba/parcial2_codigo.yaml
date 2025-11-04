@@ -1,0 +1,34 @@
+nombre_examen: "Parcial II - Análisis de Código"
+institucion: "Universidad Nacional de Río Negro - Sede Andina"
+materia: "Programación 1"
+fecha: "2025-12-10"
+duracion_minutos: 120
+instrucciones_generales: |
+  Este examen evalúa tu capacidad para leer y comprender código.
+  - Lee cada fragmento de código cuidadosamente.
+  - Responde qué hace el código o cuál es el resultado.
+  - Tiempo: 120 minutos.
+idioma: "es"
+
+configuracion_examen:
+  mezclar_preguntas_dentro_seccion: false
+  mezclar_opciones_dentro_pregunta: true
+  generar_clave_profesor: true
+
+variables_personalizadas:
+  profesor: "Dr. María García"
+  email_contacto: "maria.garcia@unrn.edu.ar"
+  aula: "Laboratorio 3"
+  comision: "Comisión B - Turno Tarde"
+  periodo: "Segundo Cuatrimestre {anio_actual}"
+  nota_especial: "Se permite una hoja de ayuda memoria (A4)"
+
+secciones_examen:
+  - nombre: "Análisis de Fragmentos Python"
+    instrucciones: "Lee el código y selecciona la respuesta correcta"
+    layout: "default"
+    pools:
+      - categoria: "**codigo**"
+        tipos: ["seleccion_multiple"]
+        cantidad: 10
+        accion_si_insuficiente: advertir

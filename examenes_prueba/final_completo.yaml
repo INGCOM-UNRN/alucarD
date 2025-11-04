@@ -1,0 +1,55 @@
+nombre_examen: "Examen Final - Programación 1"
+institucion: "Universidad Nacional de Río Negro - Sede Andina"
+materia: "Programación 1"
+fecha: "2025-12-20"
+duracion_minutos: 180
+instrucciones_generales: |
+  EXAMEN FINAL INTEGRADOR
+  
+  - Este examen consta de 3 partes con diferentes tipos de preguntas.
+  - Lee cuidadosamente cada pregunta antes de responder.
+  - Administra tu tiempo: tienes 180 minutos en total.
+  - No se permite el uso de dispositivos electrónicos.
+idioma: "es"
+
+configuracion_examen:
+  mezclar_preguntas_dentro_seccion: true
+  mezclar_opciones_dentro_pregunta: true
+  generar_clave_profesor: true
+
+variables_personalizadas:
+  profesor: "Prof. Carlos Rodríguez"
+  email_contacto: "carlos.rodriguez@unrn.edu.ar"
+  departamento: "Departamento de Informática"
+  aula: "Aula Magna"
+  periodo: "Segundo Cuatrimestre {anio_actual}"
+  titulo_completo: "FINAL - {materia}"
+  fecha_generacion: "Generado: {fecha_actual}"
+
+secciones_examen:
+  - nombre: "Parte 1: Teoría (40%)"
+    instrucciones: "Selecciona la única respuesta correcta"
+    layout: "compact-2col"
+    pools:
+      - tipos: ["seleccion_multiple"]
+        cantidad: 20
+        accion_si_insuficiente: usar_todas
+        puntaje_fijo_por_pregunta: 2.0
+  
+  - nombre: "Parte 2: Análisis de Código (40%)"
+    instrucciones: "Analiza cada fragmento y responde"
+    layout: "default"
+    pools:
+      - tipos: ["seleccion_multiple"]
+        cantidad: 10
+        accion_si_insuficiente: usar_todas
+        puntaje_fijo_por_pregunta: 4.0
+  
+  - nombre: "Parte 3: Verdadero/Falso (20%)"
+    instrucciones: "Marca V o F según corresponda"
+    layout: "compact-4col"
+    pools:
+      - tipos: ["verdadero_falso"]
+        cantidad: 20
+        accion_si_insuficiente: usar_todas
+        puntaje_fijo_por_pregunta: 1.0
