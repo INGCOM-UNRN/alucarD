@@ -1,0 +1,38 @@
+nombre_examen: "Examen de Algoritmos"
+institucion: "UNRN - Sede Andina"
+materia: "Estructuras de Datos y Algoritmos"
+fecha: "2025-11-15"
+duracion_minutos: 90
+instrucciones_generales: |
+  Responde todas las preguntas.
+  Justifica tus respuestas cuando sea necesario.
+  No se permite el uso de calculadora.
+idioma: "es"
+
+configuracion_examen:
+  mezclar_preguntas_dentro_seccion: true
+  mezclar_opciones_dentro_pregunta: true
+  generar_clave_profesor: true
+
+variables_personalizadas:
+  profesor: "Dr. Martínez"
+  email: "martinez@unrn.edu.ar"
+  aula: "Laboratorio 2"
+  titulo_completo: "{nombre_examen} - {materia}"
+  info_contacto: "Profesor: {profesor} | Email: {email}"
+  periodo: "Segundo Cuatrimestre {anio_actual}"
+
+secciones_examen:
+  - nombre: "Parte 1: Algoritmos Fundamentales"
+    instrucciones: "Selecciona la mejor respuesta para cada pregunta"
+    pools:
+      - cantidad: 20
+        tipos: ["seleccion_multiple"]
+        accion_si_insuficiente: usar_todas
+  
+  - nombre: "Parte 2: Complejidad Computacional"
+    instrucciones: "Analiza la complejidad de cada algoritmo"
+    pools:
+      - cantidad: 15
+        tipos: ["seleccion_multiple"]
+        accion_si_insuficiente: advertir

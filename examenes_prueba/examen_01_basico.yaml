@@ -1,0 +1,29 @@
+nombre_examen: "Examen Básico - Código"
+institucion: "UNRN - Sede Andina"
+materia: "Programación 1"
+fecha: "2025-11-10"
+duracion_minutos: 60
+instrucciones_generales: |
+  Lee cuidadosamente cada pregunta antes de responder.
+  Este examen evalúa conceptos básicos de programación.
+idioma: "es"
+
+configuracion_examen:
+  mezclar_preguntas_dentro_seccion: true
+  mezclar_opciones_dentro_pregunta: true
+  generar_clave_profesor: true
+
+variables_personalizadas:
+  profesor: "Prof. García"
+  aula: "Aula 301"
+  departamento: "Informática"
+  periodo: "Primer Cuatrimestre {anio_actual}"
+  pie_pagina: "{materia} - {profesor}"
+
+secciones_examen:
+  - nombre: "Parte 1: Análisis de Código"
+    instrucciones: "Analiza el código y selecciona la respuesta correcta"
+    pools:
+      - cantidad: 10
+        tipos: ["seleccion_multiple"]
+        accion_si_insuficiente: advertir

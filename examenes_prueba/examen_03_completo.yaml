@@ -1,0 +1,60 @@
+nombre_examen: "Examen Integral - Programación"
+institucion: "Universidad Nacional de Río Negro"
+materia: "Programación 1 - Nivel Avanzado"
+fecha: "2025-11-20"
+duracion_minutos: 120
+instrucciones_generales: |
+  INSTRUCCIONES IMPORTANTES:
+  
+  1. Lee cuidadosamente cada pregunta antes de responder
+  2. Este examen consta de tres partes con diferentes puntajes
+  3. El tiempo total es de 120 minutos
+  4. No se permite el uso de material de consulta
+  5. Las respuestas incorrectas no restan puntos
+  
+  ¡Buena suerte!
+idioma: "es"
+
+configuracion_examen:
+  mezclar_preguntas_dentro_seccion: true
+  mezclar_opciones_dentro_pregunta: true
+  generar_clave_profesor: true
+
+variables_personalizadas:
+  profesor: "Dra. Rodríguez"
+  email_profesor: "rodriguez@unrn.edu.ar"
+  aula: "Aula Magna"
+  departamento: "Ciencias de la Computación"
+  horario_consulta: "Miércoles 14:00-16:00"
+  
+  # Variables compuestas
+  titulo_largo: "{nombre_examen} - {materia}"
+  info_contacto: "Docente: {profesor} ({departamento})"
+  info_completa: "{email_profesor} | Consultas: {horario_consulta}"
+  periodo: "Año Académico {anio_actual}"
+  
+  # Pie de página
+  pie_pagina: "{materia} | {profesor} | {periodo}"
+  copyright: "© {anio_actual} {institucion}"
+
+secciones_examen:
+  - nombre: "Parte 1: Conceptos Fundamentales (25 puntos)"
+    instrucciones: "Responde las siguientes preguntas de selección múltiple"
+    pools:
+      - cantidad: 8
+        tipos: ["seleccion_multiple"]
+        accion_si_insuficiente: advertir
+  
+  - nombre: "Parte 2: Análisis de Código (40 puntos)"
+    instrucciones: "Analiza cuidadosamente cada fragmento de código"
+    pools:
+      - cantidad: 10
+        tipos: ["seleccion_multiple"]
+        accion_si_insuficiente: advertir
+  
+  - nombre: "Parte 3: Algoritmos (35 puntos)"
+    instrucciones: "Evalúa la complejidad y corrección de los algoritmos"
+    pools:
+      - cantidad: 12
+        tipos: ["seleccion_multiple"]
+        accion_si_insuficiente: usar_todas

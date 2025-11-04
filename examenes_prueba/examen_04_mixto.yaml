@@ -1,0 +1,53 @@
+nombre_examen: "Evaluación Mixta - Teoría y Práctica"
+institucion: "UNRN Andina"
+materia: "Fundamentos de Programación"
+fecha: "2025-11-25"
+duracion_minutos: 90
+instrucciones_generales: |
+  Esta evaluación combina preguntas teóricas y prácticas.
+  
+  IMPORTANTE:
+  - Parte 1 (Teoría): 40% de la nota
+  - Parte 2 (Código): 30% de la nota
+  - Parte 3 (Algoritmos): 30% de la nota
+  
+  Administra tu tiempo adecuadamente.
+idioma: "es"
+
+configuracion_examen:
+  mezclar_preguntas_dentro_seccion: true
+  mezclar_opciones_dentro_pregunta: true
+  generar_clave_profesor: true
+
+variables_personalizadas:
+  profesor: "Lic. Fernández"
+  aula: "Lab. 3"
+  comision: "Comisión A"
+  turno: "Mañana"
+  
+  info_examen: "{nombre_examen} - {comision} ({turno})"
+  ubicacion: "{aula} - {institucion}"
+  contacto_docente: "Profesor: {profesor}"
+  periodo: "Cuatrimestre {mes_actual}/{anio_actual}"
+
+secciones_examen:
+  - nombre: "Parte 1: Fundamentos Teóricos"
+    instrucciones: "Preguntas sobre conceptos fundamentales de programación"
+    pools:
+      - cantidad: 25
+        tipos: ["seleccion_multiple"]
+        accion_si_insuficiente: usar_todas
+  
+  - nombre: "Parte 2: Lectura de Código"
+    instrucciones: "Analiza y determina qué hace cada código"
+    pools:
+      - cantidad: 8
+        tipos: ["seleccion_multiple"]
+        accion_si_insuficiente: advertir
+  
+  - nombre: "Parte 3: Algoritmos y Complejidad"
+    instrucciones: "Evalúa algoritmos y su eficiencia"
+    pools:
+      - cantidad: 15
+        tipos: ["seleccion_multiple"]
+        accion_si_insuficiente: advertir

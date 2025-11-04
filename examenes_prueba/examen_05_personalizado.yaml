@@ -1,0 +1,107 @@
+nombre_examen: "Examen Final - Programación 1"
+institucion: "Universidad Nacional de Río Negro - Sede Andina"
+materia: "Introducción a la Programación"
+fecha: "2025-12-01"
+duracion_minutos: 150
+instrucciones_generales: |
+  EXAMEN FINAL - INSTRUCCIONES GENERALES
+  
+  Este examen es integral y cubre todos los temas del cuatrimestre.
+  
+  Estructura del examen:
+  • Parte 1: Sintaxis y Semántica (30 min)
+  • Parte 2: Estructuras de Control (40 min)
+  • Parte 3: Funciones y Módulos (40 min)
+  • Parte 4: Algoritmos Avanzados (40 min)
+  
+  Normas:
+  - No se permite material de consulta
+  - Calculadora permitida solo para Parte 4
+  - Entregar todas las hojas al finalizar
+  
+  ¡Éxitos!
+idioma: "es"
+
+configuracion_examen:
+  mezclar_preguntas_dentro_seccion: true
+  mezclar_opciones_dentro_pregunta: true
+  generar_clave_profesor: true
+
+variables_personalizadas:
+  # Información del docente
+  profesor: "Dr. Pablo Sánchez"
+  email: "psanchez@unrn.edu.ar"
+  telefono: "+54 294 123-4567"
+  departamento: "Escuela de Producción, Tecnología y Medio Ambiente"
+  oficina: "Oficina 205, Edificio Central"
+  
+  # Información del examen
+  tipo_examen: "Examen Final Integrador"
+  modalidad: "Presencial"
+  puntaje_total: "100 puntos"
+  puntaje_aprobacion: "60 puntos"
+  
+  # Información administrativa
+  codigo_materia: "INFO-101"
+  plan_estudios: "Plan 2023"
+  creditos: "6 créditos"
+  carrera: "Licenciatura en Sistemas"
+  
+  # Variables compuestas
+  titulo_completo: "{tipo_examen}: {nombre_examen}"
+  subtitulo: "{materia} ({codigo_materia})"
+  info_carrera: "{carrera} | {plan_estudios} | {creditos}"
+  
+  info_docente: "Profesor: {profesor}"
+  contacto_completo: "Email: {email} | Tel: {telefono}"
+  ubicacion_oficina: "Consultas en {oficina}"
+  
+  criterio_aprobacion: "Puntaje mínimo: {puntaje_aprobacion} de {puntaje_total}"
+  info_modalidad: "Modalidad: {modalidad} | Duración: {duracion_minutos} minutos"
+  
+  periodo_actual: "Segundo Cuatrimestre {anio_actual}"
+  fecha_completa: "Fecha del examen: {fecha}"
+  
+  # Pie de página elaborado
+  pie_izquierdo: "{codigo_materia} - {materia}"
+  pie_centro: "{profesor} - {institucion}"
+  pie_derecho: "Página [número] de [total]"
+  
+  nota_final: "IMPORTANTE: Verificar que todas las respuestas estén marcadas correctamente"
+  firma: "__________________\n{profesor}\n{departamento}"
+
+secciones_examen:
+  - nombre: "Parte 1: Sintaxis y Semántica Básica (20 puntos)"
+    instrucciones: |
+      Responde las siguientes preguntas sobre sintaxis básica de programación.
+      Cada pregunta vale 2 puntos.
+    pools:
+      - cantidad: 10
+        tipos: ["seleccion_multiple"]
+        accion_si_insuficiente: advertir
+  
+  - nombre: "Parte 2: Estructuras de Control (25 puntos)"
+    instrucciones: |
+      Analiza los fragmentos de código con estructuras de control.
+      Preguntas de mayor complejidad.
+    pools:
+      - cantidad: 5
+        tipos: ["seleccion_multiple"]
+        accion_si_insuficiente: advertir
+  
+  - nombre: "Parte 3: Funciones y Módulos (25 puntos)"
+    instrucciones: |
+      Evalúa tu comprensión de funciones, parámetros y módulos.
+    pools:
+      - cantidad: 8
+        tipos: ["seleccion_multiple"]
+        accion_si_insuficiente: advertir
+  
+  - nombre: "Parte 4: Algoritmos y Complejidad (30 puntos)"
+    instrucciones: |
+      Preguntas avanzadas sobre algoritmos, estructuras de datos y complejidad.
+      Esta sección tiene el mayor peso en la calificación final.
+    pools:
+      - cantidad: 20
+        tipos: ["seleccion_multiple"]
+        accion_si_insuficiente: usar_todas
