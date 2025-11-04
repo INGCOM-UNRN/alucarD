@@ -38,6 +38,17 @@ def test_seccion_layout_compact_3col():
     assert "compact-3col" in str(seccion)
 
 
+def test_seccion_layout_compact_4col():
+    """Test layout compacto de 4 columnas"""
+    seccion = SeccionExamen(
+        nombre="Test Section",
+        layout="compact-4col",
+        pools=[PoolConfig(cantidad=20)]
+    )
+    assert seccion.layout == "compact-4col"
+    assert "compact-4col" in str(seccion)
+
+
 def test_seccion_layout_invalido():
     """Test que layout inválido falla validación"""
     with pytest.raises(Exception):
@@ -195,7 +206,7 @@ def test_html_render_con_layout_class(tmp_path):
 
 def test_todos_los_layouts_validos():
     """Test que todos los valores de layout son válidos"""
-    layouts_validos = ["default", "compact-2col", "compact-3col"]
+    layouts_validos = ["default", "compact-2col", "compact-3col", "compact-4col"]
     
     for layout in layouts_validos:
         seccion = SeccionExamen(

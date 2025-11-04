@@ -77,7 +77,7 @@ class SeccionExamen(BaseModel):
     nombre: str
     instrucciones: Optional[str] = None
     pools: List[PoolConfig]
-    layout: Literal["default", "compact-2col", "compact-3col"] = "default"
+    layout: Literal["default", "compact-2col", "compact-3col", "compact-4col"] = "default"
     
     def __str__(self) -> str:
         layout_str = f", layout:{self.layout}" if self.layout != "default" else ""

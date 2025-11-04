@@ -158,6 +158,39 @@ body {
   font-size: 0.9em;
 }
 
+/* --- Layout Compact 4 Columnas --- */
+
+.section.layout-compact-4col .question {
+  display: block;
+  padding: 0.5em;
+  margin-bottom: 0.8em;
+}
+
+.section.layout-compact-4col .question-header {
+  font-size: 0.95em;
+}
+
+.section.layout-compact-4col .question-text {
+  margin-bottom: 0.4em;
+  font-size: 0.95em;
+}
+
+.section.layout-compact-4col .options {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr; /* 4 columnas */
+  gap: 0.15em;
+  margin-top: 0.4em;
+  /* Resetear propiedades del layout default */
+  grid-column: auto;
+  grid-row: auto;
+}
+
+.section.layout-compact-4col .option {
+  margin-bottom: 0.1em;
+  break-inside: avoid;
+  font-size: 0.85em;
+}
+
 .options {
   /* El 'margin-left: 1.5em' anterior ya no es necesario.
     El 'gap' del grid .question se encarga del espaciado.
@@ -249,14 +282,16 @@ code {
   /* --- Optimización para layouts compactos en impresión --- */
   
   .section.layout-compact-2col .question,
-  .section.layout-compact-3col .question {
+  .section.layout-compact-3col .question,
+  .section.layout-compact-4col .question {
     padding: 0.3em;
     margin-bottom: 0.5em;
     border-width: 0.5px;
   }
   
   .section.layout-compact-2col .question-text,
-  .section.layout-compact-3col .question-text {
+  .section.layout-compact-3col .question-text,
+  .section.layout-compact-4col .question-text {
     margin-bottom: 0.3em;
     line-height: 1.3;
   }
@@ -269,8 +304,13 @@ code {
     gap: 0.15em;
   }
   
+  .section.layout-compact-4col .options {
+    gap: 0.1em;
+  }
+  
   .section.layout-compact-2col .option,
-  .section.layout-compact-3col .option {
+  .section.layout-compact-3col .option,
+  .section.layout-compact-4col .option {
     margin-bottom: 0.1em;
     font-size: 0.85em;
     line-height: 1.2;
@@ -278,13 +318,15 @@ code {
   
   /* Reducir espacio en headers para layouts compactos */
   .section.layout-compact-2col .question-header,
-  .section.layout-compact-3col .question-header {
+  .section.layout-compact-3col .question-header,
+  .section.layout-compact-4col .question-header {
     margin-bottom: 0.2em;
   }
   
   /* Reducir tamaño de checkbox en layouts compactos */
   .section.layout-compact-2col .option-checkbox,
-  .section.layout-compact-3col .option-checkbox {
+  .section.layout-compact-3col .option-checkbox,
+  .section.layout-compact-4col .option-checkbox {
     width: 10px;
     height: 10px;
     min-width: 10px;
