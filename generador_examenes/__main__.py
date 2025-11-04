@@ -194,6 +194,15 @@ def main():
     )
     
     parser.add_argument(
+        '--wizard',
+        nargs='?',
+        const=None,
+        type=Path,
+        metavar='YAML',
+        help='Asistente interactivo para crear/editar configuración de examen'
+    )
+    
+    parser.add_argument(
         '-d', '--definicion',
         type=Path,
         help='Ruta al archivo de definición YAML del examen'
@@ -274,9 +283,21 @@ def main():
                 raise
             return 1
     
+    # Modo wizard
+    if args.wizard is not None:
+        try:
+            from generador_examenes.config.exam_wizard import run_wizard
+            run_wizard(args.wizard)
+            return 0
+        except Exception as e:
+            logger.error(f"Error en el wizard: {e}")
+            if args.debug:
+                raise
+            return 1
+    
     # Validar argumentos requeridos
     if not args.definicion:
-        parser.error("Se requiere --definicion (o --init para inicializar)")
+        parser.error("Se requiere --definicion (o --init para inicializar, o --wizard para configurar)")
     
     if not args.input_banco:
         parser.error("Se requiere --input-banco con al menos un archivo de banco")
