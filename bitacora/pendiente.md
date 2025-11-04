@@ -3,6 +3,7 @@
 ## Funcionalidad para implementar
 
 - [ ] Crear una página para la configuración fina de la generación, para elegir y tener una vista previa de las opciones de visualizacion de cada pregunta (layout), la página debe dar tener un botón para descargar la configuracion necesaria para fusionarlo a la configuracion en la generación del cuestionario 
+- [ ] Que el formato del código en guardas de markdown, utilice estilos desde CSS para adaptar la representación a papel o impreso de una forma mas simple
 
 ## ✅ Completado en esta sesión (2025-11-04)
 - [x] Solucionar error de `uv sync` (pyproject.toml)
@@ -17,6 +18,9 @@
 - [x] Cobertura 100% en parsers (gift_parser, moodle_parser)
 - [x] Cobertura 90% en markdown_utils
 - [x] Normalización de caracteres fullwidth en bloques de código (NFKC)
+- [x] Normalización del símbolo ↵ a saltos de línea reales
+- [x] Agregar checkbox con identificador (a, b, c, d) a la izquierda de cada opción en HTML
+- [x] Tests para normalización de caracteres fullwidth y símbolo ↵
 
 ## Mejoras generales
 - [ ] Mejorar los __str__ para que las salidas por los logs tengan mas información útil.
