@@ -65,7 +65,7 @@ body {
   font-size: 1.2em;
 }
 
-/* --- Bloque de Pregunta (Layout con Grid) --- */
+/* --- Bloque de Pregunta (Layout Default - Análisis de Código) --- */
 
 .question {
   display: grid;
@@ -76,7 +76,6 @@ body {
   margin-bottom: 1.5em;
   page-break-inside: avoid;
 
-  /* --- Líneas añadidas --- */
   border: 1px solid #555; /* Borde gris oscuro para agrupar */
   padding: 1em;            /* Espaciado interno */
   border-radius: 5px;      /* Esquinas redondeadas (opcional) */
@@ -93,6 +92,71 @@ body {
   margin-bottom: 0.8em;
   grid-column: 1; /* Coloca en la primera columna */
   grid-row: 2;    /* Coloca en la segunda fila */
+}
+
+/* --- Layout Compacto 2 Columnas --- */
+
+.section.layout-compact-2col .question {
+  display: block; /* Cambiar a layout de bloque */
+  padding: 0.5em;
+  margin-bottom: 1em;
+}
+
+.section.layout-compact-2col .question-header {
+  grid-column: auto;
+  grid-row: auto;
+}
+
+.section.layout-compact-2col .question-text {
+  grid-column: auto;
+  grid-row: auto;
+  margin-bottom: 0.5em;
+}
+
+.section.layout-compact-2col .options {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* 2 columnas */
+  gap: 0.3em;
+  margin-top: 0.5em;
+}
+
+.section.layout-compact-2col .option {
+  margin-bottom: 0.2em;
+  break-inside: avoid;
+}
+
+/* --- Layout Compacto 3 Columnas --- */
+
+.section.layout-compact-3col .question {
+  display: block; /* Cambiar a layout de bloque */
+  padding: 0.5em;
+  margin-bottom: 0.8em;
+}
+
+.section.layout-compact-3col .question-header {
+  grid-column: auto;
+  grid-row: auto;
+  font-size: 0.95em;
+}
+
+.section.layout-compact-3col .question-text {
+  grid-column: auto;
+  grid-row: auto;
+  margin-bottom: 0.4em;
+  font-size: 0.95em;
+}
+
+.section.layout-compact-3col .options {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr; /* 3 columnas */
+  gap: 0.2em;
+  margin-top: 0.4em;
+}
+
+.section.layout-compact-3col .option {
+  margin-bottom: 0.1em;
+  break-inside: avoid;
+  font-size: 0.9em;
 }
 
 .options {
@@ -183,6 +247,50 @@ code {
     page-break-before: avoid;
   }
   
+  /* --- Optimización para layouts compactos en impresión --- */
+  
+  .section.layout-compact-2col .question,
+  .section.layout-compact-3col .question {
+    padding: 0.3em;
+    margin-bottom: 0.5em;
+    border-width: 0.5px;
+  }
+  
+  .section.layout-compact-2col .question-text,
+  .section.layout-compact-3col .question-text {
+    margin-bottom: 0.3em;
+    line-height: 1.3;
+  }
+  
+  .section.layout-compact-2col .options {
+    gap: 0.2em;
+  }
+  
+  .section.layout-compact-3col .options {
+    gap: 0.15em;
+  }
+  
+  .section.layout-compact-2col .option,
+  .section.layout-compact-3col .option {
+    margin-bottom: 0.1em;
+    font-size: 0.85em;
+    line-height: 1.2;
+  }
+  
+  /* Reducir espacio en headers para layouts compactos */
+  .section.layout-compact-2col .question-header,
+  .section.layout-compact-3col .question-header {
+    margin-bottom: 0.2em;
+  }
+  
+  /* Reducir tamaño de checkbox en layouts compactos */
+  .section.layout-compact-2col .option-checkbox,
+  .section.layout-compact-3col .option-checkbox {
+    width: 10px;
+    height: 10px;
+    min-width: 10px;
+  }
+  
   /* Simplificar bloques de código para impresión */
   .highlight {
     background-color: #ffffff !important;
@@ -251,7 +359,7 @@ code {
     {% endif %}
 
     {% for seccion in secciones %}
-    <div class="section">
+    <div class="section{% if seccion.layout %} layout-{{ seccion.layout }}{% endif %}">
         <div class="section-title">{{ i18n.section }}: {{ seccion.nombre }}</div>
         
         {% if seccion.instrucciones %}
