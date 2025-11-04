@@ -125,7 +125,7 @@ def cargar_bancos(rutas_bancos: List[Path]) -> Dict[str, Pregunta]:
             # Combinar preguntas, verificando duplicados
             for id_pregunta, pregunta in preguntas.items():
                 if id_pregunta in banco_completo:
-                    logger.warning(f"Pregunta duplicada encontrada: {id_pregunta} - sobrescribiendo")
+                    logger.warning(f"Pregunta duplicada encontrada: {pregunta} - sobrescribiendo")
                 banco_completo[id_pregunta] = pregunta
             
         except Exception as e:
@@ -234,16 +234,17 @@ def construir_pool_examen(
     Returns:
         Diccionario con estructura del examen y preguntas seleccionadas
     """
-    logger.info("Construyendo pool de examen")
+    logger.info(f"Construyendo pool de examen: {definicion}")
     
     secciones_examen = []
     
-    for seccion_def in definicion.secciones_examen:
-        logger.debug(f"Procesando sección: {seccion_def.nombre}")
+    for idx, seccion_def in enumerate(definicion.secciones_examen, 1):
+        logger.info(f"Procesando {seccion_def} ({idx}/{len(definicion.secciones_examen)})")
         
         preguntas_seccion = []
         
-        for pool in seccion_def.pools:
+        for pool_idx, pool in enumerate(seccion_def.pools, 1):
+            logger.debug(f"  Pool {pool_idx}/{len(seccion_def.pools)}")
             preguntas_pool = _filtrar_preguntas_pool(pool, banco)
             preguntas_seccion.extend(preguntas_pool)
         
@@ -253,8 +254,9 @@ def construir_pool_examen(
             'preguntas': preguntas_seccion
         })
         
+        puntaje_total = sum(p.puntaje for p in preguntas_seccion)
         logger.info(
-            f"Sección '{seccion_def.nombre}': {len(preguntas_seccion)} preguntas"
+            f"✓ Sección '{seccion_def.nombre}': {len(preguntas_seccion)} preguntas, {puntaje_total} puntos"
         )
     
     return {'secciones': secciones_examen}
@@ -264,24 +266,29 @@ def _filtrar_preguntas_pool(pool: PoolConfig, banco: Dict[str, Pregunta]) -> Lis
     """
     Filtra y selecciona preguntas según la configuración del pool
     """
+    logger.debug(f"Filtrando preguntas para: {pool}")
+    
     # Empezar con todas las preguntas del banco
     candidatas = list(banco.values())
     
     # Filtro 1: Preguntas fijadas
     if pool.preguntas_fijadas:
         fijadas = [banco[id_p] for id_p in pool.preguntas_fijadas if id_p in banco]
-        logger.debug(f"Pool: {len(fijadas)} preguntas fijadas")
+        logger.debug(f"  → {len(fijadas)} preguntas fijadas seleccionadas")
+        if logger.isEnabledFor(logging.DEBUG):
+            for p in fijadas[:3]:
+                logger.debug(f"    • {p}")
         return fijadas
     
     # Filtro 2: Categoría (soporta categorías anidadas)
     if pool.categoria:
         candidatas = [p for p in candidatas if categoria_coincide(p.categoria, pool.categoria)]
-        logger.debug(f"Filtro categoría '{pool.categoria}': {len(candidatas)} candidatas")
+        logger.debug(f"  → Filtro categoría '{pool.categoria}': {len(candidatas)} candidatas")
     
     # Filtro 3: Tipos
     if pool.tipos:
         candidatas = [p for p in candidatas if p.tipo in pool.tipos]
-        logger.debug(f"Filtro tipos {pool.tipos}: {len(candidatas)} candidatas")
+        logger.debug(f"  → Filtro tipos {pool.tipos}: {len(candidatas)} candidatas")
     
     # Filtro 4: Etiquetas (debe tener al menos una de las etiquetas)
     if pool.etiquetas:
@@ -289,7 +296,7 @@ def _filtrar_preguntas_pool(pool: PoolConfig, banco: Dict[str, Pregunta]) -> Lis
             p for p in candidatas 
             if any(tag in p.etiquetas for tag in pool.etiquetas)
         ]
-        logger.debug(f"Filtro etiquetas {pool.etiquetas}: {len(candidatas)} candidatas")
+        logger.debug(f"  → Filtro etiquetas {pool.etiquetas}: {len(candidatas)} candidatas")
     
     # Verificar cantidad
     cantidad_solicitada = pool.cantidad if pool.cantidad else len(candidatas)
@@ -315,6 +322,13 @@ def _filtrar_preguntas_pool(pool: PoolConfig, banco: Dict[str, Pregunta]) -> Lis
     if pool.puntaje_fijo_por_pregunta:
         for pregunta in seleccionadas:
             pregunta.puntaje = pool.puntaje_fijo_por_pregunta
+    
+    logger.debug(f"  → {len(seleccionadas)} preguntas seleccionadas del pool")
+    if logger.isEnabledFor(logging.DEBUG):
+        for p in seleccionadas[:3]:
+            logger.debug(f"    • {p}")
+        if len(seleccionadas) > 3:
+            logger.debug(f"    ... y {len(seleccionadas) - 3} más")
     
     return seleccionadas
 
