@@ -32,6 +32,9 @@ def normalizar_fullwidth(text: str) -> str:
     # Esto convierte caracteres fullwidth a su equivalente halfwidth/ASCII
     normalized = unicodedata.normalize('NFKC', text)
     
+    # Reemplazar el símbolo de retorno de carro visible (↵) con saltos de línea reales
+    normalized = normalized.replace('↵', '\n')
+    
     return normalized
 
 
@@ -47,6 +50,9 @@ def markdown_to_html(text: str) -> str:
     """
     if not text:
         return ""
+    
+    # Normalizar caracteres fullwidth antes de procesar
+    text = normalizar_fullwidth(text)
     
     # Configurar extensiones de markdown con syntax highlighting
     md = markdown.Markdown(
