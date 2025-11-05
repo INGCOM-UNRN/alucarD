@@ -3,8 +3,8 @@
 **Sistema profesional de generación de exámenes** basado en plantillas YAML, con soporte para bancos Moodle/GIFT, múltiples layouts y optimización para impresión.
 
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/tests-228%20passing-success.svg)](tests/)
-[![Coverage](https://img.shields.io/badge/coverage-76%25-green.svg)](htmlcov/)
+[![Tests](https://img.shields.io/badge/tests-253%20passing-success.svg)](tests/)
+[![Coverage](https://img.shields.io/badge/coverage-77%25-green.svg)](htmlcov/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 ---
@@ -67,9 +67,9 @@
 - ✅ **Fuentes Legibles**: Tamaños y espaciado optimizados
 
 ### 🧪 Calidad y Testing
-- ✅ **228 Tests**: Suite completa con pytest
-- ✅ **76% Coverage**: Cobertura de código
-- ✅ **5 Exámenes de Prueba**: Validación en escenarios reales
+- ✅ **253 Tests**: Suite completa con pytest
+- ✅ **77% Coverage**: Cobertura de código
+- ✅ **6 Exámenes de Prueba**: Validación en escenarios reales
 - ✅ **CI Ready**: Configurado para integración continua
 
 ---
