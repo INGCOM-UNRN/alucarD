@@ -26,6 +26,7 @@
 - [Ejemplos Prácticos](#-ejemplos-prácticos)
 - [Testing y Calidad](#-testing-y-calidad)
 - [Arquitectura](#-arquitectura)
+- [Documentación Adicional](#-documentación-adicional)
 - [Contribuir](#-contribuir)
 
 ---
@@ -915,6 +916,53 @@ class MiRenderer(BaseRenderer):
         # Tu lógica aquí
         pass
 ```
+
+---
+
+## 📚 Documentación Adicional
+
+Este proyecto incluye documentación completa y detallada:
+
+### Documentos Principales
+
+1. **[README.md](README.md)** - Este archivo: Guía completa de uso
+2. **[CHANGELOG.md](CHANGELOG.md)** - Historial de cambios y versiones
+3. **[COMPLIANCE_REPORT.md](COMPLIANCE_REPORT.md)** - Verificación de cumplimiento con especificaciones
+4. **[descripcion.md](descripcion.md)** - Especificaciones técnicas originales del proyecto
+
+### Documentación en el Código
+
+- **Docstrings**: Todas las clases y funciones públicas documentadas (Google Style)
+- **Type Hints**: Tipado completo en todas las funciones
+- **Comentarios**: Explicaciones en lógica compleja
+
+### Tests como Documentación
+
+Los tests sirven como documentación viva del comportamiento esperado:
+- `tests/test_parsers.py` - Ejemplos de uso de parsers
+- `tests/test_logic.py` - Flujos de filtrado y construcción
+- `tests/test_integration.py` - Escenarios end-to-end
+- `tests/test_layouts.py` - Comportamiento de layouts
+
+### Exámenes de Ejemplo
+
+El directorio `examenes_prueba/` contiene 6 configuraciones completas que sirven como ejemplos prácticos:
+1. `examen_01_basico.yaml` - Configuración mínima
+2. `examen_02_algoritmos.yaml` - Filtrado por categoría
+3. `examen_03_completo.yaml` - Uso avanzado
+4. `examen_04_mixto.yaml` - Múltiples layouts
+5. `examen_05_personalizado.yaml` - Variables personalizadas
+6. `examen_06_layouts.yaml` - Demostración de layouts
+
+Cada uno incluye comentarios explicativos en YAML.
+
+### Reportes de Verificación
+
+- **COMPLIANCE_REPORT.md**: Verificación punto por punto del cumplimiento con `descripcion.md`
+  - ✅ 100% cumplimiento confirmado
+  - ✅ 11 mejoras adicionales documentadas
+  - ✅ 231 tests, 76% cobertura
+  - ✅ Estado: PRODUCCIÓN READY
 
 ---
 
