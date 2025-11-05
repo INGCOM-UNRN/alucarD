@@ -1,0 +1,89 @@
+nombre_examen: "Verificación de Layouts y Desarrollo"
+institucion: "Universidad Test"
+materia: "Programación y Algoritmos"
+fecha: "2025-11-05"
+duracion_minutos: 120
+instrucciones_generales: |
+  Este examen verifica diferentes layouts y tipos de preguntas.
+  Incluye preguntas de selección múltiple, verdadero/falso y desarrollo.
+idioma: "es"
+
+configuracion_examen:
+  mezclar_preguntas_dentro_seccion: false
+  mezclar_opciones_dentro_pregunta: false
+  generar_clave_profesor: true
+
+variables_personalizadas:
+  profesor: "Prof. Test"
+  aula: "Aula Virtual"
+  periodo: "Verificación {anio_actual}"
+
+secciones_examen:
+  - nombre: "Sección 1: Layout Default (Código)"
+    layout: "default"
+    instrucciones: |
+      Layout para análisis de código. Enunciado extenso a la izquierda (2/3),
+      opciones a la derecha (1/3).
+    pools:
+      - tipos: ["seleccion_multiple"]
+        cantidad: 3
+        accion_si_insuficiente: usar_todas
+
+  - nombre: "Sección 2: Layout Compact 2 Columnas"
+    layout: "compact-2col"
+    instrucciones: |
+      Enunciado arriba, opciones en 2 columnas abajo.
+      Ideal para preguntas teóricas con opciones medianas.
+    pools:
+      - tipos: ["seleccion_multiple"]
+        cantidad: 6
+        accion_si_insuficiente: usar_todas
+
+  - nombre: "Sección 3: Layout Compact 3 Columnas"
+    layout: "compact-3col"
+    instrucciones: |
+      Enunciado arriba, opciones en 3 columnas abajo.
+      Para opciones cortas. Ahorra 50-60% de papel.
+    pools:
+      - tipos: ["verdadero_falso"]
+        cantidad: 9
+        accion_si_insuficiente: usar_todas
+
+  - nombre: "Sección 4: Layout Compact 4 Columnas"
+    layout: "compact-4col"
+    instrucciones: |
+      Enunciado arriba, opciones en 4 columnas abajo.
+      Máxima densidad para V/F. Ahorra 60-70% de papel.
+    pools:
+      - tipos: ["verdadero_falso"]
+        cantidad: 12
+        accion_si_insuficiente: usar_todas
+
+  - nombre: "Sección 5: Preguntas de Desarrollo (Layout Default)"
+    layout: "default"
+    instrucciones: |
+      Preguntas de desarrollo con diferentes tamaños.
+      El alumno debe escribir su respuesta en el espacio provisto.
+    pools:
+      - tipos: ["desarrollo"]
+        cantidad: 5
+        accion_si_insuficiente: usar_todas
+
+  - nombre: "Sección 6: Desarrollo en Layout Compact 2col"
+    layout: "compact-2col"
+    instrucciones: |
+      Preguntas de desarrollo en layout compacto.
+      Verificar que se adapten correctamente.
+    pools:
+      - tipos: ["desarrollo"]
+        cantidad: 3
+        accion_si_insuficiente: usar_todas
+
+  - nombre: "Sección 7: Mixto - Selección y Desarrollo"
+    layout: "default"
+    instrucciones: |
+      Mezcla de tipos de preguntas en el mismo layout.
+    pools:
+      - tipos: ["seleccion_multiple", "desarrollo"]
+        cantidad: 6
+        accion_si_insuficiente: usar_todas

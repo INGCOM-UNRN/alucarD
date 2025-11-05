@@ -23,7 +23,7 @@ class Opcion(BaseModel):
 class Pregunta(BaseModel):
     """Modelo para una pregunta del banco"""
     id: str
-    tipo: Literal["seleccion_multiple", "verdadero_falso", "respuesta_corta", "ensayo", "emparejamiento", "numerica"]
+    tipo: Literal["seleccion_multiple", "verdadero_falso", "respuesta_corta", "ensayo", "emparejamiento", "numerica", "desarrollo"]
     nombre: str
     categoria: str
     enunciado_html: str
@@ -32,6 +32,7 @@ class Pregunta(BaseModel):
     etiquetas: List[str] = Field(default_factory=list)
     retroalimentacion_general: Optional[str] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
+    tamano_desarrollo: Optional[Literal["pequeno", "mediano", "grande"]] = "mediano"
     
     def __str__(self) -> str:
         nombre_preview = self.nombre[:60] + "..." if len(self.nombre) > 60 else self.nombre

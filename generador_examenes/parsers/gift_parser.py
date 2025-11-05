@@ -125,7 +125,16 @@ class GiftParser(BaseParser):
         opciones_str = match.group(2).strip()
         
         # Determinar tipo de pregunta y parsear opciones
-        if opciones_str.startswith('T') or opciones_str.startswith('F'):
+        tamano_desarrollo = None
+        if opciones_str.lower() in ['desarrollo', 'desarrollo:pequeno', 'desarrollo:mediano', 'desarrollo:grande']:
+            # Pregunta de desarrollo
+            tipo = "desarrollo"
+            opciones = []
+            if ':' in opciones_str:
+                tamano_desarrollo = opciones_str.split(':')[1].lower()
+            else:
+                tamano_desarrollo = 'mediano'
+        elif opciones_str.startswith('T') or opciones_str.startswith('F'):
             # Verdadero/Falso
             tipo = "verdadero_falso"
             opciones = self._parsear_verdadero_falso(opciones_str)
@@ -150,7 +159,8 @@ class GiftParser(BaseParser):
             enunciado_html=enunciado,
             puntaje=1.0,
             opciones=opciones,
-            etiquetas=etiquetas
+            etiquetas=etiquetas,
+            tamano_desarrollo=tamano_desarrollo
         )
         
         return pregunta

@@ -69,12 +69,30 @@ class MoodleXMLParser(BaseParser):
             'multichoice': 'seleccion_multiple',
             'truefalse': 'verdadero_falso',
             'shortanswer': 'respuesta_corta',
-            'essay': 'ensayo',
+            'essay': 'desarrollo',
             'matching': 'emparejamiento',
             'numerical': 'numerica'
         }
         
         tipo = tipo_map.get(tipo_moodle, 'respuesta_corta')
+        
+        # Para preguntas tipo desarrollo, detectar tamaño desde responseformat
+        tamano_desarrollo = None
+        if tipo == 'desarrollo':
+            responseformat = question_elem.find('responseformat')
+            if responseformat is not None and responseformat.text:
+                # Moodle usa: editor, editorfilepicker, plain, monospaced, noinline
+                # Mapear a nuestros tamaños: pequeno, mediano, grande
+                format_map = {
+                    'noinline': 'pequeno',
+                    'plain': 'mediano', 
+                    'editor': 'grande',
+                    'editorfilepicker': 'grande',
+                    'monospaced': 'mediano'
+                }
+                tamano_desarrollo = format_map.get(responseformat.text, 'mediano')
+            else:
+                tamano_desarrollo = 'mediano'
         
         # Extraer nombre
         name_elem = question_elem.find('name/text')
@@ -134,7 +152,8 @@ class MoodleXMLParser(BaseParser):
             puntaje=puntaje,
             opciones=opciones,
             etiquetas=etiquetas,
-            retroalimentacion_general=retroalimentacion_general
+            retroalimentacion_general=retroalimentacion_general,
+            tamano_desarrollo=tamano_desarrollo
         )
         
         return pregunta

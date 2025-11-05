@@ -1,0 +1,30 @@
+// Banco de preguntas de desarrollo
+// Formato: {desarrollo}, {desarrollo:pequeno}, {desarrollo:mediano}, {desarrollo:grande}
+
+::Análisis de Algoritmo::Analiza el siguiente algoritmo de ordenamiento y explica su complejidad temporal en el peor caso, mejor caso y caso promedio. {desarrollo:grande} [tags: algoritmos, analisis]
+
+::Concepto de Recursión::Define qué es la recursión y da un ejemplo de su uso en programación. {desarrollo:mediano} [tags: conceptos, basico]
+
+::Ventajas de POO::Enumera y explica brevemente tres ventajas de la programación orientada a objetos. {desarrollo:mediano} [tags: poo, teoria]
+
+::Diferencia Lista vs Tupla::¿Cuál es la diferencia principal entre una lista y una tupla en Python? {desarrollo:pequeno} [tags: python, estructuras]
+
+::Diseño de Función::Diseña una función recursiva que calcule el factorial de un número. Incluye el caso base y el caso recursivo. {desarrollo:grande} [tags: funciones, recursion]
+
+::Concepto de Herencia::Explica brevemente qué es la herencia en programación orientada a objetos. {desarrollo:pequeno} [tags: poo, conceptos]
+
+::Análisis de Complejidad::Analiza la complejidad espacial y temporal del siguiente código:
+```python
+def buscar(lista, elemento):
+    for i in range(len(lista)):
+        if lista[i] == elemento:
+            return i
+    return -1
+```
+{desarrollo:mediano} [tags: algoritmos, complejidad]
+
+::Ventajas de Encapsulamiento::Describe qué es el encapsulamiento y cuáles son sus ventajas principales. {desarrollo:mediano} [tags: poo, conceptos]
+
+::Comparación Algoritmos::Compara y contrasta los algoritmos de búsqueda lineal y binaria, incluyendo sus complejidades y cuándo usar cada uno. {desarrollo:grande} [tags: algoritmos, comparacion]
+
+::Concepto de Polimorfismo::Define polimorfismo y da un ejemplo simple. {desarrollo:pequeno} [tags: poo, conceptos]

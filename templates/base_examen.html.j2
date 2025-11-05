@@ -239,6 +239,49 @@ body {
   margin-top: 0.5em;
 }
 
+/* --- Estilos para Preguntas de Desarrollo --- */
+
+.desarrollo-box {
+  border: 1px solid #666;
+  border-radius: 3px;
+  padding: 0.5em;
+  margin-top: 0.5em;
+  background-color: #fafafa;
+  display: flex;
+  flex-direction: column;
+}
+
+.desarrollo-box.pequeno {
+  min-height: 4em;
+}
+
+.desarrollo-box.mediano {
+  min-height: 8em;
+}
+
+.desarrollo-box.grande {
+  min-height: 14em;
+}
+
+/* En layouts compactos, las preguntas de desarrollo ocupan todo el ancho */
+.section.layout-compact-2col .desarrollo-box,
+.section.layout-compact-3col .desarrollo-box,
+.section.layout-compact-4col .desarrollo-box {
+  min-height: 6em;
+}
+
+.section.layout-compact-2col .desarrollo-box.mediano,
+.section.layout-compact-3col .desarrollo-box.mediano,
+.section.layout-compact-4col .desarrollo-box.mediano {
+  min-height: 8em;
+}
+
+.section.layout-compact-2col .desarrollo-box.grande,
+.section.layout-compact-3col .desarrollo-box.grande,
+.section.layout-compact-4col .desarrollo-box.grande {
+  min-height: 12em;
+}
+
 /* --- Estilos para Bloques de Código --- */
 
 .highlight {
@@ -330,6 +373,25 @@ code {
     width: 10px;
     height: 10px;
     min-width: 10px;
+  }
+  
+  /* Optimización de preguntas de desarrollo en impresión */
+  .desarrollo-box {
+    padding: 0.3em !important;
+    background-color: white !important;
+    border: 1px solid #666 !important;
+  }
+  
+  .desarrollo-box.pequeno {
+    min-height: 3em !important;
+  }
+  
+  .desarrollo-box.mediano {
+    min-height: 6em !important;
+  }
+  
+  .desarrollo-box.grande {
+    min-height: 10em !important;
   }
   
   /* Simplificar bloques de código para impresión */
@@ -450,6 +512,9 @@ code {
                     <span class="option-label">F)</span>
                     <div class="option-text">Falso</div>
                 </div>
+            </div>
+            {% elif pregunta.tipo == 'desarrollo' %}
+            <div class="desarrollo-box {{ pregunta.tamano_desarrollo or 'mediano' }}">
             </div>
             {% else %}
             <div class="answer-space"></div>
