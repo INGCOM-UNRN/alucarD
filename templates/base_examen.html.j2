@@ -191,10 +191,8 @@ body {
   font-size: 0.85em;
 }
 
-.options {
-  /* El 'margin-left: 1.5em' anterior ya no es necesario.
-    El 'gap' del grid .question se encarga del espaciado.
-  */
+/* Posicionamiento de opciones solo para layout default */
+.section.layout-default .options {
   grid-column: 2;   /* Coloca en la segunda columna */
   grid-row: 1 / 3;  /* Ocupa las filas 1 y 2 */
   align-self: start;
