@@ -121,11 +121,20 @@ class DefinicionExamen(BaseModel):
     secciones_examen: List[SeccionExamen]
     variables_personalizadas: Dict[str, str] = Field(default_factory=dict)
     
+    # Configuración de generación (puede ser overrideada por CLI)
+    input_banco: Optional[List[str]] = Field(default=None, description="Rutas a archivos de banco de preguntas")
+    output_dir: Optional[str] = Field(default="./output", description="Directorio de salida")
+    path_images: Optional[str] = Field(default=None, description="Directorio de imágenes")
+    numero_temas: Optional[int] = Field(default=1, description="Número de temas a generar")
+    semilla: Optional[int] = Field(default=42, description="Semilla aleatoria")
+    formato: Optional[List[str]] = Field(default=["html"], description="Formatos de salida")
+    
     def __str__(self) -> str:
         fecha_str = f" ({self.fecha})" if self.fecha else ""
         duracion_str = f" - {self.duracion_minutos}min" if self.duracion_minutos else ""
         vars_str = f" +{len(self.variables_personalizadas)} vars" if self.variables_personalizadas else ""
-        return f"'{self.nombre_examen}'{fecha_str}{duracion_str} - {self.materia} ({self.institucion}) - {len(self.secciones_examen)} secciones{vars_str}"
+        bancos_str = f" | {len(self.input_banco)} bancos" if self.input_banco else ""
+        return f"'{self.nombre_examen}'{fecha_str}{duracion_str} - {self.materia} ({self.institucion}) - {len(self.secciones_examen)} secciones{vars_str}{bancos_str}"
     
     def __repr__(self) -> str:
         return f"DefinicionExamen(nombre='{self.nombre_examen}', secciones={len(self.secciones_examen)})"

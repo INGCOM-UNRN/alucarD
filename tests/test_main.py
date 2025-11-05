@@ -137,9 +137,22 @@ secciones_examen:
         assert exc_info.value.code == 2
     
     def test_main_sin_banco_muestra_error(self, tmp_path, monkeypatch):
-        """Sin --input-banco debe mostrar error"""
+        """Sin --input-banco en CLI ni en YAML debe mostrar error"""
         definicion = tmp_path / "def.yaml"
-        definicion.write_text("nombre_examen: Test")
+        definicion.write_text("""
+nombre_examen: "Test"
+institucion: "Inst"
+materia: "Mat"
+configuracion_examen:
+  mezclar_preguntas_dentro_seccion: true
+  mezclar_opciones_dentro_pregunta: true
+  generar_clave_profesor: false
+secciones_examen:
+  - nombre: "Sección A"
+    pools:
+      - cantidad: 2
+# Sin input_banco en YAML
+        """)
         
         monkeypatch.setattr(sys, 'argv', [
             'generador-examenes',

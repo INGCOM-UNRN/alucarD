@@ -7,6 +7,67 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ---
 
+## [5.7.0] - 2025-11-05
+
+### ✨ Agregado - Configuración en YAML con CLI Override
+
+#### Nueva Funcionalidad: Configuración Completa en YAML
+- ✅ **Campos de generación en YAML**: Ahora se puede especificar toda la configuración en el YAML
+  - `input_banco`: Lista de rutas a bancos de preguntas
+  - `output_dir`: Directorio de salida (default: "./output")
+  - `path_images`: Directorio de imágenes (opcional)
+  - `numero_temas`: Número de temas a generar (default: 1)
+  - `semilla`: Semilla aleatoria (default: 42)
+  - `formato`: Lista de formatos de salida (default: ["html"])
+- ✅ **CLI Override**: Argumentos de línea de comandos sobrescriben valores del YAML
+- ✅ **Uso simplificado**: Ejecutar con solo `-d archivo.yaml` si todo está en el YAML
+- ✅ **Backward compatible**: Sigue funcionando con CLI tradicional
+
+#### Ejemplo de Uso
+```bash
+# Solo con YAML (si todo está configurado)
+generador-examenes -d mi_examen.yaml
+
+# Override de opciones específicas
+generador-examenes -d mi_examen.yaml -n 5  # Genera 5 temas en vez de lo configurado
+generador-examenes -d mi_examen.yaml -f pdf  # Genera PDF en vez de HTML
+generador-examenes -d mi_examen.yaml -o ./mis_examenes  # Cambia directorio de salida
+```
+
+#### Ejemplo de YAML Completo
+```yaml
+# Configuración tradicional
+nombre_examen: "Parcial de Programación"
+institucion: "Universidad Nacional"
+materia: "Programación 1"
+
+# Nueva configuración de generación (opcional)
+input_banco:
+  - "bancos/codigo.xml"
+  - "bancos/teorico.gift"
+output_dir: "./output"
+numero_temas: 3
+semilla: 42
+formato:
+  - "html"
+  - "pdf"
+
+secciones_examen:
+  - nombre: "Sección 1"
+    pools:
+      - cantidad: 10
+```
+
+### 🔧 Arreglado
+- 🐛 Tests actualizados para soportar nueva funcionalidad
+
+### 📊 Estadísticas
+- **Tests totales**: 253 (sin cambios)
+- **Tests pasando**: 253/253 (100%)
+- **Cobertura**: 77% (sin cambios)
+
+---
+
 ## [5.6.0] - 2025-11-05
 
 ### ✨ Agregado - Modularización de Tipos de Preguntas

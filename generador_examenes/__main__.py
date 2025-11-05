@@ -212,42 +212,38 @@ def main():
         '-i', '--input-banco',
         type=Path,
         nargs='+',
-        help='Ruta(s) a los archivos de banco de preguntas'
+        help='Ruta(s) a los archivos de banco de preguntas (override de YAML)'
     )
     
     parser.add_argument(
         '-o', '--output-dir',
         type=Path,
-        default=Path('./output'),
-        help='Directorio de salida para los exámenes generados (default: ./output)'
+        help='Directorio de salida para los exámenes generados (override de YAML, default: ./output)'
     )
     
     parser.add_argument(
         '-p', '--path-images',
         type=Path,
-        help='Ruta al directorio de imágenes referenciadas en las preguntas'
+        help='Ruta al directorio de imágenes referenciadas en las preguntas (override de YAML)'
     )
     
     parser.add_argument(
         '-n', '--numero-temas',
         type=int,
-        default=1,
-        help='Número de temas/versiones a generar (default: 1)'
+        help='Número de temas/versiones a generar (override de YAML, default: 1)'
     )
     
     parser.add_argument(
         '-s', '--semilla',
         type=int,
-        default=42,
-        help='Semilla pseudo-aleatoria para generación (default: 42)'
+        help='Semilla pseudo-aleatoria para generación (override de YAML, default: 42)'
     )
     
     parser.add_argument(
         '-f', '--formato',
         nargs='+',
         choices=['html', 'pdf'],
-        default=['html'],
-        help='Formato(s) de salida (default: html)'
+        help='Formato(s) de salida (override de YAML, default: html)'
     )
     
     parser.add_argument(
@@ -299,13 +295,8 @@ def main():
     if not args.definicion:
         parser.error("Se requiere --definicion (o --init para inicializar, o --wizard para configurar)")
     
-    if not args.input_banco:
-        parser.error("Se requiere --input-banco con al menos un archivo de banco")
-    
-    logger.info(f"Iniciando generador de exámenes v5.0.0")
+    logger.info(f"Iniciando generador de exámenes v5.7.0")
     logger.info(f"Definición: {args.definicion}")
-    logger.info(f"Bancos: {args.input_banco}")
-    logger.info(f"Formato(s): {args.formato}")
     
     try:
         # Cargar y validar definición
@@ -321,23 +312,44 @@ def main():
         
         try:
             definicion = DefinicionExamen(**definicion_yaml)
-            logger.info("Definición validada correctamente")
+            logger.info(f"Definición validada: {definicion}")
         except ValidationError as e:
             logger.error(f"Error de validación en definición:\n{e}")
             return 1
         
+        # Aplicar overrides de CLI sobre configuración YAML
+        # Los argumentos de CLI tienen prioridad sobre YAML
+        input_banco = args.input_banco if args.input_banco else (
+            [Path(b) for b in definicion.input_banco] if definicion.input_banco else None
+        )
+        output_dir = args.output_dir if args.output_dir else Path(definicion.output_dir or './output')
+        path_images = args.path_images if args.path_images else (
+            Path(definicion.path_images) if definicion.path_images else None
+        )
+        numero_temas = args.numero_temas if args.numero_temas is not None else (definicion.numero_temas or 1)
+        semilla = args.semilla if args.semilla is not None else (definicion.semilla or 42)
+        formato = args.formato if args.formato else (definicion.formato or ['html'])
+        
+        # Validar que tengamos bancos de preguntas
+        if not input_banco:
+            parser.error("Se requiere input_banco en YAML o --input-banco en CLI")
+        
+        logger.info(f"Bancos: {input_banco}")
+        logger.info(f"Output: {output_dir}")
+        logger.info(f"Temas: {numero_temas}, Semilla: {semilla}, Formato(s): {formato}")
+        
         # Cargar bancos de preguntas
         logger.info("Cargando bancos de preguntas...")
-        banco_completo = logic.cargar_bancos(args.input_banco)
+        banco_completo = logic.cargar_bancos(input_banco)
         
         if not banco_completo:
             logger.error("No se cargaron preguntas de los bancos")
             return 1
         
         # Procesar imágenes si se especificó directorio
-        if args.path_images:
+        if path_images:
             logger.info("Procesando imágenes...")
-            logic.procesar_imagenes(banco_completo, args.path_images)
+            logic.procesar_imagenes(banco_completo, path_images)
         
         # Construir pool del examen
         logger.info("Construyendo pool del examen...")
@@ -365,11 +377,11 @@ def main():
             return 0
         
         # Modo generación
-        logger.info(f"Generando {args.numero_temas} tema(s)...")
+        logger.info(f"Generando {numero_temas} tema(s)...")
         
-        for i in range(args.numero_temas):
-            semilla_tema = args.semilla + i
-            logger.info(f"Generando tema {i + 1}/{args.numero_temas} (semilla: {semilla_tema})")
+        for i in range(numero_temas):
+            semilla_tema = semilla + i
+            logger.info(f"Generando tema {i + 1}/{numero_temas} (semilla: {semilla_tema})")
             
             # Mezclar examen para este tema
             examen_mezclado = logic.mezclar_examen(
@@ -379,15 +391,15 @@ def main():
             )
             
             # Generar en cada formato solicitado
-            for formato in args.formato:
+            for fmt in formato:
                 try:
-                    renderer = obtener_renderer(formato)
+                    renderer = obtener_renderer(fmt)
                     
                     # Generar examen
                     archivo_examen = renderer.renderizar_examen(
                         examen_mezclado,
                         definicion,
-                        args.output_dir,
+                        output_dir,
                         i
                     )
                     print(f"✓ Examen generado: {archivo_examen}")
@@ -397,18 +409,18 @@ def main():
                         archivo_clave = renderer.renderizar_clave(
                             examen_mezclado,
                             definicion,
-                            args.output_dir,
+                            output_dir,
                             i
                         )
                         print(f"✓ Clave generada: {archivo_clave}")
                 
                 except Exception as e:
-                    logger.error(f"Error generando formato {formato}: {e}")
+                    logger.error(f"Error generando formato {fmt}: {e}")
                     if args.debug:
                         raise
         
         print(f"\n✓ Generación completada exitosamente")
-        print(f"  Archivos guardados en: {args.output_dir}")
+        print(f"  Archivos guardados en: {output_dir}")
         return 0
         
     except Exception as e:

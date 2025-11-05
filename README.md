@@ -142,6 +142,14 @@ El asistente interactivo te guía:
 - Vista previa antes de guardar
 
 ### 3️⃣ Validar Configuración
+
+**Opción A: Todo en YAML (más simple)**
+```bash
+# Si el YAML incluye input_banco, solo necesitas:
+generador-examenes -d mi_examen.yaml --validate
+```
+
+**Opción B: Especificar bancos por CLI**
 ```bash
 generador-examenes -d mi_examen.yaml \
   -i bancos/banco1.txt bancos/banco2.xml \
@@ -149,8 +157,22 @@ generador-examenes -d mi_examen.yaml \
 ```
 
 ### 4️⃣ Generar Exámenes
+
+**Opción A: Configuración completa en YAML**
 ```bash
-# Generar 3 temas en HTML
+# Si tu YAML incluye input_banco, numero_temas, formato, etc:
+generador-examenes -d mi_examen_completo.yaml
+
+# Override específico (ej: generar 5 temas en vez de lo configurado)
+generador-examenes -d mi_examen_completo.yaml -n 5
+
+# Cambiar formato a PDF
+generador-examenes -d mi_examen_completo.yaml -f pdf
+```
+
+**Opción B: CLI tradicional**
+```bash
+# Especificar todo por línea de comandos
 generador-examenes -d mi_examen.yaml \
   -i bancos/banco1.txt bancos/banco2.xml \
   -o output \
@@ -163,6 +185,8 @@ generador-examenes -d mi_examen.yaml \
   -n 5 \
   -f pdf
 ```
+
+> **💡 Tip**: Las opciones de CLI siempre tienen prioridad sobre las del YAML, permitiendo overrides rápidos.
 
 ---
 
@@ -249,6 +273,18 @@ variables_personalizadas:
   titulo_completo: "{nombre_examen} | {materia}"
   periodo: "Segundo Cuatrimestre {anio_actual}"
 
+# Configuración de generación (opcional, puede overridearse por CLI)
+input_banco:
+  - "bancos/codigo.xml"
+  - "bancos/teorico.gift"
+output_dir: "./output"
+path_images: null  # Opcional
+numero_temas: 3    # Número de versiones a generar
+semilla: 42        # Para reproducibilidad
+formato:
+  - "html"
+  - "pdf"
+
 secciones_examen:
   - nombre: "Parte 1: Conceptos Básicos"
     instrucciones: "Selecciona la respuesta correcta"
@@ -266,6 +302,46 @@ secciones_examen:
         tipos: ["seleccion_multiple"]
         cantidad: 10
         puntaje_fijo_por_pregunta: 5.0
+```
+
+### Configuración de Generación en YAML (Nuevo en v5.7.0)
+
+Ahora puedes incluir opciones de generación directamente en el YAML:
+
+```yaml
+# Configuración de generación (todas opcionales)
+input_banco:                    # Lista de bancos de preguntas
+  - "bancos/teoria.gift"
+  - "bancos/practica.xml"
+  
+output_dir: "./examenes"        # Directorio de salida (default: "./output")
+
+path_images: "./imagenes"       # Directorio de imágenes (opcional)
+
+numero_temas: 5                 # Número de versiones (default: 1)
+
+semilla: 123                    # Semilla aleatoria (default: 42)
+
+formato:                        # Formatos de salida (default: ["html"])
+  - "html"
+  - "pdf"
+```
+
+**Ventajas:**
+- ✅ Menos argumentos en CLI
+- ✅ Configuración reproducible
+- ✅ Fácil de versionar en Git
+- ✅ CLI override para casos especiales
+
+**Ejemplo de uso:**
+```bash
+# Con configuración completa en YAML
+generador-examenes -d examen.yaml
+
+# Override de opciones específicas
+generador-examenes -d examen.yaml -n 10      # Genera 10 temas
+generador-examenes -d examen.yaml -f pdf     # Solo PDF
+generador-examenes -d examen.yaml -o ./test  # Directorio diferente
 ```
 
 ### Configuración de Pools
