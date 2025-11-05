@@ -203,6 +203,14 @@ def main():
     )
     
     parser.add_argument(
+        '--category-tree',
+        nargs='+',
+        type=Path,
+        metavar='BANCO',
+        help='Generar árbol HTML de categorías de uno o más bancos de preguntas'
+    )
+    
+    parser.add_argument(
         '-d', '--definicion',
         type=Path,
         help='Ruta al archivo de definición YAML del examen'
@@ -291,9 +299,36 @@ def main():
                 raise
             return 1
     
+    # Modo árbol de categorías
+    if args.category_tree:
+        logger.info("Modo árbol de categorías - generando visualización HTML")
+        try:
+            from generador_examenes.config.category_tree_viewer import main_category_viewer
+            
+            banco_paths = args.category_tree
+            for banco_path in banco_paths:
+                if not banco_path.exists():
+                    logger.error(f"✗ Banco no encontrado: {banco_path}")
+                    return 1
+            
+            output_path = args.output_dir / "category_tree.html" if args.output_dir else Path("output/category_tree.html")
+            resultado = main_category_viewer(banco_paths, output_path)
+            
+            logger.info(f"✓ Árbol de categorías generado exitosamente")
+            logger.info(f"  Abre el archivo en tu navegador: {resultado.absolute()}")
+            print(f"\n✓ Árbol de categorías generado: {resultado.absolute()}")
+            print(f"  Abre el archivo en tu navegador para explorar las categorías.")
+            
+            return 0
+        except Exception as e:
+            logger.error(f"Error generando árbol de categorías: {e}")
+            if args.debug:
+                raise
+            return 1
+    
     # Validar argumentos requeridos
     if not args.definicion:
-        parser.error("Se requiere --definicion (o --init para inicializar, o --wizard para configurar)")
+        parser.error("Se requiere --definicion (o --init para inicializar, o --wizard para configurar, o --category-tree para ver categorías)")
     
     logger.info(f"Iniciando generador de exámenes v5.7.0")
     logger.info(f"Definición: {args.definicion}")

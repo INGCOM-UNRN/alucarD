@@ -39,7 +39,6 @@ numero_temas: 3    # Generar 3 versiones del examen
 semilla: 42        # Semilla para reproducibilidad
 formato:
   - "html"
-  - "pdf"
 
 # Secciones del examen
 secciones_examen:

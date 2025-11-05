@@ -156,7 +156,26 @@ generador-examenes -d mi_examen.yaml \
   --validate
 ```
 
-### 4️⃣ Generar Exámenes
+### 4️⃣ Explorar Categorías de Bancos
+
+Antes de crear tu configuración, puedes explorar las categorías disponibles en tus bancos:
+
+```bash
+# Generar árbol interactivo de categorías
+generador-examenes --category-tree bancos/*.xml bancos/*.gift
+
+# Especificar directorio de salida
+generador-examenes --category-tree bancos/*.xml -o output
+```
+
+Esto genera un HTML interactivo con:
+- 🌳 Árbol jerárquico de categorías
+- 📊 Contador de preguntas por categoría
+- 📋 Botones para copiar nombres de categorías
+- 🔍 Búsqueda en tiempo real
+- 🎨 Interfaz moderna y responsive
+
+### 5️⃣ Generar Exámenes
 
 **Opción A: Configuración completa en YAML**
 ```bash
@@ -187,6 +206,36 @@ generador-examenes -d mi_examen.yaml \
 ```
 
 > **💡 Tip**: Las opciones de CLI siempre tienen prioridad sobre las del YAML, permitiendo overrides rápidos.
+
+---
+
+## 🌳 Explorador de Categorías
+
+Antes de crear tu configuración YAML, puedes explorar visualmente las categorías de tus bancos de preguntas.
+
+### Características
+
+🌳 **Árbol Jerárquico**: Visualiza la estructura completa de categorías
+📊 **Contadores**: Ve cuántas preguntas hay en cada categoría
+📋 **Copiar Rápido**: Botones para copiar nombres al portapapeles
+🔍 **Búsqueda**: Filtra categorías en tiempo real
+🎨 **Interfaz Moderna**: Diseño responsive y atractivo
+⌨️ **Atajos de Teclado**: Presiona `/` para buscar
+
+### Uso
+
+```bash
+# Un solo banco
+generador-examenes --category-tree bancos/teorico.gift
+
+# Múltiples bancos
+generador-examenes --category-tree bancos/*.xml bancos/*.txt
+
+# Especificar directorio de salida
+generador-examenes --category-tree bancos/*.xml -o mis_reportes
+```
+
+El comando genera un archivo `category_tree.html` que puedes abrir en tu navegador. Usa los botones "Copiar" para obtener el nombre exacto de cada categoría y pegarlo en tu configuración YAML.
 
 ---
 

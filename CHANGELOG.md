@@ -7,6 +7,62 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ---
 
+## [5.9.0] - 2025-11-05
+
+### ✨ Agregado - Explorador de Categorías
+
+#### Nueva Herramienta: Visor de Árbol de Categorías
+- ✅ **Generación HTML interactiva** del árbol de categorías de bancos
+- ✅ **Visualización jerárquica** con estructura de árbol expandible/colapsable
+- ✅ **Contadores de preguntas** por categoría y subcategoría
+- ✅ **Botones de copiado** para nombres de categorías al portapapeles
+- ✅ **Búsqueda en tiempo real** para filtrar categorías
+- ✅ **Interfaz moderna** con gradientes, sombras y animaciones
+- ✅ **Responsive design** adaptado a diferentes tamaños de pantalla
+- ✅ **Estadísticas globales** de total de preguntas y bancos cargados
+- ✅ **Controles de navegación**: Expandir/colapsar todo
+- ✅ **Atajos de teclado**: Presiona `/` para enfocar búsqueda
+
+#### Integración en CLI
+```bash
+# Uso básico
+generador-examenes --category-tree bancos/teorico.gift
+
+# Múltiples bancos
+generador-examenes --category-tree bancos/*.xml bancos/*.txt
+
+# Con directorio de salida custom
+generador-examenes --category-tree bancos/*.xml -o reportes
+```
+
+#### Características Técnicas
+- **Módulo nuevo**: `generador_examenes/config/category_tree_viewer.py`
+- **Estructura de árbol**: Clase `CategoryNode` para representación jerárquica
+- **Parser integrado**: Usa el sistema de parsers existente (GIFT, XML)
+- **Generación HTML**: Template completo con CSS y JavaScript embebidos
+- **Tooltips visuales**: Notificaciones toast al copiar categorías
+- **Colores codificados**: Badges para contadores y tipos de archivo
+
+#### Beneficios para el Usuario
+1. **Descubrimiento**: Explora qué categorías existen en tus bancos
+2. **Planificación**: Ve cuántas preguntas hay disponibles por tema
+3. **Configuración rápida**: Copia nombres exactos para tu YAML
+4. **Documentación**: Exporta estructura de bancos para referencia
+5. **Debugging**: Verifica organización y conteos de preguntas
+
+### 🔧 Modificado
+- 📝 **README.md**: Agregada sección "Explorador de Categorías"
+- 📝 **CLI (__main__.py)**: Nuevo argumento `--category-tree`
+- 📝 **Documentación**: Ejemplos de uso del visor de categorías
+
+### 📊 Estadísticas
+- **Tests totales**: 253 (sin cambios)
+- **Tests pasando**: 253/253 (100%)
+- **Cobertura**: 72% (nueva funcionalidad sin tests por ahora)
+- **Líneas de código**: +400 (nuevo módulo category_tree_viewer)
+
+---
+
 ## [5.8.0] - 2025-11-05
 
 ### ✨ Agregado
