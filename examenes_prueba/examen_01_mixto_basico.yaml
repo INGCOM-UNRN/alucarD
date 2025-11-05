@@ -1,0 +1,64 @@
+nombre_examen: "Examen Parcial I - Programación Básica"
+institucion: "UNRN Sede Andina"
+materia: "Programación 1"
+fecha: "2025-01-15"
+duracion_minutos: 90
+instrucciones_generales: |
+  Lee cuidadosamente cada pregunta antes de responder.
+  Marca la respuesta correcta en cada caso.
+  Las preguntas de desarrollo deben responderse en el espacio indicado.
+idioma: "es"
+
+# Variables personalizadas con f-strings
+variables_personalizadas:
+  profesor: "Prof. García"
+  cuatrimestre: "Primer Cuatrimestre 2025"
+  aula: "Aula 301"
+  nota_minima: "6.0"
+  descripcion_materia: "{materia} - {cuatrimestre}"
+
+# Configuración de generación (puede ser overrideada por CLI)
+input_banco:
+  - "bancos/teorico.gift"
+  - "bancos/desarrollo.gift"
+output_dir: "./output"
+numero_temas: 3
+semilla: 42
+formato:
+  - "html"
+  - "pdf"
+
+configuracion_examen:
+  mezclar_preguntas_dentro_seccion: true
+  mezclar_opciones_dentro_pregunta: true
+  generar_clave_profesor: true
+
+secciones_examen:
+  - nombre: "Sección A - Conceptos Teóricos"
+    instrucciones: "Selecciona la respuesta correcta (2 puntos cada una)"
+    layout: "compact-2col"
+    pools:
+      - cantidad: 10
+        tipos: ["seleccion_multiple"]
+        etiquetas: ["conceptos", "basico"]
+        puntaje_fijo_por_pregunta: 2.0
+        accion_si_insuficiente: "usar_todas"
+
+  - nombre: "Sección B - Verdadero o Falso"
+    instrucciones: "Indica si cada afirmación es verdadera (V) o falsa (F) (1 punto cada una)"
+    layout: "compact-4col"
+    pools:
+      - cantidad: 10
+        tipos: ["verdadero_falso"]
+        puntaje_fijo_por_pregunta: 1.0
+        accion_si_insuficiente: "usar_todas"
+
+  - nombre: "Sección C - Desarrollo"
+    instrucciones: "Responde brevemente en el espacio indicado"
+    layout: "default"
+    pools:
+      - cantidad: 3
+        tipos: ["desarrollo"]
+        etiquetas: ["conceptos", "basico"]
+        puntaje_fijo_por_pregunta: 5.0
+        accion_si_insuficiente: "usar_todas"

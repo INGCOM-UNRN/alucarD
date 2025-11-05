@@ -1,0 +1,48 @@
+nombre_examen: "Evaluación Rápida - Conocimientos Generales"
+institucion: "UNRN Sede Andina"
+materia: "Fundamentos de Programación"
+fecha: "2025-03-10"
+duracion_minutos: 45
+instrucciones_generales: |
+  Evaluación de opciones múltiples.
+  Solo una respuesta correcta por pregunta.
+  No se penalizan respuestas incorrectas.
+idioma: "es"
+
+variables_personalizadas:
+  docente: "Prof. López"
+  comision: "Comisión A"
+  turno: "Mañana"
+  peso_examen: "30% de la nota final"
+
+input_banco:
+  - "bancos/teorico.gift"
+  - "bancos/banco_ejemplo.txt"
+output_dir: "./output"
+numero_temas: 10
+semilla: 999
+formato: ["html"]
+
+configuracion_examen:
+  mezclar_preguntas_dentro_seccion: true
+  mezclar_opciones_dentro_pregunta: true
+  generar_clave_profesor: true
+
+secciones_examen:
+  - nombre: "Parte I - Conceptos Fundamentales"
+    instrucciones: "Marca la opción correcta"
+    layout: "compact-3col"
+    pools:
+      - cantidad: 25
+        tipos: ["seleccion_multiple"]
+        puntaje_fijo_por_pregunta: 1.0
+        accion_si_insuficiente: "usar_todas"
+
+  - nombre: "Parte II - Verdadero/Falso"
+    instrucciones: "V para Verdadero, F para Falso"
+    layout: "compact-4col"
+    pools:
+      - cantidad: 20
+        tipos: ["verdadero_falso"]
+        puntaje_fijo_por_pregunta: 0.5
+        accion_si_insuficiente: "usar_todas"

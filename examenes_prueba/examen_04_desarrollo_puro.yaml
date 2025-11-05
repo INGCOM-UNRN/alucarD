@@ -1,0 +1,61 @@
+nombre_examen: "Examen Teórico - Desarrollo Escrito"
+institucion: "UNRN Sede Andina"
+materia: "Programación Orientada a Objetos"
+fecha: "2025-04-05"
+duracion_minutos: 150
+instrucciones_generales: |
+  Examen teórico de desarrollo.
+  Responde con claridad y precisión.
+  Se evaluará la correctitud conceptual y la claridad de la explicación.
+  Puedes usar diagramas o pseudocódigo si ayuda a tu explicación.
+idioma: "es"
+
+variables_personalizadas:
+  catedra: "Programación II"
+  responsable: "Dr. Fernández"
+  ayudantes: "Lic. Gómez, Lic. Pérez"
+  fecha_recuperatorio: "2025-04-12"
+  nota_info: "Se requiere 60% para aprobar"
+
+input_banco:
+  - "bancos/desarrollo.gift"
+output_dir: "./output"
+numero_temas: 2
+semilla: 555
+formato: ["html", "pdf"]
+
+configuracion_examen:
+  mezclar_preguntas_dentro_seccion: true
+  mezclar_opciones_dentro_pregunta: false
+  generar_clave_profesor: false
+
+secciones_examen:
+  - nombre: "Parte A - Conceptos Breves"
+    instrucciones: "Responde brevemente (máximo 5 líneas)"
+    layout: "default"
+    pools:
+      - cantidad: 5
+        tipos: ["desarrollo"]
+        etiquetas: ["conceptos", "basico"]
+        puntaje_fijo_por_pregunta: 4.0
+        accion_si_insuficiente: "usar_todas"
+
+  - nombre: "Parte B - Análisis Extenso"
+    instrucciones: "Desarrolla completamente tu respuesta"
+    layout: "default"
+    pools:
+      - cantidad: 3
+        tipos: ["desarrollo"]
+        etiquetas: ["analisis", "algoritmos"]
+        puntaje_fijo_por_pregunta: 10.0
+        accion_si_insuficiente: "usar_todas"
+
+  - nombre: "Parte C - Comparación y Diseño"
+    instrucciones: "Responde con ejemplos y justificaciones"
+    layout: "default"
+    pools:
+      - cantidad: 2
+        tipos: ["desarrollo"]
+        etiquetas: ["comparacion", "funciones"]
+        puntaje_fijo_por_pregunta: 15.0
+        accion_si_insuficiente: "usar_todas"

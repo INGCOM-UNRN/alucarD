@@ -1,0 +1,60 @@
+nombre_examen: "Examen Final - Análisis de Código"
+institucion: "UNRN Sede Andina"
+materia: "Programación 1"
+fecha: "2025-02-20"
+duracion_minutos: 120
+instrucciones_generales: |
+  Analiza cuidadosamente cada fragmento de código.
+  Algunas preguntas pueden tener más de una respuesta correcta.
+  Justifica tus respuestas cuando se solicite.
+idioma: "es"
+
+variables_personalizadas:
+  profesor: "Prof. Martínez"
+  periodo: "2025"
+  tipo_examen: "Final"
+  archivo_pdf: "examen_final_{fecha}_{materia}.pdf"
+
+input_banco:
+  - "bancos/codigo.xml"
+  - "bancos/algoritmos.xml"
+  - "bancos/desarrollo.gift"
+output_dir: "./output"
+numero_temas: 5
+semilla: 123
+formato: ["html", "pdf"]
+
+configuracion_examen:
+  mezclar_preguntas_dentro_seccion: true
+  mezclar_opciones_dentro_pregunta: true
+  generar_clave_profesor: true
+
+secciones_examen:
+  - nombre: "Sección A - Análisis de Código (Layout Default)"
+    instrucciones: "Analiza el código y selecciona la respuesta correcta"
+    layout: "default"
+    pools:
+      - cantidad: 8
+        tipos: ["seleccion_multiple"]
+        puntaje_fijo_por_pregunta: 3.0
+        accion_si_insuficiente: "advertir"
+
+  - nombre: "Sección B - Algoritmos y Estructuras"
+    instrucciones: "Responde sobre complejidad y funcionamiento"
+    layout: "compact-2col"
+    pools:
+      - cantidad: 12
+        tipos: ["seleccion_multiple", "verdadero_falso"]
+        etiquetas: ["algoritmos", "complejidad"]
+        puntaje_fijo_por_pregunta: 2.0
+        accion_si_insuficiente: "usar_todas"
+
+  - nombre: "Sección C - Desarrollo Analítico"
+    instrucciones: "Desarrolla las respuestas con detalle"
+    layout: "default"
+    pools:
+      - cantidad: 2
+        tipos: ["desarrollo"]
+        etiquetas: ["algoritmos", "analisis"]
+        puntaje_fijo_por_pregunta: 10.0
+        accion_si_insuficiente: "usar_todas"

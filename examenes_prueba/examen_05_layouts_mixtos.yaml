@@ -1,0 +1,80 @@
+nombre_examen: "Evaluación Integral - Todos los Layouts"
+institucion: "Universidad Nacional de Río Negro"
+materia: "Introducción a la Programación"
+fecha: "2025-05-20"
+duracion_minutos: 100
+instrucciones_generales: |
+  Este examen combina diferentes tipos de preguntas y layouts.
+  Lee cuidadosamente cada sección.
+  Administra tu tiempo adecuadamente.
+idioma: "es"
+
+variables_personalizadas:
+  profesor_titular: "Prof. Dr. Rodríguez"
+  jefes_trabajos: "Lic. Silva y Lic. Castro"
+  sede: "Sede Andina - San Carlos de Bariloche"
+  carrera: "Licenciatura en Sistemas"
+  anio_cursada: "{anio_actual}"
+  contacto_catedra: "prog1@unrn.edu.ar"
+
+input_banco:
+  - "bancos/teorico.gift"
+  - "bancos/codigo.xml"
+  - "bancos/desarrollo.gift"
+output_dir: "./output"
+numero_temas: 4
+semilla: 777
+formato: ["html", "pdf"]
+
+configuracion_examen:
+  mezclar_preguntas_dentro_seccion: true
+  mezclar_opciones_dentro_pregunta: true
+  generar_clave_profesor: true
+
+secciones_examen:
+  - nombre: "Sección A - Análisis de Código (Default Layout)"
+    instrucciones: "Analiza el código y selecciona la respuesta correcta (3 pts c/u)"
+    layout: "default"
+    pools:
+      - cantidad: 5
+        tipos: ["seleccion_multiple"]
+        puntaje_fijo_por_pregunta: 3.0
+        accion_si_insuficiente: "advertir"
+
+  - nombre: "Sección B - Conceptos Teóricos (2 Columnas)"
+    instrucciones: "Selecciona la opción correcta (2 pts c/u)"
+    layout: "compact-2col"
+    pools:
+      - cantidad: 10
+        tipos: ["seleccion_multiple"]
+        etiquetas: ["conceptos"]
+        puntaje_fijo_por_pregunta: 2.0
+        accion_si_insuficiente: "usar_todas"
+
+  - nombre: "Sección C - Preguntas Rápidas (3 Columnas)"
+    instrucciones: "Responde verdadero o falso (1 pt c/u)"
+    layout: "compact-3col"
+    pools:
+      - cantidad: 15
+        tipos: ["verdadero_falso", "seleccion_multiple"]
+        puntaje_fijo_por_pregunta: 1.0
+        accion_si_insuficiente: "usar_todas"
+
+  - nombre: "Sección D - Test Rápido (4 Columnas)"
+    instrucciones: "Marca V o F (0.5 pts c/u)"
+    layout: "compact-4col"
+    pools:
+      - cantidad: 20
+        tipos: ["verdadero_falso"]
+        puntaje_fijo_por_pregunta: 0.5
+        accion_si_insuficiente: "usar_todas"
+
+  - nombre: "Sección E - Desarrollo"
+    instrucciones: "Desarrolla las respuestas en el espacio indicado"
+    layout: "default"
+    pools:
+      - cantidad: 2
+        tipos: ["desarrollo"]
+        etiquetas: ["conceptos"]
+        puntaje_fijo_por_pregunta: 7.5
+        accion_si_insuficiente: "usar_todas"
