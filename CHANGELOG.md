@@ -457,10 +457,11 @@ El proyecto sigue **Semantic Versioning** (SemVer):
 
 ## Próximas Versiones (Roadmap)
 
-### [5.5.0] - Planificado
+### [5.8.0] - Planificado
 - 🔄 **Importar desde Banco**: Wizard para importar preguntas
 - 📊 **Estadísticas**: Análisis de dificultad y uso
 - 🎨 **Temas visuales**: Múltiples estilos CSS
+- 📋 **Plantillas de configuración**: Templates predefinidos de YAML
 
 ### [6.0.0] - Futuro
 - 🌐 **API REST**: Servicio web para generación
