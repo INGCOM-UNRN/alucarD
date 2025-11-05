@@ -544,17 +544,18 @@ pools:
 ### Filtrado por Tipo
 
 Tipos soportados:
-- `seleccion_multiple`
-- `verdadero_falso`
-- `respuesta_corta`
-- `ensayo`
-- `emparejamiento`
-- `numerica`
+- `seleccion_multiple` - Pregunta con múltiples opciones
+- `verdadero_falso` - Pregunta de V/F
+- `respuesta_corta` - Respuesta breve
+- `desarrollo` - Pregunta de respuesta extensa (ver sección Preguntas de Desarrollo)
+- `emparejamiento` - Relacionar conceptos
+- `numerica` - Respuesta numérica
 
 ```yaml
 pools:
   - tipos: ["seleccion_multiple"]
   - tipos: ["verdadero_falso", "seleccion_multiple"]
+  - tipos: ["desarrollo"]
 ```
 
 ### Filtros Combinados
@@ -640,6 +641,65 @@ print(suma(2, 3))
 ~Error
 } [tags: python, codigo]
 ```
+
+### Preguntas de Desarrollo
+
+Las preguntas de desarrollo permiten al alumno escribir respuestas extensas. Se renderizan como rectángulos en blanco donde el estudiante puede escribir.
+
+#### Formato GIFT
+
+```gift
+::Concepto de Recursión::Define qué es la recursión y da un ejemplo. {desarrollo:mediano} [tags: conceptos]
+
+::Análisis de Algoritmo::Analiza el siguiente algoritmo... {desarrollo:grande} [tags: algoritmos]
+
+::Diferencia Simple::¿Cuál es la diferencia entre X e Y? {desarrollo:pequeno} [tags: basico]
+```
+
+**Tamaños disponibles:**
+- `{desarrollo:pequeno}` - Espacio pequeño (~4-6 líneas)
+- `{desarrollo:mediano}` - Espacio mediano (~8-10 líneas) [default]
+- `{desarrollo:grande}` - Espacio grande (~14-16 líneas)
+
+#### Formato Moodle XML
+
+En Moodle XML, las preguntas tipo `essay` se mapean automáticamente a `desarrollo`:
+
+```xml
+<question type="essay">
+  <name><text>Análisis de Código</text></name>
+  <questiontext format="html">
+    <text><![CDATA[<p>Explica cómo funciona...</p>]]></text>
+  </questiontext>
+  <responseformat>editor</responseformat> <!-- grande -->
+</question>
+```
+
+**Mapeo de tamaños:**
+- `noinline` → pequeno
+- `plain`, `monospaced` → mediano
+- `editor`, `editorfilepicker` → grande
+
+#### Uso en Configuración YAML
+
+```yaml
+secciones_examen:
+  - nombre: "Parte 3: Desarrollo"
+    layout: "default"
+    instrucciones: "Responde con claridad y fundamenta tus respuestas"
+    pools:
+      - tipos: ["desarrollo"]
+        etiquetas: ["conceptos"]
+        cantidad: 3
+```
+
+#### Comportamiento en Layouts
+
+Las preguntas de desarrollo se adaptan al layout de la sección:
+- **default**: Espacio completo, tamaño según configuración
+- **compact-2col/3col/4col**: Espacio ajustado pero legible
+
+En impresión, los tamaños se optimizan automáticamente para ahorrar papel manteniendo legibilidad.
 
 ---
 

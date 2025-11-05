@@ -1,6 +1,6 @@
 # Resumen de Mejoras Implementadas
 
-## Fecha: 2025-11-04
+## Última actualización: 2025-11-05
 
 Este documento resume todas las mejoras realizadas al sistema **alucarD - Generador de Exámenes**.
 
@@ -340,7 +340,66 @@ output/clave_tema_02.html     39K
 
 ---
 
-## 🏆 Resumen Ejecutivo
+## 🆕 Nueva Funcionalidad - Preguntas de Desarrollo (v5.5.0)
+
+### 8. 📝 **Preguntas de Tipo Desarrollo**
+
+**Objetivo**: Agregar soporte para preguntas donde el alumno debe escribir respuestas extensas.
+
+**Implementación**:
+- ✅ Nuevo tipo `desarrollo` en modelo `Pregunta`
+- ✅ Campo `tamano_desarrollo` con valores: `pequeno`, `mediano`, `grande`
+- ✅ Renderizado como cajas rectangulares en HTML
+- ✅ Parser GIFT actualizado: `{desarrollo:tamaño}`
+- ✅ Parser Moodle XML: mapeo de tipo `essay` → `desarrollo`
+- ✅ Estilos CSS específicos:
+  - Pantalla: fondo gris, bordes definidos
+  - Impresión: fondo blanco, padding reducido
+  - Adaptación a todos los layouts
+- ✅ Banco `desarrollo.gift` con 10 ejemplos
+- ✅ Examen de verificación `examen_layouts_verificacion.yaml`
+
+**Tamaños y alturas**:
+- **Pequeño**: 4em pantalla / 3em impresión (~4-6 líneas)
+- **Mediano**: 8em pantalla / 6em impresión (~8-10 líneas) [default]
+- **Grande**: 14em pantalla / 10em impresión (~14-16 líneas)
+
+**Uso**:
+```yaml
+secciones_examen:
+  - nombre: "Preguntas de Desarrollo"
+    pools:
+      - tipos: ["desarrollo"]
+        cantidad: 5
+```
+
+**Resultado**: Sistema completo para preguntas de respuesta abierta con espacios configurables.
+
+---
+
+### 9. 🔧 **Corrección de CSS de Layouts**
+
+**Problema**: Todos los layouts se veían iguales debido a herencia incorrecta de reglas CSS.
+
+**Causa**: Reglas `grid-column` y `grid-row` en `.options` se aplicaban globalmente.
+
+**Solución**:
+- ✅ Limitar reglas de posicionamiento a `.section.layout-default .options`
+- ✅ Permitir que layouts compactos usen `display: block` sin interferencia
+- ✅ Opciones ahora se muestran en columnas correctamente en layouts compactos
+
+**Verificación**:
+```bash
+# Generar examen de prueba
+python -m generador_examenes -d examenes_prueba/examen_layouts_verificacion.yaml \
+  -i bancos/*.xml bancos/*.gift -o output -n 1 -f html
+```
+
+**Resultado**: Layouts visualmente diferenciados y funcionales.
+
+---
+
+## 🏆 Resumen Ejecutivo Actualizado
 
 **Todas las tareas solicitadas han sido completadas exitosamente:**
 
@@ -354,17 +413,23 @@ output/clave_tema_02.html     39K
 8. ✅ Documentación consolidada en README.md y CHANGELOG.md
 9. ✅ Commits descriptivos realizados paso a paso
 10. ✅ Verificación de cumplimiento con `descripcion.md`
+11. ✅ **Preguntas de tipo desarrollo implementadas**
+12. ✅ **CSS de layouts corregido**
 
 **Estado del Proyecto**: ✅ **Producción Ready**
 
+**Versión**: 5.5.0
+
 **Test Coverage**: 76% (228 tests pasando)
 
-**Configuraciones de Prueba**: 5/5 validadas exitosamente
+**Configuraciones de Prueba**: 6/6 validadas exitosamente (incluye examen_layouts_verificacion.yaml)
 
-**Documentación**: Completa y consolidada
+**Documentación**: Completa, consolidada y actualizada con desarrollo
+
+**Commits**: 2 nuevos commits descriptivos (feat: desarrollo, fix: css layouts)
 
 ---
 
-**Generado**: 2025-11-04  
-**Versión**: 5.4.0  
+**Generado**: 2025-11-05  
+**Versión**: 5.5.0  
 **Sistema**: alucarD - Generador de Exámenes

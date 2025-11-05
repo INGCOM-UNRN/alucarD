@@ -7,6 +7,42 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ---
 
+## [5.5.0] - 2025-11-05
+
+### ✨ Agregado - Preguntas de Desarrollo
+
+#### Nuevo Tipo de Pregunta: Desarrollo
+- ✅ **Tipo `desarrollo`** agregado a modelo `Pregunta`
+- ✅ **Tres tamaños configurables**: `pequeno` (4-6 líneas), `mediano` (8-10 líneas), `grande` (14-16 líneas)
+- ✅ **Renderizado visual**: Cajas rectangulares en blanco para que el alumno escriba
+- ✅ **Adaptación a layouts**: Se ajusta a default, compact-2col, compact-3col y compact-4col
+- ✅ **Optimización de impresión**: Tamaños reducidos automáticamente para ahorrar papel
+
+#### Soporte en Parsers
+- ✅ **Parser GIFT**: Formato `{desarrollo}`, `{desarrollo:pequeno}`, `{desarrollo:mediano}`, `{desarrollo:grande}`
+- ✅ **Parser Moodle XML**: Mapeo automático de tipo `essay` a `desarrollo`
+- ✅ **Detección de tamaño**: Mapeo desde `responseformat` en XML (noinline→pequeno, plain→mediano, editor→grande)
+
+#### Estilos CSS
+- ✅ **Clase `.desarrollo-box`** con variantes por tamaño
+- ✅ **Estilos de pantalla**: Fondo gris claro, bordes definidos
+- ✅ **Estilos de impresión**: Fondo blanco, padding reducido, bordes conservados
+- ✅ **Adaptación a layouts**: Reglas específicas para layouts compactos
+
+#### Banco de Preguntas y Ejemplos
+- ✅ **Banco `desarrollo.gift`**: 10 preguntas de ejemplo con diferentes tamaños
+- ✅ **Examen de verificación**: `examen_layouts_verificacion.yaml` con 7 secciones probando todos los layouts
+- ✅ **Documentación completa**: Sección en README.md con ejemplos y uso
+
+### 🔧 Arreglado
+
+#### CSS de Layouts
+- 🐛 **Posicionamiento de opciones**: Reglas `grid-column` y `grid-row` limitadas solo a layout default
+- 🐛 **Layouts compactos**: Ahora muestran correctamente opciones en columnas debajo del enunciado
+- 🐛 **Herencia no deseada**: Eliminada interferencia entre reglas CSS de diferentes layouts
+
+---
+
 ## [5.4.0] - 2025-11-04
 
 ### ✨ Agregado
