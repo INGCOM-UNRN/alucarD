@@ -281,10 +281,17 @@ def _filtrar_preguntas_pool(pool: PoolConfig, banco: Dict[str, Pregunta]) -> Lis
                 logger.debug(f"    • {p}")
         return fijadas
     
-    # Filtro 2: Categoría (soporta categorías anidadas)
+    # Filtro 2: Categoría o categorías (soporta categorías anidadas)
     if pool.categoria:
         candidatas = [p for p in candidatas if categoria_coincide(p.categoria, pool.categoria)]
         logger.debug(f"  → Filtro categoría '{pool.categoria}': {len(candidatas)} candidatas")
+    elif pool.categorias:
+        # Filtrar por múltiples categorías (OR lógico)
+        candidatas = [
+            p for p in candidatas 
+            if any(categoria_coincide(p.categoria, cat) for cat in pool.categorias)
+        ]
+        logger.debug(f"  → Filtro categorías {pool.categorias}: {len(candidatas)} candidatas")
     
     # Filtro 3: Tipos
     if pool.tipos:

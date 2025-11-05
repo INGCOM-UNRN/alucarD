@@ -33,6 +33,7 @@ class GiftParser(BaseParser):
         logger.info(f"Parseando archivo GIFT: {filepath}")
         
         preguntas = {}
+        banco_nombre = filepath.name
         
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
@@ -43,14 +44,14 @@ class GiftParser(BaseParser):
             
             for i, bloque in enumerate(bloques):
                 try:
-                    pregunta = self._parsear_bloque(bloque, i)
+                    pregunta = self._parsear_bloque(bloque, i, banco_nombre)
                     if pregunta:
                         preguntas[pregunta.id] = pregunta
                 except Exception as e:
                     logger.warning(f"Error parseando bloque {i}: {e}")
                     continue
             
-            logger.info(f"{len(preguntas)} preguntas cargadas de {filepath.name}")
+            logger.info(f"✓ {len(preguntas)} preguntas cargadas de {filepath.name}")
             
         except Exception as e:
             raise ValueError(f"Error leyendo archivo GIFT: {e}")
@@ -79,7 +80,7 @@ class GiftParser(BaseParser):
         
         return bloques
     
-    def _parsear_bloque(self, bloque: str, indice: int) -> Pregunta | None:
+    def _parsear_bloque(self, bloque: str, indice: int, banco_nombre: str = None) -> Pregunta | None:
         """Parsea un bloque individual de pregunta GIFT"""
         if not bloque.strip():
             return None
@@ -160,7 +161,8 @@ class GiftParser(BaseParser):
             puntaje=1.0,
             opciones=opciones,
             etiquetas=etiquetas,
-            tamano_desarrollo=tamano_desarrollo
+            tamano_desarrollo=tamano_desarrollo,
+            fuente_banco=banco_nombre
         )
         
         return pregunta

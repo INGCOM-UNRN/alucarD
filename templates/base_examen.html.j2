@@ -394,41 +394,62 @@ code {
   
   /* Simplificar bloques de código para impresión */
   .highlight {
-    background-color: #f9f9f9 !important;
-    border: 1px solid #333 !important;
+    background-color: white !important;
+    border: 1.5px solid #000 !important;
     border-radius: 0 !important;
-    padding: 0.4em !important;
-    font-size: 0.8em !important;
+    padding: 0.5em !important;
+    font-size: 0.75em !important;
     page-break-inside: avoid;
-    line-height: 1.3 !important;
+    line-height: 1.25 !important;
+    margin: 0.4em 0 !important;
   }
   
-  /* Remover colores de sintaxis y usar tonos de gris */
+  /* Remover colores de sintaxis y usar solo negro sobre blanco */
   .highlight * {
     background-color: transparent !important;
     color: #000 !important;
     font-weight: normal !important;
   }
   
-  /* Mantener estructura pero sin colores */
+  /* Mantener estructura pero sin colores - optimizado para impresión */
   .highlight pre {
     margin: 0 !important;
     padding: 0 !important;
     white-space: pre-wrap !important;
     word-wrap: break-word !important;
+    font-family: 'Courier New', 'Courier', monospace !important;
   }
   
-  /* Asegurar que el código sea legible y compacto */
+  /* Código inline también en blanco y negro */
   code {
     font-family: 'Courier New', 'Courier', monospace !important;
-    font-size: 0.8em !important;
+    font-size: 0.75em !important;
     color: #000 !important;
-    line-height: 1.2 !important;
+    line-height: 1.25 !important;
+    background-color: transparent !important;
+    padding: 0 !important;
   }
   
   /* Reducir márgenes de párrafos dentro del código */
   .highlight p {
-    margin: 0.2em 0 !important;
+    margin: 0.15em 0 !important;
+  }
+  
+  /* Guardas de código markdown - bordes simples para papel */
+  pre.code-block,
+  div.code-wrapper {
+    background-color: white !important;
+    border: 1.5px solid #000 !important;
+    border-radius: 0 !important;
+    padding: 0.4em !important;
+    margin: 0.3em 0 !important;
+    page-break-inside: avoid;
+  }
+  
+  /* Simplificar todos los elementos de código para ahorro de tinta */
+  pre, code, .code-block, .highlight {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 }
 

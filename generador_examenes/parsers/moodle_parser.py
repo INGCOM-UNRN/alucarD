@@ -30,6 +30,7 @@ class MoodleXMLParser(BaseParser):
         logger.info(f"Parseando archivo Moodle XML: {filepath}")
         
         preguntas = {}
+        banco_nombre = filepath.name
         
         try:
             tree = ET.parse(filepath)
@@ -38,14 +39,14 @@ class MoodleXMLParser(BaseParser):
             # Buscar todas las preguntas en el XML
             for i, question_elem in enumerate(root.findall('.//question')):
                 try:
-                    pregunta = self._parsear_pregunta(question_elem, i)
+                    pregunta = self._parsear_pregunta(question_elem, i, banco_nombre)
                     if pregunta:
                         preguntas[pregunta.id] = pregunta
                 except Exception as e:
                     logger.warning(f"Error parseando pregunta {i}: {e}")
                     continue
             
-            logger.info(f"{len(preguntas)} preguntas cargadas de {filepath.name}")
+            logger.info(f"✓ {len(preguntas)} preguntas cargadas de {filepath.name}")
             
         except ET.ParseError as e:
             raise ValueError(f"Error parseando XML: {e}")
@@ -54,7 +55,7 @@ class MoodleXMLParser(BaseParser):
         
         return preguntas
     
-    def _parsear_pregunta(self, question_elem: ET.Element, indice: int) -> Pregunta | None:
+    def _parsear_pregunta(self, question_elem: ET.Element, indice: int, banco_nombre: str = None) -> Pregunta | None:
         """Parsea un elemento question del XML"""
         
         # Obtener tipo de pregunta
@@ -153,7 +154,8 @@ class MoodleXMLParser(BaseParser):
             opciones=opciones,
             etiquetas=etiquetas,
             retroalimentacion_general=retroalimentacion_general,
-            tamano_desarrollo=tamano_desarrollo
+            tamano_desarrollo=tamano_desarrollo,
+            fuente_banco=banco_nombre
         )
         
         return pregunta

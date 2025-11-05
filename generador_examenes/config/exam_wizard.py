@@ -188,6 +188,19 @@ class ExamWizard:
         if Confirm.ask("  ¿Agregar instrucciones específicas?", default=False):
             seccion['instrucciones'] = Prompt.ask("  Instrucciones")
         
+        # Configurar layout
+        console.print("\n  [yellow]Seleccionar layout de la sección:[/yellow]")
+        console.print("  [dim]- default: Enunciado extenso (2/3) + opciones laterales (1/3) - 3-5 preg/pág[/dim]")
+        console.print("  [dim]- compact-2col: Enunciado arriba + 2 columnas opciones - 6-10 preg/pág[/dim]")
+        console.print("  [dim]- compact-3col: Enunciado arriba + 3 columnas opciones - 12-20 preg/pág[/dim]")
+        console.print("  [dim]- compact-4col: Enunciado arriba + 4 columnas opciones - 20-30 preg/pág[/dim]")
+        
+        seccion['layout'] = Prompt.ask(
+            "  Layout",
+            choices=['default', 'compact-2col', 'compact-3col', 'compact-4col'],
+            default='default'
+        )
+        
         # Configurar pools
         console.print("\n  [yellow]Configuración de pools de preguntas[/yellow]")
         pools = []
@@ -219,7 +232,11 @@ class ExamWizard:
         )
         
         if filtro == 'categoria':
-            pool['categoria'] = Prompt.ask("    Categoría")
+            if Confirm.ask("    ¿Usar múltiples categorías?", default=False):
+                cats_str = Prompt.ask("    Categorías (separadas por coma)")
+                pool['categorias'] = [c.strip() for c in cats_str.split(',')]
+            else:
+                pool['categoria'] = Prompt.ask("    Categoría")
         elif filtro == 'tipos':
             tipos_str = Prompt.ask(
                 "    Tipos (separados por coma)",

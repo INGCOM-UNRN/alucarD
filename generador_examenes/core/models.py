@@ -33,11 +33,14 @@ class Pregunta(BaseModel):
     retroalimentacion_general: Optional[str] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
     tamano_desarrollo: Optional[Literal["pequeno", "mediano", "grande"]] = "mediano"
+    fuente_banco: Optional[str] = None
     
     def __str__(self) -> str:
         nombre_preview = self.nombre[:60] + "..." if len(self.nombre) > 60 else self.nombre
-        etiquetas_str = f" [{', '.join(self.etiquetas)}]" if self.etiquetas else ""
-        return f"[{self.tipo}] {nombre_preview} (cat: {self.categoria}, pts: {self.puntaje}){etiquetas_str}"
+        etiquetas_str = f" tags:[{', '.join(self.etiquetas)}]" if self.etiquetas else ""
+        banco_str = f" from:{self.fuente_banco}" if self.fuente_banco else ""
+        opciones_str = f" opts:{len(self.opciones)}" if self.opciones else ""
+        return f"[{self.tipo}] {nombre_preview} (cat:{self.categoria}, pts:{self.puntaje}{opciones_str}{etiquetas_str}{banco_str})"
     
     def __repr__(self) -> str:
         return f"Pregunta(id='{self.id}', tipo='{self.tipo}', cat='{self.categoria}', opciones={len(self.opciones)})"
@@ -48,6 +51,7 @@ class PoolConfig(BaseModel):
     banco: Optional[str] = None
     preguntas_fijadas: List[str] = Field(default_factory=list)
     categoria: Optional[str] = None
+    categorias: List[str] = Field(default_factory=list)
     tipos: List[str] = Field(default_factory=list)
     etiquetas: List[str] = Field(default_factory=list)
     cantidad: Optional[int] = None
@@ -56,18 +60,23 @@ class PoolConfig(BaseModel):
     
     def __str__(self) -> str:
         filtros = []
+        if self.banco:
+            filtros.append(f"banco:{self.banco}")
         if self.categoria:
             filtros.append(f"cat:{self.categoria}")
+        if self.categorias:
+            filtros.append(f"cats:[{','.join(self.categorias[:2])}{'...' if len(self.categorias) > 2 else ''}]")
         if self.tipos:
-            filtros.append(f"tipos:{','.join(self.tipos)}")
+            filtros.append(f"tipos:[{','.join(self.tipos)}]")
         if self.etiquetas:
-            filtros.append(f"tags:{','.join(self.etiquetas)}")
+            filtros.append(f"tags:[{','.join(self.etiquetas[:3])}{'...' if len(self.etiquetas) > 3 else ''}]")
         if self.preguntas_fijadas:
             filtros.append(f"fijadas:{len(self.preguntas_fijadas)}")
         
-        filtros_str = ", ".join(filtros) if filtros else "sin filtros"
+        filtros_str = ", ".join(filtros) if filtros else "sin_filtros"
         cant_str = f"cant:{self.cantidad}" if self.cantidad else "todas"
-        return f"Pool({filtros_str}, {cant_str})"
+        pts_str = f", pts:{self.puntaje_fijo_por_pregunta}" if self.puntaje_fijo_por_pregunta else ""
+        return f"Pool({filtros_str}, {cant_str}{pts_str})"
     
     def __repr__(self) -> str:
         return f"PoolConfig(categoria={self.categoria}, tipos={self.tipos}, cantidad={self.cantidad})"
