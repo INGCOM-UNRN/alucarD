@@ -7,6 +7,67 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ---
 
+## [5.8.0] - 2025-11-05
+
+### ✨ Agregado
+
+#### Mejoras de CSS para Impresión
+- ✅ **Optimización de bloques de código**: Bordes simples, fondo blanco, mejor legibilidad
+- ✅ **Modo B/N mejorado**: Eliminación completa de colores en impresión para ahorro de tinta
+- ✅ **Guardas de markdown**: Estilos específicos para código con bordes simples
+- ✅ **Reducción de espacio**: Padding y márgenes optimizados para papel
+
+#### Logging Mejorado
+- ✅ **Campo `fuente_banco`**: Agregado a modelo `Pregunta` para trazabilidad
+- ✅ **Método `__str__` mejorado**: Más información en logs (banco origen, opciones, tags)
+- ✅ **Método `__str__` para `PoolConfig`**: Información detallada de filtros y configuración
+- ✅ **Logs con checkmarks**: Uso de ✓ para indicar operaciones exitosas
+
+#### Soporte para Múltiples Categorías
+- ✅ **Campo `categorias`**: Lista de categorías en `PoolConfig` (OR lógico)
+- ✅ **Filtrado mejorado**: Soporte para `categoria` (single) o `categorias` (multiple)
+- ✅ **Wizard actualizado**: Opción para seleccionar múltiples categorías
+
+#### Wizard Mejorado
+- ✅ **Selección de layouts**: Interfaz para elegir layout por sección
+- ✅ **Descripción de layouts**: Info de densidad y páginas por layout
+- ✅ **Soporte categorías múltiples**: Configuración de varias categorías por pool
+
+#### Configuraciones de Exámenes de Prueba
+- ✅ **5 exámenes completos** en `examenes_prueba/`:
+  - `examen_01_mixto_basico.yaml`: Mixto con 3 secciones y 3 layouts
+  - `examen_02_codigo_intensivo.yaml`: Análisis de código profundo
+  - `examen_03_compacto_multiple.yaml`: 10 temas con layouts compactos
+  - `examen_04_desarrollo_puro.yaml`: Solo preguntas de desarrollo
+  - `examen_05_layouts_mixtos.yaml`: Demostración de todos los layouts
+- ✅ **Variables personalizadas**: Uso extensivo de f-strings
+- ✅ **Configuración completa**: Todos los parámetros en YAML
+
+#### Documentación Consolidada
+- ✅ **README.md**: Sección de especificación técnica agregada
+- ✅ **Arquitectura de plugins**: Documentación de parsers y renderers
+- ✅ **Flujo de ejecución**: Diagrama completo del pipeline
+- ✅ **Modelos Pydantic**: Estructura de datos documentada
+- ✅ **Limpieza de docs**: Eliminados archivos redundantes, solo README y CHANGELOG
+
+### 🔧 Modificado
+- 📝 **Parsers**: `gift_parser.py` y `moodle_parser.py` agregan `fuente_banco` automáticamente
+- 📝 **Logic**: Función `_filtrar_preguntas_pool` soporta `categorias` múltiples
+- 📝 **Models**: `Pregunta.fuente_banco` agregado como campo opcional
+
+### 🗑️ Eliminado
+- 🧹 **Documentación redundante**: 17 archivos markdown consolidados en README.md y CHANGELOG.md
+- 🧹 **Backups**: Archivos movidos a `.docs_backup/` para referencia
+
+### 📊 Estadísticas
+- **Tests totales**: 253 (sin cambios)
+- **Tests pasando**: 253/253 (100%)
+- **Cobertura**: 77% (sin cambios)
+- **Exámenes de prueba**: 5 configuraciones completas
+- **Líneas de documentación**: -15K (consolidación)
+
+---
+
 ## [5.7.0] - 2025-11-05
 
 ### ✨ Agregado - Configuración en YAML con CLI Override

@@ -1042,6 +1042,125 @@ Cada uno incluye comentarios explicativos en YAML.
 
 ---
 
+## 🏗️ Especificación Técnica
+
+### Arquitectura de Plugins
+
+El proyecto utiliza **Clases Base Abstractas (ABC)** para extensibilidad:
+
+#### Parsers (Entrada)
+```python
+class BaseParser(ABC):
+    @abstractmethod
+    def parse(self, filepath: Path) -> Dict[str, Pregunta]:
+        """Parsea archivo y retorna diccionario de preguntas"""
+        pass
+```
+
+**Implementaciones**:
+- `GiftParser`: Formato GIFT de Moodle (.txt, .gift)
+- `MoodleParser`: Formato XML de Moodle (.xml)
+
+**Agregar nuevo parser**:
+1. Heredar de `BaseParser`
+2. Implementar método `parse()`
+3. Registrar en `parsers/__init__.py`
+
+#### Renderers (Salida)
+```python
+class BaseRenderer(ABC):
+    @abstractmethod
+    def renderizar_examen(self, datos_examen: Dict, 
+                         definicion: DefinicionExamen, 
+                         output_dir: Path, tema: int):
+        """Genera archivo de examen"""
+        pass
+```
+
+**Implementaciones**:
+- `HtmlRenderer`: Genera HTML con Jinja2
+- `PdfRenderer`: Genera PDF usando WeasyPrint (reutiliza HTML)
+
+**Agregar nuevo renderer**:
+1. Heredar de `BaseRenderer`
+2. Implementar métodos de renderizado
+3. Registrar en `generators/__init__.py`
+
+### Flujo de Ejecución
+
+```
+1. CLI Args Parse (argparse)
+   ↓
+2. Load YAML (pyyaml + pydantic)
+   ↓
+3. Validar Definición (Pydantic models)
+   ↓
+4. Cargar Bancos (BaseParser plugins)
+   ↓
+5. Procesar Imágenes (base64 embedding)
+   ↓
+6. Filtrar Preguntas (categorías/tags/tipos)
+   ↓
+7. Construir Pool (selección + puntajes)
+   ↓
+8. Mezclar (random con semilla)
+   ↓
+9. Renderizar (BaseRenderer plugins)
+   ↓
+10. Guardar Archivos (HTML/PDF)
+```
+
+### Modelos Pydantic
+
+```python
+# Modelo de entrada (YAML)
+DefinicionExamen
+  ├── ConfiguracionExamen
+  ├── List[SeccionExamen]
+  │   └── List[PoolConfig]
+  └── Dict[str, str] variables_personalizadas
+
+# Modelo de datos interno
+Pregunta
+  ├── id: str
+  ├── tipo: Literal[tipos]
+  ├── categoria: str
+  ├── enunciado_html: str
+  ├── puntaje: float
+  ├── List[Opcion]
+  ├── List[etiquetas]
+  └── fuente_banco: str
+```
+
+### Dependencias Core
+
+| Librería | Versión | Propósito |
+|----------|---------|-----------|
+| **pydantic** | ≥2.10 | Validación de YAML |
+| **pyyaml** | ≥6.0 | Parseo YAML |
+| **jinja2** | ≥3.1 | Templating HTML |
+| **weasyprint** | ≥63.0 | Generación PDF |
+| **pygments** | ≥2.18 | Syntax highlighting |
+| **rich** | ≥13.9 | CLI interactiva |
+
+### Testing
+
+```bash
+# Ejecutar todos los tests
+pytest
+
+# Con cobertura
+pytest --cov=generador_examenes --cov-report=html
+
+# Tests específicos
+pytest tests/test_parsers.py -v
+pytest tests/test_logic.py -k filtrado
+```
+
+**Coverage Target**: > 70% para features críticas
+
+---
+
 ## 🤝 Contribuir
 
 ### Guía de Contribución

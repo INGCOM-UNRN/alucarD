@@ -40,7 +40,6 @@ secciones_examen:
     pools:
       - cantidad: 10
         tipos: ["seleccion_multiple"]
-        etiquetas: ["conceptos", "basico"]
         puntaje_fijo_por_pregunta: 2.0
         accion_si_insuficiente: "usar_todas"
 
@@ -59,6 +58,5 @@ secciones_examen:
     pools:
       - cantidad: 3
         tipos: ["desarrollo"]
-        etiquetas: ["conceptos", "basico"]
         puntaje_fijo_por_pregunta: 5.0
         accion_si_insuficiente: "usar_todas"

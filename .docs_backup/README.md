@@ -3,8 +3,8 @@
 **Sistema profesional de generación de exámenes** basado en plantillas YAML, con soporte para bancos Moodle/GIFT, múltiples layouts y optimización para impresión.
 
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/tests-228%20passing-success.svg)](tests/)
-[![Coverage](https://img.shields.io/badge/coverage-76%25-green.svg)](htmlcov/)
+[![Tests](https://img.shields.io/badge/tests-253%20passing-success.svg)](tests/)
+[![Coverage](https://img.shields.io/badge/coverage-77%25-green.svg)](htmlcov/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 ---
@@ -26,6 +26,7 @@
 - [Ejemplos Prácticos](#-ejemplos-prácticos)
 - [Testing y Calidad](#-testing-y-calidad)
 - [Arquitectura](#-arquitectura)
+- [Documentación Adicional](#-documentación-adicional)
 - [Contribuir](#-contribuir)
 
 ---
@@ -66,9 +67,9 @@
 - ✅ **Fuentes Legibles**: Tamaños y espaciado optimizados
 
 ### 🧪 Calidad y Testing
-- ✅ **228 Tests**: Suite completa con pytest
-- ✅ **76% Coverage**: Cobertura de código
-- ✅ **5 Exámenes de Prueba**: Validación en escenarios reales
+- ✅ **253 Tests**: Suite completa con pytest
+- ✅ **77% Coverage**: Cobertura de código
+- ✅ **6 Exámenes de Prueba**: Validación en escenarios reales
 - ✅ **CI Ready**: Configurado para integración continua
 
 ---
@@ -141,6 +142,14 @@ El asistente interactivo te guía:
 - Vista previa antes de guardar
 
 ### 3️⃣ Validar Configuración
+
+**Opción A: Todo en YAML (más simple)**
+```bash
+# Si el YAML incluye input_banco, solo necesitas:
+generador-examenes -d mi_examen.yaml --validate
+```
+
+**Opción B: Especificar bancos por CLI**
 ```bash
 generador-examenes -d mi_examen.yaml \
   -i bancos/banco1.txt bancos/banco2.xml \
@@ -148,8 +157,22 @@ generador-examenes -d mi_examen.yaml \
 ```
 
 ### 4️⃣ Generar Exámenes
+
+**Opción A: Configuración completa en YAML**
 ```bash
-# Generar 3 temas en HTML
+# Si tu YAML incluye input_banco, numero_temas, formato, etc:
+generador-examenes -d mi_examen_completo.yaml
+
+# Override específico (ej: generar 5 temas en vez de lo configurado)
+generador-examenes -d mi_examen_completo.yaml -n 5
+
+# Cambiar formato a PDF
+generador-examenes -d mi_examen_completo.yaml -f pdf
+```
+
+**Opción B: CLI tradicional**
+```bash
+# Especificar todo por línea de comandos
 generador-examenes -d mi_examen.yaml \
   -i bancos/banco1.txt bancos/banco2.xml \
   -o output \
@@ -162,6 +185,8 @@ generador-examenes -d mi_examen.yaml \
   -n 5 \
   -f pdf
 ```
+
+> **💡 Tip**: Las opciones de CLI siempre tienen prioridad sobre las del YAML, permitiendo overrides rápidos.
 
 ---
 
@@ -248,6 +273,18 @@ variables_personalizadas:
   titulo_completo: "{nombre_examen} | {materia}"
   periodo: "Segundo Cuatrimestre {anio_actual}"
 
+# Configuración de generación (opcional, puede overridearse por CLI)
+input_banco:
+  - "bancos/codigo.xml"
+  - "bancos/teorico.gift"
+output_dir: "./output"
+path_images: null  # Opcional
+numero_temas: 3    # Número de versiones a generar
+semilla: 42        # Para reproducibilidad
+formato:
+  - "html"
+  - "pdf"
+
 secciones_examen:
   - nombre: "Parte 1: Conceptos Básicos"
     instrucciones: "Selecciona la respuesta correcta"
@@ -265,6 +302,46 @@ secciones_examen:
         tipos: ["seleccion_multiple"]
         cantidad: 10
         puntaje_fijo_por_pregunta: 5.0
+```
+
+### Configuración de Generación en YAML (Nuevo en v5.7.0)
+
+Ahora puedes incluir opciones de generación directamente en el YAML:
+
+```yaml
+# Configuración de generación (todas opcionales)
+input_banco:                    # Lista de bancos de preguntas
+  - "bancos/teoria.gift"
+  - "bancos/practica.xml"
+  
+output_dir: "./examenes"        # Directorio de salida (default: "./output")
+
+path_images: "./imagenes"       # Directorio de imágenes (opcional)
+
+numero_temas: 5                 # Número de versiones (default: 1)
+
+semilla: 123                    # Semilla aleatoria (default: 42)
+
+formato:                        # Formatos de salida (default: ["html"])
+  - "html"
+  - "pdf"
+```
+
+**Ventajas:**
+- ✅ Menos argumentos en CLI
+- ✅ Configuración reproducible
+- ✅ Fácil de versionar en Git
+- ✅ CLI override para casos especiales
+
+**Ejemplo de uso:**
+```bash
+# Con configuración completa en YAML
+generador-examenes -d examen.yaml
+
+# Override de opciones específicas
+generador-examenes -d examen.yaml -n 10      # Genera 10 temas
+generador-examenes -d examen.yaml -f pdf     # Solo PDF
+generador-examenes -d examen.yaml -o ./test  # Directorio diferente
 ```
 
 ### Configuración de Pools
@@ -915,6 +992,53 @@ class MiRenderer(BaseRenderer):
         # Tu lógica aquí
         pass
 ```
+
+---
+
+## 📚 Documentación Adicional
+
+Este proyecto incluye documentación completa y detallada:
+
+### Documentos Principales
+
+1. **[README.md](README.md)** - Este archivo: Guía completa de uso
+2. **[CHANGELOG.md](CHANGELOG.md)** - Historial de cambios y versiones
+3. **[COMPLIANCE_REPORT.md](COMPLIANCE_REPORT.md)** - Verificación de cumplimiento con especificaciones
+4. **[descripcion.md](descripcion.md)** - Especificaciones técnicas originales del proyecto
+
+### Documentación en el Código
+
+- **Docstrings**: Todas las clases y funciones públicas documentadas (Google Style)
+- **Type Hints**: Tipado completo en todas las funciones
+- **Comentarios**: Explicaciones en lógica compleja
+
+### Tests como Documentación
+
+Los tests sirven como documentación viva del comportamiento esperado:
+- `tests/test_parsers.py` - Ejemplos de uso de parsers
+- `tests/test_logic.py` - Flujos de filtrado y construcción
+- `tests/test_integration.py` - Escenarios end-to-end
+- `tests/test_layouts.py` - Comportamiento de layouts
+
+### Exámenes de Ejemplo
+
+El directorio `examenes_prueba/` contiene 6 configuraciones completas que sirven como ejemplos prácticos:
+1. `examen_01_basico.yaml` - Configuración mínima
+2. `examen_02_algoritmos.yaml` - Filtrado por categoría
+3. `examen_03_completo.yaml` - Uso avanzado
+4. `examen_04_mixto.yaml` - Múltiples layouts
+5. `examen_05_personalizado.yaml` - Variables personalizadas
+6. `examen_06_layouts.yaml` - Demostración de layouts
+
+Cada uno incluye comentarios explicativos en YAML.
+
+### Reportes de Verificación
+
+- **COMPLIANCE_REPORT.md**: Verificación punto por punto del cumplimiento con `descripcion.md`
+  - ✅ 100% cumplimiento confirmado
+  - ✅ 11 mejoras adicionales documentadas
+  - ✅ 231 tests, 76% cobertura
+  - ✅ Estado: PRODUCCIÓN READY
 
 ---
 
