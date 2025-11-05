@@ -128,9 +128,11 @@ class TestExamWizard:
         
         with patch('generador_examenes.config.exam_wizard.Prompt.ask') as mock_ask, \
              patch('generador_examenes.config.exam_wizard.IntPrompt.ask') as mock_int_ask, \
+             patch('generador_examenes.config.exam_wizard.Confirm.ask') as mock_confirm, \
              patch('generador_examenes.config.exam_wizard.console'):
             
             mock_ask.side_effect = ['categoria', 'Math/Algebra', 'advertir']
+            mock_confirm.return_value = False  # No usar múltiples categorías
             mock_int_ask.return_value = 10
             
             pool = wizard._configurar_pool()

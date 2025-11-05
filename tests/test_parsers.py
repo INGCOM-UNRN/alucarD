@@ -703,11 +703,11 @@ class TestGiftParserExceptions:
         original_parsear = parser._parsear_bloque
         call_count = [0]
         
-        def mock_parsear(bloque, indice):
+        def mock_parsear(bloque, indice, banco_nombre=None):
             call_count[0] += 1
             if call_count[0] == 1:
                 raise ValueError("Error simulado")
-            return original_parsear(bloque, indice)
+            return original_parsear(bloque, indice, banco_nombre)
         
         monkeypatch.setattr(parser, '_parsear_bloque', mock_parsear)
         
@@ -847,11 +847,11 @@ class TestMoodleXMLParserExceptions:
         original_parsear = parser._parsear_pregunta
         call_count = [0]
         
-        def mock_parsear(elem, indice):
+        def mock_parsear(elem, indice, banco_nombre=None):
             call_count[0] += 1
             if call_count[0] == 1:
                 raise ValueError("Error simulado")
-            return original_parsear(elem, indice)
+            return original_parsear(elem, indice, banco_nombre)
         
         monkeypatch.setattr(parser, '_parsear_pregunta', mock_parsear)
         
