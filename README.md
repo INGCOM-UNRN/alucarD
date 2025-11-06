@@ -129,7 +129,19 @@ Esto crea:
 - `definicion_ejemplo.yaml` - Configuración de ejemplo
 - `README_PROYECTO.md`
 
-### 2️⃣ Crear Configuración con Wizard
+### 2️⃣ Explorar Categorías del Banco
+```bash
+# Genera un árbol HTML interactivo con todas las categorías
+generador-examenes --category-tree bancos/mi_banco.gift
+# Abre output/category_tree.html en tu navegador
+```
+
+Esto te ayuda a:
+- Ver la estructura jerárquica de categorías
+- Conocer cuántas preguntas hay por categoría y tipo
+- Copiar nombres de categorías al portapapeles para el YAML
+
+### 3️⃣ Crear Configuración con Wizard
 ```bash
 generador-examenes --wizard mi_examen.yaml
 ```
@@ -141,7 +153,28 @@ El asistente interactivo te guía:
 - Variables personalizadas
 - Vista previa antes de guardar
 
-### 3️⃣ Validar Configuración
+### 4️⃣ Usar Ejemplos de Configuración
+
+El proyecto incluye 5 configuraciones de ejemplo listas para usar:
+
+```bash
+# Ejemplo 1: Básico - Configuración mínima
+generador-examenes -d examenes_prueba/ejemplo_1_basico.yaml
+
+# Ejemplo 2: Mixto - Múltiples layouts y tipos
+generador-examenes -d examenes_prueba/ejemplo_2_mixto.yaml
+
+# Ejemplo 3: Análisis de código - Layout para código extenso
+generador-examenes -d examenes_prueba/ejemplo_3_analisis_codigo.yaml
+
+# Ejemplo 4: Por categorías - Filtrado avanzado
+generador-examenes -d examenes_prueba/ejemplo_4_categorias.yaml
+
+# Ejemplo 5: Completo - Todas las características
+generador-examenes -d examenes_prueba/ejemplo_5_completo.yaml
+```
+
+### 5️⃣ Validar Configuración
 
 **Opción A: Todo en YAML (más simple)**
 ```bash

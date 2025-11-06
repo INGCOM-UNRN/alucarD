@@ -7,6 +7,50 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ---
 
+## [5.10.0] - 2025-11-06
+
+### ✨ Nuevas Funcionalidades
+
+#### 📋 Configuraciones de Ejemplo
+- ✅ **5 configuraciones YAML completas** en `examenes_prueba/`
+  - `ejemplo_1_basico.yaml`: Configuración mínima
+  - `ejemplo_2_mixto.yaml`: Múltiples layouts y tipos
+  - `ejemplo_3_analisis_codigo.yaml`: Layout para código extenso
+  - `ejemplo_4_categorias.yaml`: Filtrado avanzado por categorías
+  - `ejemplo_5_completo.yaml`: Todas las características disponibles
+- ✅ **Demuestran** variables personalizadas, layouts, filtros, etiquetas
+- ✅ **Validadas** con bancos reales del proyecto
+
+#### 🔧 Linter GIFT Mejorado
+- ✅ **Validación mejorada** con nombre de pregunta en errores
+- ✅ **Detecta** formato incorrecto de tags y categorías
+- ✅ **Verifica** opciones vacías o sin marcadores válidos
+- ✅ **Preserva** bloques de código markdown durante formateo
+- ✅ **Normaliza** espacios alrededor de componentes GIFT
+- ✅ **Mensajes** de error más descriptivos y contextualizados
+
+### 🐛 Mejoras
+
+#### 📝 Logging Mejorado
+- ✅ **Nombre de banco** incluido en warnings del parser GIFT
+- ✅ **Conteo de bloques** procesados en mensajes de éxito
+- ✅ **Errores contextualizados** con información del archivo fuente
+- ✅ **Facilita debugging** de bancos problemáticos
+
+#### 📚 Documentación Consolidada
+- ✅ **README.md** y **CHANGELOG.md** como documentación principal
+- ✅ **Archivos antiguos** movidos a `.docs_backup/old_root/`
+- ✅ **Sección de ejemplos** agregada al README
+- ✅ **Reducción de redundancia** en documentación
+
+### 📂 Commits
+- `e270712` - Mejora mensajes de logging con información más detallada
+- `[hash]` - Agrega 5 configuraciones de ejemplo para verificar funcionalidad
+- `7f8dad7` - Consolida documentación: mueve archivos redundantes a backup
+- `58c5cee` - Mejora linter GIFT con validaciones adicionales y mejor formato
+
+---
+
 ## [5.9.1] - 2025-11-06
 
 ### 🐛 Corregido
