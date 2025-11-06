@@ -7,6 +7,26 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ---
 
+## [5.9.1] - 2025-11-06
+
+### 🐛 Corregido
+
+#### Explorador de Categorías - Clasificación por Tipos
+- ✅ **Agregado desglose por tipos de pregunta** en el árbol de categorías
+- ✅ **Visualización mejorada** mostrando conteo por tipo (Sel. Múltiple, V/F, Desarrollo, etc.)
+- ✅ **Ejemplo de salida**: "15 preguntas (10 Sel. Múltiple | 3 V/F | 2 Desarrollo)"
+- ✅ **Estilos CSS** para badges de tipos con formato compacto
+- ✅ **Labels traducidos** en español para mejor legibilidad
+
+#### Cambios Técnicos
+- Agregado `type_counts: Dict[str, int]` a clase `CategoryNode`
+- Método `add_question()` ahora acepta parámetro `question_type`
+- Actualizado `build_category_tree()` para pasar tipo de pregunta
+- JavaScript del viewer con diccionario `typeLabels` para traducciones
+- Nuevo estilo CSS `.type-breakdown` para mostrar desglose inline
+
+---
+
 ## [5.9.0] - 2025-11-05
 
 ### ✨ Agregado - Explorador de Categorías

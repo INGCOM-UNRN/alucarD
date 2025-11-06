@@ -22,11 +22,14 @@ class CategoryNode:
         self.name = name
         self.full_path = full_path
         self.count = 0
+        self.type_counts: Dict[str, int] = defaultdict(int)
         self.children: Dict[str, CategoryNode] = {}
         
-    def add_question(self):
-        """Incrementa el contador de preguntas."""
+    def add_question(self, question_type: str = None):
+        """Incrementa el contador de preguntas y por tipo."""
         self.count += 1
+        if question_type:
+            self.type_counts[question_type] += 1
         
     def add_child(self, name: str, full_path: str) -> 'CategoryNode':
         """Agrega un nodo hijo."""
@@ -40,6 +43,7 @@ class CategoryNode:
             'name': self.name,
             'full_path': self.full_path,
             'count': self.count,
+            'type_counts': dict(self.type_counts),
             'children': {k: v.to_dict() for k, v in self.children.items()}
         }
 
@@ -58,6 +62,7 @@ def build_category_tree(banco_preguntas: Dict) -> CategoryNode:
     
     for pregunta in banco_preguntas.values():
         categoria = pregunta.categoria or "Sin categoría"
+        question_type = pregunta.tipo
         
         # Dividir la categoría en partes
         if '/' in categoria:
@@ -76,7 +81,7 @@ def build_category_tree(banco_preguntas: Dict) -> CategoryNode:
                 full_path = part
                 
             current = current.add_child(part, full_path)
-            current.add_question()
+            current.add_question(question_type)
     
     return root
 
@@ -326,6 +331,24 @@ def generate_html_content(tree: CategoryNode, banco_info: List[dict], total_ques
             margin-right: 0.5rem;
         }}
         
+        .type-breakdown {{
+            font-size: 0.75rem;
+            color: #666;
+            margin-left: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            background: #f8f9fa;
+            border-radius: 6px;
+            display: inline-block;
+        }}
+        
+        .type-item {{
+            margin-right: 0.5rem;
+        }}
+        
+        .type-item:last-child {{
+            margin-right: 0;
+        }}
+        
         .copy-btn {{
             background: #28a745;
             color: white;
@@ -474,6 +497,15 @@ def generate_html_content(tree: CategoryNode, banco_info: List[dict], total_ques
     <script>
         const treeData = {tree_json};
         
+        const typeLabels = {{
+            'seleccion_multiple': 'Sel. Múltiple',
+            'verdadero_falso': 'V/F',
+            'desarrollo': 'Desarrollo',
+            'respuesta_corta': 'Resp. Corta',
+            'emparejamiento': 'Emparejamiento',
+            'numerica': 'Numérica'
+        }};
+        
         function createTreeNode(node, level = 0) {{
             if (level === 0 && node.name === '(raíz)') {{
                 // Skip root node, render only children
@@ -494,6 +526,18 @@ def generate_html_content(tree: CategoryNode, banco_info: List[dict], total_ques
             
             if (node.count > 0) {{
                 html += '<span class="question-count">' + node.count + ' pregunta' + (node.count !== 1 ? 's' : '') + '</span>';
+                
+                // Add type breakdown
+                if (node.type_counts && Object.keys(node.type_counts).length > 0) {{
+                    html += '<span class="type-breakdown">';
+                    const types = [];
+                    for (const [type, count] of Object.entries(node.type_counts)) {{
+                        const label = typeLabels[type] || type;
+                        types.push('<span class="type-item">' + count + ' ' + label + '</span>');
+                    }}
+                    html += types.join(' | ');
+                    html += '</span>';
+                }}
             }}
             
             if (node.full_path) {{
