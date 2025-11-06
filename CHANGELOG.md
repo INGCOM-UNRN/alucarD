@@ -7,6 +7,26 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ---
 
+## [5.10.1] - 2025-11-06
+
+### 🐛 Correcciones
+
+#### Parser GIFT - Soporte para $CATEGORY
+- ✅ **Directiva `$CATEGORY:`** ahora procesada correctamente
+- ✅ **Categorías aplicadas** a todas las preguntas siguientes
+- ✅ **Jerarquía completa** en explorador de categorías
+- ✅ **Compatible con** formato Moodle GIFT estándar
+- ✅ **Mantiene soporte** para `[category: nombre]` inline
+
+**Problema resuelto**: El explorador de categorías mostraba todas las preguntas bajo "General" en lugar de la estructura jerárquica correcta definida con `$CATEGORY:` en archivos GIFT.
+
+**Impacto**: El explorador de categorías ahora muestra correctamente la estructura completa de categorías anidadas (ej: `$course$/top/programacion_1/arrays/arreglos`).
+
+### 📂 Commits
+- `a00d4af` - Corrige parser GIFT para soportar formato estándar $CATEGORY
+
+---
+
 ## [5.10.0] - 2025-11-06
 
 ### ✨ Nuevas Funcionalidades
