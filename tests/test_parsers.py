@@ -703,11 +703,11 @@ class TestGiftParserExceptions:
         original_parsear = parser._parsear_bloque
         call_count = [0]
         
-        def mock_parsear(bloque, indice, banco_nombre=None):
+        def mock_parsear(bloque, indice, banco_nombre=None, categoria_actual="General"):
             call_count[0] += 1
             if call_count[0] == 1:
                 raise ValueError("Error simulado")
-            return original_parsear(bloque, indice, banco_nombre)
+            return original_parsear(bloque, indice, banco_nombre, categoria_actual)
         
         monkeypatch.setattr(parser, '_parsear_bloque', mock_parsear)
         

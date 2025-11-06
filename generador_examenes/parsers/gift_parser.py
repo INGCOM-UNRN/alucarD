@@ -42,9 +42,9 @@ class GiftParser(BaseParser):
             # Dividir en bloques de preguntas (separadas por líneas en blanco)
             bloques = self._dividir_bloques(content)
             
-            for i, bloque in enumerate(bloques):
+            for i, (bloque, categoria) in enumerate(bloques):
                 try:
-                    pregunta = self._parsear_bloque(bloque, i, banco_nombre)
+                    pregunta = self._parsear_bloque(bloque, i, banco_nombre, categoria)
                     if pregunta:
                         preguntas[pregunta.id] = pregunta
                 except Exception as e:
@@ -58,30 +58,58 @@ class GiftParser(BaseParser):
         
         return preguntas
     
-    def _dividir_bloques(self, content: str) -> list[str]:
-        """Divide el contenido en bloques de preguntas"""
+    def _dividir_bloques(self, content: str) -> list[tuple[str, str]]:
+        """
+        Divide el contenido en bloques de preguntas con su categoría.
+        
+        Returns:
+            Lista de tuplas (bloque_texto, categoria_actual)
+        """
         # Eliminar comentarios (líneas que empiezan con //)
         lines = [line for line in content.split('\n') if not line.strip().startswith('//')]
         
         bloques = []
         bloque_actual = []
+        categoria_actual = "General"
         
         for line in lines:
-            if line.strip() == '':
+            stripped = line.strip()
+            
+            # Detectar cambio de categoría
+            if stripped.startswith('$CATEGORY:'):
+                # Guardar bloque actual si existe antes de cambiar categoría
                 if bloque_actual:
-                    bloques.append('\n'.join(bloque_actual))
+                    bloques.append(('\n'.join(bloque_actual), categoria_actual))
+                    bloque_actual = []
+                
+                # Actualizar categoría actual
+                categoria_actual = stripped[10:].strip()  # Remover "$CATEGORY:"
+                continue
+            
+            # Procesar líneas de contenido
+            if stripped == '':
+                if bloque_actual:
+                    bloques.append(('\n'.join(bloque_actual), categoria_actual))
                     bloque_actual = []
             else:
                 bloque_actual.append(line)
         
         # Agregar último bloque si existe
         if bloque_actual:
-            bloques.append('\n'.join(bloque_actual))
+            bloques.append(('\n'.join(bloque_actual), categoria_actual))
         
         return bloques
     
-    def _parsear_bloque(self, bloque: str, indice: int, banco_nombre: str = None) -> Pregunta | None:
-        """Parsea un bloque individual de pregunta GIFT"""
+    def _parsear_bloque(self, bloque: str, indice: int, banco_nombre: str = None, categoria_actual: str = "General") -> Pregunta | None:
+        """
+        Parsea un bloque individual de pregunta GIFT.
+        
+        Args:
+            bloque: Texto del bloque de pregunta
+            indice: Índice del bloque
+            banco_nombre: Nombre del archivo de banco
+            categoria_actual: Categoría aplicada a esta pregunta desde $CATEGORY
+        """
         if not bloque.strip():
             return None
         
@@ -107,8 +135,8 @@ class GiftParser(BaseParser):
             formato = format_match.group(1).lower()
             bloque = bloque[:format_match.start()] + bloque[format_match.end():]
         
-        # Extraer categoría [category: nombre]
-        categoria = "General"
+        # Usar categoría actual por defecto, pero permitir override con [category: nombre]
+        categoria = categoria_actual
         cat_match = re.search(r'\[category:\s*(.+?)\]', bloque, re.IGNORECASE)
         if cat_match:
             categoria = cat_match.group(1).strip()
