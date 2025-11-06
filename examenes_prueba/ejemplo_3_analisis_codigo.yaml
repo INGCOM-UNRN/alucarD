@@ -1,0 +1,59 @@
+# Ejemplo 3: Examen de análisis de código con layout para código extenso
+# Ideal para preguntas con fragmentos de código largos
+
+nombre_examen: Examen de Análisis de Código
+institucion: Universidad Tecnológica
+materia: Algoritmos y Estructuras de Datos
+fecha: '2025-11-25'
+duracion_minutos: 120
+instrucciones_generales: |
+  Lee cuidadosamente cada fragmento de código antes de responder.
+  Se provee código en C para análisis.
+  Puedes usar el espacio en blanco para cálculos auxiliares.
+idioma: es
+
+# Configuración de archivos
+input_banco:
+  - bancos/codigo.xml
+  - bancos/algoritmos.xml
+output_dir: examenes_prueba/output
+numero_temas: 2
+semilla: 200
+formato:
+  - html
+  - pdf
+
+# Variables personalizadas
+variables_personalizadas:
+  ciclo_lectivo: "2025"
+  tipo_evaluacion: "Examen Final"
+  catedra: "Algoritmos - Prof. López"
+  instrucciones_detalladas: "Analiza el código y responde. Tiempo: {duracion_minutos} minutos."
+
+configuracion_examen:
+  mezclar_preguntas_dentro_seccion: false  # Mantener orden lógico
+  mezclar_opciones_dentro_pregunta: true
+  generar_clave_profesor: true
+
+secciones_examen:
+  - nombre: "Sección A: Análisis de Algoritmos de Búsqueda"
+    instrucciones: "Analiza los fragmentos de código y selecciona la respuesta correcta."
+    layout: default  # Layout con código a la izquierda, opciones a la derecha
+    pools:
+      - cantidad: 5
+        tipos:
+          - seleccion_multiple
+        categoria: "$course$/top/busqueda"
+        accion_si_insuficiente: usar_todas
+        puntaje_fijo_por_pregunta: 3.0
+  
+  - nombre: "Sección B: Algoritmos de Ordenamiento"
+    instrucciones: "Identifica el algoritmo y su complejidad."
+    layout: default
+    pools:
+      - cantidad: 5
+        tipos:
+          - seleccion_multiple
+        categoria: "$course$/top/ordenamiento"
+        accion_si_insuficiente: usar_todas
+        puntaje_fijo_por_pregunta: 3.0

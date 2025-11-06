@@ -1,0 +1,44 @@
+# Ejemplo 1: Examen básico con selección múltiple
+# Usa el banco simple de ejemplo y configuración mínima
+
+nombre_examen: Examen Básico - Conceptos Fundamentales
+institucion: Universidad Nacional
+materia: Introducción a la Programación
+fecha: '2025-11-15'
+duracion_minutos: 60
+instrucciones_generales: |
+  Lee cuidadosamente cada pregunta antes de responder.
+  Marca una única respuesta correcta en cada caso.
+idioma: es
+
+# Configuración de archivos (puede ser overrideada por CLI)
+input_banco:
+  - bancos/banco_ejemplo.txt
+output_dir: examenes_prueba/output
+numero_temas: 2
+semilla: 42
+formato:
+  - html
+  - pdf
+
+# Variables personalizadas con f-strings
+variables_personalizadas:
+  periodo: "2025 - Primer Cuatrimestre"
+  docente: "Prof. García"
+  nota_minima: "60"
+  info_completa: "{nombre_examen} - {materia} ({periodo})"
+
+configuracion_examen:
+  mezclar_preguntas_dentro_seccion: true
+  mezclar_opciones_dentro_pregunta: true
+  generar_clave_profesor: true
+
+secciones_examen:
+  - nombre: "Parte I: Conceptos Básicos"
+    instrucciones: "Selecciona la respuesta correcta para cada pregunta."
+    layout: compact-2col
+    pools:
+      - cantidad: 3
+        tipos:
+          - seleccion_multiple
+        accion_si_insuficiente: usar_todas

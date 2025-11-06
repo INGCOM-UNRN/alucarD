@@ -1,0 +1,72 @@
+# Ejemplo 2: Examen mixto con múltiples layouts y tipos de preguntas
+# Combina selección múltiple, verdadero/falso y desarrollo
+
+nombre_examen: Parcial Integrador - Programación en C
+institucion: UNRN Andina
+materia: Programación I
+fecha: '2025-11-20'
+duracion_minutos: 90
+instrucciones_generales: |
+  Este examen consta de tres partes:
+  - Parte I: Preguntas de selección múltiple (layout compacto)
+  - Parte II: Verdadero o Falso (layout ultra compacto)
+  - Parte III: Preguntas de desarrollo (respuestas extensas)
+idioma: es
+
+# Configuración de archivos
+input_banco:
+  - bancos/teorico.gift
+output_dir: examenes_prueba/output
+numero_temas: 3
+semilla: 100
+formato:
+  - html
+  - pdf
+
+# Variables personalizadas
+variables_personalizadas:
+  cuatrimestre: "Segundo Cuatrimestre 2025"
+  comision: "Comisión A"
+  profesor: "Dr. Martínez"
+  encabezado: "{institucion} - {materia}"
+  aprobacion: "Para aprobar se requiere 60% de respuestas correctas"
+
+configuracion_examen:
+  mezclar_preguntas_dentro_seccion: true
+  mezclar_opciones_dentro_pregunta: true
+  generar_clave_profesor: true
+
+secciones_examen:
+  - nombre: "Parte I: Selección Múltiple - Arreglos"
+    instrucciones: "Selecciona la opción correcta. Cada pregunta vale 2 puntos."
+    layout: compact-2col
+    pools:
+      - cantidad: 10
+        tipos:
+          - seleccion_multiple
+        etiquetas:
+          - arreglos
+        accion_si_insuficiente: usar_todas
+        puntaje_fijo_por_pregunta: 2.0
+  
+  - nombre: "Parte II: Verdadero o Falso - Punteros"
+    instrucciones: "Indica si la afirmación es verdadera o falsa."
+    layout: compact-4col
+    pools:
+      - cantidad: 8
+        tipos:
+          - verdadero_falso
+        etiquetas:
+          - punteros
+        accion_si_insuficiente: usar_todas
+        puntaje_fijo_por_pregunta: 1.0
+  
+  - nombre: "Parte III: Desarrollo"
+    instrucciones: "Responde de forma clara y completa. Utiliza el espacio provisto."
+    layout: default
+    pools:
+      - cantidad: 2
+        tipos:
+          - desarrollo
+        accion_si_insuficiente: usar_todas
+        puntaje_fijo_por_pregunta: 5.0

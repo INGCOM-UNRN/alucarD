@@ -1,0 +1,150 @@
+# Ejemplo 5: Configuración completa con todas las características
+# Demuestra el uso completo de capacidades: variables, layouts, filtros, etiquetas, etc.
+
+nombre_examen: Examen Final Integrador - Programación Completa
+institucion: UNRN Sede Andina
+materia: Programación y Estructuras de Datos
+fecha: '2025-12-15'
+duracion_minutos: 180
+instrucciones_generales: |
+  EXAMEN FINAL INTEGRADOR
+  
+  Este examen evalúa todos los contenidos de la materia.
+  Consta de 5 secciones con diferentes formatos de pregunta.
+  
+  Importante:
+  - Lee todas las instrucciones cuidadosamente
+  - Administra bien tu tiempo (180 minutos totales)
+  - Puedes usar calculadora para la sección de algoritmos
+  - No está permitido el uso de apuntes
+  
+  Distribución de puntaje:
+  - Sección 1: 25 puntos (conceptos básicos)
+  - Sección 2: 20 puntos (verdadero/falso)
+  - Sección 3: 30 puntos (análisis de código)
+  - Sección 4: 15 puntos (respuestas cortas)
+  - Sección 5: 10 puntos (desarrollo)
+  
+  Total: 100 puntos. Aprobación con 60 puntos.
+idioma: es
+
+# Configuración de archivos (CLI puede override)
+input_banco:
+  - bancos/teorico.gift
+  - bancos/codigo.xml
+  - bancos/algoritmos.xml
+output_dir: examenes_prueba/output
+numero_temas: 5
+semilla: 500
+formato:
+  - html
+  - pdf
+
+# Variables personalizadas con f-strings y composición
+variables_personalizadas:
+  # Variables base
+  periodo: "Ciclo Lectivo 2025"
+  cuatrimestre: "Segundo Cuatrimestre"
+  comision: "Comisión 1"
+  
+  # Profesores
+  titular: "Dr. Juan Pérez"
+  adjunto: "Lic. María González"
+  jtp: "Ing. Carlos López"
+  
+  # Información de contacto
+  email_catedra: "programacion@unrn.edu.ar"
+  aula: "Aula 203"
+  
+  # Composición de variables
+  encabezado_completo: "{institucion} - {materia}"
+  info_examen: "{nombre_examen} ({fecha})"
+  equipo_docente: "Titular: {titular} | Adjunto: {adjunto}"
+  datos_administrativos: "{periodo} - {cuatrimestre} - {comision}"
+  
+  # Información de aprobación
+  puntaje_total: "100"
+  puntaje_aprobacion: "60"
+  criterio: "Se requiere {puntaje_aprobacion}/{puntaje_total} puntos para aprobar"
+
+configuracion_examen:
+  mezclar_preguntas_dentro_seccion: true
+  mezclar_opciones_dentro_pregunta: true
+  generar_clave_profesor: true
+
+secciones_examen:
+  # Sección 1: Conceptos básicos - Layout compacto 2 columnas
+  - nombre: "Parte I: Conceptos Fundamentales (25 pts)"
+    instrucciones: |
+      Selecciona la respuesta correcta.
+      Cada pregunta vale 2.5 puntos.
+      Esta sección cubre conceptos básicos de arreglos y cadenas.
+    layout: compact-2col
+    pools:
+      - cantidad: 10
+        tipos:
+          - seleccion_multiple
+        etiquetas:
+          - arreglos
+          - cadenas
+        accion_si_insuficiente: usar_todas
+        puntaje_fijo_por_pregunta: 2.5
+  
+  # Sección 2: Verdadero/Falso - Layout ultra compacto 4 columnas
+  - nombre: "Parte II: Verdadero o Falso (20 pts)"
+    instrucciones: |
+      Indica si cada afirmación es verdadera (V) o falsa (F).
+      Cada respuesta correcta vale 1 punto.
+    layout: compact-4col
+    pools:
+      - cantidad: 20
+        tipos:
+          - verdadero_falso
+        accion_si_insuficiente: usar_todas
+        puntaje_fijo_por_pregunta: 1.0
+  
+  # Sección 3: Análisis de código - Layout default (código extenso)
+  - nombre: "Parte III: Análisis de Código (30 pts)"
+    instrucciones: |
+      Lee cuidadosamente cada fragmento de código.
+      Analiza su funcionamiento y selecciona la respuesta correcta.
+      Cada pregunta vale 3 puntos.
+    layout: default
+    pools:
+      - cantidad: 10
+        banco: bancos/codigo.xml
+        tipos:
+          - seleccion_multiple
+        accion_si_insuficiente: usar_todas
+        puntaje_fijo_por_pregunta: 3.0
+  
+  # Sección 4: Algoritmos específicos - Layout compacto 3 columnas
+  - nombre: "Parte IV: Algoritmos de Búsqueda y Ordenamiento (15 pts)"
+    instrucciones: |
+      Preguntas sobre algoritmos fundamentales.
+      Cada pregunta vale 1.5 puntos.
+    layout: compact-3col
+    pools:
+      - cantidad: 10
+        banco: bancos/algoritmos.xml
+        categorias:
+          - "$course$/top/busqueda"
+          - "$course$/top/ordenamiento"
+        tipos:
+          - seleccion_multiple
+        accion_si_insuficiente: usar_todas
+        puntaje_fijo_por_pregunta: 1.5
+  
+  # Sección 5: Preguntas de desarrollo - Layout default
+  - nombre: "Parte V: Desarrollo (10 pts)"
+    instrucciones: |
+      Responde de forma clara y completa en el espacio provisto.
+      Justifica tus respuestas con ejemplos cuando sea necesario.
+      Cada pregunta vale 5 puntos.
+    layout: default
+    pools:
+      - cantidad: 2
+        tipos:
+          - desarrollo
+        accion_si_insuficiente: usar_todas
+        puntaje_fijo_por_pregunta: 5.0

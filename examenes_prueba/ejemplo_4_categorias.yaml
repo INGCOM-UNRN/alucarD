@@ -1,0 +1,76 @@
+# Ejemplo 4: Examen usando múltiples categorías específicas
+# Demuestra filtrado avanzado por categorías
+
+nombre_examen: Parcial Temático - Estructuras de Datos
+institucion: Instituto Superior
+materia: Estructuras de Datos y Algoritmos II
+fecha: '2025-12-01'
+duracion_minutos: 100
+instrucciones_generales: |
+  Este examen evalúa conocimientos sobre estructuras de datos fundamentales.
+  Se organizó por temas específicos en cada sección.
+idioma: es
+
+# Configuración de archivos
+input_banco:
+  - bancos/algoritmos.xml
+  - bancos/teorico.gift
+output_dir: examenes_prueba/output
+numero_temas: 2
+semilla: 300
+formato:
+  - html
+
+# Variables personalizadas
+variables_personalizadas:
+  año: "{anio_actual}"
+  semestre: "2do Semestre"
+  carrera: "Ingeniería en Sistemas"
+  titular: "Prof. Rodríguez"
+  info: "{nombre_examen} - {carrera} - {año}"
+
+configuracion_examen:
+  mezclar_preguntas_dentro_seccion: true
+  mezclar_opciones_dentro_pregunta: true
+  generar_clave_profesor: true
+
+secciones_examen:
+  - nombre: "Sección 1: Arreglos y Matrices"
+    instrucciones: "Preguntas sobre estructuras de datos básicas."
+    layout: compact-2col
+    pools:
+      - cantidad: 8
+        categorias:
+          - "$course$/top/arreglos"
+          - "$course$/top/matrices"
+        tipos:
+          - seleccion_multiple
+          - verdadero_falso
+        accion_si_insuficiente: usar_todas
+        puntaje_fijo_por_pregunta: 2.0
+  
+  - nombre: "Sección 2: Punteros y Memoria Dinámica"
+    instrucciones: "Conceptos avanzados de manejo de memoria."
+    layout: compact-2col
+    pools:
+      - cantidad: 6
+        categorias:
+          - "$course$/top/punteros"
+          - "$course$/top/memoria"
+        tipos:
+          - seleccion_multiple
+        accion_si_insuficiente: usar_todas
+        puntaje_fijo_por_pregunta: 2.5
+  
+  - nombre: "Sección 3: Estructuras y Algoritmos"
+    instrucciones: "Aplicación de estructuras en algoritmos."
+    layout: default
+    pools:
+      - cantidad: 4
+        categorias:
+          - "$course$/top/estructuras"
+          - "$course$/top/algoritmos"
+        tipos:
+          - seleccion_multiple
+        accion_si_insuficiente: usar_todas
+        puntaje_fijo_por_pregunta: 3.0
