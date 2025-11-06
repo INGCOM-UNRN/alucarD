@@ -48,10 +48,10 @@ class GiftParser(BaseParser):
                     if pregunta:
                         preguntas[pregunta.id] = pregunta
                 except Exception as e:
-                    logger.warning(f"Error parseando bloque {i}: {e}")
+                    logger.warning(f"[{banco_nombre}] Error en bloque {i+1}: {e}")
                     continue
             
-            logger.info(f"✓ {len(preguntas)} preguntas cargadas de {filepath.name}")
+            logger.info(f"✓ [{filepath.name}] {len(preguntas)} preguntas cargadas correctamente de {len(bloques)} bloques procesados")
             
         except Exception as e:
             raise ValueError(f"Error leyendo archivo GIFT: {e}")
@@ -117,7 +117,7 @@ class GiftParser(BaseParser):
         # Buscar las llaves que contienen las opciones
         match = re.search(r'^(.+?)\{(.+)\}', bloque.strip(), re.DOTALL)
         if not match:
-            logger.warning(f"No se encontraron opciones en bloque: {nombre}")
+            logger.warning(f"[{banco_nombre}] Pregunta '{nombre}' omitida: no se encontraron opciones entre {{ }}. Revisar formato GIFT.")
             return None
         
         enunciado = match.group(1).strip()
