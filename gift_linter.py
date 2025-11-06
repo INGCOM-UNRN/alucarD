@@ -99,27 +99,49 @@ def _process_question(question, line_num, output):
     issues = []
     valid = True
     
-    # Validar nombre
-    if not re.match(r'^::(.+?)::', question):
+    # Extraer nombre
+    name_match = re.match(r'^::(.+?)::', question)
+    if not name_match:
         issues.append((line_num, "Falta nombre de pregunta (::nombre::)"))
         valid = False
+        question_name = f"pregunta_linea_{line_num}"
+    else:
+        question_name = name_match.group(1)
     
     # Validar llaves
     if '{' not in question or '}' not in question:
-        issues.append((line_num, "Faltan opciones entre llaves {}"))
+        issues.append((line_num, f"[{question_name}] Faltan opciones entre llaves {{}}"))
         valid = False
     else:
         open_b = question.count('{')
         close_b = question.count('}')
         if open_b != close_b:
-            issues.append((line_num, f"Llaves desbalanceadas: {open_b} {{ vs {close_b} }}"))
+            issues.append((line_num, f"[{question_name}] Llaves desbalanceadas: {open_b} {{ vs {close_b} }}"))
             valid = False
         
         # Verificar contenido de opciones
         match = re.search(r'\{(.+?)\}', question, re.DOTALL)
-        if match and not match.group(1).strip():
-            issues.append((line_num, "Opciones vacías entre llaves"))
-            valid = False
+        if match:
+            content = match.group(1).strip()
+            if not content:
+                issues.append((line_num, f"[{question_name}] Opciones vacías entre llaves"))
+                valid = False
+            # Verificar que tenga al menos una opción válida
+            elif not re.search(r'[=~]', content) and content.lower() not in ['t', 'f', 'true', 'false', 'desarrollo', 'desarrollo:pequeno', 'desarrollo:mediano', 'desarrollo:grande']:
+                issues.append((line_num, f"[{question_name}] No se encontraron opciones válidas (=, ~) o tipo de pregunta"))
+                valid = False
+    
+    # Validar formato de tags si existen
+    if '[tags' in question.lower() or '[tag:' in question.lower():
+        tag_match = re.search(r'\[tags?:\s*(.+?)\]', question, re.IGNORECASE)
+        if not tag_match:
+            issues.append((line_num, f"[{question_name}] Tags mal formados, debe ser [tags: tag1, tag2]"))
+    
+    # Validar categoría si existe
+    if '[category' in question.lower():
+        cat_match = re.search(r'\[category:\s*(.+?)\]', question, re.IGNORECASE)
+        if not cat_match:
+            issues.append((line_num, f"[{question_name}] Categoría mal formada, debe ser [category: nombre]"))
     
     # Formatear
     formatted = _format_question(question)
@@ -130,14 +152,51 @@ def _process_question(question, line_num, output):
 
 def _format_question(question):
     """Formatea una pregunta para mejor legibilidad."""
-    lines = [l.strip() for l in question.split('\n') if l.strip()]
-    result = '\n'.join(lines)
+    # Dividir en líneas y procesar
+    lines = question.split('\n')
     
-    # Espacios consistentes
-    result = re.sub(r' +', ' ', result)
-    result = re.sub(r'::([^:]+)::(\S)', r'::\1:: \2', result)
-    result = re.sub(r'(\S)\{', r'\1 {', result)
-    result = re.sub(r'\}(\[tags)', r'} \1', result)
+    # Identificar componentes de la pregunta
+    formatted_lines = []
+    in_code_block = False
+    
+    for line in lines:
+        stripped = line.strip()
+        
+        # Detectar bloques de código markdown
+        if stripped.startswith('```'):
+            in_code_block = not in_code_block
+            formatted_lines.append(line)
+            continue
+        
+        # Preservar líneas dentro de bloques de código
+        if in_code_block:
+            formatted_lines.append(line)
+            continue
+        
+        # Saltar líneas vacías
+        if not stripped:
+            continue
+        
+        # Formatear líneas normales
+        # Normalizar espacios múltiples
+        formatted = re.sub(r' +', ' ', stripped)
+        
+        # Espacio después de ::nombre::
+        formatted = re.sub(r'::([^:]+)::(\S)', r'::\1:: \2', formatted)
+        
+        # Espacio antes de llaves
+        formatted = re.sub(r'(\S)\{', r'\1 {', formatted)
+        
+        # Espacio entre } y [tags
+        formatted = re.sub(r'\}(\[tags)', r'} \1', formatted, flags=re.IGNORECASE)
+        
+        # Espacio entre } y [category
+        formatted = re.sub(r'\}(\[category)', r'} \1', formatted, flags=re.IGNORECASE)
+        
+        formatted_lines.append(formatted)
+    
+    # Unir líneas
+    result = '\n'.join(formatted_lines)
     
     return result
 
