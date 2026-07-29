@@ -47,6 +47,13 @@ dev = [
 
 [project.scripts]
 generador-examenes = "generador_examenes.__main__:main"
+alucard = "generador_examenes.__main__:main"
+gift-linter = "gift_linter:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["generador_examenes"]
+extra-metadata = {}
+
+[tool.hatch.build.targets.wheel.force-include]
+"gift_linter.py" = "gift_linter.py"
+

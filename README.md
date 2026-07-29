@@ -92,7 +92,31 @@ source .venv/bin/activate
 .\.venv\Scripts\Activate.ps1
 ```
 
-### Opción 2: Poetry
+### Opción 2: Instalación Global como Herramienta CLI con `uv tool`
+
+Puedes instalar **alucarD** globalmente usando `uv tool` directamente desde el repositorio o directorio local:
+
+```bash
+# Desde el directorio local del repositorio
+uv tool install .
+
+# O forzar actualización/reinstalación
+uv tool install . --force
+```
+
+Una vez instalado con `uv tool`, tendrás disponibles globalmente los ejecutables:
+```bash
+alucard --help
+generador-examenes --help
+gift-linter --help
+```
+
+O ejecutarlo directamente sin instalar usando `uvx` / `uv tool run`:
+```bash
+uv tool run --from . alucard -d definicion_ejemplo.yaml
+```
+
+### Opción 3: Poetry
 ```bash
 git clone <repo-url>
 cd alucard
@@ -100,7 +124,7 @@ poetry install
 poetry shell
 ```
 
-### Opción 3: pip
+### Opción 4: pip
 ```bash
 git clone <repo-url>
 cd alucard
@@ -110,6 +134,8 @@ pip install -e .
 ### Verificar Instalación
 ```bash
 generador-examenes --help
+# o también:
+alucard --help
 ```
 
 ---
