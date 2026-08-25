@@ -40,6 +40,7 @@
 - ✅ **Validación con Pydantic**: Parseo seguro de definiciones YAML
 - ✅ **Templating con Jinja2**: Salidas HTML/PDF personalizables
 - ✅ **Arquitectura de Plugins**: Extensible vía clases base abstractas
+- ✅ **Sintetizador `daedalus`** (nuevo): genera preguntas paramétricas de C cuya respuesta correcta se verifica compilando y ejecutando el snippet con GCC
 
 ### 📐 Layouts de Secciones
 - **`default`**: Enunciado extenso (2/3) + opciones laterales (1/3)
@@ -166,6 +167,30 @@ Esto te ayuda a:
 - Ver la estructura jerárquica de categorías
 - Conocer cuántas preguntas hay por categoría y tipo
 - Copiar nombres de categorías al portapapeles para el YAML
+
+### 2️⃣b Sintetizar Preguntas de C con `daedalus`
+
+Genera bancos de preguntas de análisis de código (trazas de punteros,
+precedencia de operadores, recursión, incrementos) cuya **respuesta correcta se
+verifica compilando y ejecutando el snippet con GCC** — cero erratas en la clave.
+
+```bash
+# Ver las plantillas disponibles
+generador-examenes --listar-sintetizadores
+
+# Sintetizar 5 preguntas de aritmética de punteros (banco GIFT)
+generador-examenes --sintetizar traza-punteros -n 8 -s 42 -o output/
+
+# También en formato Moodle XML
+generador-examenes --sintetizar recursion --cantidad 4 --formato-banco xml
+
+# El banco generado se usa directo en un examen:
+generador-examenes -d examen.yaml -i output/sintetizados_traza-punteros.gift -n 3
+```
+
+Cada pregunta incluye el snippet C en un bloque de código, la salida correcta
+(ejecutada de verdad) y distractores verosímiles basados en errores típicos:
+precedencia mal interpretada, off-by-one en punteros, post vs pre-incremento.
 
 ### 3️⃣ Crear Configuración con Wizard
 ```bash

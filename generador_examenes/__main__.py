@@ -209,13 +209,41 @@ def main():
         metavar='BANCO',
         help='Generar árbol HTML de categorías de uno o más bancos de preguntas'
     )
-    
+
+    parser.add_argument(
+        '--sintetizar',
+        type=str,
+        metavar='PLANTILLA',
+        help='Generar un banco de preguntas de C con daedalus (sintetizador verificado con gcc). '
+             'Ver plantillas disponibles con --listar-sintetizadores'
+    )
+
+    parser.add_argument(
+        '--listar-sintetizadores',
+        action='store_true',
+        help='Lista las plantillas disponibles del sintetizador daedalus'
+    )
+
+    parser.add_argument(
+        '--cantidad',
+        type=int,
+        default=5,
+        help='Cantidad de preguntas a sintetizar (default: 5)'
+    )
+
+    parser.add_argument(
+        '--formato-banco',
+        choices=['gift', 'xml'],
+        default='gift',
+        help='Formato del banco generado por daedalus (default: gift)'
+    )
+
     parser.add_argument(
         '-d', '--definicion',
         type=Path,
         help='Ruta al archivo de definición YAML del examen'
     )
-    
+
     parser.add_argument(
         '-i', '--input-banco',
         type=Path,
@@ -228,25 +256,25 @@ def main():
         type=Path,
         help='Directorio de salida para los exámenes generados (override de YAML, default: ./output)'
     )
-    
+
     parser.add_argument(
         '-p', '--path-images',
         type=Path,
         help='Ruta al directorio de imágenes referenciadas en las preguntas (override de YAML)'
     )
-    
+
     parser.add_argument(
         '-n', '--numero-temas',
         type=int,
         help='Número de temas/versiones a generar (override de YAML, default: 1)'
     )
-    
+
     parser.add_argument(
         '-s', '--semilla',
         type=int,
         help='Semilla pseudo-aleatoria para generación (override de YAML, default: 42)'
     )
-    
+
     parser.add_argument(
         '-f', '--formato',
         nargs='+',
@@ -299,6 +327,55 @@ def main():
                 raise
             return 1
     
+    # Modo catálogo del sintetizador daedalus
+    if args.listar_sintetizadores:
+        from generador_examenes.synthesizer import plantillas_disponibles
+
+        print("\nPlantillas disponibles del sintetizador daedalus (verificadas con gcc):")
+        for nombre, descripcion in sorted(plantillas_disponibles().items()):
+            print(f"  - {nombre}: {descripcion}")
+        print("\nUso: generador-examenes --sintetizar <plantilla> --cantidad N [-o output] [--formato-banco gift|xml]\n")
+        return 0
+
+    # Modo síntesis de preguntas de C compiladas y verificadas al vuelo
+    if args.sintetizar:
+        try:
+            from generador_examenes.synthesizer import (
+                plantillas_disponibles,
+                sintetizar,
+                exportar_gift,
+                exportar_xml,
+            )
+
+            if args.sintetizar not in plantillas_disponibles():
+                logger.error(f"✗ Plantilla desconocida: '{args.sintetizar}'. "
+                             f"Disponibles: {', '.join(sorted(plantillas_disponibles()))}")
+                return 1
+
+            output_dir = args.output_dir or Path('./output')
+            output_dir.mkdir(parents=True, exist_ok=True)
+            semilla = args.semilla if args.semilla is not None else 42
+
+            logger.info(f"Sintetizando {args.cantidad} preguntas con la plantilla '{args.sintetizar}' "
+                        f"(semilla: {semilla})...")
+            snippets = sintetizar(args.sintetizar, cantidad=args.cantidad, semilla=semilla)
+
+            extension = 'gift' if args.formato_banco == 'gift' else 'xml'
+            destino = output_dir / f"sintetizados_{args.sintetizar}.{extension}"
+            contenido = exportar_gift(snippets) if extension == 'gift' else exportar_xml(snippets)
+            destino.write_text(contenido, encoding='utf-8')
+
+            logger.info(f"✓ Banco generado: {destino} ({len(snippets)} preguntas verificadas)")
+            print(f"\n✓ {len(snippets)} preguntas de C sintetizadas y verificadas con gcc:")
+            print(f"  {destino}")
+            print("\nPodés usarlas directo como banco de alucarD (-i) o editarlas con questions ui.")
+            return 0
+        except Exception as e:
+            logger.error(f"Error durante la síntesis: {e}")
+            if args.debug:
+                raise
+            return 1
+
     # Modo árbol de categorías
     if args.category_tree:
         logger.info("Modo árbol de categorías - generando visualización HTML")
