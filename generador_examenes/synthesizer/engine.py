@@ -249,7 +249,10 @@ def sintetizar(planta: str, cantidad: int = 5, semilla: int | None = None) -> li
 # ---------------------------------------------------------------------------
 
 def _bloque_codigo(codigo: str) -> str:
-    return "```c\n" + codigo.rstrip("\n") + "\n```"
+    # Sin líneas vacías internas: los parsers GIFT cortan bloques por líneas
+    # en blanco y el código rompería la pregunta.
+    limpio = "\n".join(l for l in codigo.rstrip("\n").splitlines() if l.strip())
+    return "```c\n" + limpio + "\n```"
 
 
 def exportar_gift(snippets: list[SnippetGenerado]) -> str:
