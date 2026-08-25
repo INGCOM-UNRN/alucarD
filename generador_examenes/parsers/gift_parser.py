@@ -13,6 +13,45 @@ from generador_examenes.core.markdown_utils import detect_and_convert_format
 logger = logging.getLogger(__name__)
 
 
+def _extraer_bloque_respuestas(texto: str):
+    """Localiza el bloque de respuestas GIFT dentro de una pregunta.
+
+    El bloque de respuestas es el ULTIMO grupo balanceado de llaves del texto
+    (todo lo anterior puede ser el enunciado, incluyendo codigo C con sus
+    propias llaves). Respeta los escapes con barra invertida.
+
+    Devuelve una tupla (antes, contenido, despues) o None si no hay un grupo
+    de llaves que cierre al final del texto.
+    """
+    texto = texto.rstrip()
+    if not texto.endswith('}'):
+        return None
+
+    # Marcar posiciones de caracteres escapados (\X -> X es literal)
+    escapados = set()
+    i = 0
+    n = len(texto)
+    while i < n:
+        if texto[i] == '\\':
+            escapados.add(i + 1)
+            i += 2
+        else:
+            i += 1
+
+    profundidad = 0
+    for j in range(n - 1, -1, -1):
+        if j in escapados:
+            continue
+        ch = texto[j]
+        if ch == '}':
+            profundidad += 1
+        elif ch == '{':
+            profundidad -= 1
+            if profundidad == 0:
+                return texto[:j], texto[j + 1:-1], ''
+    return None
+
+
 class GiftParser(BaseParser):
     """Parser para archivos en formato GIFT de Moodle"""
     
@@ -67,32 +106,46 @@ class GiftParser(BaseParser):
         """
         # Eliminar comentarios (líneas que empiezan con //)
         lines = [line for line in content.split('\n') if not line.strip().startswith('//')]
-        
+
         bloques = []
         bloque_actual = []
         categoria_actual = "General"
-        
+        linea_previa_vacia = False
+
+        def inicia_pregunta(linea: str) -> bool:
+            """Una línea en blanco sólo corta bloque si la siguiente inicia pregunta.
+
+            Esto preserva bloques de código (C, etc.) dentro del enunciado,
+            que suelen contener líneas vacías.
+            """
+            s = linea.lstrip()
+            return s.startswith('::') or s.startswith('$CATEGORY:') or \
+                s.startswith('[markdown]') or s.startswith('[html]')
+
         for line in lines:
             stripped = line.strip()
-            
+
             # Detectar cambio de categoría
             if stripped.startswith('$CATEGORY:'):
                 # Guardar bloque actual si existe antes de cambiar categoría
                 if bloque_actual:
                     bloques.append(('\n'.join(bloque_actual), categoria_actual))
                     bloque_actual = []
-                
+
                 # Actualizar categoría actual
                 categoria_actual = stripped[10:].strip()  # Remover "$CATEGORY:"
+                linea_previa_vacia = False
                 continue
-            
+
             # Procesar líneas de contenido
             if stripped == '':
-                if bloque_actual:
+                linea_previa_vacia = True
+            else:
+                if linea_previa_vacia and bloque_actual and inicia_pregunta(line):
                     bloques.append(('\n'.join(bloque_actual), categoria_actual))
                     bloque_actual = []
-            else:
                 bloque_actual.append(line)
+                linea_previa_vacia = False
         
         # Agregar último bloque si existe
         if bloque_actual:
@@ -142,16 +195,18 @@ class GiftParser(BaseParser):
             categoria = cat_match.group(1).strip()
             bloque = bloque[:cat_match.start()] + bloque[cat_match.end():]
         
-        # Buscar las llaves que contienen las opciones
-        match = re.search(r'^(.+?)\{(.+)\}', bloque.strip(), re.DOTALL)
-        if not match:
+        # Buscar el bloque de respuestas: el último grupo balanceado de llaves
+        # (tolera código C embebido en el enunciado, con sus propias llaves).
+        partes = _extraer_bloque_respuestas(bloque.strip())
+        if not partes:
             logger.warning(f"[{banco_nombre}] Pregunta '{nombre}' omitida: no se encontraron opciones entre {{ }}. Revisar formato GIFT.")
             return None
         
-        enunciado = match.group(1).strip()
+        enunciado, opciones_str, _sobrante = partes
+        enunciado = enunciado.strip()
+        opciones_str = opciones_str.strip()
         # Convertir el enunciado según el formato
         enunciado = detect_and_convert_format(enunciado, formato)
-        opciones_str = match.group(2).strip()
         
         # Determinar tipo de pregunta y parsear opciones
         tamano_desarrollo = None
