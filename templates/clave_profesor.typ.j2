@@ -1,0 +1,55 @@
+// Plantilla Typst para Clave del Profesor (alucarD)
+#set document(title: "{{ definicion.nombre_examen }} - Clave Tema {{ tema + 1 }}", author: "Cátedra")
+#set page(
+  paper: "a4",
+  margin: (top: 2cm, bottom: 2cm, left: 2cm, right: 2cm),
+  header: align(right)[
+    #text(size: 8pt, fill: rgb("c53030"))[*CLAVE DOCENTE* — {{ definicion.institucion }} | *Tema {{ tema + 1 }}*]
+  ],
+  footer: context [
+    #line(length: 100%, stroke: 0.5pt + rgb("cccccc"))
+    #grid(
+      columns: (1fr, 1fr),
+      align(left)[#text(size: 8pt, fill: rgb("888888"))[SOLUCIONARIO: {{ definicion.nombre_examen }}]],
+      align(right)[#text(size: 8pt, fill: rgb("888888"))[Página #counter(page).display("1 / 1", both: true)]]
+    )
+  ]
+)
+
+#set text(font: ("Liberation Sans", "DejaVu Sans", "Arial"), size: 10pt, lang: "{{ definicion.idioma | default('es') }}")
+#set par(justify: true, leading: 0.65em)
+
+#align(center)[
+  #block(fill: rgb("fff5f5"), inset: 10pt, radius: 4pt, stroke: 1pt + rgb("feb2b2"))[
+    #text(size: 15pt, weight: "bold", fill: rgb("9b2c2c"))[CLAVE DE CORRECCIÓN — TEMA {{ tema + 1 }}]\
+    #v(2pt)
+    #text(size: 10pt, fill: rgb("742a2a"))[{{ definicion.nombre_examen }} — {{ definicion.materia }}]
+  ]
+]
+
+#v(10pt)
+
+{% for seccion in secciones %}
+#text(size: 11pt, weight: "bold", fill: rgb("2b6cb0"))[{{ seccion.nombre }}]
+#v(4pt)
+
+{% for preg in seccion.preguntas %}
+#block(
+  width: 100%,
+  stroke: 0.5pt + rgb("e2e8f0"),
+  radius: 4pt,
+  inset: 6pt,
+  fill: rgb("fafafa"),
+  breakable: false
+)[
+  #text(weight: "bold")[{{ loop.index }}. {{ preg.enunciado | default(preg.titulo) }}]
+  #v(2pt)
+  #text(fill: rgb("22543d"), weight: "bold")[✓ Respuesta Correcta:] {{ preg.respuesta_correcta | default('Ver criterio de corrección') }}
+  {% if preg.retroalimentacion %}
+  \ #text(fill: rgb("4a5568"), size: 8.5pt)[*Explicación:* {{ preg.retroalimentacion }}]
+  {% endif %}
+]
+#v(4pt)
+{% endfor %}
+#v(6pt)
+{% endfor %}
