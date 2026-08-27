@@ -201,15 +201,66 @@ def _format_question(question):
     return result
 
 def main():
+    if '--help' in sys.argv or '-h' in sys.argv:
+        print("""Usage: gift-linter [OPTIONS] FILES...
+
+Linter y formateador para archivos GIFT.
+
+Options:
+  --fix                 Corrige problemas comunes in-place.
+  --show-completion     Show completion for the current shell, to copy it or customize the installation.
+  --install-completion  Install completion for the current shell.
+  -h, --help            Show this message and exit.
+
+Examples:
+  gift-linter bancos/teorico.gift
+  gift-linter bancos/*.gift --fix
+""")
+        sys.exit(0)
+
+    if '--show-completion' in sys.argv or '--install-completion' in sys.argv:
+        prog = "gift-linter"
+        script = f"""_{prog.replace('-', '_')}_completion() {{
+    local cur prev words cword
+    if declare -F _init_completion >/dev/null 2>&1; then
+        _init_completion || return
+    else
+        cur="${{COMP_WORDS[COMP_CWORD]}}"
+    fi
+    if [[ "$cur" == -* ]]; then
+        COMPREPLY=($(compgen -W "--fix --help -h --show-completion --install-completion" -- "$cur"))
+        return 0
+    fi
+    COMPREPLY=($(compgen -f -X '!*.gift' -- "$cur") $(compgen -d -- "$cur"))
+}}
+complete -F _{prog.replace('-', '_')}_completion {prog}
+"""
+        if '--show-completion' in sys.argv:
+            print(script)
+            sys.exit(0)
+        if '--install-completion' in sys.argv:
+            comp_dir = Path.home() / ".bash_completions"
+            if comp_dir.is_dir():
+                target = comp_dir / f"{prog}.bash"
+                target.write_text(script, encoding="utf-8")
+                print(f"Completion installed in {target}")
+            else:
+                rc_file = Path.home() / ".bashrc"
+                if rc_file.is_file():
+                    with open(rc_file, "a", encoding="utf-8") as f:
+                        f.write(f"\n# {prog} completion\n{script}\n")
+                    print(f"Completion installed in {rc_file}")
+            sys.exit(0)
+
     if len(sys.argv) < 2:
         print(__doc__)
         print("\nEjemplos:")
-        print("  python gift_linter.py bancos/teorico.gift")
-        print("  python gift_linter.py bancos/*.gift --fix")
+        print("  gift-linter bancos/teorico.gift")
+        print("  gift-linter bancos/*.gift --fix")
         sys.exit(1)
     
     fix = '--fix' in sys.argv
-    files = [Path(arg) for arg in sys.argv[1:] if arg != '--fix']
+    files = [Path(arg) for arg in sys.argv[1:] if arg not in ('--fix', '--show-completion', '--install-completion')]
     
     print("="*60)
     print("LINTER GIFT - Analizador de Bancos de Preguntas")
@@ -228,5 +279,7 @@ def main():
     
     sys.exit(0 if all_clean else 1)
 
+
 if __name__ == '__main__':
     main()
+

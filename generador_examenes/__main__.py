@@ -293,8 +293,79 @@ def main():
         action='store_true',
         help='Activar modo debug con logging detallado'
     )
+
+    parser.add_argument(
+        '--show-completion',
+        action='store_true',
+        help='Show completion for the current shell, to copy it or customize the installation.'
+    )
+
+    parser.add_argument(
+        '--install-completion',
+        action='store_true',
+        help='Install completion for the current shell.'
+    )
     
     args = parser.parse_args()
+
+    if getattr(args, 'show_completion', False) or getattr(args, 'install_completion', False):
+        prog = Path(sys.argv[0]).name
+        if prog not in ("generador-examenes", "alucard"):
+            prog = "generador-examenes"
+        script = f"""_{prog.replace('-', '_')}_completion() {{
+    local cur prev words cword
+    if declare -F _init_completion >/dev/null 2>&1; then
+        _init_completion || return
+    else
+        cur="${{COMP_WORDS[COMP_CWORD]}}"
+        prev="${{COMP_WORDS[COMP_CWORD-1]}}"
+    fi
+
+    local opts="--init --wizard --category-tree --sintetizar --listar-sintetizadores --cantidad --formato-banco -d --definicion -i --input-banco -o --output-dir -p --path-images -n --numero-temas -s --semilla -f --formato --validate --debug --help --show-completion --install-completion"
+
+    case "$prev" in
+        --formato|-f)
+            COMPREPLY=($(compgen -W "html pdf" -- "$cur"))
+            return 0
+            ;;
+        --formato-banco)
+            COMPREPLY=($(compgen -W "gift xml" -- "$cur"))
+            return 0
+            ;;
+        --sintetizar)
+            COMPREPLY=($(compgen -W "incrementos precedencia recursion traza-punteros" -- "$cur"))
+            return 0
+            ;;
+        -d|--definicion|-i|--input-banco|-o|--output-dir|-p|--path-images|--wizard|--category-tree)
+            COMPREPLY=($(compgen -f -- "$cur"))
+            return 0
+            ;;
+    esac
+
+    if [[ "$cur" == -* ]]; then
+        COMPREPLY=($(compgen -W "$opts" -- "$cur"))
+        return 0
+    fi
+    COMPREPLY=($(compgen -f -- "$cur"))
+}}
+complete -F _{prog.replace('-', '_')}_completion {prog}
+"""
+        if args.show_completion:
+            print(script)
+            return 0
+        if args.install_completion:
+            comp_dir = Path.home() / ".bash_completions"
+            if comp_dir.is_dir():
+                target = comp_dir / f"{prog}.bash"
+                target.write_text(script, encoding="utf-8")
+                print(f"Completion installed in {target}")
+            else:
+                rc_file = Path.home() / ".bashrc"
+                if rc_file.is_file():
+                    with open(rc_file, "a", encoding="utf-8") as f:
+                        f.write(f"\n# {prog} completion\n{script}\n")
+                    print(f"Completion installed in {rc_file}")
+            return 0
     
     # Configurar logging
     from generador_examenes.config.logging_config import setup_logging
