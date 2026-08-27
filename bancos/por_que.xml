@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<quiz>
+    <question type="category">
+    <category>
+      <text>$course$/top/simple/porque</text>
+    </category>
+    <info format="moodle_auto_format">
+      <text />
+    </info>
+    <idnumber />
+  </question>
+<!-- question: 1840774  -->
+  <question type="essay">
+    <name>
+      <text>¿Por qué?</text>
+    </name>
+    <questiontext format="markdown">
+      <text><![CDATA[En función de la pregunta anterior, explica _por qué_ elegiste esa opción.]]></text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>20</defaultgrade>
+    <penalty>0</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <responseformat>editor</responseformat>
+    <responserequired>1</responserequired>
+    <responsefieldlines>40</responsefieldlines>
+    <minwordlimit>10</minwordlimit>
+    <maxwordlimit>400</maxwordlimit>
+    <attachments>0</attachments>
+    <attachmentsrequired>0</attachmentsrequired>
+    <maxbytes>0</maxbytes>
+    <filetypeslist></filetypeslist>
+    <graderinfo format="markdown">
+      <text></text>
+    </graderinfo>
+    <responsetemplate format="markdown">
+      <text></text>
+    </responsetemplate>
+  </question>
+
+</quiz>

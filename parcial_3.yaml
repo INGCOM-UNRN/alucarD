@@ -1,0 +1,70 @@
+# Ejemplo de configuración completa con todas las opciones en YAML
+# Las opciones de línea de comandos pueden override cualquiera de estas configuraciones
+
+nombre_examen: "Parcial III "
+institucion: "UNRN - Andina"
+materia: "Programación 1"
+fecha: "2025-11-11"
+duracion_minutos: 90
+instrucciones_generales: |
+  Lee cuidadosamente cada pregunta antes de responder.
+  Marca la respuesta correcta en cada caso.
+  No se permite el uso de ningún dispositivo.
+idioma: "es"
+
+# Variables personalizadas con f-strings
+variables_personalizadas:
+  profesor: "Martín René Vilugrón"
+  aula: ""
+  comision: ""
+  periodo: "Segundo Cuatrimestre {anio_actual}"
+  pie_pagina: "{materia} | {profesor} | {periodo}"
+
+# Configuración del examen
+configuracion_examen:
+  mezclar_preguntas_dentro_seccion: true
+  mezclar_opciones_dentro_pregunta: true
+  generar_clave_profesor: true
+
+# Configuración de generación (puede ser overrideada por CLI)
+# Si especificas estas opciones aquí, no necesitas pasarlas por línea de comandos
+input_banco:
+  - "bancos/codigo.xml"
+  - "bancos/teorico.gift"
+  - "bancos/algoritmos.xml"
+
+output_dir: "./output"
+path_images: null  # Opcional: directorio de imágenes
+numero_temas: 3    # Generar 3 versiones del examen
+semilla: 42        # Semilla para reproducibilidad
+formato:
+  - "html"
+
+# Secciones del examen
+secciones_examen:
+  - nombre: "Parte 1: Análisis de Código"
+    instrucciones: "Analiza el código y selecciona la respuesta correcta"
+    layout: "default"  # Layout para código extenso
+    pools:
+      - tipos: ["seleccion_multiple"]
+        cantidad: 1
+        puntaje_fijo_por_pregunta: 5.0
+        accion_si_insuficiente: usar_todas
+  
+  - nombre: "Parte 2: Conceptos Teóricos"
+    instrucciones: "Selecciona la respuesta correcta para cada concepto"
+    layout: "compact-2col"  # Layout compacto de 2 columnas
+    pools:
+      - tipos: ["seleccion_multiple"]
+        cantidad: 1
+        puntaje_fijo_por_pregunta: 2.0
+        accion_si_insuficiente: usar_todas
+  
+  - nombre: "Parte 3: Verdadero o Falso"
+    instrucciones: "Indica si las siguientes afirmaciones son verdaderas o falsas"
+    layout: "compact-4col"  # Layout super compacto de 4 columnas
+    pools:
+      - tipos: ["verdadero_falso"]
+        cantidad: 1
+        puntaje_fijo_por_pregunta: 0.5
+        accion_si_insuficiente: usar_todas

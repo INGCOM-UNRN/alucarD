@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<quiz>
+      <question type="category">
+    <category>
+      <text>$course$/top/simple/multiple</text>
+    </category>
+    <info format="moodle_auto_format">
+      <text />
+    </info>
+    <idnumber />
+  </question>
+<!-- question: 1813646  -->
+  <question type="matching">
+    <name>
+      <text>operadores - propósito, programación en C</text>
+    </name>
+    <questiontext format="markdown">
+      <text>Relaciona cada operador en C con su rol</text>
+    </questiontext>
+    <generalfeedback format="markdown">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <shuffleanswers>true</shuffleanswers>
+    <correctfeedback format="markdown">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="markdown">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="markdown">
+      <text></text>
+    </incorrectfeedback>
+    <subquestion format="markdown">
+      <text>`a*b`</text>
+      <answer>
+        <text>Calcular la multiplicación</text>
+      </answer>
+    </subquestion>
+    <subquestion format="markdown">
+      <text>`b++`</text>
+      <answer>
+        <text>Incremento</text>
+      </answer>
+    </subquestion>
+    <subquestion format="markdown">
+      <text>`a--`</text>
+      <answer>
+        <text>Decremento</text>
+      </answer>
+    </subquestion>
+    <subquestion format="markdown">
+      <text>`*a`</text>
+      <answer>
+        <text>Obtener el contenido de un puntero</text>
+      </answer>
+    </subquestion>
+    <subquestion format="markdown">
+      <text>`a%b`</text>
+      <answer>
+        <text>Obtener el resto de la división</text>
+      </answer>
+    </subquestion>
+    <subquestion format="markdown">
+      <text>`sizeof(a)`</text>
+      <answer>
+        <text>Obtener el tamaño de `a`</text>
+      </answer>
+    </subquestion>
+    <subquestion format="markdown">
+      <text>`a＝b`</text>
+      <answer>
+        <text>Asignar valor en otro</text>
+      </answer>
+    </subquestion>
+    <subquestion format="markdown">
+      <text>`a⩵b`</text>
+      <answer>
+        <text>Comparar valores</text>
+      </answer>
+    </subquestion>
+    <subquestion format="markdown">
+      <text>`!a`</text>
+      <answer>
+        <text>Negación lógica</text>
+      </answer>
+    </subquestion>
+    <subquestion format="markdown">
+      <text>`a||b`</text>
+      <answer>
+        <text>OR lógico</text>
+      </answer>
+    </subquestion>
+  </question>
+
+</quiz>

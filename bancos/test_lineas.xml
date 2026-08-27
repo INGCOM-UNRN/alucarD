@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<quiz>
+  <question type="category">
+    <category>
+      <text>$course$/top/test/desarrollo</text>
+    </category>
+  </question>
+  
+  <!-- Pregunta 1: Sin recuadro (0 líneas) -->
+  <question type="essay">
+    <name>
+      <text>Pregunta sin recuadro</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[<p>Esta pregunta NO tiene recuadro. Responder en hoja aparte.</p>]]></text>
+    </questiontext>
+    <defaultgrade>10</defaultgrade>
+    <responseformat>editor</responseformat>
+    <responsefieldlines>0</responsefieldlines>
+  </question>
+  
+  <!-- Pregunta 2: 5 líneas -->
+  <question type="essay">
+    <name>
+      <text>Pregunta con 5 líneas</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[<p>Esta pregunta tiene un recuadro de <strong>5 líneas</strong>.</p>]]></text>
+    </questiontext>
+    <defaultgrade>10</defaultgrade>
+    <responseformat>editor</responseformat>
+    <responsefieldlines>5</responsefieldlines>
+  </question>
+  
+  <!-- Pregunta 3: 15 líneas -->
+  <question type="essay">
+    <name>
+      <text>Pregunta con 15 líneas</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[<p>Esta pregunta tiene un recuadro de <strong>15 líneas</strong>.</p>]]></text>
+    </questiontext>
+    <defaultgrade>10</defaultgrade>
+    <responseformat>editor</responseformat>
+    <responsefieldlines>15</responsefieldlines>
+  </question>
+  
+  <!-- Pregunta 4: 30 líneas -->
+  <question type="essay">
+    <name>
+      <text>Pregunta con 30 líneas</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[<p>Esta pregunta tiene un recuadro de <strong>30 líneas</strong>.</p>]]></text>
+    </questiontext>
+    <defaultgrade>10</defaultgrade>
+    <responseformat>editor</responseformat>
+    <responsefieldlines>30</responsefieldlines>
+  </question>
+  
+  <!-- Pregunta 5: Sin especificar (usa tamaño predefinido) -->
+  <question type="essay">
+    <name>
+      <text>Pregunta sin líneas especificadas (tamaño grande)</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[<p>Esta pregunta NO especifica líneas, usa tamaño <strong>grande</strong> predefinido.</p>]]></text>
+    </questiontext>
+    <defaultgrade>10</defaultgrade>
+    <responseformat>editor</responseformat>
+  </question>
+  
+</quiz>
