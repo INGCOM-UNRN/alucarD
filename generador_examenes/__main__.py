@@ -283,6 +283,13 @@ def main():
     )
     
     parser.add_argument(
+        '-t', '--template', '--typst-template',
+        type=Path,
+        dest='typst_template',
+        help='Ruta a una plantilla Typst personalizada (.typ / .typ.j2) para generación de PDF'
+    )
+    
+    parser.add_argument(
         '--validate',
         action='store_true',
         help='Validar la definición sin generar archivos'
@@ -576,7 +583,7 @@ complete -F _{prog.replace('-', '_')}_completion {prog}
             # Generar en cada formato solicitado
             for fmt in formato:
                 try:
-                    renderer = obtener_renderer(fmt)
+                    renderer = obtener_renderer(fmt, custom_template=getattr(args, 'typst_template', None))
                     
                     # Generar examen
                     archivo_examen = renderer.renderizar_examen(

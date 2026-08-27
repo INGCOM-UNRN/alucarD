@@ -210,49 +210,50 @@ class TestPdfRenderer:
         assert 'pdf' in formatos
     
     def test_inicializacion(self):
-        """Debe inicializar con HtmlRenderer"""
-        try:
-            renderer = PdfRenderer()
-            assert renderer.html_renderer is not None
-            assert hasattr(renderer, 'HTML')
-        except ImportError:
-            # WeasyPrint no instalado, skip test
-            pytest.skip("WeasyPrint no instalado")
-    
-    @pytest.mark.skipif(True, reason="WeasyPrint requiere dependencias del sistema")
-    def test_renderizar_examen_pdf(self, tmp_path, definicion_ejemplo, examen_data):
-        """Debe generar PDF de examen"""
-        try:
-            renderer = PdfRenderer()
-            output_file = renderer.renderizar_examen(
-                examen_data,
-                definicion_ejemplo,
-                tmp_path,
-                tema=0
-            )
-            
-            assert output_file.exists()
-            assert output_file.name == "examen_tema_01.pdf"
-            assert output_file.suffix == ".pdf"
-        except ImportError:
-            pytest.skip("WeasyPrint no instalado")
-    
-    @pytest.mark.skipif(True, reason="WeasyPrint requiere dependencias del sistema")
-    def test_renderizar_clave_pdf(self, tmp_path, definicion_ejemplo, examen_data):
-        """Debe generar PDF de clave"""
-        try:
-            renderer = PdfRenderer()
-            output_file = renderer.renderizar_clave(
-                examen_data,
-                definicion_ejemplo,
-                tmp_path,
-                tema=0
-            )
-            
-            assert output_file.exists()
-            assert output_file.name == "clave_tema_01.pdf"
-        except ImportError:
-            pytest.skip("WeasyPrint no instalado")
+        """Debe inicializar correctamente con soporte Typst"""
+        renderer = PdfRenderer()
+        assert renderer.html_renderer is not None
+        assert 'pdf' in renderer.get_supported_formats()
+
+    def test_renderizar_examen_pdf_typst(self, tmp_path, definicion_ejemplo, examen_data):
+        """Debe generar PDF de examen usando Typst"""
+        renderer = PdfRenderer()
+        output_file = renderer.renderizar_examen(
+            examen_data,
+            definicion_ejemplo,
+            tmp_path,
+            tema=0
+        )
+        assert output_file.exists()
+        assert output_file.name == "examen_tema_01.pdf"
+        assert output_file.stat().st_size > 0
+
+    def test_renderizar_clave_pdf_typst(self, tmp_path, definicion_ejemplo, examen_data):
+        """Debe generar PDF de clave usando Typst"""
+        renderer = PdfRenderer()
+        output_file = renderer.renderizar_clave(
+            examen_data,
+            definicion_ejemplo,
+            tmp_path,
+            tema=0
+        )
+        assert output_file.exists()
+        assert output_file.name == "clave_tema_01.pdf"
+        assert output_file.stat().st_size > 0
+
+    def test_renderizar_con_plantilla_personalizada(self, tmp_path, definicion_ejemplo, examen_data):
+        """Debe permitir personalizar la plantilla Typst"""
+        custom_tpl = tmp_path / "custom.typ.j2"
+        custom_tpl.write_text("= Examen Personalizado: {{ definicion.nombre_examen }}\nTema: {{ tema + 1 }}\n", encoding="utf-8")
+        renderer = PdfRenderer(custom_typst_template=custom_tpl)
+        output_file = renderer.renderizar_examen(
+            examen_data,
+            definicion_ejemplo,
+            tmp_path / "out",
+            tema=0
+        )
+        assert output_file.exists()
+        assert output_file.stat().st_size > 0
 
 
 class TestRegistroRenderers:
@@ -270,12 +271,9 @@ class TestRegistroRenderers:
         assert isinstance(renderer, HtmlRenderer)
     
     def test_obtener_renderer_pdf(self):
-        """Debe obtener renderer PDF"""
-        try:
-            renderer = obtener_renderer('pdf')
-            assert isinstance(renderer, PdfRenderer)
-        except ImportError:
-            pytest.skip("WeasyPrint no instalado")
+        """Debe obtener renderer PDF con soporte Typst"""
+        renderer = obtener_renderer('pdf')
+        assert isinstance(renderer, PdfRenderer)
     
     def test_obtener_renderer_formato_no_soportado(self):
         """Debe fallar con formato no soportado"""

@@ -1,7 +1,8 @@
 """
 Módulo generators - Renderizadores para diferentes formatos de salida
 """
-from typing import Dict, Type
+from pathlib import Path
+from typing import Dict, Type, Optional
 from generador_examenes.generators.base import BaseRenderer
 from generador_examenes.generators.html_renderer import HtmlRenderer
 from generador_examenes.generators.pdf_renderer import PdfRenderer
@@ -17,18 +18,13 @@ def registrar_renderer(renderer_class: Type[BaseRenderer]) -> None:
         RENDERERS_REGISTRY[fmt.lower()] = renderer_class
 
 
-def obtener_renderer(formato: str) -> BaseRenderer:
+def obtener_renderer(
+    formato: str,
+    templates_dir: Optional[Path] = None,
+    custom_template: Optional[Path] = None
+) -> BaseRenderer:
     """
-    Obtiene el renderer apropiado según el formato solicitado
-    
-    Args:
-        formato: Formato de salida ('html', 'pdf', etc.)
-        
-    Returns:
-        Instancia del renderer apropiado
-        
-    Raises:
-        ValueError: Si no hay renderer para el formato
+    Obtiene el renderer apropiado según el formato solicitado.
     """
     formato = formato.lower()
     
@@ -39,6 +35,10 @@ def obtener_renderer(formato: str) -> BaseRenderer:
         )
     
     renderer_class = RENDERERS_REGISTRY[formato]
+    if renderer_class == PdfRenderer:
+        return PdfRenderer(templates_dir=templates_dir, custom_typst_template=custom_template)
+    elif renderer_class == HtmlRenderer:
+        return HtmlRenderer(templates_dir=templates_dir)
     return renderer_class()
 
 
