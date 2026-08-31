@@ -290,6 +290,75 @@ def main():
     )
     
     parser.add_argument(
+        '--spellcheck', '--languagetool',
+        action='store_true',
+        dest='spellcheck',
+        help='Auditar ortografía y gramática de las preguntas del examen o banco usando LanguageTool'
+    )
+    
+    parser.add_argument(
+        '--lt-server',
+        type=str,
+        help='URL del servidor LanguageTool (por defecto http://localhost:8081 y API pública)'
+    )
+
+    parser.add_argument(
+        '--lt-username',
+        type=str,
+        help='Usuario / email de LanguageTool Premium'
+    )
+
+    parser.add_argument(
+        '--lt-api-key',
+        type=str,
+        help='API Key / Token de LanguageTool Premium'
+    )
+
+    parser.add_argument(
+        '--lt-premium',
+        action='store_true',
+        help='Forzar uso de la API LanguageTool Premium'
+    )
+
+    parser.add_argument(
+        '--lt-lang',
+        default='es-AR',
+        help='Código de idioma para LanguageTool (default: es-AR)'
+    )
+
+    parser.add_argument(
+        '--lt-ignore-rules',
+        type=str,
+        help='Reglas de LanguageTool a ignorar separadas por comas'
+    )
+
+    parser.add_argument(
+        '--lt-ignore-words',
+        type=str,
+        help='Palabras personalizadas a ignorar separadas por comas'
+    )
+
+    parser.add_argument(
+        '--lt-fix',
+        action='store_true',
+        help='Aplica correcciones ortográficas automáticas'
+    )
+
+    parser.add_argument(
+        '--md', '--output-md',
+        type=Path,
+        dest='output_md',
+        help='Genera reporte de auditoría en formato Markdown'
+    )
+
+    parser.add_argument(
+        '--json',
+        action='store_true',
+        dest='json_output',
+        help='Emite salida estructurada en formato JSON'
+    )
+
+    parser.add_argument(
         '--validate',
         action='store_true',
         help='Validar la definición sin generar archivos'
@@ -450,6 +519,94 @@ complete -F _{prog.replace('-', '_')}_completion {prog}
             return 0
         except Exception as e:
             logger.error(f"Error durante la síntesis: {e}")
+            if args.debug:
+                raise
+            return 1
+
+    # Modo spellcheck / languagetool
+    if getattr(args, 'spellcheck', False):
+        try:
+            import json
+            from generador_examenes.config.config_loader import cargar_definicion, cargar_bancos
+            from generador_examenes.core.languagetool_checker import (
+                analizar_pregunta_languagetool,
+                aplicar_autofix_pregunta,
+                generar_reporte_markdown_languagetool,
+            )
+
+            preguntas_a_revisar = []
+            if args.definicion and args.definicion.is_file():
+                definicion = cargar_definicion(args.definicion)
+                bancos = cargar_bancos(definicion.bancos_preguntas)
+                for preguntas in bancos.values():
+                    preguntas_a_revisar.extend(preguntas)
+            elif args.input_banco:
+                bancos = cargar_bancos([str(p) for p in args.input_banco])
+                for preguntas in bancos.values():
+                    preguntas_a_revisar.extend(preguntas)
+            else:
+                for candidate in (Path('definicion.yaml'), Path('definicion_ejemplo.yaml')):
+                    if candidate.is_file():
+                        definicion = cargar_definicion(candidate)
+                        bancos = cargar_bancos(definicion.bancos_preguntas)
+                        for preguntas in bancos.values():
+                            preguntas_a_revisar.extend(preguntas)
+                        break
+
+            if not preguntas_a_revisar:
+                print("No se encontraron preguntas para auditar con LanguageTool.")
+                return 0
+
+            reglas_ign = set(r.strip() for r in args.lt_ignore_rules.split(",") if r.strip()) if getattr(args, 'lt_ignore_rules', None) else None
+            palabras_ign = set(w.strip() for w in args.lt_ignore_words.split(",") if w.strip()) if getattr(args, 'lt_ignore_words', None) else None
+
+            todos_los_issues = []
+            total_arreglos = 0
+
+            for p in preguntas_a_revisar:
+                issues = analizar_pregunta_languagetool(
+                    p,
+                    lang=args.lt_lang,
+                    server_url=args.lt_server,
+                    username=args.lt_username,
+                    api_key=args.lt_api_key,
+                    premium=args.lt_premium,
+                    ignore_words=palabras_ign,
+                    ignore_rules=reglas_ign,
+                )
+                if getattr(args, 'lt_fix', False) and issues:
+                    total_arreglos += aplicar_autofix_pregunta(p, issues)
+                todos_los_issues.extend(issues)
+
+            if getattr(args, 'output_md', None):
+                md_text = generar_reporte_markdown_languagetool(todos_los_issues)
+                args.output_md.parent.mkdir(parents=True, exist_ok=True)
+                args.output_md.write_text(md_text, encoding='utf-8')
+                print(f"✓ Reporte Markdown generado en: {args.output_md}")
+                return 0 if not todos_los_issues else 1
+
+            if getattr(args, 'json_output', False):
+                res = {
+                    "total_preguntas": len(preguntas_a_revisar),
+                    "total_issues": len(todos_los_issues),
+                    "total_arreglos": total_arreglos,
+                    "issues": [i.to_dict() for i in todos_los_issues],
+                }
+                print(json.dumps(res, indent=2, ensure_ascii=False))
+                return 0 if not todos_los_issues else 1
+
+            if not todos_los_issues:
+                print(f"✓ LanguageTool Passed: {len(preguntas_a_revisar)} preguntas sin observaciones.")
+                return 0
+
+            print(f"\n⚠️  Observaciones de LanguageTool ({len(todos_los_issues)} encontradas):")
+            for iss in todos_los_issues:
+                sug = ", ".join(iss.replacements[:2]) if iss.replacements else "—"
+                print(f"  - [{iss.pregunta_id} -> {iss.campo}] {iss.line}:{iss.column} | {iss.original_word} ({iss.context}) -> {sug}")
+
+            return 1
+        except Exception as e:
+            logger.error(f"Error durante LanguageTool spellcheck: {e}")
             if args.debug:
                 raise
             return 1
