@@ -171,3 +171,56 @@ check-alucard:
 ````
 
 Ejecutá `make check-alucard` antes de cada commit para asegurar que tu código conserve el estado de aprobación.
+
+---
+
+(manual-alucard-arquitectura)=
+## 7. Arquitectura Interna y Mecanismo Técnico
+
+La herramienta **`alucarD`** implementa un motor de alta precisión basado en:
+
+- **Tecnología Núcleo:** `Typst 0.11 + PyYAML + PyMuPDF + OpenCV (OMR) + LanguageTool API`.
+- **Aislamiento y Determinismo:** Diseñada para operar sin efectos colaterales en entornos de integración continua (CI), terminales de estudiantes y servidores docentes headless.
+- **Manejo de Errores Pedagógico:** Todo fallo de sintaxis, memoria o lógica se traduce en una acción prescriptiva concreta con su respectiva justificación técnica.
+
+---
+
+(manual-alucard-ecosistema)=
+## 8. Integración y Conexión con el Ecosistema
+
+````{note}
+Ninguna herramienta opera de forma aislada. **`alucarD`** forma parte del pipeline integral de evaluación, verificación y enseñanza de la cátedra.
+````
+
+### Diagrama de Flujo e Interoperabilidad
+
+````{mermaid}
+graph TD
+    DK[Deckard: Banco de Ejercicios] -->|Enunciados YAML| ALU[Alucard: Motor de Exámenes]
+    MT[Moodle-Toolbox: Bancos GIFT] -->|Preguntas Teóricas| ALU
+    DAE[Daedalus: Compilador C] -->|Verificación GCC| ALU
+    ALU -->|PDFs Maquetados en Typst| IMP[Impresión / Campus Virtual]
+    ALU -->|Grillas de Respuestas| OMR[Lectura Óptica OMR]
+    ALU -->|Claves de Evaluación| DR[Dredd: Autograder Masivo]
+````
+
+### Matriz de Intercambio de Datos
+
+| Canal | Herramientas Conectadas | Tipo de Datos Transferidos |
+| :--- | :--- | :--- |
+| **Entradas (Inputs)** | - `deckard (enunciados y starter codes)`
+- `daedalus (código C verificado)`
+- `moodle-toolbox (bancos GIFT/XML)` | Código fuente, AST, binarios, testcases, contratos |
+| **Salidas (Outputs)** | - `dredd (pautas de corrección)`
+- `Estudiantes / Imprenta (PDFs maquetados y hojas OMR)` | Informes Markdown, diagnósticos Rich, JSON, actas |
+| **Sincronización** | `idkfa`, `deckard`, `moodle-toolbox` | Validación cruzada, flags compartidos y autofix |
+
+### Pipeline de Integración Recomendado
+
+Podés encadenar `alucarD` con otras herramientas del ecosistema en una única línea de comando:
+
+````{code-block} bash
+# Pipeline de integración típico
+deckard compose guia.yaml | alucard render parcial.yaml -o parcial.pdf
+````
+
