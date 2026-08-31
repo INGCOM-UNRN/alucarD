@@ -345,3 +345,12 @@ Podés encadenar `alucarD` con otras herramientas del ecosistema en una única l
 deckard compose guia.yaml | alucard render parcial.yaml -o parcial.pdf
 ````
 
+---
+
+(manual-alucard-seccion-plugins)=
+## 9. Extensión, Desarrollo de Plugins y API Python
+
+Para crear tus propias reglas, conectores de evaluación o integrar `alucarD` programáticamente en pipelines de CI/CD:
+
+- 👉 **Consultá la guía completa:** [Guía de Extensión y Creación de Plugins](plugins.md)
+
