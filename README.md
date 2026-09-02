@@ -9,6 +9,35 @@
 
 ---
 
+## 🎯 Alcance
+
+### Qué cubre
+- Generación automatizada de exámenes y parciales institucionales en formatos Typst y PDF.
+- Síntesis de variantes numéricas y lógicas de enunciados mediante semillas reproducibles.
+- Diseño y renderizado de plantillas de examen con hojas de respuestas OMR (Optical Mark Recognition).
+- Procesamiento por visión artificial (OpenCV) para corrección óptica automatizada de exámenes escaneados.
+- Linting y validación de archivos de preguntas en formato GIFT.
+
+### Qué no cubre (Límites y Delegación)
+- Calificación masiva de entregas de código de software (delegado a `dredd`).
+- Repositorio y conversión de bancos de preguntas Moodle (delegado a `moodle-toolbox`).
+- Curaduría y balance de guías de trabajos prácticos (delegado a `deckard`).
+
+---
+
+## 📋 Requisitos
+
+### Requisitos de Sistema y Entorno
+- Linux (x86_64 / arm64) o Windows (MSYS2 UCRT64 / WSL). Python >= 3.10.
+
+### Dependencias Externas y Binarios
+- `typst` (>= 0.11), `gcc` (para compilación de variantes de código C).
+
+### Integración en el Ecosistema
+- CLI `alucard`, `generador-examenes`, `gift-linter`. Subcomando `doctor` para verificar Typst y toolchain.
+
+---
+
 ## 📑 Tabla de Contenidos
 
 - [Características Principales](#-características-principales)
