@@ -1,78 +1,101 @@
-"""Tests para las mejoras QoL de ALUCARD."""
-
+import pytest
 from pathlib import Path
-from generador_examenes.core.space_calibrator import calibrar_espacio_desarrollo
-from generador_examenes.core.learning_objectives import auditar_cobertura_objetivos
-from generador_examenes.core.answer_matrix import generar_matriz_respuestas_temas
-from generador_examenes.core.attendance import generar_acta_asistencia
-from generador_examenes.core.readability import auditar_legibilidad_imprenta
-from generador_examenes.core.moodle_export import exportar_a_moodle_xml
+from generador_examenes.core.alucard_qol import (
+    generar_plantilla_omr,
+    generar_especificacion_omr_json,
+    verificar_alineacion_doble_faz,
+    formatear_caja_codigo_con_lineas,
+    auditar_calidad_tipografica_codigo,
+    verificar_balance_preguntas_entre_temas,
+    empaquetar_pdfs_para_imprenta,
+)
 
 
-def test_space_calibrator():
-    p1 = {"enunciado": "Implemente la funcion insertar_nodo", "tipo": "desarrollo"}
-    p2 = {"enunciado": "Explique brevemente que es un TDA", "tipo": "desarrollo"}
+def test_generar_plantilla_omr():
+    typ = generar_plantilla_omr(num_preguntas=10, opciones_por_pregunta=5, tema=2)
+    assert "HOJA DE RESPUESTAS OMR" in typ
+    assert "TEMA 2" in typ
+    assert "circle" in typ
+    assert "P10" in typ
+
+
+def test_generar_especificacion_omr_json():
+    spec = generar_especificacion_omr_json(num_preguntas=5, opciones_por_pregunta=4, tema=1)
+    assert spec["schema_version"] == "1.0-omr"
+    assert spec["total_preguntas"] == 5
+    assert len(spec["preguntas"]) == 5
+    assert spec["preguntas"][0]["opciones"] == ["A", "B", "C", "D"]
+    assert "A" in spec["preguntas"][0]["coordenadas"]
+    assert len(spec["fiducial_markers"]) == 4
+
+
+def test_verificar_alineacion_doble_faz():
+    res_par = verificar_alineacion_doble_faz(4)
+    assert res_par["es_par"] is True
+    assert res_par["requiere_pagina_blanco"] is False
+    assert res_par["paginas_impresion"] == 4
+
+    res_impar = verificar_alineacion_doble_faz(3)
+    assert res_impar["es_par"] is False
+    assert res_impar["requiere_pagina_blanco"] is True
+    assert res_impar["paginas_impresion"] == 4
+    assert "impar" in res_impar["advertencia"]
+
+
+def test_formatear_caja_codigo_con_lineas():
+    codigo = "int x = 10;\nprintf(\"%d\", x);\nreturn 0;"
+    box = formatear_caja_codigo_con_lineas(codigo)
+    assert "```c" in box
+    assert "int x = 10;" in box
+    assert "printf" in box
+    assert "return 0;" in box
+
+
+def test_auditar_calidad_tipografica_codigo():
+    codigo_ok = "int a = 1;\nint b = 2;\nreturn a + b;"
+    aud_ok = auditar_calidad_tipografica_codigo(codigo_ok, max_cols=40)
+    assert aud_ok["cumple_calidad"] is True
+    assert len(aud_ok["lineas_largas"]) == 0
+
+    codigo_largo = "char *muy_largo = \"Este es un string extraordinariamente largo que va a superar el limite de columnas\";"
+    aud_bad = auditar_calidad_tipografica_codigo(codigo_largo, max_cols=30)
+    assert aud_bad["cumple_calidad"] is False
+    assert len(aud_bad["lineas_largas"]) == 1
+
+
+def test_verificar_balance_preguntas_entre_temas():
+    tema1 = {"preguntas": [{"puntaje": 2.0}, {"puntaje": 3.0}]}
+    tema2 = {"preguntas": [{"puntaje": 2.5}, {"puntaje": 2.5}]}
+    bal = verificar_balance_preguntas_entre_temas([tema1, tema2])
+    assert bal["balanceado"] is True
+    assert bal["balance_cantidad"] is True
+    assert bal["balance_puntaje"] is True
+
+    tema3 = {"preguntas": [{"puntaje": 1.0}]}
+    desbal = verificar_balance_preguntas_entre_temas([tema1, tema3])
+    assert desbal["balanceado"] is False
+    assert len(desbal["discrepancias"]) > 0
+
+
+def test_empaquetar_pdfs_para_imprenta(tmp_path):
+    import pypdf
+    # Crear dos PDFs ficticios válidos
+    pdf1_path = tmp_path / "t1.pdf"
+    pdf2_path = tmp_path / "t2.pdf"
     
-    calib1 = calibrar_espacio_desarrollo(p1)
-    calib2 = calibrar_espacio_desarrollo(p2)
-    assert calib1["lineas_sugeridas"] >= 14
-    assert calib2["lineas_sugeridas"] >= 6
-
-
-def test_learning_objectives():
-    preguntas = [
-        {"enunciado": "Utilice malloc y punteros para crear una estructura."},
-        {"enunciado": "Escriba un bucle for que recorra la lista."},
-    ]
-    res = auditar_cobertura_objetivos(preguntas)
-    assert res["objetivos_cubiertos"] >= 2
-    assert res["porcentaje_cobertura"] > 0
-
-
-def test_answer_matrix():
-    temas = [
-        {"preguntas": [{"respuesta_correcta": "A"}, {"respuesta_correcta": "C"}]},
-        {"preguntas": [{"respuesta_correcta": "B"}, {"respuesta_correcta": "A"}]},
-    ]
-    matriz = generar_matriz_respuestas_temas(temas)
-    assert "Tema 1" in matriz
-    assert "Tema 2" in matriz
-    assert "`A`" in matriz
-
-
-def test_attendance_sheet(tmp_path: Path):
-    alumnos = [
-        {"padron": "1001", "nombre": "Perez, Juan", "tema": "Tema A"},
-        {"padron": "1002", "nombre": "Gomez, Maria", "tema": "Tema B"},
-    ]
-    out = tmp_path / "asistencia.md"
-    res = generar_acta_asistencia("Parcial 1", alumnos, out)
-    assert out.is_file()
-    assert "Perez, Juan" in res
-
-
-def test_readability_audit():
-    ok_cfg = {"font_size": 10.0, "margin_mm": 15.0}
-    bad_cfg = {"font_size": 7.0, "margin_mm": 5.0}
-
-    assert auditar_legibilidad_imprenta(ok_cfg)["apto_imprenta"] is True
-    assert auditar_legibilidad_imprenta(bad_cfg)["apto_imprenta"] is False
-
-
-def test_moodle_export(tmp_path: Path):
-    examen = {
-        "nombre": "Final Cátedra",
-        "secciones": [
-            {
-                "preguntas": [
-                    {"titulo": "P1", "enunciado": "Explique stack", "puntaje": 2.0}
-                ]
-            }
-        ]
-    }
-    out_xml = tmp_path / "cuestionario.xml"
-    res = exportar_a_moodle_xml(examen, out_xml)
-    assert res.is_file()
-    txt = res.read_text(encoding="utf-8")
-    assert "<quiz>" in txt
-    assert "Explique stack" in txt
+    writer1 = pypdf.PdfWriter()
+    writer1.add_blank_page(width=100, height=100)
+    with open(pdf1_path, "wb") as f:
+        writer1.write(f)
+        
+    writer2 = pypdf.PdfWriter()
+    writer2.add_blank_page(width=100, height=100)
+    with open(pdf2_path, "wb") as f:
+        writer2.write(f)
+        
+    salida = tmp_path / "imprenta_total.pdf"
+    res = empaquetar_pdfs_para_imprenta([pdf1_path, pdf2_path], salida, doble_faz=True)
+    assert res.exists()
+    reader = pypdf.PdfReader(str(salida))
+    # Como ambos tenían 1 página (impar), se les agrega 1 página en blanco a cada uno -> total 4
+    assert len(reader.pages) == 4

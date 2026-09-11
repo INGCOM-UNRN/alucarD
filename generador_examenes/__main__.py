@@ -371,6 +371,34 @@ def main():
     )
 
     parser.add_argument(
+        '--omr',
+        action='store_true',
+        help='Generar hoja de respuestas OMR de lectura óptica y descriptor JSON'
+    )
+
+    parser.add_argument(
+        '--accessible', '--large-text',
+        action='store_true',
+        dest='accessible',
+        help='Generar versión con letra grande y contraste adaptado para accesibilidad'
+    )
+
+    parser.add_argument(
+        '--bundle-print', '--empaquetar-imprenta',
+        action='store_true',
+        dest='bundle_print',
+        help='Empaquetar y concatenar los PDFs de todos los temas en un único archivo para imprenta'
+    )
+
+    parser.add_argument(
+        '--audit-typography',
+        action='store_true',
+        dest='audit_typography',
+        help='Auditar calidad tipográfica y líneas huérfanas en bloques de código de preguntas'
+    )
+
+
+    parser.add_argument(
         '--show-completion',
         action='store_true',
         help='Show completion for the current shell, to copy it or customize the installation.'
@@ -765,7 +793,46 @@ complete -F _{prog.replace('-', '_')}_completion {prog}
                     logger.error(f"Error generando formato {fmt}: {e}")
                     if args.debug:
                         raise
-        
+
+            # Si se solicitó OMR, generar hoja Typst y descriptor JSON
+            if getattr(args, 'omr', False):
+                from generador_examenes.core.alucard_qol import generar_plantilla_omr, generar_especificacion_omr_json
+                total_pregs = sum(len(s.get('preguntas', [])) for s in examen_mezclado.get('secciones', []))
+                omr_typst = generar_plantilla_omr(
+                    num_preguntas=total_pregs,
+                    tema=i + 1,
+                    institucion=definicion.institucion,
+                    materia=definicion.materia
+                )
+                omr_file = output_dir / f"omr_tema_{i + 1:02d}.typ"
+                omr_file.write_text(omr_typst, encoding='utf-8')
+                
+                omr_spec = generar_especificacion_omr_json(num_preguntas=total_pregs, tema=i + 1)
+                spec_file = output_dir / f"omr_descriptor_tema_{i + 1:02d}.json"
+                spec_file.write_text(json.dumps(omr_spec, indent=2, ensure_ascii=False), encoding='utf-8')
+                print(f"✓ OMR y Descriptor JSON generados para tema {i + 1}: {spec_file.name}")
+
+        # Auditoría tipográfica de código si fue solicitada
+        if getattr(args, 'audit_typography', False):
+            from generador_examenes.core.alucard_qol import auditar_calidad_tipografica_codigo
+            print("\n--- Auditoría Tipográfica de Bloques de Código ---")
+            for sec in examen_base.get('secciones', []):
+                for preg in sec.get('preguntas', []):
+                    enunciado = getattr(preg, 'enunciado_html', '') or ''
+                    if '```' in enunciado or '<pre>' in enunciado or 'int ' in enunciado:
+                        res = auditar_calidad_tipografica_codigo(enunciado)
+                        if not res['cumple_calidad']:
+                            print(f"  [!] Pregunta {preg.id}: {len(res['lineas_largas'])} líneas largas detectadas.")
+
+        # Empaquetado para imprenta si fue solicitado
+        if getattr(args, 'bundle_print', False):
+            from generador_examenes.core.alucard_qol import empaquetar_pdfs_para_imprenta
+            pdfs_generados = sorted(output_dir.glob("examen_tema_*.pdf"))
+            if pdfs_generados:
+                salida_imprenta = output_dir / "paquete_imprenta_todos_los_temas.pdf"
+                empaquetar_pdfs_para_imprenta(pdfs_generados, salida_imprenta, doble_faz=True)
+                print(f"✓ Paquete para imprenta generado (doble faz verificado): {salida_imprenta}")
+
         print(f"\n✓ Generación completada exitosamente")
         print(f"  Archivos guardados en: {output_dir}")
         return 0
