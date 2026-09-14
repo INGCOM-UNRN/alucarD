@@ -2,9 +2,17 @@
 Punto de entrada principal de la aplicación
 """
 import sys
-import argparse
 from pathlib import Path
+from types import SimpleNamespace
+from typing import List, Optional
 import shutil
+
+import typer
+
+from generador_examenes import cli_commands
+from generador_examenes.cli_errors import usage_error as _usage_error
+
+app = typer.Typer(add_completion=False, pretty_exceptions_enable=False)
 
 
 def inicializar_proyecto():
@@ -179,669 +187,178 @@ Para más información, consulta la documentación oficial de alucarD.
     print()
 
 
-def main():
-    """Función principal del CLI"""
-    parser = argparse.ArgumentParser(
-        prog='generador-examenes',
-        description='Generador de exámenes basado en plantillas YAML y bancos Moodle/GIFT'
-    )
-    
-    # Argumentos principales
-    parser.add_argument(
-        '--init',
-        action='store_true',
-        help='Inicializar proyecto con archivos de ejemplo'
-    )
-    
-    parser.add_argument(
-        '--wizard',
-        nargs='?',
-        const=None,
-        type=Path,
-        metavar='YAML',
-        help='Asistente interactivo para crear/editar configuración de examen'
-    )
-    
-    parser.add_argument(
-        '--category-tree',
-        nargs='+',
-        type=Path,
-        metavar='BANCO',
-        help='Generar árbol HTML de categorías de uno o más bancos de preguntas'
-    )
-
-    parser.add_argument(
-        '--sintetizar',
-        type=str,
-        metavar='PLANTILLA',
-        help='Generar un banco de preguntas de C con daedalus (sintetizador verificado con gcc). '
-             'Ver plantillas disponibles con --listar-sintetizadores'
-    )
-
-    parser.add_argument(
-        '--listar-sintetizadores',
-        action='store_true',
-        help='Lista las plantillas disponibles del sintetizador daedalus'
-    )
-
-    parser.add_argument(
-        '--cantidad',
-        type=int,
-        default=5,
-        help='Cantidad de preguntas a sintetizar (default: 5)'
-    )
-
-    parser.add_argument(
-        '--formato-banco',
-        choices=['gift', 'xml'],
-        default='gift',
-        help='Formato del banco generado por daedalus (default: gift)'
-    )
-
-    parser.add_argument(
-        '-d', '--definicion',
-        type=Path,
-        help='Ruta al archivo de definición YAML del examen'
-    )
-
-    parser.add_argument(
-        '-i', '--input-banco',
-        type=Path,
-        nargs='+',
-        help='Ruta(s) a los archivos de banco de preguntas (override de YAML)'
-    )
-    
-    parser.add_argument(
-        '-o', '--output-dir',
-        type=Path,
-        help='Directorio de salida para los exámenes generados (override de YAML, default: ./output)'
-    )
-
-    parser.add_argument(
-        '-p', '--path-images',
-        type=Path,
-        help='Ruta al directorio de imágenes referenciadas en las preguntas (override de YAML)'
-    )
-
-    parser.add_argument(
-        '-n', '--numero-temas',
-        type=int,
-        help='Número de temas/versiones a generar (override de YAML, default: 1)'
-    )
-
-    parser.add_argument(
-        '-s', '--semilla',
-        type=int,
-        help='Semilla pseudo-aleatoria para generación (override de YAML, default: 42)'
-    )
-
-    parser.add_argument(
-        '-f', '--formato',
-        nargs='+',
-        choices=['html', 'pdf'],
-        help='Formato(s) de salida (override de YAML, default: html)'
-    )
-    
-    parser.add_argument(
-        '-t', '--template', '--typst-template',
-        type=Path,
-        dest='typst_template',
-        help='Ruta a una plantilla Typst personalizada (.typ / .typ.j2) para generación de PDF'
-    )
-    
-    parser.add_argument(
-        '--spellcheck', '--languagetool',
-        action='store_true',
-        dest='spellcheck',
-        help='Auditar ortografía y gramática de las preguntas del examen o banco usando LanguageTool'
-    )
-    
-    parser.add_argument(
-        '--lt-server',
-        type=str,
-        help='URL del servidor LanguageTool (por defecto http://localhost:8081 y API pública)'
+@app.command()
+def _cli(
+    init: bool = typer.Option(False, "--init", help="Inicializar proyecto con archivos de ejemplo"),
+    wizard: Optional[Path] = typer.Option(
+        None, "--wizard", metavar="YAML",
+        help="Asistente interactivo para crear/editar configuración de examen",
+    ),
+    category_tree: Optional[List[Path]] = typer.Option(
+        None, "--category-tree", metavar="BANCO",
+        help="Generar árbol HTML de categorías de uno o más bancos de preguntas",
+    ),
+    sintetizar: Optional[str] = typer.Option(
+        None, "--sintetizar", metavar="PLANTILLA",
+        help="Generar un banco de preguntas de C con daedalus (sintetizador verificado con gcc). "
+             "Ver plantillas disponibles con --listar-sintetizadores",
+    ),
+    listar_sintetizadores: bool = typer.Option(
+        False, "--listar-sintetizadores",
+        help="Lista las plantillas disponibles del sintetizador daedalus",
+    ),
+    cantidad: int = typer.Option(5, "--cantidad", help="Cantidad de preguntas a sintetizar (default: 5)"),
+    formato_banco: str = typer.Option(
+        "gift", "--formato-banco",
+        help="Formato del banco generado por daedalus: gift|xml (default: gift)",
+    ),
+    definicion: Optional[Path] = typer.Option(
+        None, "-d", "--definicion", help="Ruta al archivo de definición YAML del examen",
+    ),
+    input_banco: Optional[List[Path]] = typer.Option(
+        None, "-i", "--input-banco",
+        help="Ruta(s) a los archivos de banco de preguntas (override de YAML)",
+    ),
+    output_dir: Optional[Path] = typer.Option(
+        None, "-o", "--output-dir",
+        help="Directorio de salida para los exámenes generados (override de YAML, default: ./output)",
+    ),
+    path_images: Optional[Path] = typer.Option(
+        None, "-p", "--path-images",
+        help="Ruta al directorio de imágenes referenciadas en las preguntas (override de YAML)",
+    ),
+    numero_temas: Optional[int] = typer.Option(
+        None, "-n", "--numero-temas",
+        help="Número de temas/versiones a generar (override de YAML, default: 1)",
+    ),
+    semilla: Optional[int] = typer.Option(
+        None, "-s", "--semilla",
+        help="Semilla pseudo-aleatoria para generación (override de YAML, default: 42)",
+    ),
+    formato: Optional[List[str]] = typer.Option(
+        None, "-f", "--formato",
+        help="Formato(s) de salida: html y/o pdf (override de YAML, default: html)",
+    ),
+    typst_template: Optional[Path] = typer.Option(
+        None, "-t", "--template", "--typst-template",
+        help="Ruta a una plantilla Typst personalizada (.typ / .typ.j2) para generación de PDF",
+    ),
+    spellcheck: bool = typer.Option(
+        False, "--spellcheck", "--languagetool",
+        help="Auditar ortografía y gramática de las preguntas del examen o banco usando LanguageTool",
+    ),
+    lt_server: Optional[str] = typer.Option(
+        None, "--lt-server", help="URL del servidor LanguageTool (por defecto http://localhost:8081 y API pública)",
+    ),
+    lt_username: Optional[str] = typer.Option(None, "--lt-username", help="Usuario / email de LanguageTool Premium"),
+    lt_api_key: Optional[str] = typer.Option(None, "--lt-api-key", help="API Key / Token de LanguageTool Premium"),
+    lt_premium: bool = typer.Option(False, "--lt-premium", help="Forzar uso de la API LanguageTool Premium"),
+    lt_lang: str = typer.Option("es-AR", "--lt-lang", help="Código de idioma para LanguageTool (default: es-AR)"),
+    lt_ignore_rules: Optional[str] = typer.Option(
+        None, "--lt-ignore-rules", help="Reglas de LanguageTool a ignorar separadas por comas",
+    ),
+    lt_ignore_words: Optional[str] = typer.Option(
+        None, "--lt-ignore-words", help="Palabras personalizadas a ignorar separadas por comas",
+    ),
+    lt_fix: bool = typer.Option(False, "--lt-fix", help="Aplica correcciones ortográficas automáticas"),
+    output_md: Optional[Path] = typer.Option(
+        None, "--md", "--output-md", help="Genera reporte de auditoría en formato Markdown",
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Emite salida estructurada en formato JSON"),
+    validate: bool = typer.Option(False, "--validate", help="Validar la definición sin generar archivos"),
+    debug: bool = typer.Option(False, "--debug", help="Activar modo debug con logging detallado"),
+    omr: bool = typer.Option(
+        False, "--omr", help="Generar hoja de respuestas OMR de lectura óptica y descriptor JSON",
+    ),
+    accessible: bool = typer.Option(
+        False, "--accessible", "--large-text",
+        help="Generar versión con letra grande y contraste adaptado para accesibilidad",
+    ),
+    bundle_print: bool = typer.Option(
+        False, "--bundle-print", "--empaquetar-imprenta",
+        help="Empaquetar y concatenar los PDFs de todos los temas en un único archivo para imprenta",
+    ),
+    audit_typography: bool = typer.Option(
+        False, "--audit-typography",
+        help="Auditar calidad tipográfica y líneas huérfanas en bloques de código de preguntas",
+    ),
+    show_completion: bool = typer.Option(
+        False, "--show-completion",
+        help="Show completion for the current shell, to copy it or customize the installation.",
+    ),
+    install_completion: bool = typer.Option(
+        False, "--install-completion", help="Install completion for the current shell.",
+    ),
+) -> int:
+    """Generador de exámenes basado en plantillas YAML y bancos Moodle/GIFT."""
+    args = SimpleNamespace(
+        init=init, wizard=wizard, category_tree=category_tree, sintetizar=sintetizar,
+        listar_sintetizadores=listar_sintetizadores, cantidad=cantidad, formato_banco=formato_banco,
+        definicion=definicion, input_banco=input_banco, output_dir=output_dir, path_images=path_images,
+        numero_temas=numero_temas, semilla=semilla, formato=formato, typst_template=typst_template,
+        spellcheck=spellcheck, lt_server=lt_server, lt_username=lt_username, lt_api_key=lt_api_key,
+        lt_premium=lt_premium, lt_lang=lt_lang, lt_ignore_rules=lt_ignore_rules, lt_ignore_words=lt_ignore_words,
+        lt_fix=lt_fix, output_md=output_md, json_output=json_output, validate=validate, debug=debug,
+        omr=omr, accessible=accessible, bundle_print=bundle_print, audit_typography=audit_typography,
+        show_completion=show_completion, install_completion=install_completion,
     )
 
-    parser.add_argument(
-        '--lt-username',
-        type=str,
-        help='Usuario / email de LanguageTool Premium'
-    )
+    if formato_banco not in ("gift", "xml"):
+        _usage_error(f"argumento --formato-banco: valor inválido: '{formato_banco}' (elegir entre 'gift', 'xml')")
+    if formato:
+        for fmt in formato:
+            if fmt not in ("html", "pdf"):
+                _usage_error(f"argumento -f/--formato: valor inválido: '{fmt}' (elegir entre 'html', 'pdf')")
 
-    parser.add_argument(
-        '--lt-api-key',
-        type=str,
-        help='API Key / Token de LanguageTool Premium'
-    )
-
-    parser.add_argument(
-        '--lt-premium',
-        action='store_true',
-        help='Forzar uso de la API LanguageTool Premium'
-    )
-
-    parser.add_argument(
-        '--lt-lang',
-        default='es-AR',
-        help='Código de idioma para LanguageTool (default: es-AR)'
-    )
-
-    parser.add_argument(
-        '--lt-ignore-rules',
-        type=str,
-        help='Reglas de LanguageTool a ignorar separadas por comas'
-    )
-
-    parser.add_argument(
-        '--lt-ignore-words',
-        type=str,
-        help='Palabras personalizadas a ignorar separadas por comas'
-    )
-
-    parser.add_argument(
-        '--lt-fix',
-        action='store_true',
-        help='Aplica correcciones ortográficas automáticas'
-    )
-
-    parser.add_argument(
-        '--md', '--output-md',
-        type=Path,
-        dest='output_md',
-        help='Genera reporte de auditoría en formato Markdown'
-    )
-
-    parser.add_argument(
-        '--json',
-        action='store_true',
-        dest='json_output',
-        help='Emite salida estructurada en formato JSON'
-    )
-
-    parser.add_argument(
-        '--validate',
-        action='store_true',
-        help='Validar la definición sin generar archivos'
-    )
-    
-    parser.add_argument(
-        '--debug',
-        action='store_true',
-        help='Activar modo debug con logging detallado'
-    )
-
-    parser.add_argument(
-        '--omr',
-        action='store_true',
-        help='Generar hoja de respuestas OMR de lectura óptica y descriptor JSON'
-    )
-
-    parser.add_argument(
-        '--accessible', '--large-text',
-        action='store_true',
-        dest='accessible',
-        help='Generar versión con letra grande y contraste adaptado para accesibilidad'
-    )
-
-    parser.add_argument(
-        '--bundle-print', '--empaquetar-imprenta',
-        action='store_true',
-        dest='bundle_print',
-        help='Empaquetar y concatenar los PDFs de todos los temas en un único archivo para imprenta'
-    )
-
-    parser.add_argument(
-        '--audit-typography',
-        action='store_true',
-        dest='audit_typography',
-        help='Auditar calidad tipográfica y líneas huérfanas en bloques de código de preguntas'
-    )
-
-
-    parser.add_argument(
-        '--show-completion',
-        action='store_true',
-        help='Show completion for the current shell, to copy it or customize the installation.'
-    )
-
-    parser.add_argument(
-        '--install-completion',
-        action='store_true',
-        help='Install completion for the current shell.'
-    )
-    
-    args = parser.parse_args()
 
     if getattr(args, 'show_completion', False) or getattr(args, 'install_completion', False):
-        prog = Path(sys.argv[0]).name
-        if prog not in ("generador-examenes", "alucard"):
-            prog = "generador-examenes"
-        script = f"""_{prog.replace('-', '_')}_completion() {{
-    local cur prev words cword
-    if declare -F _init_completion >/dev/null 2>&1; then
-        _init_completion || return
-    else
-        cur="${{COMP_WORDS[COMP_CWORD]}}"
-        prev="${{COMP_WORDS[COMP_CWORD-1]}}"
-    fi
+        return cli_commands.ejecutar_completion(args)
 
-    local opts="--init --wizard --category-tree --sintetizar --listar-sintetizadores --cantidad --formato-banco -d --definicion -i --input-banco -o --output-dir -p --path-images -n --numero-temas -s --semilla -f --formato --validate --debug --help --show-completion --install-completion"
-
-    case "$prev" in
-        --formato|-f)
-            COMPREPLY=($(compgen -W "html pdf" -- "$cur"))
-            return 0
-            ;;
-        --formato-banco)
-            COMPREPLY=($(compgen -W "gift xml" -- "$cur"))
-            return 0
-            ;;
-        --sintetizar)
-            COMPREPLY=($(compgen -W "incrementos precedencia recursion traza-punteros" -- "$cur"))
-            return 0
-            ;;
-        -d|--definicion|-i|--input-banco|-o|--output-dir|-p|--path-images|--wizard|--category-tree)
-            COMPREPLY=($(compgen -f -- "$cur"))
-            return 0
-            ;;
-    esac
-
-    if [[ "$cur" == -* ]]; then
-        COMPREPLY=($(compgen -W "$opts" -- "$cur"))
-        return 0
-    fi
-    COMPREPLY=($(compgen -f -- "$cur"))
-}}
-complete -F _{prog.replace('-', '_')}_completion {prog}
-"""
-        if args.show_completion:
-            print(script)
-            return 0
-        if args.install_completion:
-            comp_dir = Path.home() / ".bash_completions"
-            if comp_dir.is_dir():
-                target = comp_dir / f"{prog}.bash"
-                target.write_text(script, encoding="utf-8")
-                print(f"Completion installed in {target}")
-            else:
-                rc_file = Path.home() / ".bashrc"
-                if rc_file.is_file():
-                    with open(rc_file, "a", encoding="utf-8") as f:
-                        f.write(f"\n# {prog} completion\n{script}\n")
-                    print(f"Completion installed in {rc_file}")
-            return 0
-    
     # Configurar logging
     from generador_examenes.config.logging_config import setup_logging
     setup_logging(debug=args.debug)
-    
+
     import logging
     logger = logging.getLogger(__name__)
-    
-    # Modo inicialización
+
     if args.init:
-        logger.info("Modo inicialización - creando archivos de ejemplo")
-        try:
-            inicializar_proyecto()
-            return 0
-        except Exception as e:
-            logger.error(f"Error durante la inicialización: {e}")
-            if args.debug:
-                raise
-            return 1
-    
-    # Modo wizard
+        return cli_commands.ejecutar_init(args, logger)
+
     if args.wizard is not None:
-        try:
-            from generador_examenes.config.exam_wizard import run_wizard
-            run_wizard(args.wizard)
-            return 0
-        except Exception as e:
-            logger.error(f"Error en el wizard: {e}")
-            if args.debug:
-                raise
-            return 1
-    
-    # Modo catálogo del sintetizador daedalus
+        return cli_commands.ejecutar_wizard(args, logger)
+
     if args.listar_sintetizadores:
-        from generador_examenes.synthesizer import plantillas_disponibles
+        return cli_commands.listar_sintetizadores_disponibles()
 
-        print("\nPlantillas disponibles del sintetizador daedalus (verificadas con gcc):")
-        for nombre, descripcion in sorted(plantillas_disponibles().items()):
-            print(f"  - {nombre}: {descripcion}")
-        print("\nUso: generador-examenes --sintetizar <plantilla> --cantidad N [-o output] [--formato-banco gift|xml]\n")
-        return 0
-
-    # Modo síntesis de preguntas de C compiladas y verificadas al vuelo
     if args.sintetizar:
-        try:
-            from generador_examenes.synthesizer import (
-                plantillas_disponibles,
-                sintetizar,
-                exportar_gift,
-                exportar_xml,
-            )
+        return cli_commands.ejecutar_sintetizar(args, logger)
 
-            if args.sintetizar not in plantillas_disponibles():
-                logger.error(f"✗ Plantilla desconocida: '{args.sintetizar}'. "
-                             f"Disponibles: {', '.join(sorted(plantillas_disponibles()))}")
-                return 1
-
-            output_dir = args.output_dir or Path('./output')
-            output_dir.mkdir(parents=True, exist_ok=True)
-            semilla = args.semilla if args.semilla is not None else 42
-
-            logger.info(f"Sintetizando {args.cantidad} preguntas con la plantilla '{args.sintetizar}' "
-                        f"(semilla: {semilla})...")
-            snippets = sintetizar(args.sintetizar, cantidad=args.cantidad, semilla=semilla)
-
-            extension = 'gift' if args.formato_banco == 'gift' else 'xml'
-            destino = output_dir / f"sintetizados_{args.sintetizar}.{extension}"
-            contenido = exportar_gift(snippets) if extension == 'gift' else exportar_xml(snippets)
-            destino.write_text(contenido, encoding='utf-8')
-
-            logger.info(f"✓ Banco generado: {destino} ({len(snippets)} preguntas verificadas)")
-            print(f"\n✓ {len(snippets)} preguntas de C sintetizadas y verificadas con gcc:")
-            print(f"  {destino}")
-            print("\nPodés usarlas directo como banco de alucarD (-i) o editarlas con questions ui.")
-            return 0
-        except Exception as e:
-            logger.error(f"Error durante la síntesis: {e}")
-            if args.debug:
-                raise
-            return 1
-
-    # Modo spellcheck / languagetool
     if getattr(args, 'spellcheck', False):
-        try:
-            import json
-            from generador_examenes.config.config_loader import cargar_definicion, cargar_bancos
-            from generador_examenes.core.languagetool_checker import (
-                analizar_pregunta_languagetool,
-                aplicar_autofix_pregunta,
-                generar_reporte_markdown_languagetool,
-            )
+        return cli_commands.ejecutar_spellcheck(args, logger)
 
-            preguntas_a_revisar = []
-            if args.definicion and args.definicion.is_file():
-                definicion = cargar_definicion(args.definicion)
-                bancos = cargar_bancos(definicion.bancos_preguntas)
-                for preguntas in bancos.values():
-                    preguntas_a_revisar.extend(preguntas)
-            elif args.input_banco:
-                bancos = cargar_bancos([str(p) for p in args.input_banco])
-                for preguntas in bancos.values():
-                    preguntas_a_revisar.extend(preguntas)
-            else:
-                for candidate in (Path('definicion.yaml'), Path('definicion_ejemplo.yaml')):
-                    if candidate.is_file():
-                        definicion = cargar_definicion(candidate)
-                        bancos = cargar_bancos(definicion.bancos_preguntas)
-                        for preguntas in bancos.values():
-                            preguntas_a_revisar.extend(preguntas)
-                        break
-
-            if not preguntas_a_revisar:
-                print("No se encontraron preguntas para auditar con LanguageTool.")
-                return 0
-
-            reglas_ign = set(r.strip() for r in args.lt_ignore_rules.split(",") if r.strip()) if getattr(args, 'lt_ignore_rules', None) else None
-            palabras_ign = set(w.strip() for w in args.lt_ignore_words.split(",") if w.strip()) if getattr(args, 'lt_ignore_words', None) else None
-
-            todos_los_issues = []
-            total_arreglos = 0
-
-            for p in preguntas_a_revisar:
-                issues = analizar_pregunta_languagetool(
-                    p,
-                    lang=args.lt_lang,
-                    server_url=args.lt_server,
-                    username=args.lt_username,
-                    api_key=args.lt_api_key,
-                    premium=args.lt_premium,
-                    ignore_words=palabras_ign,
-                    ignore_rules=reglas_ign,
-                )
-                if getattr(args, 'lt_fix', False) and issues:
-                    total_arreglos += aplicar_autofix_pregunta(p, issues)
-                todos_los_issues.extend(issues)
-
-            if getattr(args, 'output_md', None):
-                md_text = generar_reporte_markdown_languagetool(todos_los_issues)
-                args.output_md.parent.mkdir(parents=True, exist_ok=True)
-                args.output_md.write_text(md_text, encoding='utf-8')
-                print(f"✓ Reporte Markdown generado en: {args.output_md}")
-                return 0 if not todos_los_issues else 1
-
-            if getattr(args, 'json_output', False):
-                res = {
-                    "total_preguntas": len(preguntas_a_revisar),
-                    "total_issues": len(todos_los_issues),
-                    "total_arreglos": total_arreglos,
-                    "issues": [i.to_dict() for i in todos_los_issues],
-                }
-                print(json.dumps(res, indent=2, ensure_ascii=False))
-                return 0 if not todos_los_issues else 1
-
-            if not todos_los_issues:
-                print(f"✓ LanguageTool Passed: {len(preguntas_a_revisar)} preguntas sin observaciones.")
-                return 0
-
-            print(f"\n⚠️  Observaciones de LanguageTool ({len(todos_los_issues)} encontradas):")
-            for iss in todos_los_issues:
-                sug = ", ".join(iss.replacements[:2]) if iss.replacements else "—"
-                print(f"  - [{iss.pregunta_id} -> {iss.campo}] {iss.line}:{iss.column} | {iss.original_word} ({iss.context}) -> {sug}")
-
-            return 1
-        except Exception as e:
-            logger.error(f"Error durante LanguageTool spellcheck: {e}")
-            if args.debug:
-                raise
-            return 1
-
-    # Modo árbol de categorías
     if args.category_tree:
-        logger.info("Modo árbol de categorías - generando visualización HTML")
-        try:
-            from generador_examenes.config.category_tree_viewer import main_category_viewer
-            
-            banco_paths = args.category_tree
-            for banco_path in banco_paths:
-                if not banco_path.exists():
-                    logger.error(f"✗ Banco no encontrado: {banco_path}")
-                    return 1
-            
-            output_path = args.output_dir / "category_tree.html" if args.output_dir else Path("output/category_tree.html")
-            resultado = main_category_viewer(banco_paths, output_path)
-            
-            logger.info(f"✓ Árbol de categorías generado exitosamente")
-            logger.info(f"  Abre el archivo en tu navegador: {resultado.absolute()}")
-            print(f"\n✓ Árbol de categorías generado: {resultado.absolute()}")
-            print(f"  Abre el archivo en tu navegador para explorar las categorías.")
-            
-            return 0
-        except Exception as e:
-            logger.error(f"Error generando árbol de categorías: {e}")
-            if args.debug:
-                raise
-            return 1
-    
-    # Validar argumentos requeridos
-    if not args.definicion:
-        parser.error("Se requiere --definicion (o --init para inicializar, o --wizard para configurar, o --category-tree para ver categorías)")
-    
-    logger.info(f"Iniciando generador de exámenes v5.7.0")
-    logger.info(f"Definición: {args.definicion}")
-    
+        return cli_commands.ejecutar_category_tree(args, logger)
+
+    return cli_commands.generar_examen(args, logger)
+
+
+
+
+def main() -> int:
+    """Punto de entrada compatible con el contrato histórico de la CLI.
+
+    Ejecuta la app Typer con ``standalone_mode=False`` para poder devolver
+    el código de salida como valor de retorno (usado por los tests) y
+    traduce los errores de uso de CLI en ``SystemExit(2)``, tal como hacía
+    ``ArgumentParser.error`` en la implementación previa basada en argparse.
+    """
     try:
-        # Cargar y validar definición
-        import yaml
-        from pydantic import ValidationError
-        from generador_examenes.core.models import DefinicionExamen
-        from generador_examenes.core import logic
-        from generador_examenes.generators import obtener_renderer
-        
-        logger.info("Cargando definición del examen...")
-        with open(args.definicion, 'r', encoding='utf-8') as f:
-            definicion_yaml = yaml.safe_load(f)
-        
-        try:
-            definicion = DefinicionExamen(**definicion_yaml)
-            logger.info(f"Definición validada: {definicion}")
-        except ValidationError as e:
-            logger.error(f"Error de validación en definición:\n{e}")
-            return 1
-        
-        # Aplicar overrides de CLI sobre configuración YAML
-        # Los argumentos de CLI tienen prioridad sobre YAML
-        input_banco = args.input_banco if args.input_banco else (
-            [Path(b) for b in definicion.input_banco] if definicion.input_banco else None
-        )
-        output_dir = args.output_dir if args.output_dir else Path(definicion.output_dir or './output')
-        path_images = args.path_images if args.path_images else (
-            Path(definicion.path_images) if definicion.path_images else None
-        )
-        numero_temas = args.numero_temas if args.numero_temas is not None else (definicion.numero_temas or 1)
-        semilla = args.semilla if args.semilla is not None else (definicion.semilla or 42)
-        formato = args.formato if args.formato else (definicion.formato or ['html'])
-        
-        # Validar que tengamos bancos de preguntas
-        if not input_banco:
-            parser.error("Se requiere input_banco en YAML o --input-banco en CLI")
-        
-        logger.info(f"Bancos: {input_banco}")
-        logger.info(f"Output: {output_dir}")
-        logger.info(f"Temas: {numero_temas}, Semilla: {semilla}, Formato(s): {formato}")
-        
-        # Cargar bancos de preguntas
-        logger.info("Cargando bancos de preguntas...")
-        banco_completo = logic.cargar_bancos(input_banco)
-        
-        if not banco_completo:
-            logger.error("No se cargaron preguntas de los bancos")
-            return 1
-        
-        # Procesar imágenes si se especificó directorio
-        if path_images:
-            logger.info("Procesando imágenes...")
-            logic.procesar_imagenes(banco_completo, path_images)
-        
-        # Construir pool del examen
-        logger.info("Construyendo pool del examen...")
-        examen_base = logic.construir_pool_examen(definicion, banco_completo)
-        
-        # Calcular puntaje total
-        puntaje_total = logic.calcular_puntaje_total(examen_base)
-        logger.info(f"Puntaje total del examen: {puntaje_total}")
-        
-        # Modo validación
-        if args.validate:
-            print("\n" + "="*60)
-            print("VALIDACIÓN DEL EXAMEN")
-            print("="*60)
-            print(f"\nExamen: {definicion.nombre_examen}")
-            print(f"Institución: {definicion.institucion}")
-            print(f"Materia: {definicion.materia}")
-            print(f"\nPuntaje total: {puntaje_total}")
-            print(f"\nSecciones:")
-            for seccion in examen_base['secciones']:
-                num_preguntas = len(seccion['preguntas'])
-                puntaje_seccion = sum(p.puntaje for p in seccion['preguntas'])
-                print(f"  - {seccion['nombre']}: {num_preguntas} preguntas, {puntaje_seccion} puntos")
-            print("\nValidación exitosa ✓")
-            return 0
-        
-        # Modo generación
-        logger.info(f"Generando {numero_temas} tema(s)...")
-        
-        for i in range(numero_temas):
-            semilla_tema = semilla + i
-            logger.info(f"Generando tema {i + 1}/{numero_temas} (semilla: {semilla_tema})")
-            
-            # Mezclar examen para este tema
-            examen_mezclado = logic.mezclar_examen(
-                examen_base,
-                semilla_tema,
-                definicion.configuracion_examen
-            )
-            
-            # Generar en cada formato solicitado
-            for fmt in formato:
-                try:
-                    renderer = obtener_renderer(fmt, custom_template=getattr(args, 'typst_template', None))
-                    
-                    # Generar examen
-                    archivo_examen = renderer.renderizar_examen(
-                        examen_mezclado,
-                        definicion,
-                        output_dir,
-                        i
-                    )
-                    print(f"✓ Examen generado: {archivo_examen}")
-                    
-                    # Generar clave si está configurado
-                    if definicion.configuracion_examen.generar_clave_profesor:
-                        archivo_clave = renderer.renderizar_clave(
-                            examen_mezclado,
-                            definicion,
-                            output_dir,
-                            i
-                        )
-                        print(f"✓ Clave generada: {archivo_clave}")
-                
-                except Exception as e:
-                    logger.error(f"Error generando formato {fmt}: {e}")
-                    if args.debug:
-                        raise
-
-            # Si se solicitó OMR, generar hoja Typst y descriptor JSON
-            if getattr(args, 'omr', False):
-                from generador_examenes.core.alucard_qol import generar_plantilla_omr, generar_especificacion_omr_json
-                total_pregs = sum(len(s.get('preguntas', [])) for s in examen_mezclado.get('secciones', []))
-                omr_typst = generar_plantilla_omr(
-                    num_preguntas=total_pregs,
-                    tema=i + 1,
-                    institucion=definicion.institucion,
-                    materia=definicion.materia
-                )
-                omr_file = output_dir / f"omr_tema_{i + 1:02d}.typ"
-                omr_file.write_text(omr_typst, encoding='utf-8')
-                
-                omr_spec = generar_especificacion_omr_json(num_preguntas=total_pregs, tema=i + 1)
-                spec_file = output_dir / f"omr_descriptor_tema_{i + 1:02d}.json"
-                spec_file.write_text(json.dumps(omr_spec, indent=2, ensure_ascii=False), encoding='utf-8')
-                print(f"✓ OMR y Descriptor JSON generados para tema {i + 1}: {spec_file.name}")
-
-        # Auditoría tipográfica de código si fue solicitada
-        if getattr(args, 'audit_typography', False):
-            from generador_examenes.core.alucard_qol import auditar_calidad_tipografica_codigo
-            print("\n--- Auditoría Tipográfica de Bloques de Código ---")
-            for sec in examen_base.get('secciones', []):
-                for preg in sec.get('preguntas', []):
-                    enunciado = getattr(preg, 'enunciado_html', '') or ''
-                    if '```' in enunciado or '<pre>' in enunciado or 'int ' in enunciado:
-                        res = auditar_calidad_tipografica_codigo(enunciado)
-                        if not res['cumple_calidad']:
-                            print(f"  [!] Pregunta {preg.id}: {len(res['lineas_largas'])} líneas largas detectadas.")
-
-        # Empaquetado para imprenta si fue solicitado
-        if getattr(args, 'bundle_print', False):
-            from generador_examenes.core.alucard_qol import empaquetar_pdfs_para_imprenta
-            pdfs_generados = sorted(output_dir.glob("examen_tema_*.pdf"))
-            if pdfs_generados:
-                salida_imprenta = output_dir / "paquete_imprenta_todos_los_temas.pdf"
-                empaquetar_pdfs_para_imprenta(pdfs_generados, salida_imprenta, doble_faz=True)
-                print(f"✓ Paquete para imprenta generado (doble faz verificado): {salida_imprenta}")
-
-        print(f"\n✓ Generación completada exitosamente")
-        print(f"  Archivos guardados en: {output_dir}")
-        return 0
-        
-    except Exception as e:
-        logger.error(f"Error durante la ejecución: {e}")
-        if args.debug:
-            raise
-        return 1
+        return app(sys.argv[1:], standalone_mode=False)
+    except Exception as exc:  # errores de parseo de Typer/Click (opciones inválidas, etc.)
+        if hasattr(exc, "exit_code") and hasattr(exc, "show"):
+            exc.show()
+            raise SystemExit(exc.exit_code)
+        raise
 
 
 if __name__ == '__main__':
