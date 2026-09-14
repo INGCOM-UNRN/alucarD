@@ -15,6 +15,15 @@ from pathlib import Path
 from generador_examenes.cli_errors import usage_error as _usage_error
 
 
+def ejecutar_doctor() -> int:
+    """Subcomando `doctor` (ALUCARD-D0401): diagnostica gcc/typst/weasyprint/pypdf/LT."""
+    from rich.console import Console
+    from generador_examenes.core.doctor import ejecutar_diagnostico_doctor
+
+    ok = ejecutar_diagnostico_doctor(console=Console())
+    return 0 if ok else 1
+
+
 def ejecutar_completion(args) -> int:
     prog = Path(sys.argv[0]).name
     if prog not in ("generador-examenes", "alucard"):

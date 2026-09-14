@@ -34,7 +34,7 @@
 - `typst` (>= 0.11), `gcc` (para compilación de variantes de código C).
 
 ### Integración en el Ecosistema
-- CLI `alucard`, `generador-examenes`, `gift-linter`. Subcomando `doctor` para verificar Typst y toolchain.
+- CLI `alucard`, `generador-examenes`, `gift-linter`. Subcomando `doctor` (`generador-examenes doctor`) para verificar gcc, Typst, WeasyPrint, pypdf y conectividad con LanguageTool.
 
 ---
 

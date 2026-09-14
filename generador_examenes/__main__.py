@@ -14,6 +14,13 @@ from generador_examenes.cli_errors import usage_error as _usage_error
 
 app = typer.Typer(add_completion=False, pretty_exceptions_enable=False)
 
+# Último código de salida (0/1) reportado por el modo ejecutado, para que
+# main() lo devuelva como valor de retorno. Los errores de uso de CLI
+# (--definicion faltante, etc.) no pasan por acá: se reportan con
+# SystemExit(2), que se propaga sin capturar hasta el llamador de main(),
+# igual que hacía ArgumentParser.error() en la implementación previa.
+_ultimo_codigo_salida = {"code": 0}
+
 
 def inicializar_proyecto():
     """
@@ -187,8 +194,9 @@ Para más información, consulta la documentación oficial de alucarD.
     print()
 
 
-@app.command()
+@app.callback(invoke_without_command=True)
 def _cli(
+    ctx: typer.Context,
     init: bool = typer.Option(False, "--init", help="Inicializar proyecto con archivos de ejemplo"),
     wizard: Optional[Path] = typer.Option(
         None, "--wizard", metavar="YAML",
@@ -289,8 +297,13 @@ def _cli(
     install_completion: bool = typer.Option(
         False, "--install-completion", help="Install completion for the current shell.",
     ),
-) -> int:
+) -> None:
     """Generador de exámenes basado en plantillas YAML y bancos Moodle/GIFT."""
+    if ctx.invoked_subcommand is not None:
+        # Se invocó un subcomando explícito (p. ej. `doctor`); no ejecutar
+        # el modo principal.
+        return
+
     args = SimpleNamespace(
         init=init, wizard=wizard, category_tree=category_tree, sintetizar=sintetizar,
         listar_sintetizadores=listar_sintetizadores, cantidad=cantidad, formato_banco=formato_banco,
@@ -310,9 +323,9 @@ def _cli(
             if fmt not in ("html", "pdf"):
                 _usage_error(f"argumento -f/--formato: valor inválido: '{fmt}' (elegir entre 'html', 'pdf')")
 
-
     if getattr(args, 'show_completion', False) or getattr(args, 'install_completion', False):
-        return cli_commands.ejecutar_completion(args)
+        _ultimo_codigo_salida["code"] = cli_commands.ejecutar_completion(args)
+        return
 
     # Configurar logging
     from generador_examenes.config.logging_config import setup_logging
@@ -322,44 +335,50 @@ def _cli(
     logger = logging.getLogger(__name__)
 
     if args.init:
-        return cli_commands.ejecutar_init(args, logger)
+        codigo = cli_commands.ejecutar_init(args, logger)
+    elif args.wizard is not None:
+        codigo = cli_commands.ejecutar_wizard(args, logger)
+    elif args.listar_sintetizadores:
+        codigo = cli_commands.listar_sintetizadores_disponibles()
+    elif args.sintetizar:
+        codigo = cli_commands.ejecutar_sintetizar(args, logger)
+    elif getattr(args, 'spellcheck', False):
+        codigo = cli_commands.ejecutar_spellcheck(args, logger)
+    elif args.category_tree:
+        codigo = cli_commands.ejecutar_category_tree(args, logger)
+    else:
+        codigo = cli_commands.generar_examen(args, logger)
 
-    if args.wizard is not None:
-        return cli_commands.ejecutar_wizard(args, logger)
-
-    if args.listar_sintetizadores:
-        return cli_commands.listar_sintetizadores_disponibles()
-
-    if args.sintetizar:
-        return cli_commands.ejecutar_sintetizar(args, logger)
-
-    if getattr(args, 'spellcheck', False):
-        return cli_commands.ejecutar_spellcheck(args, logger)
-
-    if args.category_tree:
-        return cli_commands.ejecutar_category_tree(args, logger)
-
-    return cli_commands.generar_examen(args, logger)
+    _ultimo_codigo_salida["code"] = codigo
 
 
+@app.command("doctor")
+def _doctor() -> None:
+    """Diagnostica gcc, Typst, WeasyPrint, pypdf y conectividad LanguageTool."""
+    _ultimo_codigo_salida["code"] = cli_commands.ejecutar_doctor()
 
 
 def main() -> int:
     """Punto de entrada compatible con el contrato histórico de la CLI.
 
-    Ejecuta la app Typer con ``standalone_mode=False`` para poder devolver
-    el código de salida como valor de retorno (usado por los tests) y
-    traduce los errores de uso de CLI en ``SystemExit(2)``, tal como hacía
-    ``ArgumentParser.error`` en la implementación previa basada en argparse.
+    Ejecuta la app Typer con ``standalone_mode=False``. Los errores de uso
+    de CLI (opciones inválidas, `--definicion` faltante, etc.) se reportan
+    con ``SystemExit(2)`` sin capturar acá, tal como hacía
+    ``ArgumentParser.error()``/argparse en la implementación previa; los
+    códigos 0/1 de los modos de negocio se devuelven como valor de retorno
+    de esta función (usado por los tests).
     """
+    _ultimo_codigo_salida["code"] = 0
     try:
-        return app(sys.argv[1:], standalone_mode=False)
+        app(sys.argv[1:], standalone_mode=False)
     except Exception as exc:  # errores de parseo de Typer/Click (opciones inválidas, etc.)
         if hasattr(exc, "exit_code") and hasattr(exc, "show"):
             exc.show()
             raise SystemExit(exc.exit_code)
         raise
+    return _ultimo_codigo_salida["code"]
 
 
 if __name__ == '__main__':
     sys.exit(main())
+
