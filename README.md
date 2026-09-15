@@ -2,10 +2,10 @@
 
 **Sistema profesional de generación de exámenes** basado en plantillas YAML, con soporte para bancos Moodle/GIFT, múltiples layouts y optimización para impresión.
 
-[![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/tests-253%20passing-success.svg)](tests/)
-[![Coverage](https://img.shields.io/badge/coverage-77%25-green.svg)](htmlcov/)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Tests](https://img.shields.io/badge/tests-297%20passing-success.svg)](tests/)
+[![Coverage](https://img.shields.io/badge/coverage-71%25-green.svg)](htmlcov/)
+[![License](https://img.shields.io/badge/license-GPL--3.0--or--later-blue.svg)](LICENSE)
 
 ---
 
@@ -14,8 +14,7 @@
 ### Qué cubre
 - Generación automatizada de exámenes y parciales institucionales en formatos Typst y PDF.
 - Síntesis de variantes numéricas y lógicas de enunciados mediante semillas reproducibles.
-- Diseño y renderizado de plantillas de examen con hojas de respuestas OMR (Optical Mark Recognition).
-- Procesamiento por visión artificial (OpenCV) para corrección óptica automatizada de exámenes escaneados.
+- Diseño y renderizado de plantillas de examen con hojas de respuestas y descriptores OMR (Optical Mark Recognition).
 - Linting y validación de archivos de preguntas en formato GIFT.
 
 ### Qué no cubre (Límites y Delegación)
@@ -28,7 +27,7 @@
 ## 📋 Requisitos
 
 ### Requisitos de Sistema y Entorno
-- Linux (x86_64 / arm64) o Windows (MSYS2 UCRT64 / WSL). Python >= 3.10.
+- Linux (x86_64 / arm64) o Windows (MSYS2 UCRT64 / WSL). Python >= 3.11.
 
 ### Dependencias Externas y Binarios
 - `typst` (>= 0.11), `gcc` (para compilación de variantes de código C).
