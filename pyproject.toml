@@ -7,21 +7,24 @@ name = "generador-examenes"
 version = "5.0.0"
 description = "Generador de exámenes basado en plantillas, YAML y bancos Moodle/GIFT."
 readme = "README.md"
-requires-python = ">=3.10"
-license = {text = "MIT"}
+requires-python = ">=3.11"
+license = {text = "GPL-3.0-or-later"}
 authors = [
-    {name = "alucarD Team", email = "team@alucard.dev"}
+    {name = "Martín René Vilugrón", email = "martinvilu@gmail.com"}
 ]
-keywords = ["exam", "generator", "moodle", "gift", "education"]
+maintainers = [
+    {name = "Programación I [B6003] - UNRN Andina"}
+]
+keywords = ["education", "c-programming", "pedagogical-tools", "unrn", "exam", "generator", "moodle", "gift"]
 classifiers = [
-    "Development Status :: 5 - Production/Stable",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Education",
-    "Topic :: Education",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Topic :: Education",
+    "Topic :: Software Development :: Quality Assurance",
 ]
 
 dependencies = [
@@ -36,6 +39,11 @@ dependencies = [
     "pypdf>=3.0,<6.0",
     "typst>=0.11,<0.14",
 ]
+
+[project.urls]
+Homepage = "https://github.com/INGCOM-UNRN-P1/alucarD"
+Repository = "https://github.com/INGCOM-UNRN-P1/alucarD.git"
+Issues = "https://github.com/INGCOM-UNRN-P1/alucarD/issues"
 
 [project.optional-dependencies]
 dev = [
