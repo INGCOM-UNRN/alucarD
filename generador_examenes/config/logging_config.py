@@ -19,8 +19,8 @@ def setup_logging(debug: bool = False) -> None:
         '[%(levelname)s] [%(name)s] %(message)s'
     )
     
-    # Configurar handler para consola
-    handler = logging.StreamHandler(sys.stdout)
+    # Configurar handler para consola (en stderr para preservar stdout para pipes y --json)
+    handler = logging.StreamHandler(sys.stderr)
     handler.setFormatter(formatter)
     
     # Configurar logger raíz

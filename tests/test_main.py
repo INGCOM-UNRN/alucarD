@@ -162,3 +162,60 @@ secciones_examen:
         with pytest.raises(SystemExit) as exc_info:
             main()
         assert exc_info.value.code == 2
+
+    def test_main_validate_json(self, tmp_path, monkeypatch, capsys):
+        """--validate con --json debe emitir JSON estructurado válido"""
+        import json
+        definicion = tmp_path / "def.yaml"
+        banco = tmp_path / "banco.txt"
+        banco.write_text("::P1::Test{=Si ~No}\n::P2::Test2{T}\n")
+        definicion.write_text(f"""
+nombre_examen: "Examen JSON"
+institucion: "UNRN"
+materia: "Programacion 1"
+configuracion_examen:
+  mezclar_preguntas_dentro_seccion: true
+  mezclar_opciones_dentro_pregunta: true
+  generar_clave_profesor: false
+secciones_examen:
+  - nombre: "Sección A"
+    pools:
+      - cantidad: 1
+input_banco:
+  - "{banco}"
+""")
+        monkeypatch.setattr(sys, 'argv', [
+            'generador-examenes',
+            '-d', str(definicion),
+            '--validate',
+            '--json',
+        ])
+        code = main()
+        assert code == 0
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert data["version"] == "1.0"
+        assert data["command"] == "validate"
+        assert data["valido"] is True
+        assert data["examen"] == "Examen JSON"
+
+    def test_main_category_tree_json(self, tmp_path, monkeypatch, capsys):
+        """--category-tree con --json debe emitir árbol estructurado en JSON"""
+        import json
+        banco = tmp_path / "banco.txt"
+        banco.write_text("// Categoria: Matematica\n::P1::Test{=Si ~No}\n")
+        monkeypatch.setattr(sys, 'argv', [
+            'generador-examenes',
+            '--category-tree', str(banco),
+            '-o', str(tmp_path),
+            '--json',
+        ])
+        code = main()
+        assert code == 0
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert data["version"] == "1.0"
+        assert data["command"] == "category-tree"
+        assert "tree" in data
+        assert data["total_preguntas"] >= 1
+

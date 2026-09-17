@@ -152,12 +152,41 @@ def ejecutar_sintetizar(args, logger) -> int:
         destino.write_text(contenido, encoding='utf-8')
 
         logger.info(f"✓ Banco generado: {destino} ({len(snippets)} preguntas verificadas)")
+        if getattr(args, 'json_output', False):
+            import json
+            res = {
+                "version": "1.0",
+                "command": "sintetizar",
+                "plantilla": args.sintetizar,
+                "semilla": semilla,
+                "cantidad": len(snippets),
+                "formato": extension,
+                "archivo": str(destino),
+                "snippets": [
+                    {
+                        "titulo": s.titulo,
+                        "enunciado": s.enunciado,
+                        "codigo": s.codigo,
+                        "salida_correcta": s.salida_correcta,
+                        "distractores": s.distractores,
+                        "opciones": s.opciones,
+                        "explicacion": s.explicacion,
+                    }
+                    for s in snippets
+                ],
+            }
+            print(json.dumps(res, indent=2, ensure_ascii=False))
+            return 0
+
         print(f"\n✓ {len(snippets)} preguntas de C sintetizadas y verificadas con gcc:")
         print(f"  {destino}")
         print("\nPodés usarlas directo como banco de alucarD (-i) o editarlas con questions ui.")
         return 0
     except Exception as e:
         logger.error(f"Error durante la síntesis: {e}")
+        if getattr(args, 'json_output', False):
+            import json
+            print(json.dumps({"version": "1.0", "command": "sintetizar", "error": str(e)}, indent=2, ensure_ascii=False))
         if args.debug:
             raise
         return 1
@@ -227,6 +256,8 @@ def ejecutar_spellcheck(args, logger) -> int:
 
         if getattr(args, 'json_output', False):
             res = {
+                "version": "1.0",
+                "command": "spellcheck",
                 "total_preguntas": len(preguntas_a_revisar),
                 "total_issues": len(todos_los_issues),
                 "total_arreglos": total_arreglos,
@@ -247,6 +278,9 @@ def ejecutar_spellcheck(args, logger) -> int:
         return 1
     except Exception as e:
         logger.error(f"Error durante LanguageTool spellcheck: {e}")
+        if getattr(args, 'json_output', False):
+            import json
+            print(json.dumps({"version": "1.0", "command": "spellcheck", "error": str(e)}, indent=2, ensure_ascii=False))
         if args.debug:
             raise
         return 1
@@ -256,17 +290,55 @@ def ejecutar_category_tree(args, logger) -> int:
     # Modo árbol de categorías
     logger.info("Modo árbol de categorías - generando visualización HTML")
     try:
-        from generador_examenes.config.category_tree_viewer import main_category_viewer
+        from generador_examenes.config.category_tree_viewer import (
+            build_category_tree,
+            generate_html_content,
+            main_category_viewer,
+        )
+        from generador_examenes.parsers import obtener_parser
         
         banco_paths = args.category_tree
         for banco_path in banco_paths:
             if not banco_path.exists():
                 logger.error(f"✗ Banco no encontrado: {banco_path}")
+                if getattr(args, 'json_output', False):
+                    import json
+                    print(json.dumps({
+                        "version": "1.0",
+                        "command": "category-tree",
+                        "error": f"Banco no encontrado: {banco_path}",
+                    }, indent=2, ensure_ascii=False))
                 return 1
         
         output_path = args.output_dir / "category_tree.html" if args.output_dir else Path("output/category_tree.html")
         resultado = main_category_viewer(banco_paths, output_path)
         
+        if getattr(args, 'json_output', False):
+            import json
+            all_questions = {}
+            bancos_meta = []
+            for b in banco_paths:
+                p = obtener_parser(b)
+                qs = p.parse(b)
+                all_questions.update(qs)
+                bancos_meta.append({
+                    "path": str(b),
+                    "name": b.name,
+                    "count": len(qs),
+                    "tipo": b.suffix,
+                })
+            tree = build_category_tree(all_questions)
+            res = {
+                "version": "1.0",
+                "command": "category-tree",
+                "html_file": str(resultado.absolute()),
+                "total_preguntas": len(all_questions),
+                "bancos": bancos_meta,
+                "tree": tree.to_dict(),
+            }
+            print(json.dumps(res, indent=2, ensure_ascii=False))
+            return 0
+
         logger.info(f"✓ Árbol de categorías generado exitosamente")
         logger.info(f"  Abre el archivo en tu navegador: {resultado.absolute()}")
         print(f"\n✓ Árbol de categorías generado: {resultado.absolute()}")
@@ -275,6 +347,13 @@ def ejecutar_category_tree(args, logger) -> int:
         return 0
     except Exception as e:
         logger.error(f"Error generando árbol de categorías: {e}")
+        if getattr(args, 'json_output', False):
+            import json
+            print(json.dumps({
+                "version": "1.0",
+                "command": "category-tree",
+                "error": str(e),
+            }, indent=2, ensure_ascii=False))
         if args.debug:
             raise
         return 1
@@ -351,6 +430,30 @@ def generar_examen(args, logger) -> int:
         
         # Modo validación
         if args.validate:
+            if getattr(args, 'json_output', False):
+                import json
+                secciones_json = []
+                for seccion in examen_base['secciones']:
+                    num_preguntas = len(seccion['preguntas'])
+                    puntaje_seccion = sum(p.puntaje for p in seccion['preguntas'])
+                    secciones_json.append({
+                        "nombre": seccion['nombre'],
+                        "num_preguntas": num_preguntas,
+                        "puntaje": puntaje_seccion,
+                    })
+                res = {
+                    "version": "1.0",
+                    "command": "validate",
+                    "valido": True,
+                    "examen": definicion.nombre_examen,
+                    "institucion": definicion.institucion,
+                    "materia": definicion.materia,
+                    "puntaje_total": puntaje_total,
+                    "secciones": secciones_json,
+                }
+                print(json.dumps(res, indent=2, ensure_ascii=False))
+                return 0
+
             print("\n" + "="*60)
             print("VALIDACIÓN DEL EXAMEN")
             print("="*60)
@@ -368,6 +471,7 @@ def generar_examen(args, logger) -> int:
         
         # Modo generación
         logger.info(f"Generando {numero_temas} tema(s)...")
+        archivos_generados = []
         
         for i in range(numero_temas):
             semilla_tema = semilla + i
@@ -392,7 +496,9 @@ def generar_examen(args, logger) -> int:
                         output_dir,
                         i
                     )
-                    print(f"✓ Examen generado: {archivo_examen}")
+                    archivos_generados.append(str(archivo_examen))
+                    if not getattr(args, 'json_output', False):
+                        print(f"✓ Examen generado: {archivo_examen}")
                     
                     # Generar clave si está configurado
                     if definicion.configuracion_examen.generar_clave_profesor:
@@ -402,7 +508,9 @@ def generar_examen(args, logger) -> int:
                             output_dir,
                             i
                         )
-                        print(f"✓ Clave generada: {archivo_clave}")
+                        archivos_generados.append(str(archivo_clave))
+                        if not getattr(args, 'json_output', False):
+                            print(f"✓ Clave generada: {archivo_clave}")
                 
                 except Exception as e:
                     logger.error(f"Error generando formato {fmt}: {e}")
@@ -421,22 +529,26 @@ def generar_examen(args, logger) -> int:
                 )
                 omr_file = output_dir / f"omr_tema_{i + 1:02d}.typ"
                 omr_file.write_text(omr_typst, encoding='utf-8')
+                archivos_generados.append(str(omr_file))
                 
                 omr_spec = generar_especificacion_omr_json(num_preguntas=total_pregs, tema=i + 1)
                 spec_file = output_dir / f"omr_descriptor_tema_{i + 1:02d}.json"
                 spec_file.write_text(json.dumps(omr_spec, indent=2, ensure_ascii=False), encoding='utf-8')
-                print(f"✓ OMR y Descriptor JSON generados para tema {i + 1}: {spec_file.name}")
+                archivos_generados.append(str(spec_file))
+                if not getattr(args, 'json_output', False):
+                    print(f"✓ OMR y Descriptor JSON generados para tema {i + 1}: {spec_file.name}")
 
         # Auditoría tipográfica de código si fue solicitada
         if getattr(args, 'audit_typography', False):
             from generador_examenes.core.alucard_qol import auditar_calidad_tipografica_codigo
-            print("\n--- Auditoría Tipográfica de Bloques de Código ---")
+            if not getattr(args, 'json_output', False):
+                print("\n--- Auditoría Tipográfica de Bloques de Código ---")
             for sec in examen_base.get('secciones', []):
                 for preg in sec.get('preguntas', []):
                     enunciado = getattr(preg, 'enunciado_html', '') or ''
                     if '```' in enunciado or '<pre>' in enunciado or 'int ' in enunciado:
                         res = auditar_calidad_tipografica_codigo(enunciado)
-                        if not res['cumple_calidad']:
+                        if not res['cumple_calidad'] and not getattr(args, 'json_output', False):
                             print(f"  [!] Pregunta {preg.id}: {len(res['lineas_largas'])} líneas largas detectadas.")
 
         # Empaquetado para imprenta si fue solicitado
@@ -446,7 +558,25 @@ def generar_examen(args, logger) -> int:
             if pdfs_generados:
                 salida_imprenta = output_dir / "paquete_imprenta_todos_los_temas.pdf"
                 empaquetar_pdfs_para_imprenta(pdfs_generados, salida_imprenta, doble_faz=True)
-                print(f"✓ Paquete para imprenta generado (doble faz verificado): {salida_imprenta}")
+                archivos_generados.append(str(salida_imprenta))
+                if not getattr(args, 'json_output', False):
+                    print(f"✓ Paquete para imprenta generado (doble faz verificado): {salida_imprenta}")
+
+        if getattr(args, 'json_output', False):
+            import json
+            res = {
+                "version": "1.0",
+                "command": "generar_examen",
+                "examen": definicion.nombre_examen,
+                "institucion": definicion.institucion,
+                "materia": definicion.materia,
+                "numero_temas": numero_temas,
+                "formatos": formato,
+                "output_dir": str(output_dir),
+                "archivos_generados": archivos_generados,
+            }
+            print(json.dumps(res, indent=2, ensure_ascii=False))
+            return 0
 
         print(f"\n✓ Generación completada exitosamente")
         print(f"  Archivos guardados en: {output_dir}")
@@ -454,6 +584,13 @@ def generar_examen(args, logger) -> int:
         
     except Exception as e:
         logger.error(f"Error durante la ejecución: {e}")
+        if getattr(args, 'json_output', False):
+            import json
+            print(json.dumps({
+                "version": "1.0",
+                "command": "generar_examen",
+                "error": str(e),
+            }, indent=2, ensure_ascii=False))
         if args.debug:
             raise
         return 1
