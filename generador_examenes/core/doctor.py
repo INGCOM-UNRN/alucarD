@@ -17,7 +17,7 @@ import shutil
 import subprocess
 import urllib.error
 import urllib.request
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from rich.console import Console
 from rich.table import Table
@@ -67,99 +67,93 @@ def chequear_conectividad_languagetool(timeout: float = 3.0) -> Dict[str, Any]:
         return {"disponible": False, "detalle": str(exc)}
 
 
+def diagnosticar() -> List[Dict[str, Any]]:
+    """Estado de cada requisito (sin imprimir nada), en el formato común de doctor."""
+    chequeos: List[Dict[str, Any]] = []
+
+    gcc_info = chequear_binario("gcc")
+    chequeos.append({
+        "nombre": "gcc", "requerido": True, "ok": gcc_info["disponible"],
+        "detalle": f"{gcc_info['version']} ({gcc_info['ruta']})" if gcc_info["disponible"] else "No encontrado en $PATH",
+        "proposito": "Compilación del sintetizador de preguntas de C (--sintetizar)",
+        "sugerencia": "" if gcc_info["disponible"] else "sudo apt install build-essential  (Fedora: sudo dnf install gcc)",
+    })
+
+    typst_bin = chequear_binario("typst")
+    typst_mod = chequear_modulo_python("typst")
+    typst_ok = typst_bin["disponible"] or typst_mod["disponible"]
+    if typst_mod["disponible"]:
+        detalle_typst = f"módulo Python {typst_mod['version']}"
+    elif typst_bin["disponible"]:
+        detalle_typst = f"binario {typst_bin['version']} ({typst_bin['ruta']})"
+    else:
+        detalle_typst = "Ni binario en $PATH ni módulo Python instalado"
+    chequeos.append({
+        "nombre": "typst", "requerido": True, "ok": typst_ok, "detalle": detalle_typst,
+        "proposito": "Render de exámenes en PDF (motor primario)",
+        "sugerencia": "" if typst_ok else "pip install typst  (o) sudo snap install typst / cargo install typst-cli",
+    })
+
+    for modulo, proposito, sugerencia in (
+        ("weasyprint", "Fallback de render PDF cuando no hay plantilla Typst",
+         "pip install weasyprint  (requiere libpango/libcairo del sistema)"),
+        ("pypdf", "Empaquetado de PDFs para imprenta (--bundle-print)", "pip install pypdf"),
+    ):
+        info = chequear_modulo_python(modulo)
+        chequeos.append({
+            "nombre": modulo, "requerido": True, "ok": info["disponible"],
+            "detalle": str(info["version"]) if info["disponible"] else "Módulo no instalado",
+            "proposito": proposito, "sugerencia": "" if info["disponible"] else sugerencia,
+        })
+
+    lt_info = chequear_conectividad_languagetool()
+    chequeos.append({
+        "nombre": "LanguageTool (API pública)", "requerido": False, "ok": lt_info["disponible"],
+        "detalle": lt_info["detalle"], "proposito": "Auditoría ortográfica (--spellcheck)",
+        "sugerencia": "" if lt_info["disponible"] else "Sin conectividad: --spellcheck fallará hasta configurar --lt-server local",
+    })
+    return chequeos
+
+
+def informe_json(chequeos: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Sobre JSON común de `doctor --json` (schema_version 1.0.0)."""
+    from generador_examenes import __version__
+
+    return {
+        "schema_version": "1.0.0",
+        "herramienta": "alucard",
+        "version": __version__,
+        "ok": all(c["ok"] for c in chequeos if c["requerido"]),
+        "chequeos": chequeos,
+    }
+
+
 def ejecutar_diagnostico_doctor(console: Optional[Console] = None) -> bool:
     """Ejecuta el diagnóstico completo e imprime una tabla con el resultado.
 
-    Retorna ``True`` si todos los requisitos obligatorios (gcc y al menos
-    un mecanismo de compilación de Typst) están disponibles; ``False`` en
-    caso contrario, indicando cómo instalar lo faltante en Ubuntu/Debian.
+    Retorna ``True`` si todos los requisitos obligatorios (gcc, Typst,
+    WeasyPrint y pypdf) están disponibles; ``False`` en caso contrario,
+    indicando cómo instalar lo faltante.
     """
     cons = console or Console()
-    todo_ok = True
-
     tabla = Table(title="🏥 Diagnóstico de alucarD (doctor)", border_style="cyan")
     tabla.add_column("Componente", style="bold white")
     tabla.add_column("Estado", justify="center")
     tabla.add_column("Detalle", style="dim")
     tabla.add_column("Acción sugerida", style="yellow")
 
-    # gcc: obligatorio, usado por el sintetizador de preguntas de C.
-    gcc_info = chequear_binario("gcc")
-    if gcc_info["disponible"]:
-        tabla.add_row(
-            "gcc", "[bold green]✓ OK[/bold green]",
-            f"{gcc_info['version']} ([cyan]{gcc_info['ruta']}[/cyan])",
-            "Compilación del sintetizador de preguntas de C (--sintetizar)",
-        )
-    else:
-        todo_ok = False
-        tabla.add_row(
-            "gcc", "[bold red]✗ Faltante[/bold red]", "[dim]No encontrado en $PATH[/dim]",
-            "sudo apt install build-essential  (Fedora: sudo dnf install gcc)",
-        )
-
-    # typst: obligatorio (binario o módulo Python), motor primario de PDF.
-    typst_bin = chequear_binario("typst")
-    typst_mod = chequear_modulo_python("typst")
-    if typst_bin["disponible"] or typst_mod["disponible"]:
-        if typst_mod["disponible"]:
-            detalle = f"módulo Python {typst_mod['version']}"
+    chequeos = diagnosticar()
+    for c in chequeos:
+        if c["ok"]:
+            estado, accion = "[bold green]✓ OK[/bold green]", c["proposito"]
+        elif c["requerido"]:
+            estado, accion = "[bold red]✗ Faltante[/bold red]", c["sugerencia"]
         else:
-            detalle = f"binario {typst_bin['version']} ([cyan]{typst_bin['ruta']}[/cyan])"
-        tabla.add_row(
-            "typst", "[bold green]✓ OK[/bold green]", detalle,
-            "Render de exámenes en PDF (motor primario)",
-        )
-    else:
-        todo_ok = False
-        tabla.add_row(
-            "typst", "[bold red]✗ Faltante[/bold red]",
-            "[dim]Ni binario en $PATH ni módulo Python instalado[/dim]",
-            "pip install typst  (o) sudo snap install typst / cargo install typst-cli",
-        )
-
-    # weasyprint: obligatorio (fallback de PDF cuando no hay plantilla Typst).
-    weasyprint_mod = chequear_modulo_python("weasyprint")
-    if weasyprint_mod["disponible"]:
-        tabla.add_row(
-            "weasyprint", "[bold green]✓ OK[/bold green]", str(weasyprint_mod["version"]),
-            "Fallback de render PDF cuando no hay plantilla Typst",
-        )
-    else:
-        todo_ok = False
-        tabla.add_row(
-            "weasyprint", "[bold red]✗ Faltante[/bold red]", "[dim]Módulo no instalado[/dim]",
-            "pip install weasyprint  (requiere libpango/libcairo del sistema)",
-        )
-
-    # pypdf: obligatorio, usado para el empaquetado de imprenta (--bundle-print).
-    pypdf_mod = chequear_modulo_python("pypdf")
-    if pypdf_mod["disponible"]:
-        tabla.add_row(
-            "pypdf", "[bold green]✓ OK[/bold green]", str(pypdf_mod["version"]),
-            "Empaquetado de PDFs para imprenta (--bundle-print)",
-        )
-    else:
-        todo_ok = False
-        tabla.add_row(
-            "pypdf", "[bold red]✗ Faltante[/bold red]", "[dim]Módulo no instalado[/dim]",
-            "pip install pypdf",
-        )
-
-    # LanguageTool: opcional/informativo, usado por --spellcheck.
-    lt_info = chequear_conectividad_languagetool()
-    if lt_info["disponible"]:
-        tabla.add_row(
-            "LanguageTool (API pública)", "[bold green]✓ OK[/bold green]", lt_info["detalle"],
-            "Auditoría ortográfica (--spellcheck)",
-        )
-    else:
-        tabla.add_row(
-            "LanguageTool (API pública)", "[yellow]! Opcional[/yellow]", lt_info["detalle"],
-            "Sin conectividad: --spellcheck fallará hasta configurar --lt-server local",
-        )
+            estado, accion = "[yellow]! Opcional[/yellow]", c["sugerencia"]
+        tabla.add_row(c["nombre"], estado, c["detalle"], accion)
 
     cons.print(tabla)
+    todo_ok = all(c["ok"] for c in chequeos if c["requerido"])
     if todo_ok:
         cons.print("[bold green]✓ Todos los requisitos obligatorios están disponibles.[/bold green]")
     else:

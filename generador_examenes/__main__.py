@@ -12,7 +12,7 @@ import typer
 from generador_examenes import cli_commands
 from generador_examenes.cli_errors import usage_error as _usage_error
 
-app = typer.Typer(add_completion=False, pretty_exceptions_enable=False)
+app = typer.Typer(context_settings={"help_option_names": ["-h", "--help"]}, add_completion=False, pretty_exceptions_enable=False)
 
 # Último código de salida (0/1) reportado por el modo ejecutado, para que
 # main() lo devuelva como valor de retorno. Los errores de uso de CLI
@@ -194,9 +194,21 @@ Para más información, consulta la documentación oficial de alucarD.
     print()
 
 
+def _mostrar_version(valor: bool) -> None:
+    if valor:
+        from generador_examenes import __version__
+
+        typer.echo(f"alucard {__version__}")
+        raise typer.Exit(code=0)
+
+
 @app.callback(invoke_without_command=True)
 def _cli(
     ctx: typer.Context,
+    version: bool = typer.Option(
+        False, "--version", "-v", callback=_mostrar_version, is_eager=True,
+        help="Muestra la versión de alucard y termina.",
+    ),
     init: bool = typer.Option(False, "--init", help="Inicializar proyecto con archivos de ejemplo"),
     wizard: Optional[Path] = typer.Option(
         None, "--wizard", metavar="YAML",
@@ -353,8 +365,19 @@ def _cli(
 
 
 @app.command("doctor")
-def _doctor() -> None:
+def _doctor(
+    json_output: bool = typer.Option(False, "--json", help="Emitir el diagnóstico como JSON (schema_version 1.0.0)."),
+) -> None:
     """Diagnostica gcc, Typst, WeasyPrint, pypdf y conectividad LanguageTool."""
+    if json_output:
+        import json
+
+        from generador_examenes.core.doctor import diagnosticar, informe_json
+
+        informe = informe_json(diagnosticar())
+        print(json.dumps(informe, ensure_ascii=False, indent=2))
+        _ultimo_codigo_salida["code"] = 0 if informe["ok"] else 1
+        return
     _ultimo_codigo_salida["code"] = cli_commands.ejecutar_doctor()
 
 
