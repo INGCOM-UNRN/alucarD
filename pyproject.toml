@@ -31,13 +31,15 @@ dependencies = [
     "pydantic>=2.0,<3.0",
     "pyyaml>=6.0,<7.0",
     "jinja2>=3.1,<4.0",
-    "weasyprint>=60.0,<61.0",
+    # Sin cota superior: weasyprint<61 y pypdf<6 fijaban versiones con avisos
+    # de seguridad (N-ALUCARD-01). La API usada (HTML().write_pdf,
+    # PdfReader/PdfWriter) es estable entre esas versiones.
+    "weasyprint>=68.0",
     "markdown>=3.5,<4.0",
     "pygments>=2.17,<3.0",
     "rich>=13.0,<14.0",
     "typer>=0.12,<1.0",
-    "pypdf>=3.0,<6.0",
-    "pydyf<0.11.0",
+    "pypdf>=6.16",
     "typst>=0.11,<0.14",
 ]
 
@@ -48,10 +50,10 @@ Issues = "https://github.com/INGCOM-UNRN-P1/alucarD/issues"
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.0,<8.0",
-    "pytest-cov>=4.0,<5.0",
-    "pytest-xdist>=3.0,<4.0",
-    "black>=23.0,<24.0",
+    "pytest>=9.0.3",
+    "pytest-cov>=4.0",
+    "pytest-xdist>=3.0",
+    "black>=26.3.1",
     "flake8>=6.0,<7.0",
     "isort>=5.12,<6.0",
     "mypy>=1.0,<2.0",

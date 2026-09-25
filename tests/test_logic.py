@@ -69,9 +69,12 @@ class TestCargarBancos:
   </question>
 </quiz>""")
         
-        # Cargar ambos bancos - debe generar warning sobre duplicado
-        import logging
-        with pytest.warns(None) as record:
+        # Cargar ambos bancos - debe generar warning sobre duplicado.
+        # pytest.warns(None) se eliminó en pytest 8: catch_warnings es el
+        # equivalente para registrar cualquier advertencia sin exigir una.
+        import warnings
+        with warnings.catch_warnings(record=True):
+            warnings.simplefilter("always")
             banco = logic.cargar_bancos([banco1, banco2])
         
         # Debe tener solo una pregunta (la segunda sobrescribe)
