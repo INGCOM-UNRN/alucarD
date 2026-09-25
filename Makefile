@@ -25,8 +25,7 @@ install-pip: ## Instalar con pip (alternativa)
 	@echo "✅ Dependencias instaladas"
 
 dev-install: ## Instalar con dependencias de desarrollo
-	@uv venv
-	@. .venv/bin/activate && uv pip install -e ".[dev]"
+	@uv sync  # paquete editable + grupo dev (pytest, black, …)
 	@echo "✅ Dependencias de desarrollo instaladas"
 
 test: ## Ejecutar tests con cobertura

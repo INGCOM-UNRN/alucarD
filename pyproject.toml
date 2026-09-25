@@ -48,17 +48,6 @@ Homepage = "https://github.com/INGCOM-UNRN-P1/alucarD"
 Repository = "https://github.com/INGCOM-UNRN-P1/alucarD.git"
 Issues = "https://github.com/INGCOM-UNRN-P1/alucarD/issues"
 
-[project.optional-dependencies]
-dev = [
-    "pytest>=9.0.3",
-    "pytest-cov>=4.0",
-    "pytest-xdist>=3.0",
-    "black>=26.3.1",
-    "flake8>=6.0,<7.0",
-    "isort>=5.12,<6.0",
-    "mypy>=1.0,<2.0",
-]
-
 [project.scripts]
 generador-examenes = "generador_examenes.__main__:main"
 alucard = "generador_examenes.__main__:main"
@@ -68,3 +57,13 @@ gift-linter = "generador_examenes.gift_linter:main"
 packages = ["generador_examenes"]
 extra-metadata = {}
 
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+    "pytest-cov>=4.0",
+    "pytest-xdist>=3.0",
+    "black>=26.3.1",
+    "flake8>=6.0,<7.0",
+    "isort>=5.12,<6.0",
+    "mypy>=1.0,<2.0",
+]
