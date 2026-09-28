@@ -20,7 +20,7 @@ except ImportError as error:  # sin el extra `languagetool` (myst-tools)
     raise ModuleNotFoundError(
         "La revisión con LanguageTool usa myst-tools, que no está instalado. Instalá alucarD con el "
         "extra languagetool: uv tool install \"generador-examenes[languagetool] @ "
-        "git+https://github.com/INGCOM-UNRN-P1/alucarD\"",
+        "git+https://github.com/INGCOM-UNRN/alucarD\"",
         name="myst_tools",
     ) from error
 

@@ -61,6 +61,8 @@ def test_spellcheck_sin_myst_tools_explica_el_extra(tmp_path):
     salida = resultado.stdout + resultado.stderr
     assert resultado.returncode == 1
     assert "extra languagetool" in salida
+    # El repo real de alucarD (el `url` de p1-tools/ecosistema.toml); INGCOM-UNRN-P1/alucarD no existe.
+    assert '"generador-examenes[languagetool] @ git+https://github.com/INGCOM-UNRN/alucarD"' in salida
     assert "Traceback" not in salida
 
 
