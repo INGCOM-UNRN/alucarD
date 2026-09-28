@@ -4,8 +4,11 @@ import json
 from pathlib import Path
 import pytest
 
-from generador_examenes.core.models import Pregunta, Opcion
-from generador_examenes.core.languagetool_checker import (
+# myst-tools llega con el extra `languagetool` (uv sync --extra languagetool).
+pytest.importorskip("myst_tools", reason="requiere el extra languagetool (myst-tools)")
+
+from generador_examenes.core.models import Pregunta, Opcion  # noqa: E402
+from generador_examenes.core.languagetool_checker import (  # noqa: E402
     enmascarar_pregunta,
     consultar_languagetool,
     analizar_pregunta_languagetool,

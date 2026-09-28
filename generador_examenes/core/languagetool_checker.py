@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import re
-import sys
-from pathlib import Path
 from typing import List, Optional, Set, Tuple, Dict, Any
 
 try:
@@ -18,20 +16,13 @@ try:
         analizar_texto_languagetool as _analizar_texto_base,
         aplicar_autofix_texto,
     )
-except ImportError:
-    sibling = Path(__file__).resolve().parents[3] / "myst-tools" / "src"
-    if sibling.is_dir() and str(sibling) not in sys.path:
-        sys.path.insert(0, str(sibling))
-    from myst_tools.languagetool_checker import (
-        DEFAULT_LANGUAGETOOL_URL,
-        DEFAULT_LANGUAGETOOL_PREMIUM_URL,
-        LOCAL_LANGUAGETOOL_URL,
-        PALABRAS_IGNORADAS_DEFAULT,
-        LanguageToolIssue,
-        consultar_languagetool,
-        analizar_texto_languagetool as _analizar_texto_base,
-        aplicar_autofix_texto,
-    )
+except ImportError as error:  # sin el extra `languagetool` (myst-tools)
+    raise ModuleNotFoundError(
+        "La revisión con LanguageTool usa myst-tools, que no está instalado. Instalá alucarD con el "
+        "extra languagetool: uv tool install \"generador-examenes[languagetool] @ "
+        "git+https://github.com/INGCOM-UNRN-P1/alucarD\"",
+        name="myst_tools",
+    ) from error
 
 from generador_examenes.core.models import Pregunta, Opcion
 

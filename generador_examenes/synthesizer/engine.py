@@ -38,26 +38,16 @@ class SnippetGenerado:
 
 
 def _compilar_fuente(fuente: Path, binario: Path, timeout: int) -> tuple[bool, str]:
-    """Compila delegando en daedalus con fallback a GCC."""
+    """Compila delegando en daedalus (extra `ecosistema`) con fallback a GCC."""
     try:
         from daedalus.core.compiler import compilar_archivos
+    except ImportError:
+        pass  # sin el extra `ecosistema`: gcc directo
+    else:
         res = compilar_archivos([fuente], binario_salida=binario, timeout=timeout)
         if not res.exito:
             return False, f"compilación falló:\n{res.stderr_crudo.strip()}"
         return True, ""
-    except ImportError:
-        import sys
-        sibling_daedalus = Path(__file__).resolve().parents[3] / "daedalus" / "src"
-        if sibling_daedalus.is_dir() and str(sibling_daedalus) not in sys.path:
-            sys.path.insert(0, str(sibling_daedalus))
-            try:
-                from daedalus.core.compiler import compilar_archivos
-                res = compilar_archivos([fuente], binario_salida=binario, timeout=timeout)
-                if not res.exito:
-                    return False, f"compilación falló:\n{res.stderr_crudo.strip()}"
-                return True, ""
-            except ImportError:
-                pass
 
     if GCC is None:
         raise RuntimeError("gcc no está disponible en el PATH")

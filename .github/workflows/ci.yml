@@ -23,10 +23,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
           enable-cache: true
 
+      # --all-extras trae daedalus y myst-tools fijados (extras ecosistema y languagetool).
       - name: Sincronizar dependencias
-        run: |
-          uv sync --all-extras
-          uv pip install "git+https://github.com/martinvilu/mystmd-tools.git"
+        run: uv sync --all-extras
 
       - name: Ejecutar suite de pruebas
         run: uv run pytest -q
