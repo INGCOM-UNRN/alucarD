@@ -192,35 +192,40 @@ def ejecutar_sintetizar(args, logger) -> int:
         return 1
 
 
+def _bancos_de_definicion(ruta: Path) -> list[Path]:
+    """Rutas de los bancos (`input_banco`) que declara una definición YAML."""
+    import yaml
+    from generador_examenes.core.models import DefinicionExamen
+
+    with open(ruta, 'r', encoding='utf-8') as f:
+        definicion = DefinicionExamen(**yaml.safe_load(f))
+    return [Path(b) for b in definicion.input_banco or []]
+
+
 def ejecutar_spellcheck(args, logger) -> int:
     # Modo spellcheck / languagetool
     try:
         import json
-        from generador_examenes.config.config_loader import cargar_definicion, cargar_bancos
+        from generador_examenes.core.logic import cargar_bancos
         from generador_examenes.core.languagetool_checker import (
             analizar_pregunta_languagetool,
             aplicar_autofix_pregunta,
             generar_reporte_markdown_languagetool,
         )
 
-        preguntas_a_revisar = []
-        if args.definicion and args.definicion.is_file():
-            definicion = cargar_definicion(args.definicion)
-            bancos = cargar_bancos(definicion.bancos_preguntas)
-            for preguntas in bancos.values():
-                preguntas_a_revisar.extend(preguntas)
-        elif args.input_banco:
-            bancos = cargar_bancos([str(p) for p in args.input_banco])
-            for preguntas in bancos.values():
-                preguntas_a_revisar.extend(preguntas)
+        # Mismo orden que la generación: --input-banco manda sobre el input_banco del YAML.
+        rutas_bancos: list[Path] = []
+        if args.input_banco:
+            rutas_bancos = list(args.input_banco)
+        elif args.definicion and args.definicion.is_file():
+            rutas_bancos = _bancos_de_definicion(args.definicion)
         else:
             for candidate in (Path('definicion.yaml'), Path('definicion_ejemplo.yaml')):
                 if candidate.is_file():
-                    definicion = cargar_definicion(candidate)
-                    bancos = cargar_bancos(definicion.bancos_preguntas)
-                    for preguntas in bancos.values():
-                        preguntas_a_revisar.extend(preguntas)
+                    rutas_bancos = _bancos_de_definicion(candidate)
                     break
+        # cargar_bancos devuelve {id: Pregunta}.
+        preguntas_a_revisar = list(cargar_bancos(rutas_bancos).values()) if rutas_bancos else []
 
         if not preguntas_a_revisar:
             print("No se encontraron preguntas para auditar con LanguageTool.")
