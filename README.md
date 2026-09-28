@@ -1166,8 +1166,8 @@ Este proyecto incluye documentación completa y detallada:
 
 1. **[README.md](README.md)** - Este archivo: Guía completa de uso
 2. **[CHANGELOG.md](CHANGELOG.md)** - Historial de cambios y versiones
-3. **[COMPLIANCE_REPORT.md](COMPLIANCE_REPORT.md)** - Verificación de cumplimiento con especificaciones
-4. **[descripcion.md](descripcion.md)** - Especificaciones técnicas originales del proyecto
+3. **[COMPLIANCE_REPORT.md](.docs_backup/COMPLIANCE_REPORT.md)** - Verificación de cumplimiento con especificaciones
+4. **[descripcion.md](.docs_backup/descripcion.md)** - Especificaciones técnicas originales del proyecto
 
 ### Documentación en el Código
 
