@@ -7,6 +7,24 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ---
 
+## [5.11.0] - 2026-09-28
+
+### Agregado
+
+- **cli**: cumplir el contrato de línea de comandos de LINEAMIENTOS §3.2 (N-ECO-04) (`f61b796`)
+
+### Documentación
+
+- agregar el texto de la licencia GPL-3.0-or-later que declara pyproject (N-ECO-06) (`f66ea3b`)
+- **readme**: enlazar COMPLIANCE_REPORT y descripcion en su ubicación actual (N-ECO-17) (`230b6b1`)
+- incorporar manual de uso integral y referencia tecnica (alucarD) (`8712b94`)
+
+### Mantenimiento
+
+- **calidad**: verificar errores de Python y dependencias vulnerables (N-ECO-08, N-ECO-13) (`28b9315`)
+- **deps**: mover las dependencias de desarrollo a dependency-groups (N-ECO-07) (`e951848`)
+- **deps**: quitar las cotas superiores que fijaban versiones vulnerables (N-ALUCARD-01) (`4a120f2`)
+
 ## [5.10.1] - 2025-11-06
 
 ### 🐛 Correcciones

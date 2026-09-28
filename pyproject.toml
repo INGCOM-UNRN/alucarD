@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "generador-examenes"
-version = "5.0.0"
+version = "5.11.0"
 description = "Generador de exámenes basado en plantillas, YAML y bancos Moodle/GIFT."
 readme = "README.md"
 requires-python = ">=3.11"
