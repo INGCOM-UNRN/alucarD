@@ -35,7 +35,7 @@
 
 ### Instalación vía `uv tool`
 ```bash
-uv tool install --editable /home/mrtin/dev/tools/alucarD
+uv tool install "generador-examenes[ecosistema,languagetool] @ git+https://github.com/INGCOM-UNRN/alucarD"
 ```
 
 ### Verificación del Entorno
