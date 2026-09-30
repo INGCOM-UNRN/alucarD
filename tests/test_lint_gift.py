@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -71,3 +72,19 @@ def test_la_ayuda_de_gift_linter_esta_en_espanol(monkeypatch, capsys):
     assert codigo == 0
     assert salida.startswith("Uso: gift-linter") and "Muestra esta ayuda y sale." in salida
     assert "Usage" not in salida and "Show " not in salida
+
+
+def test_install_completion_sin_bashrc_es_un_error(monkeypatch, capsys, tmp_path):
+    # Path.home y no HOME: en Windows, Path.home() toma USERPROFILE.
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
+    monkeypatch.setattr(sys, "argv", ["gift-linter", "--install-completion"])
+    with pytest.raises(SystemExit) as salida:
+        gift_linter()
+    assert salida.value.code == 1
+    assert "no se instaló el autocompletado" in capsys.readouterr().err
+
+    (tmp_path / ".bashrc").write_text("# bashrc\n", encoding="utf-8")
+    with pytest.raises(SystemExit) as salida:
+        gift_linter()
+    assert salida.value.code == 0
+    assert "complete -F _gift_linter_completion gift-linter" in (tmp_path / ".bashrc").read_text(encoding="utf-8")

@@ -217,6 +217,12 @@ complete -F _{prog.replace('-', '_')}_completion {prog}
                     with open(rc_file, "a", encoding="utf-8") as f:
                         f.write(f"\n# {prog} completion\n{script}\n")
                     print(f"Autocompletado instalado en {rc_file}")
+                else:
+                    # Antes salía con 0 sin instalar nada (N-ECO-18).
+                    print("No se encontró ~/.bash_completions ni ~/.bashrc: no se instaló el "
+                          "autocompletado. Copiá la salida de `gift-linter --show-completion` en la "
+                          "configuración de tu terminal.", file=sys.stderr)
+                    sys.exit(1)
             sys.exit(0)
 
     if len(sys.argv) < 2:
