@@ -1377,22 +1377,22 @@ Al reportar un issue, incluye:
 | `--category-tree` | Generar árbol HTML de categorías de uno o más bancos de preguntas |
 | `--sintetizar` | Generar un banco de preguntas de C con daedalus (sintetizador verificado con gcc). Ver plantillas disponibles con --listar-sintetizadores |
 | `--listar-sintetizadores` | Lista las plantillas disponibles del sintetizador daedalus |
-| `--cantidad` | Cantidad de preguntas a sintetizar (default: 5) [por defecto: 5] |
-| `--formato-banco` | Formato del banco generado por daedalus: gift\|xml (default: gift) [por defecto: gift] |
+| `--cantidad` | Cantidad de preguntas a sintetizar. [por defecto: 5] |
+| `--formato-banco` | Formato del banco generado por daedalus: gift o xml. [por defecto: gift] |
 | `--definicion`, `-d` | Ruta al archivo de definición YAML del examen |
-| `--input-banco`, `-i` | Ruta(s) a los archivos de banco de preguntas (override de YAML) |
-| `--output-dir`, `-o` | Directorio de salida para los exámenes generados (override de YAML, default: ./output) |
-| `--path-images`, `-p` | Ruta al directorio de imágenes referenciadas en las preguntas (override de YAML) |
-| `--numero-temas`, `-n` | Número de temas/versiones a generar (override de YAML, default: 1) |
-| `--semilla`, `-s` | Semilla pseudo-aleatoria para generación (override de YAML, default: 42) |
-| `--formato`, `-f` | Formato(s) de salida: html y/o pdf (override de YAML, default: html) |
+| `--input-banco`, `-i` | Ruta(s) a los archivos de banco de preguntas (tiene prioridad sobre el YAML) |
+| `--output-dir`, `-o` | Directorio de salida para los exámenes generados (tiene prioridad sobre el YAML; si no está en ninguno: ./output) |
+| `--path-images`, `-p` | Ruta al directorio de imágenes referenciadas en las preguntas (tiene prioridad sobre el YAML) |
+| `--numero-temas`, `-n` | Número de temas/versiones a generar (tiene prioridad sobre el YAML; si no está en ninguno: 1) |
+| `--semilla`, `-s` | Semilla pseudo-aleatoria para generación (tiene prioridad sobre el YAML; si no está en ninguno: 42) |
+| `--formato`, `-f` | Formato(s) de salida: html y/o pdf (tiene prioridad sobre el YAML; si no está en ninguno: html) |
 | `--template`, `--typst-template`, `-t` | Ruta a una plantilla Typst personalizada (.typ / .typ.j2) para generación de PDF |
 | `--spellcheck`, `--languagetool` | Auditar ortografía y gramática de las preguntas del examen o banco usando LanguageTool |
 | `--lt-server` | URL del servidor LanguageTool (por defecto http://localhost:8081 y API pública) |
 | `--lt-username` | Usuario / email de LanguageTool Premium |
 | `--lt-api-key` | API Key / Token de LanguageTool Premium |
 | `--lt-premium` | Forzar uso de la API LanguageTool Premium |
-| `--lt-lang` | Código de idioma para LanguageTool (default: es-AR) [por defecto: es-AR] |
+| `--lt-lang` | Código de idioma para LanguageTool. [por defecto: es-AR] |
 | `--lt-ignore-rules` | Reglas de LanguageTool a ignorar separadas por comas |
 | `--lt-ignore-words` | Palabras personalizadas a ignorar separadas por comas |
 | `--lt-fix` | Aplica correcciones ortográficas automáticas |

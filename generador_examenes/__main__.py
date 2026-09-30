@@ -222,37 +222,37 @@ def _cli(
         False, "--listar-sintetizadores",
         help="Lista las plantillas disponibles del sintetizador daedalus",
     ),
-    cantidad: int = typer.Option(5, "--cantidad", help="Cantidad de preguntas a sintetizar (default: 5)"),
+    cantidad: int = typer.Option(5, "--cantidad", help="Cantidad de preguntas a sintetizar."),
     formato_banco: str = typer.Option(
         "gift", "--formato-banco",
-        help="Formato del banco generado por daedalus: gift|xml (default: gift)",
+        help="Formato del banco generado por daedalus: gift o xml.",
     ),
     definicion: Optional[Path] = typer.Option(
         None, "-d", "--definicion", help="Ruta al archivo de definición YAML del examen",
     ),
     input_banco: Optional[List[Path]] = typer.Option(
         None, "-i", "--input-banco",
-        help="Ruta(s) a los archivos de banco de preguntas (override de YAML)",
+        help="Ruta(s) a los archivos de banco de preguntas (tiene prioridad sobre el YAML)",
     ),
     output_dir: Optional[Path] = typer.Option(
         None, "-o", "--output-dir",
-        help="Directorio de salida para los exámenes generados (override de YAML, default: ./output)",
+        help="Directorio de salida para los exámenes generados (tiene prioridad sobre el YAML; si no está en ninguno: ./output)",
     ),
     path_images: Optional[Path] = typer.Option(
         None, "-p", "--path-images",
-        help="Ruta al directorio de imágenes referenciadas en las preguntas (override de YAML)",
+        help="Ruta al directorio de imágenes referenciadas en las preguntas (tiene prioridad sobre el YAML)",
     ),
     numero_temas: Optional[int] = typer.Option(
         None, "-n", "--numero-temas",
-        help="Número de temas/versiones a generar (override de YAML, default: 1)",
+        help="Número de temas/versiones a generar (tiene prioridad sobre el YAML; si no está en ninguno: 1)",
     ),
     semilla: Optional[int] = typer.Option(
         None, "-s", "--semilla",
-        help="Semilla pseudo-aleatoria para generación (override de YAML, default: 42)",
+        help="Semilla pseudo-aleatoria para generación (tiene prioridad sobre el YAML; si no está en ninguno: 42)",
     ),
     formato: Optional[List[str]] = typer.Option(
         None, "-f", "--formato",
-        help="Formato(s) de salida: html y/o pdf (override de YAML, default: html)",
+        help="Formato(s) de salida: html y/o pdf (tiene prioridad sobre el YAML; si no está en ninguno: html)",
     ),
     typst_template: Optional[Path] = typer.Option(
         None, "-t", "--template", "--typst-template",
@@ -268,7 +268,7 @@ def _cli(
     lt_username: Optional[str] = typer.Option(None, "--lt-username", help="Usuario / email de LanguageTool Premium"),
     lt_api_key: Optional[str] = typer.Option(None, "--lt-api-key", help="API Key / Token de LanguageTool Premium"),
     lt_premium: bool = typer.Option(False, "--lt-premium", help="Forzar uso de la API LanguageTool Premium"),
-    lt_lang: str = typer.Option("es-AR", "--lt-lang", help="Código de idioma para LanguageTool (default: es-AR)"),
+    lt_lang: str = typer.Option("es-AR", "--lt-lang", help="Código de idioma para LanguageTool."),
     lt_ignore_rules: Optional[str] = typer.Option(
         None, "--lt-ignore-rules", help="Reglas de LanguageTool a ignorar separadas por comas",
     ),
