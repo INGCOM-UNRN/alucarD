@@ -364,6 +364,17 @@ def _cli(
     _ultimo_codigo_salida["code"] = codigo
 
 
+@app.command("lint-gift")
+def _lint_gift(
+    archivos: List[Path] = typer.Argument(..., exists=True, dir_okay=False, help="Bancos de preguntas GIFT a revisar."),
+    fix: bool = typer.Option(False, "--fix", help="Corrige problemas comunes en el lugar."),
+) -> None:
+    """Revisa (y con --fix corrige) bancos de preguntas GIFT (antes, el ejecutable gift-linter)."""
+    from generador_examenes.gift_linter import revisar_archivos
+
+    _ultimo_codigo_salida["code"] = revisar_archivos(archivos, fix=fix)
+
+
 @app.command("doctor")
 def _doctor(
     json_output: bool = typer.Option(False, "--json", help="Emitir el diagnóstico como JSON (schema_version 1.0.0)."),

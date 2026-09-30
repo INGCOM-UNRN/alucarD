@@ -153,10 +153,20 @@ def format_gift_text(text):
     return result
 
 def main():
+    # gift-linter es un alias de `alucard lint-gift` (N-ALUCARD-02): responde también el contrato
+    # (--version/-v y doctor) en lugar de tomar «doctor» o «--version» por nombres de archivo.
+    if sys.argv[1:] in (['--version'], ['-v']):
+        from generador_examenes import __version__
+        print(f"gift-linter {__version__}")
+        sys.exit(0)
+    if sys.argv[1:2] == ['doctor']:
+        from generador_examenes.__main__ import main as main_alucard
+        sys.argv = ['alucard', *sys.argv[1:]]
+        sys.exit(main_alucard())
     if '--help' in sys.argv or '-h' in sys.argv:
         print("""Usage: gift-linter [OPTIONS] FILES...
 
-Linter y formateador para archivos GIFT.
+Linter y formateador para archivos GIFT (alias de `alucard lint-gift`).
 
 Options:
   --fix                 Corrige problemas comunes in-place.
@@ -213,23 +223,30 @@ complete -F _{prog.replace('-', '_')}_completion {prog}
     
     fix = '--fix' in sys.argv
     files = [Path(arg) for arg in sys.argv[1:] if arg not in ('--fix', '--show-completion', '--install-completion')]
-    
+    sys.exit(revisar_archivos(files, fix=fix))
+
+
+def revisar_archivos(files, fix=False) -> int:
+    """Revisa (y con fix, corrige) bancos GIFT e imprime el resumen; 0 si están todos sin errores.
+
+    La usan `alucard lint-gift` y el alias `gift-linter` (N-ALUCARD-02).
+    """
     print("="*60)
     print("LINTER GIFT - Analizador de Bancos de Preguntas")
     print("="*60)
-    
+
     all_clean = True
     for filepath in files:
         clean = lint_gift_file(filepath, fix=fix)
         if not clean:
             all_clean = False
-    
+
     print(f"\n{'='*60}")
     print(f"Total archivos: {len(files)}")
     print(f"Estado: {'✅ Todos sin errores' if all_clean else '⚠️  Algunos con errores'}")
     print(f"{'='*60}\n")
-    
-    sys.exit(0 if all_clean else 1)
+
+    return 0 if all_clean else 1
 
 
 if __name__ == '__main__':

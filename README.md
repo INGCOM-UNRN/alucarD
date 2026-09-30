@@ -1409,6 +1409,7 @@ Al reportar un issue, incluye:
 
 | Comando | Descripción |
 |:--|:--|
+| `alucard lint-gift` | Revisa (y con --fix corrige) bancos de preguntas GIFT (antes, el ejecutable gift-linter). |
 | `alucard doctor` | Diagnostica gcc, Typst, WeasyPrint, pypdf y conectividad LanguageTool. |
 
 Ayuda de cada comando: `alucard <comando> -h`.
