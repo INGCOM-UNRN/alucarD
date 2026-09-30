@@ -1352,6 +1352,69 @@ Al reportar un issue, incluye:
 
 ---
 
+<!-- p1:referencia:inicio — generado por p1-tools/scripts/readme_generado.py: no editar a mano -->
+
+## Referencia rápida
+
+### Requisitos
+
+- Python ≥ 3.11 y [uv](https://docs.astral.sh/uv/getting-started/installation/).
+- Programas del sistema: `typst`.
+
+| Sistema | `typst` |
+|:--|:--|
+| Debian / Ubuntu | binario de https://github.com/typst/typst/releases |
+| Fedora | binario de https://github.com/typst/typst/releases |
+| Windows | `winget install --id Typst.Typst` |
+| macOS | `brew install typst` |
+
+### Opciones de `alucard`
+
+| Opción | Descripción |
+|:--|:--|
+| `--init` | Inicializar proyecto con archivos de ejemplo |
+| `--wizard` | Asistente interactivo para crear/editar configuración de examen |
+| `--category-tree` | Generar árbol HTML de categorías de uno o más bancos de preguntas |
+| `--sintetizar` | Generar un banco de preguntas de C con daedalus (sintetizador verificado con gcc). Ver plantillas disponibles con --listar-sintetizadores |
+| `--listar-sintetizadores` | Lista las plantillas disponibles del sintetizador daedalus |
+| `--cantidad` | Cantidad de preguntas a sintetizar (default: 5) [default: 5] |
+| `--formato-banco` | Formato del banco generado por daedalus: gift\|xml (default: gift) [default: gift] |
+| `--definicion`, `-d` | Ruta al archivo de definición YAML del examen |
+| `--input-banco`, `-i` | Ruta(s) a los archivos de banco de preguntas (override de YAML) |
+| `--output-dir`, `-o` | Directorio de salida para los exámenes generados (override de YAML, default: ./output) |
+| `--path-images`, `-p` | Ruta al directorio de imágenes referenciadas en las preguntas (override de YAML) |
+| `--numero-temas`, `-n` | Número de temas/versiones a generar (override de YAML, default: 1) |
+| `--semilla`, `-s` | Semilla pseudo-aleatoria para generación (override de YAML, default: 42) |
+| `--formato`, `-f` | Formato(s) de salida: html y/o pdf (override de YAML, default: html) |
+| `--template`, `--typst-template`, `-t` | Ruta a una plantilla Typst personalizada (.typ / .typ.j2) para generación de PDF |
+| `--spellcheck`, `--languagetool` | Auditar ortografía y gramática de las preguntas del examen o banco usando LanguageTool |
+| `--lt-server` | URL del servidor LanguageTool (por defecto http://localhost:8081 y API pública) |
+| `--lt-username` | Usuario / email de LanguageTool Premium |
+| `--lt-api-key` | API Key / Token de LanguageTool Premium |
+| `--lt-premium` | Forzar uso de la API LanguageTool Premium |
+| `--lt-lang` | Código de idioma para LanguageTool (default: es-AR) [default: es-AR] |
+| `--lt-ignore-rules` | Reglas de LanguageTool a ignorar separadas por comas |
+| `--lt-ignore-words` | Palabras personalizadas a ignorar separadas por comas |
+| `--lt-fix` | Aplica correcciones ortográficas automáticas |
+| `--md`, `--output-md` | Genera reporte de auditoría en formato Markdown |
+| `--json` | Emite salida estructurada en formato JSON |
+| `--validate` | Validar la definición sin generar archivos |
+| `--debug` | Activar modo debug con logging detallado |
+| `--omr` | Generar hoja de respuestas OMR de lectura óptica y descriptor JSON |
+| `--accessible`, `--large-text` | Generar versión con letra grande y contraste adaptado para accesibilidad |
+| `--bundle-print`, `--empaquetar-imprenta` | Empaquetar y concatenar los PDFs de todos los temas en un único archivo para imprenta |
+| `--audit-typography` | Auditar calidad tipográfica y líneas huérfanas en bloques de código de preguntas |
+
+### Comandos de `alucard`
+
+| Comando | Descripción |
+|:--|:--|
+| `alucard doctor` | Diagnostica gcc, Typst, WeasyPrint, pypdf y conectividad LanguageTool. |
+
+Ayuda de cada comando: `alucard <comando> -h`.
+
+<!-- p1:referencia:fin -->
+
 ## 📝 Licencia
 
 Este proyecto está licenciado bajo la Licencia MIT - ver el archivo LICENSE para detalles.
