@@ -64,3 +64,10 @@ def test_gift_linter_responde_el_contrato(monkeypatch, capsys, tmp_path):
     banco.write_text(LIMPIO, encoding="utf-8")
     codigo, salida = _gift_linter(monkeypatch, capsys, [str(banco)])
     assert codigo == 0 and "Todos sin errores" in salida
+
+
+def test_la_ayuda_de_gift_linter_esta_en_espanol(monkeypatch, capsys):
+    codigo, salida = _gift_linter(monkeypatch, capsys, ["--help"])
+    assert codigo == 0
+    assert salida.startswith("Uso: gift-linter") and "Muestra esta ayuda y sale." in salida
+    assert "Usage" not in salida and "Show " not in salida

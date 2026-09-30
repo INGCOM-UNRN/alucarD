@@ -164,17 +164,22 @@ def main():
         sys.argv = ['alucard', *sys.argv[1:]]
         sys.exit(main_alucard())
     if '--help' in sys.argv or '-h' in sys.argv:
-        print("""Usage: gift-linter [OPTIONS] FILES...
+        # Ayuda en español, con la misma redacción que la de Typer traducida por yutani (N-ECO-14).
+        print("""Uso: gift-linter [OPCIONES] ARCHIVOS...
 
 Linter y formateador para archivos GIFT (alias de `alucard lint-gift`).
 
-Options:
-  --fix                 Corrige problemas comunes in-place.
-  --show-completion     Show completion for the current shell, to copy it or customize the installation.
-  --install-completion  Install completion for the current shell.
-  -h, --help            Show this message and exit.
+Opciones:
+  --fix                 Corrige los problemas comunes en el mismo archivo.
+  --show-completion     Muestra el autocompletado para bash, para copiarlo o adaptarlo.
+  --install-completion  Instala el autocompletado para bash.
+  -v, --version         Muestra la versión de gift-linter y sale.
+  -h, --help            Muestra esta ayuda y sale.
 
-Examples:
+Comandos:
+  doctor [--json]       Diagnostica el entorno (el mismo diagnóstico que `alucard doctor`).
+
+Ejemplos:
   gift-linter bancos/teorico.gift
   gift-linter bancos/*.gift --fix
 """)
@@ -205,13 +210,13 @@ complete -F _{prog.replace('-', '_')}_completion {prog}
             if comp_dir.is_dir():
                 target = comp_dir / f"{prog}.bash"
                 target.write_text(script, encoding="utf-8")
-                print(f"Completion installed in {target}")
+                print(f"Autocompletado instalado en {target}")
             else:
                 rc_file = Path.home() / ".bashrc"
                 if rc_file.is_file():
                     with open(rc_file, "a", encoding="utf-8") as f:
                         f.write(f"\n# {prog} completion\n{script}\n")
-                    print(f"Completion installed in {rc_file}")
+                    print(f"Autocompletado instalado en {rc_file}")
             sys.exit(0)
 
     if len(sys.argv) < 2:
