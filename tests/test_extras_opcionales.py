@@ -15,6 +15,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from rich.text import Text
 
 import generador_examenes
 
@@ -47,7 +48,8 @@ def test_la_ayuda_funciona_sin_myst_tools_ni_daedalus():
         "main()\n"
     )
     assert resultado.returncode == 0, resultado.stderr
-    assert "--spellcheck" in resultado.stdout
+    # Texto plano: en GitHub Actions, Typer resalta la ayuda con códigos ANSI que parten las opciones.
+    assert "--spellcheck" in Text.from_ansi(resultado.stdout).plain
 
 
 def test_spellcheck_sin_myst_tools_explica_el_extra(tmp_path):
