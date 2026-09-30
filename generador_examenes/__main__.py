@@ -8,11 +8,17 @@ from typing import List, Optional
 import shutil
 
 import typer
+from yutani.cli import CONTEXTO, TyperConErrores, opcion_version
+from yutani.textos import traducir
 
-from generador_examenes import cli_commands
+from generador_examenes import __version__, cli_commands
 from generador_examenes.cli_errors import usage_error as _usage_error
 
-app = typer.Typer(context_settings={"help_option_names": ["-h", "--help"]}, add_completion=False, pretty_exceptions_enable=False)
+# Contrato de línea de comandos del ecosistema (-h/--help, --version/-v, errores de datos como
+# mensajes) y ayuda de Typer/Click en español, desde yutani (N-ECO-14). No usa crear_app porque
+# el callback de la app raíz tiene las opciones del modo principal.
+traducir()
+app = TyperConErrores(context_settings=dict(CONTEXTO), add_completion=False, pretty_exceptions_enable=False)
 
 # Último código de salida (0/1) reportado por el modo ejecutado, para que
 # main() lo devuelva como valor de retorno. Los errores de uso de CLI
@@ -194,21 +200,10 @@ Para más información, consulta la documentación oficial de alucarD.
     print()
 
 
-def _mostrar_version(valor: bool) -> None:
-    if valor:
-        from generador_examenes import __version__
-
-        typer.echo(f"alucard {__version__}")
-        raise typer.Exit(code=0)
-
-
 @app.callback(invoke_without_command=True)
 def _cli(
     ctx: typer.Context,
-    version: bool = typer.Option(
-        False, "--version", "-v", callback=_mostrar_version, is_eager=True,
-        help="Muestra la versión de alucard y termina.",
-    ),
+    version: bool = opcion_version("alucard", __version__),  # noqa: ARG001
     init: bool = typer.Option(False, "--init", help="Inicializar proyecto con archivos de ejemplo"),
     wizard: Optional[Path] = typer.Option(
         None, "--wizard", metavar="YAML",

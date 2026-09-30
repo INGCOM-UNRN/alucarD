@@ -41,6 +41,8 @@ dependencies = [
     "typer>=0.12,<1.0",
     "pypdf>=6.16",
     "typst>=0.11,<0.14",
+    # Núcleo común del ecosistema (N-ECO-14): contrato de línea de comandos y textos en español.
+    "yutani @ git+https://github.com/INGCOM-UNRN-P1/yutani@e4c8e1050e5dd87a930c5404aba6b65d1be1665a",
 ]
 
 [project.optional-dependencies]

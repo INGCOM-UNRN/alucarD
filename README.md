@@ -1377,8 +1377,8 @@ Al reportar un issue, incluye:
 | `--category-tree` | Generar árbol HTML de categorías de uno o más bancos de preguntas |
 | `--sintetizar` | Generar un banco de preguntas de C con daedalus (sintetizador verificado con gcc). Ver plantillas disponibles con --listar-sintetizadores |
 | `--listar-sintetizadores` | Lista las plantillas disponibles del sintetizador daedalus |
-| `--cantidad` | Cantidad de preguntas a sintetizar (default: 5) [default: 5] |
-| `--formato-banco` | Formato del banco generado por daedalus: gift\|xml (default: gift) [default: gift] |
+| `--cantidad` | Cantidad de preguntas a sintetizar (default: 5) [por defecto: 5] |
+| `--formato-banco` | Formato del banco generado por daedalus: gift\|xml (default: gift) [por defecto: gift] |
 | `--definicion`, `-d` | Ruta al archivo de definición YAML del examen |
 | `--input-banco`, `-i` | Ruta(s) a los archivos de banco de preguntas (override de YAML) |
 | `--output-dir`, `-o` | Directorio de salida para los exámenes generados (override de YAML, default: ./output) |
@@ -1392,7 +1392,7 @@ Al reportar un issue, incluye:
 | `--lt-username` | Usuario / email de LanguageTool Premium |
 | `--lt-api-key` | API Key / Token de LanguageTool Premium |
 | `--lt-premium` | Forzar uso de la API LanguageTool Premium |
-| `--lt-lang` | Código de idioma para LanguageTool (default: es-AR) [default: es-AR] |
+| `--lt-lang` | Código de idioma para LanguageTool (default: es-AR) [por defecto: es-AR] |
 | `--lt-ignore-rules` | Reglas de LanguageTool a ignorar separadas por comas |
 | `--lt-ignore-words` | Palabras personalizadas a ignorar separadas por comas |
 | `--lt-fix` | Aplica correcciones ortográficas automáticas |
