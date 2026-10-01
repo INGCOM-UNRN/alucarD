@@ -394,7 +394,7 @@
             }
             
             if (node.full_path) {
-                html += '<button class="copy-btn" onclick="copyCategory(event, '' + node.full_path.replace(/'/g, "\\'") + '')">📋 Copiar</button>';
+                html += '<button class="copy-btn" onclick="copyCategory(event, \'' + node.full_path.replace(/'/g, "\\'").replace(/"/g, '&quot;') + '\')">📋 Copiar</button>';
             }
             
             html += '</div>';
