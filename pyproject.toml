@@ -58,9 +58,9 @@ languagetool = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/INGCOM-UNRN-P1/alucarD"
-Repository = "https://github.com/INGCOM-UNRN-P1/alucarD.git"
-Issues = "https://github.com/INGCOM-UNRN-P1/alucarD/issues"
+Homepage = "https://github.com/INGCOM-UNRN/alucarD"
+Repository = "https://github.com/INGCOM-UNRN/alucarD.git"
+Issues = "https://github.com/INGCOM-UNRN/alucarD/issues"
 
 [project.scripts]
 generador-examenes = "generador_examenes.__main__:main"
