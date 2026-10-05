@@ -42,7 +42,7 @@ dependencies = [
     "pypdf>=6.16",
     "typst>=0.11,<0.14",
     # Núcleo común del ecosistema (N-ECO-14): contrato de línea de comandos y textos en español.
-    "yutani @ git+https://github.com/INGCOM-UNRN-P1/yutani@31f79c904ac33065cc1c2b9fd34b4c513f0028d9",
+    "yutani @ git+https://github.com/INGCOM-UNRN-P1/yutani@cf49348fae40d264006fe07dee2cc9e88dd9c934",
 ]
 
 [project.optional-dependencies]
@@ -51,10 +51,10 @@ dependencies = [
 # Sin `ecosistema`, la síntesis compila con gcc directo; sin `languagetool`, spellcheck
 # explica cómo instalarlo.
 ecosistema = [
-    "daedalus @ git+https://github.com/INGCOM-UNRN-P1/daedalus@cd3eb998193cd5bd9ea881aa9a0e19f5fe6d9a86",
+    "daedalus @ git+https://github.com/INGCOM-UNRN-P1/daedalus@0d3da518270cea8d6a0dff85d8cec61de2e89fff",
 ]
 languagetool = [
-    "myst-tools @ git+https://github.com/martinvilu/mystmd-tools@a55f7db83b03aa1da9485b3cf70c49b71ece2664",
+    "myst-tools @ git+https://github.com/martinvilu/mystmd-tools@ce716491213a5b0c0e36ea08dfb3c31b7794d478",
 ]
 
 [project.urls]
