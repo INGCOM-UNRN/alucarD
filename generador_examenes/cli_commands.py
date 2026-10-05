@@ -429,6 +429,15 @@ def generar_examen(args, logger) -> int:
         logger.info("Construyendo pool del examen...")
         examen_base = logic.construir_pool_examen(definicion, banco_completo)
         
+        # Completitud de la clave (QoL #7): sin opción correcta no se imprime.
+        sin_clave = logic.auditar_claves(examen_base)
+        if sin_clave:
+            for problema in sin_clave:
+                logger.error(f"Clave incompleta: {problema}")
+            print("Error: hay preguntas sin respuesta correcta; corregí el banco antes de generar el examen.",
+                  file=sys.stderr)
+            return 1
+
         # Calcular puntaje total
         puntaje_total = logic.calcular_puntaje_total(examen_base)
         logger.info(f"Puntaje total del examen: {puntaje_total}")

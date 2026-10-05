@@ -375,8 +375,64 @@ def mezclar_examen(
             for pregunta in seccion['preguntas']:
                 if pregunta.tipo in ['seleccion_multiple', 'verdadero_falso']:
                     rng.shuffle(pregunta.opciones)
-    
+
+    if config.mezclar_opciones_dentro_pregunta:
+        balancear_claves(examen_mezclado, rng)
+
     return examen_mezclado
+
+
+TIPOS_CON_OPCIONES = ("seleccion_multiple", "verdadero_falso")
+RACHA_MAXIMA = 3
+
+
+def auditar_claves(examen_data: Dict[str, Any]) -> List[str]:
+    """Preguntas de opciones sin ninguna opción correcta (QoL #7): imprimir el examen así deja un
+    ítem que nadie puede contestar bien y una clave del profesor incompleta."""
+    problemas = []
+    for seccion in examen_data.get('secciones', []):
+        for pregunta in seccion.get('preguntas', []):
+            if pregunta.tipo in TIPOS_CON_OPCIONES and pregunta.opciones and not any(o.es_correcta for o in pregunta.opciones):
+                problemas.append(f"'{pregunta.id}' ({seccion.get('nombre', 'sección')}) no tiene ninguna opción correcta.")
+    return problemas
+
+
+def letras_correctas(examen_data: Dict[str, Any]) -> List[str]:
+    """La letra de la opción correcta de cada pregunta de selección múltiple, en el orden del examen."""
+    letras = []
+    for seccion in examen_data.get('secciones', []):
+        for pregunta in seccion.get('preguntas', []):
+            if pregunta.tipo == 'seleccion_multiple':
+                indice = next((i for i, o in enumerate(pregunta.opciones) if o.es_correcta), None)
+                if indice is not None:
+                    letras.append(chr(ord('A') + indice))
+    return letras
+
+
+def balancear_claves(examen_data: Dict[str, Any], rng: random.Random, racha_maxima: int = RACHA_MAXIMA) -> int:
+    """Evita rachas de la misma letra correcta (A-A-A-A, QoL #20): un estudiante que lo nota
+    contesta por patrón. Si una pregunta extiende la racha más allá de `racha_maxima`, se vuelven a
+    mezclar sus opciones (con el mismo generador: el tema sigue siendo reproducible por su semilla).
+    Devuelve cuántas preguntas se remezclaron."""
+    remezcladas = 0
+    anterior, racha = None, 0
+    for seccion in examen_data.get('secciones', []):
+        for pregunta in seccion.get('preguntas', []):
+            if pregunta.tipo != 'seleccion_multiple' or len(pregunta.opciones) < 2:
+                continue
+            letra = next((i for i, o in enumerate(pregunta.opciones) if o.es_correcta), None)
+            if letra is None:
+                continue
+            intentos = 0
+            while letra == anterior and racha >= racha_maxima and intentos < 10:
+                rng.shuffle(pregunta.opciones)
+                letra = next(i for i, o in enumerate(pregunta.opciones) if o.es_correcta)
+                intentos += 1
+            if intentos:
+                remezcladas += 1
+            racha = racha + 1 if letra == anterior else 1
+            anterior = letra
+    return remezcladas
 
 
 def calcular_puntaje_total(examen_data: Dict[str, Any]) -> float:

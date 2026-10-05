@@ -467,6 +467,12 @@ secciones_examen:
         puntaje_fijo_por_pregunta: 5.0
 ```
 
+**Clave de respuestas.** Antes de generar se verifica que cada pregunta de opciones tenga al menos
+una opción correcta: si alguna no la tiene, no se imprime nada (código de salida 1) y el log dice
+cuál. Con `mezclar_opciones_dentro_pregunta`, además, se evitan las rachas de la misma letra
+correcta (más de 3 seguidas, como A-A-A-A): la pregunta que la extendería se vuelve a mezclar con
+el mismo generador, así que cada tema sigue siendo reproducible por su semilla.
+
 ### Configuración de Generación en YAML (Nuevo en v5.7.0)
 
 Ahora puedes incluir opciones de generación directamente en el YAML:
