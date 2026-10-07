@@ -36,7 +36,7 @@ def compilar_typst_a_pdf(typst_source: str, output_pdf: Path, root_dir: Optional
                 check=False
             )
             if res.returncode != 0:
-                raise RuntimeError(f"Fallo en compilación Typst: {res.stderr or e_py}")
+                raise RuntimeError(f"Fallo en compilación Typst: {res.stderr or e_py}") from e_py
             return output_pdf
     finally:
         if tmp_path.exists():

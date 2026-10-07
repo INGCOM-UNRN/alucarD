@@ -110,7 +110,7 @@ def _process_question(q_text, start_line, formatted_lines):
         return False, issues
     
     code_blocks = re.findall(r'```([a-zA-Z]*)\n(.*?)```', rest, re.DOTALL)
-    for lang, code in code_blocks:
+    for _lang, code in code_blocks:
         if '\t' in code:
             issues.append(f"Línea {start_line} ({title}): Bloque de código contiene tabulaciones")
         

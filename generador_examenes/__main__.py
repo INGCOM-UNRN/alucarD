@@ -403,7 +403,7 @@ def main() -> int:
     except Exception as exc:  # errores de parseo de Typer/Click (opciones inválidas, etc.)
         if hasattr(exc, "exit_code") and hasattr(exc, "show"):
             exc.show()
-            raise SystemExit(exc.exit_code)
+            raise SystemExit(exc.exit_code) from exc
         raise
     return _ultimo_codigo_salida["code"]
 

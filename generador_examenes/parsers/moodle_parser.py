@@ -49,9 +49,9 @@ class MoodleXMLParser(BaseParser):
             logger.info(f"✓ {len(preguntas)} preguntas cargadas de {filepath.name}")
             
         except ET.ParseError as e:
-            raise ValueError(f"Error parseando XML: {e}")
+            raise ValueError(f"Error parseando XML: {e}") from e
         except Exception as e:
-            raise ValueError(f"Error procesando archivo Moodle XML: {e}")
+            raise ValueError(f"Error procesando archivo Moodle XML: {e}") from e
         
         return preguntas
     

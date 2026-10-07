@@ -43,7 +43,7 @@ class TestCargarBancos:
     
     def test_cargar_banco_inexistente(self):
         """Debe fallar con banco inexistente"""
-        with pytest.raises(Exception):
+        with pytest.raises(FileNotFoundError):
             logic.cargar_bancos([Path("banco_inexistente.txt")])
     
     def test_cargar_bancos_con_duplicados(self, tmp_path):

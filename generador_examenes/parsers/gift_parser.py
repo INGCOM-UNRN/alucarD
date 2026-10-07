@@ -93,7 +93,7 @@ class GiftParser(BaseParser):
             logger.info(f"✓ [{filepath.name}] {len(preguntas)} preguntas cargadas correctamente de {len(bloques)} bloques procesados")
             
         except Exception as e:
-            raise ValueError(f"Error leyendo archivo GIFT: {e}")
+            raise ValueError(f"Error leyendo archivo GIFT: {e}") from e
         
         return preguntas
     

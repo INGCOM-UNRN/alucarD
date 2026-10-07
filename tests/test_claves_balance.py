@@ -23,7 +23,7 @@ def test_balance_rompe_las_rachas():
     letras = letras_correctas(examen)
     assert remezcladas > 0
     racha = max_racha = 1
-    for a, b in zip(letras, letras[1:]):
+    for a, b in zip(letras, letras[1:], strict=False):
         racha = racha + 1 if a == b else 1
         max_racha = max(max_racha, racha)
     assert max_racha <= 3

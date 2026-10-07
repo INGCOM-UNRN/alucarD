@@ -51,7 +51,7 @@ def test_seccion_layout_compact_4col():
 
 def test_seccion_layout_invalido():
     """Test que layout inválido falla validación"""
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):  # pydantic.ValidationError
         SeccionExamen(
             nombre="Test",
             layout="invalid-layout",
