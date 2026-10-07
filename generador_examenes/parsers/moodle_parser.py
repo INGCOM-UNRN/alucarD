@@ -4,7 +4,7 @@ Parser para formato Moodle XML
 import logging
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List, Optional
 from generador_examenes.core.models import Pregunta, Opcion
 from generador_examenes.parsers.base import BaseParser
 from generador_examenes.core.markdown_utils import detect_and_convert_format
@@ -55,7 +55,7 @@ class MoodleXMLParser(BaseParser):
         
         return preguntas
     
-    def _parsear_pregunta(self, question_elem: ET.Element, indice: int, banco_nombre: str = None) -> Pregunta | None:
+    def _parsear_pregunta(self, question_elem: ET.Element, indice: int, banco_nombre: Optional[str] = None) -> Pregunta | None:
         """Parsea un elemento question del XML"""
         
         # Obtener tipo de pregunta
@@ -146,7 +146,7 @@ class MoodleXMLParser(BaseParser):
         
         pregunta = Pregunta(
             id=f"moodle_{indice + 1}_{nombre.replace(' ', '_')}",
-            tipo=tipo,
+            tipo=tipo,  # type: ignore[arg-type]  # pydantic valida el literal
             nombre=nombre,
             categoria=categoria,
             enunciado_html=enunciado,
@@ -154,7 +154,7 @@ class MoodleXMLParser(BaseParser):
             opciones=opciones,
             etiquetas=etiquetas,
             retroalimentacion_general=retroalimentacion_general,
-            tamano_desarrollo=tamano_desarrollo,
+            tamano_desarrollo=tamano_desarrollo,  # type: ignore[arg-type]
             fuente_banco=banco_nombre
         )
         

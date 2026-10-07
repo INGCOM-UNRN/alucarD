@@ -9,7 +9,7 @@ de uno o más bancos de preguntas con contadores y botones para copiar nombres.
 import logging
 from functools import lru_cache
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 from collections import defaultdict
 import json
 
@@ -28,7 +28,7 @@ class CategoryNode:
         self.type_counts: Dict[str, int] = defaultdict(int)
         self.children: Dict[str, CategoryNode] = {}
         
-    def add_question(self, question_type: str = None):
+    def add_question(self, question_type: Optional[str] = None):
         """Incrementa el contador de preguntas y por tipo."""
         self.count += 1
         if question_type:
@@ -163,7 +163,7 @@ def generate_html_content(tree: CategoryNode, banco_info: List[dict], total_ques
     )
 
 
-def main_category_viewer(banco_paths: List[Path], output_path: Path = None) -> Path:
+def main_category_viewer(banco_paths: List[Path], output_path: Optional[Path] = None) -> Path:
     """
     Función principal para generar el visor de categorías.
     

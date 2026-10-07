@@ -4,7 +4,7 @@ Parser para formato GIFT (General Import Format Template)
 import re
 import logging
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List, Optional
 from generador_examenes.core.models import Pregunta, Opcion
 from generador_examenes.parsers.base import BaseParser
 from generador_examenes.core.markdown_utils import detect_and_convert_format
@@ -108,7 +108,7 @@ class GiftParser(BaseParser):
         lines = [line for line in content.split('\n') if not line.strip().startswith('//')]
 
         bloques = []
-        bloque_actual = []
+        bloque_actual: List[str] = []
         categoria_actual = "General"
         linea_previa_vacia = False
 
@@ -153,7 +153,7 @@ class GiftParser(BaseParser):
         
         return bloques
     
-    def _parsear_bloque(self, bloque: str, indice: int, banco_nombre: str = None, categoria_actual: str = "General") -> Pregunta | None:
+    def _parsear_bloque(self, bloque: str, indice: int, banco_nombre: Optional[str] = None, categoria_actual: str = "General") -> Pregunta | None:
         """
         Parsea un bloque individual de pregunta GIFT.
         
@@ -237,7 +237,7 @@ class GiftParser(BaseParser):
         
         pregunta = Pregunta(
             id=f"gift_{indice + 1}_{nombre.replace(' ', '_')}",
-            tipo=tipo,
+            tipo=tipo,  # type: ignore[arg-type]  # pydantic valida el literal
             nombre=nombre,
             categoria=categoria,
             enunciado_html=enunciado,

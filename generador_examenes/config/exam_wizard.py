@@ -178,7 +178,7 @@ class ExamWizard:
     
     def _configurar_seccion(self) -> Dict[str, Any]:
         """Configura una sección individual"""
-        seccion = {}
+        seccion: Dict[str, Any] = {}
         
         seccion['nombre'] = Prompt.ask(
             "  Nombre de la sección",
@@ -217,7 +217,7 @@ class ExamWizard:
     
     def _configurar_pool(self) -> Dict[str, Any]:
         """Configura un pool de preguntas"""
-        pool = {}
+        pool: Dict[str, Any] = {}
         
         console.print("\n  [dim]Opciones de filtrado:[/dim]")
         console.print("  [dim]1. Categoría (ej: Math/Algebra, Programacion/**)  [/dim]")

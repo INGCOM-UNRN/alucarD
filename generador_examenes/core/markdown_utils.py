@@ -3,6 +3,7 @@ Utilidades para procesamiento de markdown con syntax highlighting
 """
 import re
 import unicodedata
+from typing import Optional
 import markdown
 from markdown.extensions import fenced_code, codehilite
 from pygments import highlight
@@ -147,7 +148,7 @@ def process_code_blocks_manual(text: str) -> str:
     return text
 
 
-def detect_and_convert_format(text: str, format_hint: str = None) -> str:
+def detect_and_convert_format(text: str, format_hint: Optional[str] = None) -> str:
     """
     Detecta el formato del texto y lo convierte a HTML si es necesario.
     

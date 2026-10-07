@@ -178,7 +178,7 @@ class DefinicionExamen(BaseModel):
         }
         
         # Evaluar variables personalizadas (orden de definición importa)
-        variables_evaluadas = {}
+        variables_evaluadas: Dict[str, Any] = {}
         for key, valor_template in self.variables_personalizadas.items():
             try:
                 # Evaluar f-string con contexto actual

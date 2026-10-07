@@ -414,7 +414,7 @@ def generar_examen(args, logger) -> int:
         
         # Cargar bancos de preguntas
         logger.info("Cargando bancos de preguntas...")
-        banco_completo = logic.cargar_bancos(input_banco)
+        banco_completo = logic.cargar_bancos(input_banco or [])
         
         if not banco_completo:
             logger.error("No se cargaron preguntas de los bancos")
@@ -561,9 +561,9 @@ def generar_examen(args, logger) -> int:
                 for preg in sec.get('preguntas', []):
                     enunciado = getattr(preg, 'enunciado_html', '') or ''
                     if '```' in enunciado or '<pre>' in enunciado or 'int ' in enunciado:
-                        res = auditar_calidad_tipografica_codigo(enunciado)
-                        if not res['cumple_calidad'] and not getattr(args, 'json_output', False):
-                            print(f"  [!] Pregunta {preg.id}: {len(res['lineas_largas'])} líneas largas detectadas.")
+                        calidad = auditar_calidad_tipografica_codigo(enunciado)
+                        if not calidad['cumple_calidad'] and not getattr(args, 'json_output', False):
+                            print(f"  [!] Pregunta {preg.id}: {len(calidad['lineas_largas'])} líneas largas detectadas.")
 
         # Empaquetado para imprenta si fue solicitado
         if getattr(args, 'bundle_print', False):

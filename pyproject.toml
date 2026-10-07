@@ -85,3 +85,9 @@ dev = [
     "isort>=5.12,<6.0",
     "mypy>=1.0,<2.0",
 ]
+
+[tool.mypy]
+# Tipos del paquete (N-ECO-08): `uv run --with mypy mypy`, igual que el CI.
+python_version = "3.11"
+files = ["generador_examenes"]
+ignore_missing_imports = true
