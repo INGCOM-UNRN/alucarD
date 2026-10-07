@@ -20,7 +20,7 @@
 
 ### Límites de Responsabilidad y Delegación (Qué no cubre)
 - Calificación masiva de entregas de código fuente en C (delegado a `dredd`).
-- Mantenimiento masivo y reestructuración de árboles de categorías de preguntas (delegado a `moodle-toolbox`).
+- Mantenimiento masivo y reestructuración de árboles de categorías de preguntas (delegado a `voight`).
 - Curaduría pedagógica y balance de guías de trabajos prácticos (delegado a `deckard`).
 
 ---

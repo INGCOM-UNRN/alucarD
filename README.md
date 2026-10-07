@@ -21,7 +21,7 @@
 
 ### Qué no cubre (Límites y Delegación)
 - Calificación masiva de entregas de código de software (delegado a `dredd`).
-- Repositorio, mantenimiento masivo y conversión bidireccional entre formatos de bancos Moodle (delegado a `moodle-toolbox`; alucarD incorpora parsers nativos directos exclusivamente para la ingesta y maquetación de exámenes a partir de archivos GIFT y Moodle XML).
+- Repositorio, mantenimiento masivo y conversión bidireccional entre formatos de bancos Moodle (delegado a `voight`; alucarD incorpora parsers nativos directos exclusivamente para la ingesta y maquetación de exámenes a partir de archivos GIFT y Moodle XML).
 - Curaduría y balance de guías de trabajos prácticos (delegado a `deckard`).
 
 ---

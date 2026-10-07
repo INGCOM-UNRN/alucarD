@@ -331,10 +331,10 @@ graph TD
 | :--- | :--- | :--- |
 | **Entradas (Inputs)** | - `deckard (enunciados y starter codes)`
 - `daedalus (código C verificado)`
-- `moodle-toolbox (bancos GIFT/XML)` | Código fuente, AST, binarios, testcases, contratos |
+- `voight (bancos GIFT/XML)` | Código fuente, AST, binarios, testcases, contratos |
 | **Salidas (Outputs)** | - `dredd (pautas de corrección)`
 - `Estudiantes / Imprenta (PDFs maquetados y hojas OMR)` | Informes Markdown, diagnósticos Rich, JSON, actas |
-| **Sincronización** | `idkfa`, `deckard`, `moodle-toolbox` | Validación cruzada, flags compartidos y autofix |
+| **Sincronización** | `idkfa`, `deckard`, `voight` | Validación cruzada, flags compartidos y autofix |
 
 ### Pipeline de Integración Recomendado
 
