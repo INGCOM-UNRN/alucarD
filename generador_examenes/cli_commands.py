@@ -180,7 +180,7 @@ def ejecutar_sintetizar(args, logger) -> int:
 
         print(f"\n✓ {len(snippets)} preguntas de C sintetizadas y verificadas con gcc:")
         print(f"  {destino}")
-        print("\nPodés usarlas directo como banco de alucarD (-i) o editarlas con questions ui.")
+        print("\nPodés usarlas directo como banco de alucarD (-i) o editarlas con voight ui.")
         return 0
     except Exception as e:
         logger.error(f"Error durante la síntesis: {e}")
