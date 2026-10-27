@@ -5,7 +5,7 @@ import random
 import logging
 import base64
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 from copy import deepcopy
 import re
 
@@ -344,7 +344,8 @@ def _filtrar_preguntas_pool(pool: PoolConfig, banco: Dict[str, Pregunta]) -> Lis
 def mezclar_examen(
     examen_data: Dict[str, Any], 
     semilla: int, 
-    config: ConfiguracionExamen
+    config: ConfiguracionExamen,
+    uso_global: Optional[Dict[int, int]] = None,
 ) -> Dict[str, Any]:
     """
     Mezcla las preguntas y opciones del examen según la configuración
@@ -377,6 +378,7 @@ def mezclar_examen(
                     rng.shuffle(pregunta.opciones)
 
     if config.mezclar_opciones_dentro_pregunta:
+        asignar_posiciones_correctas(examen_mezclado, rng, uso_global=uso_global)
         balancear_claves(examen_mezclado, rng)
 
     return examen_mezclado
@@ -407,6 +409,47 @@ def letras_correctas(examen_data: Dict[str, Any]) -> List[str]:
                 if indice is not None:
                     letras.append(chr(ord('A') + indice))
     return letras
+
+
+def asignar_posiciones_correctas(examen_data: Dict[str, Any], rng: random.Random,
+                                 racha_maxima: int = RACHA_MAXIMA,
+                                 uso_global: Optional[Dict[int, int]] = None) -> Dict[int, int]:
+    """Reparte la posición de la opción correcta entre las letras (QoL #20 y #7, Ola 14).
+
+    Con una mezcla al azar, en un tema de 12 preguntas la «C» puede ser la correcta 6 veces: quien
+    contesta por descarte o por frecuencia saca ventaja. Acá, pregunta por pregunta (en el orden
+    del examen), la correcta va a la letra menos usada hasta ese momento, con el desempate al azar
+    (con el mismo generador: el tema sigue siendo reproducible por su semilla) y sin extender una
+    racha de la misma letra más allá de `racha_maxima`. Los distractores quedan en el orden en que
+    los mezcló `mezclar_examen`. Las preguntas con más de una opción correcta no se tocan.
+    Con `uso_global` (lo que llevan los temas anteriores, que se actualiza) el desempate tiene en
+    cuenta también esos temas: con pocas preguntas por tema, cada uno balanceado por separado podía
+    sumar una letra en el 33 % del total. Devuelve cuántas veces quedó la correcta en cada posición."""
+    uso: Dict[int, int] = {}
+    anterior, racha = None, 0
+    for seccion in examen_data.get('secciones', []):
+        for pregunta in seccion.get('preguntas', []):
+            if pregunta.tipo != 'seleccion_multiple' or len(pregunta.opciones) < 2:
+                continue
+            correctas = [o for o in pregunta.opciones if o.es_correcta]
+            if len(correctas) != 1:
+                continue
+            candidatas = list(range(len(pregunta.opciones)))
+            rng.shuffle(candidatas)
+            # Estable: el empate queda al azar. Primero lo de este tema, después lo de los anteriores.
+            candidatas.sort(key=lambda i: (uso.get(i, 0), (uso_global or {}).get(i, 0)))
+            if racha >= racha_maxima and anterior is not None and anterior in candidatas and len(candidatas) > 1:
+                candidatas.remove(anterior)
+            destino = candidatas[0]
+            distractores = [o for o in pregunta.opciones if not o.es_correcta]
+            distractores.insert(destino, correctas[0])
+            pregunta.opciones = distractores
+            uso[destino] = uso.get(destino, 0) + 1
+            if uso_global is not None:
+                uso_global[destino] = uso_global.get(destino, 0) + 1
+            racha = racha + 1 if destino == anterior else 1
+            anterior = destino
+    return uso
 
 
 def balancear_claves(examen_data: Dict[str, Any], rng: random.Random, racha_maxima: int = RACHA_MAXIMA) -> int:

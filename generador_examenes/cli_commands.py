@@ -486,7 +486,8 @@ def generar_examen(args, logger) -> int:
         # Modo generación
         logger.info(f"Generando {numero_temas} tema(s)...")
         archivos_generados = []
-        
+        uso_global: dict = {}  # posición de la correcta en los temas ya generados (balance entre temas)
+
         for i in range(numero_temas):
             semilla_tema = semilla + i
             logger.info(f"Generando tema {i + 1}/{numero_temas} (semilla: {semilla_tema})")
@@ -495,7 +496,8 @@ def generar_examen(args, logger) -> int:
             examen_mezclado = logic.mezclar_examen(
                 examen_base,
                 semilla_tema,
-                definicion.configuracion_examen
+                definicion.configuracion_examen,
+                uso_global=uso_global,
             )
             
             # Generar en cada formato solicitado
