@@ -323,6 +323,25 @@ generador-examenes -d mi_examen.yaml \
 
 ---
 
+### 6️⃣ Exámenes impresos desde idkfa (`alucard build`) y balance de claves
+
+`alucard build -i banco.xml` genera los temas en PDF (y su clave) sin YAML: una sección con todas
+las preguntas del banco, por ejemplo el Moodle XML que genera idkfa. `-d` usa una definición,
+`-n` los temas, `--titulo`, `--materia` e `--institucion` el encabezado.
+
+```bash
+idkfa -s plantillas -n 4 -o idkfa_output.xml
+alucard build -i idkfa_output.xml -n 4 --titulo "Parcial 1" --materia "Programación I"
+alucard balance-check -i idkfa_output.xml -n 4
+```
+
+En cada tema la opción correcta va a la letra menos usada hasta ese momento (también contando los
+temas anteriores) y sin rachas de la misma letra. `build` muestra al terminar en qué letra quedó la
+correcta en cada tema, y `alucard balance-check` lo audita sin renderizar: sale con 1 si alguna
+letra es la correcta en más del 30 % de los casos (`--umbral`). Con preguntas de 2 o 3 opciones el
+mínimo alcanzable es mayor (un tercio): el umbral efectivo sube a ese mínimo más 5 puntos y se
+informa. `--json` emite las frecuencias por tema y en total.
+
 ## 🌳 Explorador de Categorías
 
 Antes de crear tu configuración YAML, puedes explorar visualmente las categorías de tus bancos de preguntas.
@@ -1415,6 +1434,8 @@ Al reportar un issue, incluye:
 
 | Comando | Descripción |
 |:--|:--|
+| `alucard build` | Genera los temas en PDF desde un banco (sin YAML hace falta sólo -i) y audita el balance de claves. |
+| `alucard balance-check` | Audita que ninguna letra sea la correcta en más del 30 % de los casos en las variantes generadas. |
 | `alucard lint-gift` | Revisa (y con --fix corrige) bancos de preguntas GIFT (antes, el ejecutable gift-linter). |
 | `alucard doctor` | Diagnostica gcc, Typst, WeasyPrint, pypdf y conectividad LanguageTool. |
 
@@ -1422,7 +1443,7 @@ Ayuda de cada comando: `alucard <comando> -h`.
 
 ### Salida JSON de `alucard`
 
-Con `--json`, estos comandos emiten el resultado como JSON por la salida estándar, para usarlo desde scripts, ripley o dredd: `alucard doctor`. El de `doctor --json` lleva `schema_version` y `ok`.
+Con `--json`, estos comandos emiten el resultado como JSON por la salida estándar, para usarlo desde scripts, ripley o dredd: `alucard balance-check`, `alucard doctor`. El de `doctor --json` lleva `schema_version` y `ok`.
 
 ### Códigos de salida
 

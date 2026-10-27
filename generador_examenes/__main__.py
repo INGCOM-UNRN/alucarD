@@ -359,6 +359,102 @@ def _cli(
     _ultimo_codigo_salida["code"] = codigo
 
 
+def _cargar_definicion(definicion: Optional[Path], bancos: List[Path], titulo: Optional[str], materia: str,
+                       institucion: str):
+    """La definición del YAML o, sin él, una con todas las preguntas de los bancos."""
+    import yaml
+
+    from generador_examenes.core.balance import definicion_implicita
+    from generador_examenes.core.models import DefinicionExamen
+
+    if definicion is not None:
+        datos = yaml.safe_load(definicion.read_text(encoding="utf-8"))
+    else:
+        datos = definicion_implicita(bancos, titulo, materia, institucion)
+    return DefinicionExamen(**datos), datos
+
+
+@app.command("build")
+def _build(
+    input_banco: List[Path] = typer.Option(..., "-i", "--input-banco", exists=True, dir_okay=False,
+                                           help="Banco(s) de preguntas: Moodle XML (el de idkfa), GIFT…"),
+    definicion: Optional[Path] = typer.Option(None, "-d", "--definicion", exists=True, dir_okay=False,
+                                              help="Definición YAML; sin ella, una sección con todas las preguntas."),
+    numero_temas: int = typer.Option(1, "-n", "--numero-temas", min=1, help="Temas (variantes) a generar."),
+    semilla: int = typer.Option(42, "-s", "--semilla", help="Semilla del primer tema (los siguientes, +1, +2…)."),
+    formato: List[str] = typer.Option(["pdf"], "-f", "--formato", help="pdf y/o html."),
+    output_dir: Path = typer.Option(Path("output"), "-o", "--output-dir", help="Directorio de salida."),
+    titulo: Optional[str] = typer.Option(None, "--titulo", help="Sin YAML: título del examen (por omisión, el nombre del banco)."),
+    materia: str = typer.Option("", "--materia", help="Sin YAML: materia."),
+    institucion: str = typer.Option("", "--institucion", help="Sin YAML: institución."),
+    umbral: float = typer.Option(0.30, "--umbral", min=0.0, max=1.0, help="Frecuencia máxima de una letra correcta."),
+) -> None:
+    """Genera los temas en PDF desde un banco (sin YAML hace falta sólo -i) y audita el balance de claves.
+
+    Cada tema reparte la opción correcta entre las letras (la menos usada, sin rachas); al terminar se
+    muestra en qué letra quedó la correcta en cada tema. Sale con 1 si la generación falla o si alguna
+    letra supera el umbral.
+    """
+    import logging
+    import tempfile
+
+    import yaml
+
+    from generador_examenes.config.logging_config import setup_logging
+    from generador_examenes.core.balance import armar_temas, auditar_balance, texto_del_informe
+
+    for fmt in formato:
+        if fmt not in ("html", "pdf"):
+            _usage_error(f"argumento -f/--formato: valor inválido: '{fmt}' (elegir entre 'html', 'pdf')")
+    setup_logging(debug=False)
+    definicion_modelo, datos = _cargar_definicion(definicion, input_banco, titulo, materia, institucion)
+    with tempfile.TemporaryDirectory(prefix="alucard-build-") as tmp:
+        ruta = definicion
+        if ruta is None:
+            ruta = Path(tmp) / "definicion.yaml"
+            ruta.write_text(yaml.safe_dump(datos, allow_unicode=True), encoding="utf-8")
+        args = SimpleNamespace(definicion=ruta, input_banco=input_banco, output_dir=output_dir, path_images=None,
+                               numero_temas=numero_temas, semilla=semilla, formato=formato, typst_template=None,
+                               validate=False, debug=False, json_output=False, omr=False, accessible=False,
+                               bundle_print=False, audit_typography=False)
+        codigo = cli_commands.generar_examen(args, logging.getLogger("alucard.build"))
+    if codigo != 0:
+        _ultimo_codigo_salida["code"] = codigo
+        return
+    reporte = auditar_balance(armar_temas(definicion_modelo, input_banco, numero_temas, semilla), umbral)
+    print("\n" + texto_del_informe(reporte))
+    _ultimo_codigo_salida["code"] = 0 if reporte["ok"] else 1
+
+
+@app.command("balance-check")
+def _balance_check(
+    input_banco: List[Path] = typer.Option(..., "-i", "--input-banco", exists=True, dir_okay=False,
+                                           help="Banco(s) de preguntas."),
+    definicion: Optional[Path] = typer.Option(None, "-d", "--definicion", exists=True, dir_okay=False,
+                                              help="Definición YAML; sin ella, todas las preguntas."),
+    numero_temas: int = typer.Option(4, "-n", "--numero-temas", min=1, help="Temas a auditar."),
+    semilla: int = typer.Option(42, "-s", "--semilla", help="Semilla del primer tema (la misma que en la generación)."),
+    umbral: float = typer.Option(0.30, "--umbral", min=0.0, max=1.0, help="Frecuencia máxima de una letra correcta."),
+    json_output: bool = typer.Option(False, "--json", help="Emitir el informe como JSON."),
+) -> None:
+    """Audita que ninguna letra sea la correcta en más del 30 % de los casos en las variantes generadas.
+
+    Arma los temas con las mismas semillas que `alucard` (sin renderizarlos) y cuenta en qué letra quedó la
+    opción correcta de cada pregunta de selección múltiple. Sale con 1 si alguna supera el umbral (con
+    preguntas de 2 o 3 opciones el umbral efectivo sube a lo que el banco permite, y se informa).
+    """
+    import json
+
+    from generador_examenes.config.logging_config import setup_logging
+    from generador_examenes.core.balance import armar_temas, auditar_balance, texto_del_informe
+
+    setup_logging(debug=False)
+    definicion_modelo, _ = _cargar_definicion(definicion, input_banco, None, "", "")
+    reporte = auditar_balance(armar_temas(definicion_modelo, input_banco, numero_temas, semilla), umbral)
+    print(json.dumps(reporte, ensure_ascii=False, indent=2) if json_output else texto_del_informe(reporte))
+    _ultimo_codigo_salida["code"] = 0 if reporte["ok"] else 1
+
+
 @app.command("lint-gift")
 def _lint_gift(
     archivos: List[Path] = typer.Argument(..., exists=True, dir_okay=False, help="Bancos de preguntas GIFT a revisar."),
