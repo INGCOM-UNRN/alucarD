@@ -43,6 +43,17 @@ def compilar_typst_a_pdf(typst_source: str, output_pdf: Path, root_dir: Optional
             tmp_path.unlink()
 
 
+def _con_filtros(env):
+    """`|typst` convierte el HTML de las preguntas a marcado Typst; `letra(i)` da A, B, C…"""
+    from generador_examenes.generators.typst_markup import escapar, html_a_typst, largo_visible, letra
+
+    env.filters["typst"] = html_a_typst
+    env.filters["typst_texto"] = lambda t: escapar("" if t is None else str(t))
+    env.globals["letra"] = letra
+    env.filters["largo_visible"] = largo_visible
+    return env
+
+
 class PdfRenderer(BaseRenderer):
     """Renderizador para generar archivos PDF vía Typst (con soporte de plantillas personalizadas)."""
 
@@ -99,16 +110,16 @@ class PdfRenderer(BaseRenderer):
         # Cargar plantilla Typst
         if self.custom_typst_template and self.custom_typst_template.exists():
             template_content = self.custom_typst_template.read_text(encoding="utf-8")
-            env = Environment(autoescape=False, trim_blocks=True, lstrip_blocks=True)
+            env = _con_filtros(Environment(autoescape=False, trim_blocks=True, lstrip_blocks=True))
             template = env.from_string(template_content)
         else:
             search_dirs = [str(self.templates_dir), str(Path(__file__).parent.parent.parent / 'templates')]
-            env = Environment(
+            env = _con_filtros(Environment(
                 loader=FileSystemLoader(search_dirs),
                 autoescape=False,
                 trim_blocks=True,
                 lstrip_blocks=True
-            )
+            ))
             try:
                 template = env.get_template('base_examen.typ.j2')
             except Exception:
@@ -160,12 +171,12 @@ class PdfRenderer(BaseRenderer):
         }
 
         search_dirs = [str(self.templates_dir), str(Path(__file__).parent.parent.parent / 'templates')]
-        env = Environment(
+        env = _con_filtros(Environment(
             loader=FileSystemLoader(search_dirs),
             autoescape=False,
             trim_blocks=True,
             lstrip_blocks=True
-        )
+        ))
 
         try:
             template = env.get_template('clave_profesor.typ.j2')

@@ -4,13 +4,13 @@
   paper: "a4",
   margin: (top: 2cm, bottom: 2cm, left: 2cm, right: 2cm),
   header: align(right)[
-    #text(size: 8pt, fill: rgb("666666"))[{{ definicion.institucion }} — {{ definicion.materia }} | *Tema {{ tema + 1 }}*]
+    #text(size: 8pt, fill: rgb("666666"))[{{ [definicion.institucion, definicion.materia] | select | map("typst_texto") | join(" — ") }}{% if definicion.institucion or definicion.materia %} | {% endif %}*Tema {{ tema + 1 }}*]
   ],
   footer: context [
     #line(length: 100%, stroke: 0.5pt + rgb("cccccc"))
     #grid(
       columns: (1fr, 1fr),
-      align(left)[#text(size: 8pt, fill: rgb("888888"))[{{ definicion.nombre_examen }}]],
+      align(left)[#text(size: 8pt, fill: rgb("888888"))[{{ definicion.nombre_examen | typst_texto }}]],
       align(right)[#text(size: 8pt, fill: rgb("888888"))[Página #counter(page).display("1 / 1", both: true)]]
     )
   ]
@@ -21,12 +21,14 @@
 
 // Encabezado del Examen
 #align(center)[
-  #text(size: 16pt, weight: "bold", fill: rgb("1b365d"))[{{ definicion.nombre_examen }}]\
+  #text(size: 16pt, weight: "bold", fill: rgb("1b365d"))[{{ definicion.nombre_examen | typst_texto }}]\
+  {% if definicion.materia or definicion.institucion %}
   #v(2pt)
-  #text(size: 11pt, weight: "medium")[*{{ definicion.materia }}* — {{ definicion.institucion }}]\
+  #text(size: 11pt, weight: "medium")[{{ [definicion.materia, definicion.institucion] | select | map("typst_texto") | join(" — ") }}]\
+  {% endif %}
   #v(2pt)
   #text(size: 9pt, fill: rgb("4a5568"))[
-    *Fecha:* {{ definicion.fecha }} | *Duración:* {{ definicion.duracion_minutos }} min | *TEMA {{ tema + 1 }}*
+    {% if definicion.fecha %}*Fecha:* {{ definicion.fecha | typst_texto }} | {% endif %}{% if definicion.duracion_minutos %}*Duración:* {{ definicion.duracion_minutos }} min | {% endif %}*TEMA {{ tema + 1 }}*
   ]
 ]
 
@@ -46,7 +48,7 @@
 #v(6pt)
 #rect(width: 100%, fill: rgb("f7fafc"), inset: 8pt, radius: 4pt, stroke: 0.5pt + rgb("cbd5e0"))[
   #text(weight: "bold", size: 9pt)[Instrucciones Generales:]\
-  #text(size: 8.5pt)[{{ definicion.instrucciones_generales }}]
+  #text(size: 8.5pt)[{{ definicion.instrucciones_generales | typst_texto }}]
 ]
 {% endif %}
 
@@ -55,9 +57,9 @@
 // Secciones del Examen
 {% for seccion in secciones %}
 #block(breakable: true)[
-  #text(size: 12pt, weight: "bold", fill: rgb("2b6cb0"))[{{ seccion.nombre }}]
+  #text(size: 12pt, weight: "bold", fill: rgb("2b6cb0"))[{{ seccion.nombre | typst_texto }}]
   {% if seccion.instrucciones %}
-  \ #text(size: 8.5pt, style: "italic", fill: rgb("4a5568"))[{{ seccion.instrucciones }}]
+  \ #text(size: 8.5pt, style: "italic", fill: rgb("4a5568"))[{{ seccion.instrucciones | typst_texto }}]
   {% endif %}
   #v(4pt)
 
@@ -72,19 +74,23 @@
   )[
     #grid(
       columns: (1fr, auto),
-      [ *Pregunta {{ loop.index }}:* {{ preg.enunciado | default(preg.titulo) }} ],
-      [ #text(size: 8pt, fill: rgb("718096"))[[{{ preg.puntos | default(1) }} pt]] ]
+      column-gutter: 8pt,
+      [ *Pregunta {{ loop.index }}.* {{ preg.enunciado_html | typst }} ],
+      [ #text(size: 8pt, fill: rgb("718096"))[\[{{ '%g' % preg.puntaje }} pt\]] ]
     )
 
     {% if preg.tipo in ['seleccion_multiple', 'opcion_multiple', 'multichoice'] %}
     #v(4pt)
+    {# Opciones cortas en varias columnas: 10 respuestas numéricas una por renglón ocupaban media página. #}
+    {% set largo = preg.opciones | map(attribute="texto_html") | map("largo_visible") | max %}
+    {% set por_fila = 5 if largo <= 12 else (2 if largo <= 40 else 1) %}
     #grid(
-      columns: (auto, 1fr),
+      columns: ({% for _ in range(por_fila) %}auto, 1fr, {% endfor %}),
       row-gutter: 5pt,
       column-gutter: 8pt,
       {% for op in preg.opciones %}
-      [ #box(width: 10pt, height: 10pt, radius: 2pt, stroke: 0.8pt + rgb("4a5568"))[] ],
-      [ {{ op.texto | default(op) }} ],
+      [ #box(width: 10pt, height: 10pt, radius: 2pt, stroke: 0.8pt + rgb("4a5568"))[] *{{ letra(loop.index0) }})* ],
+      [ {{ op.texto_html | typst }} ],
       {% endfor %}
     )
     {% elif preg.tipo in ['verdadero_falso', 'truefalse'] %}

@@ -4,13 +4,13 @@
   paper: "a4",
   margin: (top: 2cm, bottom: 2cm, left: 2cm, right: 2cm),
   header: align(right)[
-    #text(size: 8pt, fill: rgb("c53030"))[*CLAVE DOCENTE* — {{ definicion.institucion }} | *Tema {{ tema + 1 }}*]
+    #text(size: 8pt, fill: rgb("c53030"))[*CLAVE DOCENTE*{% if definicion.institucion %} — {{ definicion.institucion | typst_texto }}{% endif %} | *Tema {{ tema + 1 }}*]
   ],
   footer: context [
     #line(length: 100%, stroke: 0.5pt + rgb("cccccc"))
     #grid(
       columns: (1fr, 1fr),
-      align(left)[#text(size: 8pt, fill: rgb("888888"))[SOLUCIONARIO: {{ definicion.nombre_examen }}]],
+      align(left)[#text(size: 8pt, fill: rgb("888888"))[SOLUCIONARIO: {{ definicion.nombre_examen | typst_texto }}]],
       align(right)[#text(size: 8pt, fill: rgb("888888"))[Página #counter(page).display("1 / 1", both: true)]]
     )
   ]
@@ -23,14 +23,14 @@
   #block(fill: rgb("fff5f5"), inset: 10pt, radius: 4pt, stroke: 1pt + rgb("feb2b2"))[
     #text(size: 15pt, weight: "bold", fill: rgb("9b2c2c"))[CLAVE DE CORRECCIÓN — TEMA {{ tema + 1 }}]\
     #v(2pt)
-    #text(size: 10pt, fill: rgb("742a2a"))[{{ definicion.nombre_examen }} — {{ definicion.materia }}]
+    #text(size: 10pt, fill: rgb("742a2a"))[{{ [definicion.nombre_examen, definicion.materia] | select | map("typst_texto") | join(" — ") }}]
   ]
 ]
 
 #v(10pt)
 
 {% for seccion in secciones %}
-#text(size: 11pt, weight: "bold", fill: rgb("2b6cb0"))[{{ seccion.nombre }}]
+#text(size: 11pt, weight: "bold", fill: rgb("2b6cb0"))[{{ seccion.nombre | typst_texto }}]
 #v(4pt)
 
 {% for preg in seccion.preguntas %}
@@ -42,11 +42,19 @@
   fill: rgb("fafafa"),
   breakable: false
 )[
-  #text(weight: "bold")[{{ loop.index }}. {{ preg.enunciado | default(preg.titulo) }}]
+  #text(weight: "bold")[{{ loop.index }}. {{ preg.nombre | typst_texto }}]
   #v(2pt)
-  #text(fill: rgb("22543d"), weight: "bold")[✓ Respuesta Correcta:] {{ preg.respuesta_correcta | default('Ver criterio de corrección') }}
-  {% if preg.retroalimentacion %}
-  \ #text(fill: rgb("4a5568"), size: 8.5pt)[*Explicación:* {{ preg.retroalimentacion }}]
+  {% set correctas = [] %}
+  {% for op in preg.opciones %}{% if op.es_correcta %}{% set _ = correctas.append(loop.index0) %}{% endif %}{% endfor %}
+  {% if correctas %}
+  {% for i in correctas %}
+  #text(fill: rgb("22543d"), weight: "bold")[✓ {{ letra(i) }})] {{ preg.opciones[i].texto_html | typst }}
+  {% endfor %}
+  {% else %}
+  #text(fill: rgb("22543d"), weight: "bold")[✓ Respuesta:] Ver criterio de corrección
+  {% endif %}
+  {% if preg.retroalimentacion_general %}
+  \ #text(fill: rgb("4a5568"), size: 8.5pt)[*Explicación:* {{ preg.retroalimentacion_general | typst }}]
   {% endif %}
 ]
 #v(4pt)
