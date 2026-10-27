@@ -311,6 +311,11 @@ def test_normalizar_fullwidth_arrow_symbol():
     assert result == expected
 
 
+def test_la_marca_de_fin_de_linea_no_duplica_el_salto():
+    """Ola 14: con la convención de voight cada línea de código termina en ↵ y un salto real."""
+    assert normalizar_fullwidth("int a;↵\nint b;↵\n") == "int a;\nint b;\n"
+
+
 def test_markdown_code_with_fullwidth_and_arrows():
     """Test código con caracteres fullwidth y símbolo ↵"""
     text = """```c

@@ -33,8 +33,10 @@ def normalizar_fullwidth(text: str) -> str:
     # Esto convierte caracteres fullwidth a su equivalente halfwidth/ASCII
     normalized = unicodedata.normalize('NFKC', text)
     
-    # Reemplazar el símbolo de retorno de carro visible (↵) con saltos de línea reales
-    normalized = normalized.replace('↵', '\n')
+    # El ↵ de voight marca el final de una línea que igual termina en un salto real: se quita. Sólo
+    # se vuelve un salto cuando no lo hay (el código pegado en una sola línea). Antes cada ↵ sumaba un
+    # salto más y el código salía a doble espacio.
+    normalized = re.sub(r'↵\r?\n?', '\n', normalized)
     
     return normalized
 
