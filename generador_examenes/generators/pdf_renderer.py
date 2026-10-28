@@ -25,12 +25,17 @@ def compilar_typst_a_pdf(typst_source: str, output_pdf: Path, root_dir: Optional
     try:
         try:
             import typst
-            typst.compile(str(tmp_path), output=str(output_pdf), root=str(root_dir) if root_dir else None)
+            root = str(root_dir) if (root_dir and tmp_path.is_relative_to(root_dir)) else None
+            typst.compile(str(tmp_path), output=str(output_pdf), root=root)
             return output_pdf
         except Exception as e_py:
             # Fallback a binario typst de sistema
+            cmd = ["typst", "compile"]
+            if root_dir and tmp_path.is_relative_to(root_dir):
+                cmd.extend(["--root", str(root_dir)])
+            cmd.extend([str(tmp_path), str(output_pdf)])
             res = subprocess.run(
-                ["typst", "compile", str(tmp_path), str(output_pdf)],
+                cmd,
                 capture_output=True,
                 text=True,
                 check=False
