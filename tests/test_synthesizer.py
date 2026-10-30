@@ -211,3 +211,11 @@ def test_sintetizar_ya_no_es_una_opcion(monkeypatch):
     with pytest.raises(SystemExit) as exc:
         main()
     assert exc.value.code == 2
+
+
+def test_gift_con_categoria_por_plantilla(tmp_path):
+    from generador_examenes.parsers.gift_parser import GiftParser
+
+    banco = tmp_path / "b.gift"
+    banco.write_text(exportar_gift(sintetizar("fugas-malloc", cantidad=2, semilla=1)), encoding="utf-8")
+    assert {p.categoria for p in GiftParser().parse(banco).values()} == {"sintetizados/fugas-malloc"}

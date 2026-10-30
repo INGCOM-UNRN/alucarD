@@ -158,7 +158,8 @@ alucard sintetizar array-decay -f xml -s 7 -o bancos/
 | `--json` | | El resultado, con cada pregunta, como JSON. |
 
 El GIFT declara `[markdown]` en cada pregunta, así que el código en línea de enunciados y opciones
-se ve como código. Las plantillas de comportamiento indefinido necesitan gcc 10 o posterior.
+se ve como código, y pone cada plantilla en la categoría `sintetizados/<plantilla>` (un pool la elige
+con `categoria: "sintetizados/fugas-malloc"`). Las plantillas de comportamiento indefinido necesitan gcc 10 o posterior.
 
 ### Diagramas de estructuras de datos (statics)
 

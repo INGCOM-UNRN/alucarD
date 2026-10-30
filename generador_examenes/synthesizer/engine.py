@@ -100,9 +100,16 @@ def _titulos_unicos(snippets: list[SnippetGenerado]) -> list[str]:
 
 
 def exportar_gift(snippets: list[SnippetGenerado]) -> str:
-    """Serializa los snippets como banco GIFT (selección múltiple) en formato `[markdown]`."""
+    """Serializa los snippets como banco GIFT (selección múltiple) en formato `[markdown]`.
+
+    Cada plantilla va en la categoría `sintetizados/<plantilla>`, para elegirla desde un pool.
+    """
     bloques = []
+    categoria = None
     for s, titulo in zip(snippets, _titulos_unicos(snippets)):
+        if s.plantilla != categoria:
+            categoria = s.plantilla
+            bloques.append(f"$CATEGORY: sintetizados/{categoria}")
         cuerpo = [f"={_escape_gift(op)}" if op == s.salida_correcta else f"~{_escape_gift(op)}"
                   for op in s.opciones]
         bloque = (
