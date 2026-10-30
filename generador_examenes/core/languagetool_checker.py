@@ -42,6 +42,8 @@ def enmascarar_pregunta(contenido: str) -> Tuple[str, List[Dict[str, Any]]]:
     # 1. Bloques de código ``` ... ``` o <pre><code> ... </code></pre>
     for m in re.finditer(r'(```|~~~|````)[^\n]*\n.*?\n\s*\1', contenido, re.DOTALL):
         _mask_range(m.start(), m.end())
+    for m in re.finditer(r'<svg[^>]*>.*?</svg>', contenido, re.DOTALL | re.IGNORECASE):  # diagramas
+        _mask_range(m.start(), m.end())
     for m in re.finditer(r'<pre[^>]*>.*?</pre>', contenido, re.DOTALL | re.IGNORECASE):
         _mask_range(m.start(), m.end())
     for m in re.finditer(r'<code[^>]*>.*?</code>', contenido, re.DOTALL | re.IGNORECASE):

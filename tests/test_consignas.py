@@ -363,6 +363,22 @@ def test_spellcheck_revisa_tambien_las_consignas(monkeypatch, capsys, tmp_path, 
     assert set(textos) == {"deckard:propia", "deckard:corta", "deckard:media", "deckard:larga"}
     assert "Escribir la función pedida" in textos["deckard:corta"]
     assert "Segunda pista." in textos["deckard:corta"]
+    assert "<span" not in textos["deckard:corta"]  # el Markdown, no el HTML resaltado
+
+
+def test_spellcheck_revisa_solo_lo_que_los_pools_pueden_elegir(monkeypatch, capsys, tmp_path, repo_deckard):
+    from generador_examenes.core import languagetool_checker
+
+    revisadas = []
+    monkeypatch.setattr(languagetool_checker, "analizar_pregunta_languagetool",
+                        lambda pregunta, **_: revisadas.append(pregunta.id) or [])
+    definicion = _yaml_con_fuentes(tmp_path, repo_deckard)
+    datos = yaml.safe_load(definicion.read_text(encoding="utf-8"))
+    datos["secciones_examen"][0]["pools"] = [{"tipos": ["consigna_practica"], "minutos_max": 15, "cantidad": 1}]
+    definicion.write_text(yaml.safe_dump(datos, allow_unicode=True), encoding="utf-8")
+    codigo, salida = _alucard(monkeypatch, capsys, ["--spellcheck", "-d", str(definicion)])
+    assert codigo == 0, salida
+    assert sorted(revisadas) == ["deckard:corta", "deckard:propia"]
 
 
 def test_wizard_fuentes_y_pool_de_consignas():

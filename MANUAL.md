@@ -280,7 +280,7 @@ alucard build --consignas consignas --repositorio ~/dev/tools/enunciados   # sin
 alucard balance-check -d parcial.yaml --repositorio ~/catedra/preguntas
 alucard --category-tree ~/dev/tools/enunciados        # una carpeta: repositorio de preguntas o de consignas
 alucard --category-tree bancos/teoria.gift -d parcial.yaml   # suma las fuentes de la definición
-alucard --spellcheck -d parcial.yaml                  # revisa también el texto de las consignas
+alucard --spellcheck -d parcial.yaml                  # también las consignas que los pools pueden elegir
 ```
 
 `-i` reemplaza al `input_banco` de la definición; `--consignas` y `--repositorio` (repetibles) se
@@ -445,7 +445,7 @@ Flujo de trabajo:
 cd parcial2
 alucard --category-tree ~/dev/tools/enunciados       # output/category_tree.html: temas y consignas disponibles
 alucard -d parcial_practico.yaml --validate          # puntajes y cantidad de preguntas por parte
-alucard --spellcheck -d parcial_practico.yaml        # ortografía de preguntas y consignas
+alucard --spellcheck -d parcial_practico.yaml        # ortografía del banco y de las consignas elegibles
 alucard balance-check -d parcial_practico.yaml       # reparto de la letra correcta entre temas
 alucard -d parcial_practico.yaml                     # output/examen_tema_0{1,2,3}.pdf y clave_tema_0{1,2,3}.pdf
 alucard -d parcial_practico.yaml -s 7 -o recuperatorio   # mismo esquema, otras consignas

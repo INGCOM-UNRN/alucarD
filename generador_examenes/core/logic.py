@@ -305,29 +305,13 @@ def _presentar(preguntas: List[Pregunta], pool: PoolConfig,
     return [presentar_consigna(p, presentacion) if p.tipo == "consigna_practica" else p for p in preguntas]
 
 
-def _filtrar_preguntas_pool(pool: PoolConfig, banco: Dict[str, Pregunta],
-                            presentacion_general: Optional[PresentacionConsigna] = None,
-                            rng: Optional[random.Random] = None) -> List[Pregunta]:
-    """
-    Filtra y selecciona preguntas según la configuración del pool; con `rng`, las que entran se
-    sortean (las fijadas no)
-    """
-    logger.debug(f"Filtrando preguntas para: {pool}")
-    
-    # Empezar con todas las preguntas del banco
-    candidatas = list(banco.values())
-    
-    # Filtro 1: Preguntas fijadas
+def candidatas_pool(pool: PoolConfig, banco: Dict[str, Pregunta]) -> List[Pregunta]:
+    """Las preguntas del banco que el pool puede elegir: las fijadas, o las que pasan los filtros de
+    categoría, tipo, etiquetas y tiempo (sin sortear ni recortar por cantidad o presupuesto)."""
     if pool.preguntas_fijadas:
-        fijadas = _presentar([banco[id_p] for id_p in pool.preguntas_fijadas if id_p in banco], pool, presentacion_general)
-        if pool.puntaje_fijo_por_pregunta:
-            fijadas = [p.model_copy(update={"puntaje": pool.puntaje_fijo_por_pregunta}) for p in fijadas]
-        logger.debug(f"  → {len(fijadas)} preguntas fijadas seleccionadas")
-        if logger.isEnabledFor(logging.DEBUG):
-            for p in fijadas[:3]:
-                logger.debug(f"    • {p}")
-        return fijadas
-    
+        return [banco[id_p] for id_p in pool.preguntas_fijadas if id_p in banco]
+    candidatas = list(banco.values())
+
     # Filtro 2: Categoría o categorías (soporta categorías anidadas)
     if pool.categoria:
         candidatas = [p for p in candidatas if categoria_coincide(p.categoria, pool.categoria)]
@@ -359,6 +343,31 @@ def _filtrar_preguntas_pool(pool: PoolConfig, banco: Dict[str, Pregunta],
         maximo = pool.minutos_max if pool.minutos_max is not None else float("inf")
         candidatas = [p for p in candidatas if _minutos(p) is not None and minimo <= _minutos(p) <= maximo]  # type: ignore[operator]
         logger.debug(f"  → Filtro minutos [{pool.minutos_min}, {pool.minutos_max}]: {len(candidatas)} candidatas")
+
+    return candidatas
+
+
+def _filtrar_preguntas_pool(pool: PoolConfig, banco: Dict[str, Pregunta],
+                            presentacion_general: Optional[PresentacionConsigna] = None,
+                            rng: Optional[random.Random] = None) -> List[Pregunta]:
+    """
+    Filtra y selecciona preguntas según la configuración del pool; con `rng`, las que entran se
+    sortean (las fijadas no)
+    """
+    logger.debug(f"Filtrando preguntas para: {pool}")
+    
+    # Filtro 1: Preguntas fijadas
+    if pool.preguntas_fijadas:
+        fijadas = _presentar([banco[id_p] for id_p in pool.preguntas_fijadas if id_p in banco], pool, presentacion_general)
+        if pool.puntaje_fijo_por_pregunta:
+            fijadas = [p.model_copy(update={"puntaje": pool.puntaje_fijo_por_pregunta}) for p in fijadas]
+        logger.debug(f"  → {len(fijadas)} preguntas fijadas seleccionadas")
+        if logger.isEnabledFor(logging.DEBUG):
+            for p in fijadas[:3]:
+                logger.debug(f"    • {p}")
+        return fijadas
+    
+    candidatas = candidatas_pool(pool, banco)
 
     # Sorteo: el orden de las candidatas decide cuáles entran (por cantidad o por presupuesto)
     if rng is not None:

@@ -28,6 +28,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Corregido
 
+- **spellcheck**: con `-d` revisa los bancos del proyecto y, de las consignas y los repositorios externos, sólo lo que algún pool puede elegir (antes mandaba el repositorio entero a LanguageTool); las consignas se revisan sobre su Markdown y no sobre el HTML resaltado (la API pública respondía 413), y los diagramas SVG se enmascaran.
 - **sintetizador**: el banco GIFT declara `[markdown]` en cada pregunta (el código en línea salía con los acentos graves).
 - **gift**: las opciones en `[markdown]` ya no quedan envueltas en `<p>`.
 - **pools**: `puntaje_fijo_por_pregunta` también se aplica a las `preguntas_fijadas` (antes quedaban con el puntaje del banco) (`fdae19c`)

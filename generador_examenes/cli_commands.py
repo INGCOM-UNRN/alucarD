@@ -200,18 +200,27 @@ def _leer_definicion(ruta: Path):
 
 
 def _preguntas_a_revisar(rutas_bancos: list[Path], definicion) -> list:
-    """Las preguntas de los bancos y, con definición, también sus consignas y repositorios externos
-    (las consignas, con su texto completo para que se revise)."""
-    from generador_examenes.core.logic import cargar_banco_definicion, cargar_bancos
+    """Las preguntas de los bancos y, con definición, también las consignas y las preguntas de los
+    repositorios externos que algún pool puede elegir (no todo el repositorio).
 
+    Las consignas se revisan sobre su Markdown completo (enunciado y todas las pistas), que es mucho
+    más chico que el HTML con el código resaltado.
+    """
+    from generador_examenes.core.logic import cargar_banco_definicion, cargar_bancos, candidatas_pool
+
+    proyecto = cargar_bancos(rutas_bancos) if rutas_bancos else {}
     if definicion is None:
-        return list(cargar_bancos(rutas_bancos).values()) if rutas_bancos else []
-    from generador_examenes.core.consignas import presentar_consigna
+        return list(proyecto.values())
+    from generador_examenes.core.consignas import componer_markdown
     from generador_examenes.core.models import PresentacionConsigna
 
+    banco = cargar_banco_definicion(definicion, rutas_bancos)
+    elegibles = {p.id for seccion in definicion.secciones_examen for pool in seccion.pools
+                 for p in candidatas_pool(pool, banco)}
     completa = PresentacionConsigna(metadatos=False, funciones=False, pistas=100, espacio_respuesta=False)
-    return [presentar_consigna(p, completa) if p.tipo == "consigna_practica" else p
-            for p in cargar_banco_definicion(definicion, rutas_bancos).values()]
+    return [p.model_copy(update={"enunciado_html": componer_markdown(p, completa)}) if p.tipo == "consigna_practica"
+            else p
+            for pid, p in banco.items() if pid in proyecto or pid in elegibles]
 
 
 def ejecutar_spellcheck(args, logger) -> int:
