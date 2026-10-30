@@ -44,6 +44,7 @@ class ExamWizard:
         # Pasos del asistente
         self._configurar_informacion_basica()
         self._configurar_parametros_examen()
+        self._configurar_fuentes()
         self._configurar_secciones()
         
         # Mostrar resumen y guardar
@@ -144,12 +145,57 @@ class ExamWizard:
             "¿Generar clave de respuestas para el profesor?",
             default=config_examen.get('generar_clave_profesor', True)
         )
+
+        config_examen['sortear_preguntas'] = Confirm.ask(
+            "¿Sortear las preguntas de cada pool con la semilla del examen?",
+            default=config_examen.get('sortear_preguntas', True)
+        )
         
         self.config['configuracion_examen'] = config_examen
     
+    def _configurar_fuentes(self):
+        """Bancos de preguntas, consignas prácticas locales y repositorios externos"""
+        console.print("\n[bold]3. FUENTES DE PREGUNTAS[/bold]")
+        console.print("─" * 60)
+
+        bancos = ", ".join(self.config.get('input_banco') or [])
+        bancos = Prompt.ask("Bancos de preguntas GIFT/XML (separados por coma, vacío: ninguno)", default=bancos)
+        self._lista_o_nada('input_banco', bancos)
+
+        consignas = ", ".join(self.config.get('input_consignas') or [])
+        consignas = Prompt.ask("Carpetas de consignas prácticas deckard (separadas por coma, vacío: ninguna)",
+                               default=consignas)
+        self._lista_o_nada('input_consignas', consignas)
+
+        repositorios = list(self.config.get('repositorios_externos') or [])
+        if repositorios:
+            console.print(f"\n[cyan]Repositorios externos: {len(repositorios)}[/cyan]")
+            for repo in repositorios:
+                console.print(f"  • {repo.get('ruta')} ({repo.get('tipo', 'auto')})")
+            if Confirm.ask("¿Reemplazarlos?", default=False):
+                repositorios = []
+        while Confirm.ask("¿Agregar un repositorio externo de la computadora?", default=False):
+            repo: Dict[str, Any] = {'ruta': Prompt.ask("  Ruta (p. ej. ~/dev/tools/enunciados)")}
+            repo['tipo'] = Prompt.ask("  Tipo", choices=['auto', 'preguntas', 'deckard'], default='auto')
+            nombre = Prompt.ask("  Nombre para la etiqueta repo:<nombre> (vacío: el de la carpeta)", default="")
+            if nombre:
+                repo['nombre'] = nombre
+            repositorios.append(repo)
+        if repositorios:
+            self.config['repositorios_externos'] = repositorios
+        else:
+            self.config.pop('repositorios_externos', None)
+
+    def _lista_o_nada(self, clave: str, texto: str):
+        valores = [v.strip() for v in texto.split(',') if v.strip()]
+        if valores:
+            self.config[clave] = valores
+        else:
+            self.config.pop(clave, None)
+
     def _configurar_secciones(self):
         """Configura las secciones del examen"""
-        console.print("\n[bold]3. SECCIONES DEL EXAMEN[/bold]")
+        console.print("\n[bold]4. SECCIONES DEL EXAMEN[/bold]")
         console.print("─" * 60)
         
         secciones_existentes = self.config.get('secciones_examen', [])
@@ -224,10 +270,11 @@ class ExamWizard:
         console.print("  [dim]2. Tipos (seleccion_multiple, verdadero_falso, etc.)[/dim]")
         console.print("  [dim]3. Etiquetas (facil, intermedio, avanzado, etc.)[/dim]")
         console.print("  [dim]4. Preguntas específicas (por ID)[/dim]")
+        console.print("  [dim]5. Consignas prácticas deckard (tema, tiempo requerido y espacio para resolver)[/dim]")
         
         filtro = Prompt.ask(
             "\n  Tipo de filtro",
-            choices=['categoria', 'tipos', 'etiquetas', 'fijadas', 'ninguno'],
+            choices=['categoria', 'tipos', 'etiquetas', 'fijadas', 'consignas', 'ninguno'],
             default='ninguno'
         )
         
@@ -249,6 +296,8 @@ class ExamWizard:
         elif filtro == 'fijadas':
             ids_str = Prompt.ask("    IDs de preguntas (separados por coma)")
             pool['preguntas_fijadas'] = [id.strip() for id in ids_str.split(',')]
+        elif filtro == 'consignas':
+            self._configurar_pool_consignas(pool)
         
         if filtro != 'fijadas':
             pool['cantidad'] = IntPrompt.ask(
@@ -265,6 +314,25 @@ class ExamWizard:
         
         return pool
     
+    def _configurar_pool_consignas(self, pool: Dict[str, Any]):
+        """Pool de consignas prácticas: tema, filtros por tiempo requerido y renglones para resolver"""
+        pool['tipos'] = ['consigna_practica']
+        tema = Prompt.ask("    Tema (vacío: todos)", default="")
+        if tema:
+            pool['categoria'] = f"consignas/{tema}"
+        if Confirm.ask("    ¿Filtrar por tiempo requerido?", default=False):
+            minimo = IntPrompt.ask("    Minutos mínimos (0: sin mínimo)", default=0)
+            maximo = IntPrompt.ask("    Minutos máximos (0: sin máximo)", default=0)
+            if minimo:
+                pool['minutos_min'] = minimo
+            if maximo:
+                pool['minutos_max'] = maximo
+            presupuesto = IntPrompt.ask("    Suma máxima de minutos del pool (0: sin límite)", default=0)
+            if presupuesto:
+                pool['presupuesto_minutos'] = presupuesto
+        lineas = IntPrompt.ask("    Renglones para resolver (0: sin espacio)", default=20)
+        pool['presentacion'] = {'lineas': lineas} if lineas else {'espacio_respuesta': False}
+
     def _mostrar_resumen(self):
         """Muestra un resumen de la configuración"""
         console.print("\n[bold]RESUMEN DE LA CONFIGURACIÓN[/bold]")
@@ -292,6 +360,12 @@ class ExamWizard:
         console.print(f"  • Mezclar preguntas: {config_exam.get('mezclar_preguntas_dentro_seccion', True)}")
         console.print(f"  • Mezclar opciones: {config_exam.get('mezclar_opciones_dentro_pregunta', True)}")
         console.print(f"  • Generar clave: {config_exam.get('generar_clave_profesor', True)}")
+        console.print(f"  • Sortear preguntas: {config_exam.get('sortear_preguntas', True)}")
+        console.print("\n[bold]Fuentes:[/bold]")
+        console.print(f"  • Bancos: {', '.join(self.config.get('input_banco') or []) or '-'}")
+        console.print(f"  • Consignas: {', '.join(self.config.get('input_consignas') or []) or '-'}")
+        for repo in self.config.get('repositorios_externos') or []:
+            console.print(f"  • Repositorio: {repo.get('ruta')} ({repo.get('tipo', 'auto')})")
         
         # Secciones
         secciones = self.config.get('secciones_examen', [])
@@ -316,6 +390,10 @@ class ExamWizard:
                 partes.append(f"tipos:{','.join(pool['tipos'])}")
             if 'etiquetas' in pool:
                 partes.append(f"tags:{','.join(pool['etiquetas'])}")
+            if 'minutos_min' in pool or 'minutos_max' in pool:
+                partes.append(f"min:{pool.get('minutos_min', 0)}-{pool.get('minutos_max', '∞')}")
+            if 'presupuesto_minutos' in pool:
+                partes.append(f"presupuesto:{pool['presupuesto_minutos']}min")
             if 'cantidad' in pool:
                 partes.append(f"cant:{pool['cantidad']}")
         

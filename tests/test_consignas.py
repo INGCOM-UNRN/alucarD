@@ -214,3 +214,178 @@ def test_init_crea_consignas_y_la_definicion_las_usa(tmp_path, monkeypatch):
     examen = logic.construir_pool_examen(
         definicion.model_copy(update={"secciones_examen": [seccion]}), banco)
     assert examen["secciones"][0]["preguntas"][0].lineas_respuesta == 25
+
+
+# ---------------------------------------------------------------------------
+# Sorteo con la semilla del examen
+# ---------------------------------------------------------------------------
+
+@pytest.fixture()
+def banco_grande(tmp_path):
+    raiz = tmp_path / "muchas"
+    for i in range(12):
+        _consigna(raiz, f"c{i:02d}", "lazos", 10 + i)
+    return cargar_consignas(raiz)
+
+
+def _elegidas(definicion, banco, semilla=None):
+    examen = logic.construir_pool_examen(definicion, banco, semilla)
+    return [p.metadata["ejercicio_id"] for s in examen["secciones"] for p in s["preguntas"]]
+
+
+def test_sorteo_reproducible_y_distinto_con_otra_semilla(banco_grande):
+    definicion = _definicion([PoolConfig(cantidad=3)])
+    primera = _elegidas(definicion, banco_grande, 7)
+    assert primera == _elegidas(definicion, banco_grande, 7)
+    otras = {tuple(sorted(_elegidas(definicion, banco_grande, s))) for s in range(10)}
+    assert len(otras) > 1
+    # sin semilla explícita, la de la definición
+    assert _elegidas(definicion, banco_grande) == _elegidas(definicion, banco_grande, definicion.semilla)
+
+
+def test_sorteo_no_depende_del_orden_de_carga(banco_grande):
+    definicion = _definicion([PoolConfig(cantidad=4)])
+    invertido = dict(reversed(list(banco_grande.items())))
+    assert _elegidas(definicion, banco_grande, 3) == _elegidas(definicion, invertido, 3)
+
+
+def test_sin_sorteo_entran_las_primeras(banco_grande):
+    definicion = _definicion([PoolConfig(cantidad=3)])
+    definicion.configuracion_examen.sortear_preguntas = False
+    assert _elegidas(definicion, banco_grande, 7) == ["c00", "c01", "c02"]
+
+
+def test_el_presupuesto_tambien_se_sortea(banco_grande):
+    definicion = _definicion([PoolConfig(presupuesto_minutos=40)])
+    for semilla in range(5):
+        elegidas = _elegidas(definicion, banco_grande, semilla)
+        assert sum(banco_grande[f"deckard:{e}"].metadata["minutos"] for e in elegidas) <= 40
+    assert len({tuple(sorted(_elegidas(definicion, banco_grande, s))) for s in range(10)}) > 1
+
+
+# ---------------------------------------------------------------------------
+# Comandos con input_consignas y repositorios_externos
+# ---------------------------------------------------------------------------
+
+def _alucard(monkeypatch, capsys, args):
+    from generador_examenes.__main__ import main
+
+    monkeypatch.setattr(sys, "argv", ["alucard", *args])
+    try:
+        codigo = main()
+    except SystemExit as salida:
+        codigo = salida.code
+    captura = capsys.readouterr()
+    return codigo or 0, captura.out + captura.err
+
+
+def _yaml_con_fuentes(tmp_path, repo_deckard) -> Path:
+    local = tmp_path / "consignas"
+    _consigna(local, "propia", "lazos", 15)
+    ruta = tmp_path / "examen.yaml"
+    ruta.write_text(yaml.safe_dump({
+        "nombre_examen": "P", "institucion": "I", "materia": "M",
+        "configuracion_examen": {"generar_clave_profesor": True},
+        "input_consignas": [str(local)],
+        "repositorios_externos": [{"ruta": str(repo_deckard), "nombre": "enunciados"}],
+        "secciones_examen": [{"nombre": "Práctica", "pools": [{"tipos": ["consigna_practica"], "cantidad": 2}]}],
+    }, allow_unicode=True), encoding="utf-8")
+    return ruta
+
+
+def test_generacion_sin_input_banco(monkeypatch, capsys, tmp_path, repo_deckard):
+    definicion = _yaml_con_fuentes(tmp_path, repo_deckard)
+    codigo, salida = _alucard(monkeypatch, capsys, ["-d", str(definicion), "-o", str(tmp_path / "out"), "-f", "html"])
+    assert codigo == 0, salida
+    assert (tmp_path / "out" / "examen_tema_01.html").is_file()
+
+
+def test_build_y_balance_check_con_las_fuentes_de_la_definicion(monkeypatch, capsys, tmp_path, repo_deckard):
+    definicion = _yaml_con_fuentes(tmp_path, repo_deckard)
+    codigo, salida = _alucard(monkeypatch, capsys, ["build", "-d", str(definicion), "-f", "html", "-o", str(tmp_path / "b")])
+    assert codigo == 0, salida
+    assert (tmp_path / "b" / "examen_tema_01.html").is_file()
+    codigo, salida = _alucard(monkeypatch, capsys, ["balance-check", "-d", str(definicion), "--json"])
+    assert codigo == 0, salida
+
+
+def test_build_sin_yaml_con_consignas_y_repositorio(monkeypatch, capsys, tmp_path, repo_deckard):
+    local = tmp_path / "locales"
+    _consigna(local, "propia", "lazos", 15)
+    codigo, salida = _alucard(monkeypatch, capsys, [
+        "build", "--consignas", str(local), "--repositorio", str(repo_deckard), "-f", "html", "-o", str(tmp_path / "b")])
+    assert codigo == 0, salida
+    html = (tmp_path / "b" / "examen_tema_01.html").read_text(encoding="utf-8")
+    assert "Título propia" in html and "Título corta" in html
+
+
+def test_build_sin_ninguna_fuente_es_error_de_uso(monkeypatch, capsys, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    codigo, salida = _alucard(monkeypatch, capsys, ["build"])
+    assert codigo == 2, salida
+
+
+def test_category_tree_con_carpeta_y_definicion(monkeypatch, capsys, tmp_path, repo_deckard):
+    import json
+
+    preguntas = tmp_path / "preguntas"
+    preguntas.mkdir()
+    (preguntas / "t.gift").write_text("::P1:: ¿2+2? {=4 ~3}\n", encoding="utf-8")
+    definicion = _yaml_con_fuentes(tmp_path, repo_deckard)
+    codigo, salida = _alucard(monkeypatch, capsys, [
+        "--category-tree", str(preguntas), "-d", str(definicion), "-o", str(tmp_path / "arbol"), "--json"])
+    assert codigo == 0, salida
+    datos, _ = json.JSONDecoder().raw_decode(salida[salida.index("{"):])
+    assert datos["total_preguntas"] == 1 + 1 + 3  # gift + consigna local + repo (sin el prototipo)
+
+
+def test_spellcheck_revisa_tambien_las_consignas(monkeypatch, capsys, tmp_path, repo_deckard):
+    from generador_examenes.core import languagetool_checker
+
+    revisadas = []
+
+    def analizar(pregunta, **_opciones):
+        revisadas.append((pregunta.id, pregunta.enunciado_html))
+        return []
+
+    monkeypatch.setattr(languagetool_checker, "analizar_pregunta_languagetool", analizar)
+    definicion = _yaml_con_fuentes(tmp_path, repo_deckard)
+    codigo, salida = _alucard(monkeypatch, capsys, ["--spellcheck", "-d", str(definicion)])
+    assert codigo == 0, salida
+    textos = dict(revisadas)
+    assert set(textos) == {"deckard:propia", "deckard:corta", "deckard:media", "deckard:larga"}
+    assert "Escribir la función pedida" in textos["deckard:corta"]
+    assert "Segunda pista." in textos["deckard:corta"]
+
+
+def test_wizard_fuentes_y_pool_de_consignas():
+    from unittest.mock import patch
+
+    from generador_examenes.config.exam_wizard import ExamWizard
+
+    wizard = ExamWizard()
+    with patch("generador_examenes.config.exam_wizard.Prompt.ask") as ask, \
+         patch("generador_examenes.config.exam_wizard.Confirm.ask") as confirm, \
+         patch("generador_examenes.config.exam_wizard.console"):
+        ask.side_effect = ["bancos/teoria.gift", "consignas", "~/dev/tools/enunciados", "deckard", "enunciados"]
+        confirm.side_effect = [True, False]
+        wizard._configurar_fuentes()
+    assert wizard.config["input_banco"] == ["bancos/teoria.gift"]
+    assert wizard.config["input_consignas"] == ["consignas"]
+    assert wizard.config["repositorios_externos"] == [
+        {"ruta": "~/dev/tools/enunciados", "tipo": "deckard", "nombre": "enunciados"}]
+
+    with patch("generador_examenes.config.exam_wizard.Prompt.ask") as ask, \
+         patch("generador_examenes.config.exam_wizard.IntPrompt.ask") as int_ask, \
+         patch("generador_examenes.config.exam_wizard.Confirm.ask") as confirm, \
+         patch("generador_examenes.config.exam_wizard.console"):
+        ask.side_effect = ["consignas", "punteros", "advertir"]
+        confirm.return_value = True
+        int_ask.side_effect = [15, 40, 60, 25, 2]
+        pool = wizard._configurar_pool()
+    assert pool == {
+        "tipos": ["consigna_practica"], "categoria": "consignas/punteros", "minutos_min": 15, "minutos_max": 40,
+        "presupuesto_minutos": 60, "presentacion": {"lineas": 25}, "cantidad": 2, "accion_si_insuficiente": "advertir",
+    }
+    PoolConfig(**pool)
+    assert "min:15-40" in wizard._describir_pool(pool)

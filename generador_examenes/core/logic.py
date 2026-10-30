@@ -220,9 +220,28 @@ def _embeber_imagenes_en_html(html: str, path_imagenes: Path) -> str:
     return re.sub(pattern, reemplazar_src, html)
 
 
+def cargar_banco_definicion(definicion: DefinicionExamen,
+                            rutas_bancos: Optional[List[Path]] = None) -> Dict[str, Pregunta]:
+    """Todo el banco de una definición: los bancos (`rutas_bancos`, o su `input_banco`), sus consignas
+    prácticas locales (`input_consignas`) y sus repositorios externos."""
+    if rutas_bancos is None:
+        rutas_bancos = [Path(b) for b in definicion.input_banco or []]
+    banco = cargar_bancos(list(rutas_bancos))
+    if definicion.input_consignas or definicion.repositorios_externos:
+        from generador_examenes.core.consignas import cargar_fuentes_complementarias
+
+        complemento = cargar_fuentes_complementarias(definicion.input_consignas, definicion.repositorios_externos)
+        for pid, pregunta in complemento.items():
+            if pid in banco:
+                logger.warning(f"Pregunta duplicada encontrada: {pregunta} - sobrescribiendo")
+            banco[pid] = pregunta
+    return banco
+
+
 def construir_pool_examen(
     definicion: DefinicionExamen, 
-    banco: Dict[str, Pregunta]
+    banco: Dict[str, Pregunta],
+    semilla: Optional[int] = None,
 ) -> Dict[str, Any]:
     """
     Construye el pool de preguntas según la definición del examen
@@ -230,6 +249,7 @@ def construir_pool_examen(
     Args:
         definicion: Definición del examen con secciones y pools
         banco: Banco completo de preguntas disponibles
+        semilla: Semilla del sorteo de cada pool (por omisión, la de la definición)
         
     Returns:
         Diccionario con estructura del examen y preguntas seleccionadas
@@ -237,6 +257,9 @@ def construir_pool_examen(
     logger.info(f"Construyendo pool de examen: {definicion}")
     
     secciones_examen = []
+    if semilla is None:
+        semilla = definicion.semilla if definicion.semilla is not None else 42
+    sortear = definicion.configuracion_examen.sortear_preguntas
     
     for idx, seccion_def in enumerate(definicion.secciones_examen, 1):
         logger.info(f"Procesando {seccion_def} ({idx}/{len(definicion.secciones_examen)})")
@@ -245,8 +268,10 @@ def construir_pool_examen(
         
         for pool_idx, pool in enumerate(seccion_def.pools, 1):
             logger.debug(f"  Pool {pool_idx}/{len(seccion_def.pools)}")
+            # Un generador por pool: agregar o quitar un pool no cambia lo que sortean los demás.
+            rng = random.Random(f"{semilla}:{idx}:{pool_idx}") if sortear else None
             preguntas_pool = _filtrar_preguntas_pool(
-                pool, banco, definicion.configuracion_examen.presentacion_consignas
+                pool, banco, definicion.configuracion_examen.presentacion_consignas, rng=rng
             )
             preguntas_seccion.extend(preguntas_pool)
         
@@ -281,9 +306,11 @@ def _presentar(preguntas: List[Pregunta], pool: PoolConfig,
 
 
 def _filtrar_preguntas_pool(pool: PoolConfig, banco: Dict[str, Pregunta],
-                            presentacion_general: Optional[PresentacionConsigna] = None) -> List[Pregunta]:
+                            presentacion_general: Optional[PresentacionConsigna] = None,
+                            rng: Optional[random.Random] = None) -> List[Pregunta]:
     """
-    Filtra y selecciona preguntas según la configuración del pool
+    Filtra y selecciona preguntas según la configuración del pool; con `rng`, las que entran se
+    sortean (las fijadas no)
     """
     logger.debug(f"Filtrando preguntas para: {pool}")
     
@@ -330,6 +357,11 @@ def _filtrar_preguntas_pool(pool: PoolConfig, banco: Dict[str, Pregunta],
         maximo = pool.minutos_max if pool.minutos_max is not None else float("inf")
         candidatas = [p for p in candidatas if _minutos(p) is not None and minimo <= _minutos(p) <= maximo]  # type: ignore[operator]
         logger.debug(f"  → Filtro minutos [{pool.minutos_min}, {pool.minutos_max}]: {len(candidatas)} candidatas")
+
+    # Sorteo: el orden de las candidatas decide cuáles entran (por cantidad o por presupuesto)
+    if rng is not None:
+        candidatas = sorted(candidatas, key=lambda p: p.id)  # independiente del orden de carga
+        rng.shuffle(candidatas)
 
     # Filtro 6: presupuesto de minutos para todo el pool (entran en orden mientras alcance)
     if pool.presupuesto_minutos is not None:

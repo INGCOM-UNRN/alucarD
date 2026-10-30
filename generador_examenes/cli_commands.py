@@ -192,40 +192,47 @@ def ejecutar_sintetizar(args, logger) -> int:
         return 1
 
 
-def _bancos_de_definicion(ruta: Path) -> list[Path]:
-    """Rutas de los bancos (`input_banco`) que declara una definición YAML."""
+def _leer_definicion(ruta: Path):
     import yaml
     from generador_examenes.core.models import DefinicionExamen
 
     with open(ruta, 'r', encoding='utf-8') as f:
-        definicion = DefinicionExamen(**yaml.safe_load(f))
-    return [Path(b) for b in definicion.input_banco or []]
+        return DefinicionExamen(**yaml.safe_load(f))
+
+
+def _preguntas_a_revisar(rutas_bancos: list[Path], definicion) -> list:
+    """Las preguntas de los bancos y, con definición, también sus consignas y repositorios externos
+    (las consignas, con su texto completo para que se revise)."""
+    from generador_examenes.core.logic import cargar_banco_definicion, cargar_bancos
+
+    if definicion is None:
+        return list(cargar_bancos(rutas_bancos).values()) if rutas_bancos else []
+    from generador_examenes.core.consignas import presentar_consigna
+    from generador_examenes.core.models import PresentacionConsigna
+
+    completa = PresentacionConsigna(metadatos=False, funciones=False, pistas=100, espacio_respuesta=False)
+    return [presentar_consigna(p, completa) if p.tipo == "consigna_practica" else p
+            for p in cargar_banco_definicion(definicion, rutas_bancos).values()]
 
 
 def ejecutar_spellcheck(args, logger) -> int:
     # Modo spellcheck / languagetool
     try:
         import json
-        from generador_examenes.core.logic import cargar_bancos
         from generador_examenes.core.languagetool_checker import (
             analizar_pregunta_languagetool,
             aplicar_autofix_pregunta,
             generar_reporte_markdown_languagetool,
         )
 
-        # Mismo orden que la generación: --input-banco manda sobre el input_banco del YAML.
-        rutas_bancos: list[Path] = []
-        if args.input_banco:
-            rutas_bancos = list(args.input_banco)
-        elif args.definicion and args.definicion.is_file():
-            rutas_bancos = _bancos_de_definicion(args.definicion)
-        else:
-            for candidate in (Path('definicion.yaml'), Path('definicion_ejemplo.yaml')):
-                if candidate.is_file():
-                    rutas_bancos = _bancos_de_definicion(candidate)
-                    break
-        # cargar_bancos devuelve {id: Pregunta}.
-        preguntas_a_revisar = list(cargar_bancos(rutas_bancos).values()) if rutas_bancos else []
+        # Mismo orden que la generación: --input-banco manda sobre el input_banco del YAML; las
+        # consignas y repositorios externos de la definición se suman.
+        ruta_definicion = args.definicion if args.definicion and args.definicion.is_file() else next(
+            (c for c in (Path('definicion.yaml'), Path('definicion_ejemplo.yaml')) if c.is_file()), None)
+        definicion = _leer_definicion(ruta_definicion) if ruta_definicion else None
+        rutas_bancos: list[Path] = list(args.input_banco) if args.input_banco else (
+            [Path(b) for b in definicion.input_banco or []] if definicion else [])
+        preguntas_a_revisar = _preguntas_a_revisar(rutas_bancos, definicion)
 
         if not preguntas_a_revisar:
             print("No se encontraron preguntas para auditar con LanguageTool.")
@@ -297,10 +304,9 @@ def ejecutar_category_tree(args, logger) -> int:
     try:
         from generador_examenes.config.category_tree_viewer import (
             build_category_tree,
-            generate_html_content,
+            cargar_fuentes,
             main_category_viewer,
         )
-        from generador_examenes.parsers import obtener_parser
         
         banco_paths = args.category_tree
         for banco_path in banco_paths:
@@ -316,22 +322,13 @@ def ejecutar_category_tree(args, logger) -> int:
                 return 1
         
         output_path = args.output_dir / "category_tree.html" if args.output_dir else Path("output/category_tree.html")
-        resultado = main_category_viewer(banco_paths, output_path)
+        # Con -d, también las consignas y repositorios externos de la definición.
+        definicion = _leer_definicion(args.definicion) if getattr(args, 'definicion', None) else None
+        resultado = main_category_viewer(banco_paths, output_path, definicion)
         
         if getattr(args, 'json_output', False):
             import json
-            all_questions = {}
-            bancos_meta = []
-            for b in banco_paths:
-                p = obtener_parser(b)
-                qs = p.parse(b)
-                all_questions.update(qs)
-                bancos_meta.append({
-                    "path": str(b),
-                    "name": b.name,
-                    "count": len(qs),
-                    "tipo": b.suffix,
-                })
+            all_questions, bancos_meta = cargar_fuentes(banco_paths, definicion)
             tree = build_category_tree(all_questions)
             res = {
                 "version": "1.0",
@@ -415,16 +412,7 @@ def generar_examen(args, logger) -> int:
         
         # Cargar bancos de preguntas
         logger.info("Cargando bancos de preguntas...")
-        banco_completo = logic.cargar_bancos(input_banco or [])
-        if definicion.input_consignas or definicion.repositorios_externos:
-            from generador_examenes.core.consignas import cargar_fuentes_complementarias
-
-            logger.info("Cargando consignas prácticas y repositorios externos...")
-            complemento = cargar_fuentes_complementarias(definicion.input_consignas, definicion.repositorios_externos)
-            for pid, pregunta in complemento.items():
-                if pid in banco_completo:
-                    logger.warning(f"Pregunta duplicada encontrada: {pregunta} - sobrescribiendo")
-                banco_completo[pid] = pregunta
+        banco_completo = logic.cargar_banco_definicion(definicion, list(input_banco or []))
         
         if not banco_completo:
             logger.error("No se cargaron preguntas de los bancos")
@@ -437,7 +425,7 @@ def generar_examen(args, logger) -> int:
         
         # Construir pool del examen
         logger.info("Construyendo pool del examen...")
-        examen_base = logic.construir_pool_examen(definicion, banco_completo)
+        examen_base = logic.construir_pool_examen(definicion, banco_completo, semilla)
         
         # Completitud de la clave (QoL #7): sin opción correcta no se imprime.
         sin_clave = logic.auditar_claves(examen_base)

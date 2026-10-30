@@ -179,6 +179,26 @@ pools:
 
 Con un filtro de tiempo, las preguntas sin tiempo estimado (las de GIFT/XML) quedan afuera del pool.
 
+**Sorteo.** Cada pool sortea qué preguntas entran (por `cantidad` o por `presupuesto_minutos`) con
+la semilla del examen (`semilla` / `-s`): la misma semilla da el mismo examen, y cambiarla cambia
+las consignas elegidas. `configuracion_examen.sortear_preguntas: false` toma las primeras que pasan
+los filtros. Los temas (`-n`) comparten las preguntas y cambian su orden y el de las opciones.
+
+**Comandos.** Todos usan las fuentes de la definición:
+
+```bash
+alucard build -d parcial.yaml                         # sin -i: input_banco + consignas + repositorios
+alucard build --consignas consignas --repositorio ~/dev/tools/enunciados   # sin YAML
+alucard balance-check -d parcial.yaml --repositorio ~/catedra/preguntas
+alucard --category-tree ~/dev/tools/enunciados        # una carpeta: repositorio de preguntas o de consignas
+alucard --category-tree bancos/teoria.gift -d parcial.yaml   # suma las fuentes de la definición
+alucard --spellcheck -d parcial.yaml                  # revisa también el texto de las consignas
+```
+
+`-i` reemplaza al `input_banco` de la definición; `--consignas` y `--repositorio` (repetibles) se
+suman a `input_consignas` y `repositorios_externos`. El asistente (`--wizard`) pregunta por las
+fuentes y ofrece pools de consignas con tema, filtros de tiempo y renglones para resolver.
+
 **Presentación.** `configuracion_examen.presentacion_consignas` fija qué muestra el examen de
 cada consigna; cada pool puede cambiar sólo algunas claves en `presentacion`:
 

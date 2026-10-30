@@ -16,6 +16,8 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - **presentación de las consignas**: `configuracion_examen.presentacion_consignas` y `presentacion` por pool deciden qué se muestra (título, metadatos, enunciado y secciones a omitir, tabla de funciones, cabecera, cuántas pistas), si hay espacio para resolver y con cuántos renglones, y si la solución va a la clave.
 - **pools**: filtros por tiempo requerido `minutos_min`, `minutos_max` y `presupuesto_minutos` (suma máxima de lo elegido).
 - **typst**: las tablas, títulos y listas del HTML de las preguntas pasan al PDF.
+- **pools**: sorteo de las preguntas que entran en cada pool con la semilla del examen (reproducible, y el mismo en `build` y `balance-check`); `configuracion_examen.sortear_preguntas: false` vuelve a tomar las primeras que pasan los filtros.
+- **comandos**: `build` y `balance-check` usan `input_consignas` y `repositorios_externos` de la definición, ya no exigen `-i` y suman `--consignas` y `--repositorio` (también sin YAML); `--spellcheck` revisa también las consignas y los repositorios de la definición; `--category-tree` acepta carpetas (repositorios de preguntas o de consignas) y, con `-d`, suma las fuentes de la definición; `--wizard` pregunta por bancos, consignas, repositorios externos y sorteo, y arma pools de consignas con filtros de tiempo y renglones.
 
 ## [5.11.0] - 2026-09-28
 

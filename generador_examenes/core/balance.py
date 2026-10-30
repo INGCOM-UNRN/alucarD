@@ -16,11 +16,19 @@ UMBRAL_POR_OMISION = 0.30
 
 
 def definicion_implicita(bancos: Sequence[Path], titulo: Optional[str] = None, materia: str = "",
-                         institucion: str = "") -> Dict[str, Any]:
+                         institucion: str = "", consignas: Sequence[Path] = (),
+                         repositorios: Sequence[Path] = ()) -> Dict[str, Any]:
     """Una definición con todas las preguntas de los bancos en una sección: para `alucard build -i banco`
-    sin YAML (por ejemplo, el Moodle XML que genera idkfa)."""
-    nombre = titulo or (Path(bancos[0]).stem.replace("_", " ") if bancos else "Examen")
+    sin YAML (por ejemplo, el Moodle XML que genera idkfa). `consignas` y `repositorios` pasan a
+    `input_consignas` y `repositorios_externos` (tipo auto)."""
+    nombre = titulo or next((Path(r).stem.replace("_", " ") for r in [*bancos, *consignas, *repositorios]), "Examen")
+    extra: Dict[str, Any] = {}
+    if consignas:
+        extra["input_consignas"] = [str(c) for c in consignas]
+    if repositorios:
+        extra["repositorios_externos"] = [{"ruta": str(r)} for r in repositorios]
     return {
+        **extra,
         "nombre_examen": nombre,
         "institucion": institucion,
         "materia": materia,
@@ -30,12 +38,15 @@ def definicion_implicita(bancos: Sequence[Path], titulo: Optional[str] = None, m
     }
 
 
-def armar_temas(definicion, bancos: Sequence[Path], numero_temas: int, semilla: int) -> List[Dict[str, Any]]:
-    """Los temas tal como los genera `alucard` (misma semilla por tema), sin renderizarlos."""
+def armar_temas(definicion, bancos: Optional[Sequence[Path]], numero_temas: int, semilla: int) -> List[Dict[str, Any]]:
+    """Los temas tal como los genera `alucard` (mismo sorteo y misma semilla por tema), sin renderizarlos.
+
+    `bancos` reemplaza al `input_banco` de la definición (como `-i`); las consignas y los
+    repositorios externos de la definición se suman siempre."""
     from generador_examenes.core import logic
 
-    banco = logic.cargar_bancos(list(bancos))
-    base = logic.construir_pool_examen(definicion, banco)
+    banco = logic.cargar_banco_definicion(definicion, list(bancos) if bancos else None)
+    base = logic.construir_pool_examen(definicion, banco, semilla)
     uso_global: Dict[int, int] = {}
     return [logic.mezclar_examen(base, semilla + i, definicion.configuracion_examen, uso_global=uso_global)
             for i in range(numero_temas)]

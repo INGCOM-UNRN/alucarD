@@ -9,7 +9,7 @@ de uno o más bancos de preguntas con contadores y botones para copiar nombres.
 import logging
 from functools import lru_cache
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from collections import defaultdict
 import json
 
@@ -89,41 +89,52 @@ def build_category_tree(banco_preguntas: Dict) -> CategoryNode:
     return root
 
 
-def generate_html_tree(banco_paths: List[Path], output_path: Path) -> Path:
+def cargar_fuentes(banco_paths: List[Path], definicion: Any = None) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
+    """Las preguntas de los bancos (archivos GIFT/XML, o carpetas: repositorios de preguntas o de
+    consignas deckard) y, con `definicion`, sus consignas locales y repositorios externos."""
+    from generador_examenes.core.consignas import cargar_consignas, cargar_repositorio
+    from generador_examenes.core.models import RepositorioExterno
+    from generador_examenes.parsers import obtener_parser
+
+    fuentes: List[Tuple[str, str, Any]] = []
+    for banco_path in banco_paths:
+        if banco_path.is_dir():
+            fuentes.append((str(banco_path), "carpeta", lambda r=banco_path: cargar_repositorio(RepositorioExterno(ruta=str(r)))))
+        else:
+            fuentes.append((str(banco_path), banco_path.suffix, lambda r=banco_path: obtener_parser(r).parse(r)))
+    if definicion is not None:
+        for c in definicion.input_consignas or []:
+            fuentes.append((str(c), "consignas", lambda c=c: cargar_consignas(c)))
+        for repo in definicion.repositorios_externos:
+            fuentes.append((repo.ruta, f"repositorio {repo.tipo}", lambda repo=repo: cargar_repositorio(repo)))
+
+    all_questions: Dict[str, Any] = {}
+    banco_info: List[Dict[str, Any]] = []
+    for ruta, tipo, cargar in fuentes:
+        try:
+            preguntas = cargar()
+        except Exception as e:
+            logger.error(f"✗ Error cargando {ruta}: {e}")
+            continue
+        all_questions.update(preguntas)
+        banco_info.append({'path': ruta, 'name': Path(ruta).name, 'count': len(preguntas), 'tipo': tipo})
+        logger.info(f"✓ Cargado: {Path(ruta).name} ({len(preguntas)} preguntas)")
+    return all_questions, banco_info
+
+
+def generate_html_tree(banco_paths: List[Path], output_path: Path, definicion: Any = None) -> Path:
     """
     Genera un archivo HTML con el árbol de categorías de los bancos.
     
     Args:
-        banco_paths: Lista de rutas a archivos de banco de preguntas
+        banco_paths: Rutas a bancos de preguntas (archivos o carpetas de repositorios)
         output_path: Ruta donde guardar el HTML
+        definicion: Definición del examen cuyas consignas y repositorios externos se suman
         
     Returns:
         Ruta del archivo HTML generado
     """
-    from generador_examenes.parsers import obtener_parser
-    
-    # Cargar todos los bancos
-    all_questions = {}
-    banco_info = []
-    
-    for banco_path in banco_paths:
-        try:
-            parser = obtener_parser(banco_path)
-            preguntas = parser.parse(banco_path)
-            
-            all_questions.update(preguntas)
-            banco_info.append({
-                'path': str(banco_path),
-                'name': banco_path.name,
-                'count': len(preguntas),
-                'tipo': banco_path.suffix
-            })
-            
-            logger.info(f"✓ Cargado banco: {banco_path.name} ({len(preguntas)} preguntas)")
-            
-        except Exception as e:
-            logger.error(f"✗ Error cargando {banco_path}: {e}")
-            continue
+    all_questions, banco_info = cargar_fuentes(banco_paths, definicion)
     
     if not all_questions:
         raise ValueError("No se pudieron cargar preguntas de ningún banco")
@@ -163,7 +174,7 @@ def generate_html_content(tree: CategoryNode, banco_info: List[dict], total_ques
     )
 
 
-def main_category_viewer(banco_paths: List[Path], output_path: Optional[Path] = None) -> Path:
+def main_category_viewer(banco_paths: List[Path], output_path: Optional[Path] = None, definicion: Any = None) -> Path:
     """
     Función principal para generar el visor de categorías.
     
@@ -177,4 +188,4 @@ def main_category_viewer(banco_paths: List[Path], output_path: Optional[Path] = 
     if output_path is None:
         output_path = Path("output/category_tree.html")
     
-    return generate_html_tree(banco_paths, output_path)
+    return generate_html_tree(banco_paths, output_path, definicion)

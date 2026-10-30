@@ -142,6 +142,8 @@ class ConfiguracionExamen(BaseModel):
     mezclar_preguntas_dentro_seccion: bool = True
     mezclar_opciones_dentro_pregunta: bool = True
     generar_clave_profesor: bool = True
+    # Cada pool sortea qué preguntas entran (con la semilla del examen); false: las primeras que pasan los filtros.
+    sortear_preguntas: bool = True
     presentacion_consignas: PresentacionConsigna = Field(default_factory=PresentacionConsigna)
     
     def __str__(self) -> str:

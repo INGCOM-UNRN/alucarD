@@ -298,7 +298,7 @@ def _cli(
     ),
     category_tree: Optional[List[Path]] = typer.Option(
         None, "--category-tree", metavar="BANCO",
-        help="Generar árbol HTML de categorías de uno o más bancos de preguntas",
+        help="Generar árbol HTML de categorías de uno o más bancos (archivos, o carpetas de preguntas o consignas deckard; con -d, también las fuentes de la definición)",
     ),
     sintetizar: Optional[str] = typer.Option(
         None, "--sintetizar", metavar="PLANTILLA",
@@ -447,24 +447,40 @@ def _cli(
 
 
 def _cargar_definicion(definicion: Optional[Path], bancos: List[Path], titulo: Optional[str], materia: str,
-                       institucion: str):
-    """La definición del YAML o, sin él, una con todas las preguntas de los bancos."""
+                       institucion: str, consignas: Optional[List[Path]] = None,
+                       repositorios: Optional[List[Path]] = None):
+    """La definición del YAML o, sin él, una con todas las preguntas de los bancos, consignas y repositorios."""
     import yaml
 
     from generador_examenes.core.balance import definicion_implicita
     from generador_examenes.core.models import DefinicionExamen
 
-    if definicion is not None:
-        datos = yaml.safe_load(definicion.read_text(encoding="utf-8"))
+    if definicion is None:
+        if not bancos and not consignas and not repositorios:
+            _usage_error("Se requiere -d/--definicion, o al menos un -i/--input-banco, --consignas o --repositorio")
+        datos = definicion_implicita(bancos, titulo, materia, institucion, consignas or [], repositorios or [])
     else:
-        datos = definicion_implicita(bancos, titulo, materia, institucion)
+        datos = yaml.safe_load(definicion.read_text(encoding="utf-8"))
+        if consignas:
+            datos["input_consignas"] = [*(datos.get("input_consignas") or []), *map(str, consignas)]
+        if repositorios:
+            datos["repositorios_externos"] = [*(datos.get("repositorios_externos") or []),
+                                              *({"ruta": str(r)} for r in repositorios)]
     return DefinicionExamen(**datos), datos
+
+
+_AYUDA_CONSIGNAS = "Carpeta de consignas prácticas deckard (se suma a input_consignas). Repetible."
+_AYUDA_REPOSITORIO = ("Repositorio externo de la computadora: carpeta de bancos GIFT/XML o de consignas deckard "
+                      "(se suma a repositorios_externos, tipo auto). Repetible.")
 
 
 @app.command("build")
 def _build(
-    input_banco: List[Path] = typer.Option(..., "-i", "--input-banco", exists=True, dir_okay=False,
-                                           help="Banco(s) de preguntas: Moodle XML (el de idkfa), GIFT…"),
+    input_banco: Optional[List[Path]] = typer.Option(None, "-i", "--input-banco", exists=True, dir_okay=False,
+                                                     help="Banco(s) de preguntas: Moodle XML (el de idkfa), GIFT… "
+                                                          "Reemplaza al input_banco de la definición."),
+    consignas: Optional[List[Path]] = typer.Option(None, "--consignas", exists=True, file_okay=False, help=_AYUDA_CONSIGNAS),
+    repositorio: Optional[List[Path]] = typer.Option(None, "--repositorio", exists=True, help=_AYUDA_REPOSITORIO),
     definicion: Optional[Path] = typer.Option(None, "-d", "--definicion", exists=True, dir_okay=False,
                                               help="Definición YAML; sin ella, una sección con todas las preguntas."),
     numero_temas: int = typer.Option(1, "-n", "--numero-temas", min=1, help="Temas (variantes) a generar."),
@@ -476,7 +492,7 @@ def _build(
     institucion: str = typer.Option("", "--institucion", help="Sin YAML: institución."),
     umbral: float = typer.Option(0.30, "--umbral", min=0.0, max=1.0, help="Frecuencia máxima de una letra correcta."),
 ) -> None:
-    """Genera los temas en PDF desde un banco (sin YAML hace falta sólo -i) y audita el balance de claves.
+    """Genera los temas en PDF desde un banco (sin YAML basta -i, --consignas o --repositorio) y audita el balance de claves.
 
     Cada tema reparte la opción correcta entre las letras (la menos usada, sin rachas); al terminar se
     muestra en qué letra quedó la correcta en cada tema. Sale con 1 si la generación falla o si alguna
@@ -494,10 +510,11 @@ def _build(
         if fmt not in ("html", "pdf"):
             _usage_error(f"argumento -f/--formato: valor inválido: '{fmt}' (elegir entre 'html', 'pdf')")
     setup_logging(debug=False)
-    definicion_modelo, datos = _cargar_definicion(definicion, input_banco, titulo, materia, institucion)
+    definicion_modelo, datos = _cargar_definicion(definicion, input_banco or [], titulo, materia, institucion,
+                                                  consignas, repositorio)
     with tempfile.TemporaryDirectory(prefix="alucard-build-") as tmp:
         ruta = definicion
-        if ruta is None:
+        if ruta is None or consignas or repositorio:
             ruta = Path(tmp) / "definicion.yaml"
             ruta.write_text(yaml.safe_dump(datos, allow_unicode=True), encoding="utf-8")
         args = SimpleNamespace(definicion=ruta, input_banco=input_banco, output_dir=output_dir, path_images=None,
@@ -515,8 +532,10 @@ def _build(
 
 @app.command("balance-check")
 def _balance_check(
-    input_banco: List[Path] = typer.Option(..., "-i", "--input-banco", exists=True, dir_okay=False,
-                                           help="Banco(s) de preguntas."),
+    input_banco: Optional[List[Path]] = typer.Option(None, "-i", "--input-banco", exists=True, dir_okay=False,
+                                                     help="Banco(s) de preguntas; reemplaza al input_banco de la definición."),
+    consignas: Optional[List[Path]] = typer.Option(None, "--consignas", exists=True, file_okay=False, help=_AYUDA_CONSIGNAS),
+    repositorio: Optional[List[Path]] = typer.Option(None, "--repositorio", exists=True, help=_AYUDA_REPOSITORIO),
     definicion: Optional[Path] = typer.Option(None, "-d", "--definicion", exists=True, dir_okay=False,
                                               help="Definición YAML; sin ella, todas las preguntas."),
     numero_temas: int = typer.Option(4, "-n", "--numero-temas", min=1, help="Temas a auditar."),
@@ -536,7 +555,7 @@ def _balance_check(
     from generador_examenes.core.balance import armar_temas, auditar_balance, texto_del_informe
 
     setup_logging(debug=False)
-    definicion_modelo, _ = _cargar_definicion(definicion, input_banco, None, "", "")
+    definicion_modelo, _ = _cargar_definicion(definicion, input_banco or [], None, "", "", consignas, repositorio)
     reporte = auditar_balance(armar_temas(definicion_modelo, input_banco, numero_temas, semilla), umbral)
     print(json.dumps(reporte, ensure_ascii=False, indent=2) if json_output else texto_del_informe(reporte))
     _ultimo_codigo_salida["code"] = 0 if reporte["ok"] else 1
