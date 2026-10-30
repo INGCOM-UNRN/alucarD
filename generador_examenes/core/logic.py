@@ -10,7 +10,7 @@ from copy import deepcopy
 import re
 
 from generador_examenes.core.models import (
-    Pregunta, DefinicionExamen, SeccionExamen, PoolConfig, ConfiguracionExamen
+    Pregunta, DefinicionExamen, SeccionExamen, PoolConfig, ConfiguracionExamen, PresentacionConsigna
 )
 from generador_examenes.parsers import obtener_parser
 
@@ -245,7 +245,9 @@ def construir_pool_examen(
         
         for pool_idx, pool in enumerate(seccion_def.pools, 1):
             logger.debug(f"  Pool {pool_idx}/{len(seccion_def.pools)}")
-            preguntas_pool = _filtrar_preguntas_pool(pool, banco)
+            preguntas_pool = _filtrar_preguntas_pool(
+                pool, banco, definicion.configuracion_examen.presentacion_consignas
+            )
             preguntas_seccion.extend(preguntas_pool)
         
         secciones_examen.append({
@@ -263,7 +265,23 @@ def construir_pool_examen(
     return {'secciones': secciones_examen}
 
 
-def _filtrar_preguntas_pool(pool: PoolConfig, banco: Dict[str, Pregunta]) -> List[Pregunta]:
+def _minutos(pregunta: Pregunta) -> Optional[int]:
+    """Tiempo estimado de una pregunta (el de las consignas prácticas de deckard)."""
+    minutos = pregunta.metadata.get("minutos")
+    return int(minutos) if minutos is not None else None
+
+
+def _presentar(preguntas: List[Pregunta], pool: PoolConfig,
+               presentacion_general: Optional[PresentacionConsigna]) -> List[Pregunta]:
+    """Las consignas prácticas, con lo que el examen muestra de ellas (el resto, tal cual)."""
+    from generador_examenes.core.consignas import presentacion_efectiva, presentar_consigna
+
+    presentacion = presentacion_efectiva(presentacion_general or PresentacionConsigna(), pool.presentacion)
+    return [presentar_consigna(p, presentacion) if p.tipo == "consigna_practica" else p for p in preguntas]
+
+
+def _filtrar_preguntas_pool(pool: PoolConfig, banco: Dict[str, Pregunta],
+                            presentacion_general: Optional[PresentacionConsigna] = None) -> List[Pregunta]:
     """
     Filtra y selecciona preguntas según la configuración del pool
     """
@@ -274,7 +292,7 @@ def _filtrar_preguntas_pool(pool: PoolConfig, banco: Dict[str, Pregunta]) -> Lis
     
     # Filtro 1: Preguntas fijadas
     if pool.preguntas_fijadas:
-        fijadas = [banco[id_p] for id_p in pool.preguntas_fijadas if id_p in banco]
+        fijadas = _presentar([banco[id_p] for id_p in pool.preguntas_fijadas if id_p in banco], pool, presentacion_general)
         logger.debug(f"  → {len(fijadas)} preguntas fijadas seleccionadas")
         if logger.isEnabledFor(logging.DEBUG):
             for p in fijadas[:3]:
@@ -305,6 +323,25 @@ def _filtrar_preguntas_pool(pool: PoolConfig, banco: Dict[str, Pregunta]) -> Lis
             if any(tag in p.etiquetas for tag in pool.etiquetas)
         ]
         logger.debug(f"  → Filtro etiquetas {pool.etiquetas}: {len(candidatas)} candidatas")
+
+    # Filtro 5: tiempo requerido (minutos estimados); sin estimación, la pregunta no califica
+    if pool.minutos_min is not None or pool.minutos_max is not None:
+        minimo = pool.minutos_min if pool.minutos_min is not None else 0
+        maximo = pool.minutos_max if pool.minutos_max is not None else float("inf")
+        candidatas = [p for p in candidatas if _minutos(p) is not None and minimo <= _minutos(p) <= maximo]  # type: ignore[operator]
+        logger.debug(f"  → Filtro minutos [{pool.minutos_min}, {pool.minutos_max}]: {len(candidatas)} candidatas")
+
+    # Filtro 6: presupuesto de minutos para todo el pool (entran en orden mientras alcance)
+    if pool.presupuesto_minutos is not None:
+        dentro: List[Pregunta] = []
+        usados = 0
+        for p in candidatas:
+            minutos = _minutos(p)
+            if minutos is not None and usados + minutos <= pool.presupuesto_minutos:
+                dentro.append(p)
+                usados += minutos
+        candidatas = dentro
+        logger.debug(f"  → Presupuesto de {pool.presupuesto_minutos} min: {len(candidatas)} candidatas ({usados} min)")
     
     # Verificar cantidad
     cantidad_solicitada = pool.cantidad if pool.cantidad else len(candidatas)
@@ -324,7 +361,7 @@ def _filtrar_preguntas_pool(pool: PoolConfig, banco: Dict[str, Pregunta]) -> Lis
             cantidad_solicitada = len(candidatas)
     
     # Seleccionar preguntas (aún sin mezclar, eso se hace en mezclar_examen)
-    seleccionadas = candidatas[:cantidad_solicitada]
+    seleccionadas = _presentar(candidatas[:cantidad_solicitada], pool, presentacion_general)
     
     # Aplicar puntaje fijo si está especificado
     if pool.puntaje_fijo_por_pregunta:

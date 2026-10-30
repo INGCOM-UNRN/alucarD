@@ -17,6 +17,9 @@ _PRE = re.compile(r"<pre\b[^>]*>(?:\s*<code\b(?P<attrs>[^>]*)>)?(?P<codigo>.*?)(
 _FENCE = re.compile(r"```(?P<lang>[\w+#-]*)\n(?P<codigo>.*?)```", re.S)
 _CODE = re.compile(r"<code\b[^>]*>(?P<codigo>.*?)</code>", re.S | re.I)
 _LENGUAJE = re.compile(r"language-([\w+#-]+)")
+_TABLA = re.compile(r"<table\b[^>]*>(?P<cuerpo>.*?)</table>", re.S | re.I)
+_FILA = re.compile(r"<tr\b[^>]*>(?P<celdas>.*?)</tr>", re.S | re.I)
+_CELDA = re.compile(r"<t(?P<tipo>[hd])\b[^>]*>(?P<contenido>.*?)</t[hd]>", re.S | re.I)
 
 
 def _cadena(texto: str) -> str:
@@ -52,6 +55,17 @@ def html_a_typst(fragmento: object) -> str:
         lang = f', lang: "{m.group("lang")}"' if m.group("lang") else ""
         return apartar(f"\n#raw(block: true{lang}, {_cadena(_texto_plano(m.group('codigo')).rstrip())})\n")
 
+    def tabla(m: re.Match) -> str:
+        filas = [[(c.group("tipo").lower(), html_a_typst(c.group("contenido"))) for c in _CELDA.finditer(f.group("celdas"))]
+                 for f in _FILA.finditer(m.group("cuerpo"))]
+        filas = [f for f in filas if f]
+        if not filas:
+            return ""
+        columnas = max(len(f) for f in filas)
+        celdas = ", ".join(f"[#strong[{c}]]" if tipo == "h" else f"[{c}]" for f in filas for tipo, c in f)
+        return apartar(f"\n#table(columns: {columnas}, inset: 4pt, {celdas})\n")
+
+    texto = _TABLA.sub(tabla, texto)
     texto = _PRE.sub(bloque_pre, texto)
     texto = _FENCE.sub(bloque_fence, texto)
     texto = _CODE.sub(lambda m: apartar(f"#raw({_cadena(_texto_plano(m.group('codigo')))})"), texto)
@@ -67,6 +81,10 @@ def html_a_typst(fragmento: object) -> str:
             salida.append("]" if cierra else "#emph[")
         elif nombre == "br":
             salida.append(" \\\n")
+        elif re.fullmatch(r"h[1-6]", nombre):
+            salida.append("]\n\n" if cierra else "\n\n#strong[")
+        elif nombre == "li" and not cierra:
+            salida.append("\n- ")
         elif nombre in ("p", "div", "li", "ul", "ol") and cierra:
             salida.append("\n\n")
         ultimo = m.end()

@@ -261,6 +261,19 @@ body {
   min-height: 14em;
 }
 
+/* Consignas prácticas: renglones para resolver (la cantidad la fija la presentación) */
+.renglones {
+  margin-top: 0.5em;
+  border: 1px solid #666;
+  border-radius: 3px;
+  padding: 0 0.5em;
+}
+
+.renglon {
+  height: 1.6em;
+  border-bottom: 1px dotted #aaa;
+}
+
 /* En layouts compactos, las preguntas de desarrollo ocupan todo el ancho */
 .section.layout-compact-2col .desarrollo-box,
 .section.layout-compact-3col .desarrollo-box,
@@ -535,6 +548,12 @@ code {
             {% elif pregunta.tipo == 'desarrollo' %}
             <div class="desarrollo-box {{ pregunta.tamano_desarrollo or 'mediano' }}">
             </div>
+            {% elif pregunta.tipo == 'consigna_practica' %}
+            {% if pregunta.lineas_respuesta %}
+            <div class="renglones">
+                {% for _ in range(pregunta.lineas_respuesta) %}<div class="renglon"></div>{% endfor %}
+            </div>
+            {% endif %}
             {% else %}
             <div class="answer-space"></div>
             {% endif %}

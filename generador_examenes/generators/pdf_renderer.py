@@ -50,10 +50,11 @@ def compilar_typst_a_pdf(typst_source: str, output_pdf: Path, root_dir: Optional
 
 def _con_filtros(env):
     """`|typst` convierte el HTML de las preguntas a marcado Typst; `letra(i)` da A, B, C…"""
-    from generador_examenes.generators.typst_markup import escapar, html_a_typst, largo_visible, letra
+    from generador_examenes.generators.typst_markup import _cadena, escapar, html_a_typst, largo_visible, letra
 
     env.filters["typst"] = html_a_typst
     env.filters["typst_texto"] = lambda t: escapar("" if t is None else str(t))
+    env.filters["typst_cadena"] = lambda t: _cadena("" if t is None else str(t))
     env.globals["letra"] = letra
     env.filters["largo_visible"] = largo_visible
     return env

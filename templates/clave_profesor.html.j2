@@ -195,6 +195,13 @@
                     {% if opcion.es_correcta %}{{ opcion.texto_html | safe }}{% endif %}
                 {% endfor %}
             </div>
+            {% elif pregunta.tipo == 'consigna_practica' %}
+            {% if pregunta.metadata.solucion_html %}
+            <div class="correct-answer">
+                <strong>{{ i18n.correct_answer }}:</strong>
+                {{ pregunta.metadata.solucion_html | safe }}
+            </div>
+            {% endif %}
             {% else %}
             <div class="correct-answer">
                 <strong>{{ i18n.correct_answer }}:</strong>

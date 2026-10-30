@@ -144,6 +144,57 @@ gift-linter bancos/preguntas_c.gift
 gift-linter bancos/*.gift --fix
 ```
 
+### Consignas prácticas y repositorios externos
+
+Además de los bancos GIFT/XML (`input_banco` / `-i`), la definición puede sumar:
+
+```yaml
+# Consignas prácticas de deckard del proyecto (las crea --init en consignas/)
+input_consignas: ["consignas"]
+
+# Repositorios de la misma computadora que complementan el banco del proyecto
+repositorios_externos:
+  - ruta: "~/dev/tools/enunciados"   # repositorio de enunciados: usa su banco/
+    tipo: deckard                    # auto (por omisión) | preguntas | deckard
+    nombre: enunciados               # etiqueta repo:enunciados
+    incluir_no_publicados: false     # consignas con publicar: false
+  - ruta: "~/catedra/preguntas"      # todos los .gift/.txt/.xml de la carpeta
+    tipo: preguntas
+```
+
+Cada consigna es una pregunta `consigna_practica` con id `deckard:<id>`, categoría
+`consignas/<tema>` y etiquetas `<tags del ejercicio>`, `<tema>`, `bloom:<n>` y `repo:<nombre>`:
+los pools la eligen con los filtros de siempre (`tipos`, `categoria`, `etiquetas`,
+`preguntas_fijadas`) y con los de tiempo requerido:
+
+```yaml
+pools:
+  - tipos: ["consigna_practica"]
+    categoria: "consignas/punteros"
+    minutos_min: 15              # minutos estimados del ejercicio
+    minutos_max: 40
+    presupuesto_minutos: 60      # suma máxima de las consignas elegidas
+    cantidad: 2
+```
+
+Con un filtro de tiempo, las preguntas sin tiempo estimado (las de GIFT/XML) quedan afuera del pool.
+
+**Presentación.** `configuracion_examen.presentacion_consignas` fija qué muestra el examen de
+cada consigna; cada pool puede cambiar sólo algunas claves en `presentacion`:
+
+| Clave | Por omisión | Qué hace |
+| :--- | :--- | :--- |
+| `titulo` | `true` | El título del ejercicio. |
+| `metadatos` | `false` | Tema, nivel de Bloom y minutos estimados. |
+| `enunciado` | `true` | El enunciado (el MyST de deckard se pasa a Markdown común). |
+| `secciones_excluidas` | `[]` | Secciones del enunciado a omitir, por su título o parte de él (`"Contrato"`, `"Criterios"`). |
+| `funciones` | `false` | Tabla con las firmas de las funciones. |
+| `cabecera` | `false` | El archivo `.h` del ejercicio. |
+| `pistas` | `0` | Cuántas pistas mostrar. |
+| `espacio_respuesta` | `true` | Renglones para resolver debajo de la consigna. |
+| `lineas` | `20` | Cuántos renglones. |
+| `solucion_en_clave` | `true` | La solución de la cátedra en la clave del profesor. |
+
 ---
 
 ## 4. Formatos de Salida y Contratos de Integración

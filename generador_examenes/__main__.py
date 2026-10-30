@@ -36,7 +36,7 @@ def inicializar_proyecto():
     logger = logging.getLogger(__name__)
     
     # Crear directorios
-    dirs_crear = ['templates', 'i18n', 'bancos', 'output']
+    dirs_crear = ['templates', 'i18n', 'bancos', 'consignas', 'output']
     for dir_name in dirs_crear:
         dir_path = Path(dir_name)
         if not dir_path.exists():
@@ -89,6 +89,30 @@ configuracion_examen:
   mezclar_opciones_dentro_pregunta: true
   generar_clave_profesor: true
   incluir_metadata_debug: false
+  # Qué se muestra de cada consigna práctica (deckard); cada pool puede cambiar parte en `presentacion`.
+  presentacion_consignas:
+    titulo: true
+    metadatos: false            # tema, nivel de Bloom y minutos estimados
+    enunciado: true
+    secciones_excluidas: ["Criterios de Aceptación"]   # secciones del enunciado que no van al papel
+    funciones: true             # tabla con las firmas
+    cabecera: false             # el archivo .h
+    pistas: 0                   # cuántas pistas mostrar
+    espacio_respuesta: true
+    lineas: 20                  # renglones para resolver
+    solucion_en_clave: true
+
+# Consignas prácticas de deckard del proyecto (consignas/<tema>/<id>/ejercicio.yaml)
+input_consignas: ["consignas"]
+
+# Repositorios de la misma computadora que complementan los bancos del proyecto:
+# carpetas de preguntas GIFT/XML o bancos de consignas deckard (tipo auto|preguntas|deckard).
+# repositorios_externos:
+#   - ruta: "~/dev/tools/enunciados"       # repositorio de enunciados (usa su banco/)
+#     tipo: deckard
+#     nombre: enunciados                   # etiqueta repo:enunciados para filtrar
+#   - ruta: "~/catedra/preguntas"
+#     tipo: preguntas
 
 secciones_examen:
   - nombre: "Sección 1 - Preguntas de Ejemplo"
@@ -96,6 +120,17 @@ secciones_examen:
     pools:
       - cantidad: 5
         tipos: ["seleccion_multiple"]
+
+  - nombre: "Sección 2 - Consigna Práctica"
+    instrucciones: "Resolvé en C la consigna en el espacio indicado"
+    pools:
+      - tipos: ["consigna_practica"]
+        cantidad: 1
+        minutos_max: 30           # filtros opcionales por tiempo requerido
+        # minutos_min: 10
+        # presupuesto_minutos: 45 # suma máxima de minutos de las consignas elegidas
+        presentacion:
+          lineas: 25
 """
         definicion_ejemplo.write_text(contenido_definicion, encoding='utf-8')
         logger.info(f"✓ Archivo creado: definicion_ejemplo.yaml")
@@ -127,6 +162,55 @@ secciones_examen:
     else:
         logger.info(f"  Banco ya existe: bancos/banco_ejemplo.txt")
     
+    # Crear consigna práctica de ejemplo (formato deckard)
+    consigna_ejemplo = Path('consignas') / 'sumar-pares'
+    if not consigna_ejemplo.exists():
+        consigna_ejemplo.mkdir(parents=True)
+        (consigna_ejemplo / 'ejercicio.yaml').write_text("""id: sumar-pares
+titulo: Suma de los pares de un arreglo
+tema: arreglos
+bloom: 3
+minutos_estimados: 20
+tags: [arreglos, lazos]
+pistas:
+  - Recorré el arreglo una sola vez acumulando en una variable.
+  - Un número es par si el resto de dividirlo por 2 es 0.
+funciones:
+  - nombre: sumar_pares
+    retorno: int
+    parametros: const int arreglo[], size_t cantidad
+    descripcion: Suma de los elementos pares del arreglo.
+""", encoding='utf-8')
+        (consigna_ejemplo / 'enunciado.md').write_text("""Escribir la función `sumar_pares`, que devuelve la suma de los elementos pares de un arreglo de enteros. Si el arreglo está vacío, devuelve 0.
+
+### Ejemplos
+
+- `{1, 2, 3, 4}` → `6`
+- `{}` → `0`
+
+### Criterios de Aceptación
+
+- Compila sin advertencias con `-Wall -Wextra`.
+""", encoding='utf-8')
+        (consigna_ejemplo / 'solucion.c').write_text("""#include <stddef.h>
+
+int sumar_pares(const int arreglo[], size_t cantidad)
+{
+    int suma = 0;
+    for (size_t i = 0; i < cantidad; i++)
+    {
+        if (arreglo[i] % 2 == 0)
+        {
+            suma += arreglo[i];
+        }
+    }
+    return suma;
+}
+""", encoding='utf-8')
+        logger.info("✓ Consigna práctica de ejemplo creada: consignas/sumar-pares/")
+    else:
+        logger.info("  Consigna ya existe: consignas/sumar-pares/")
+
     # Crear README
     readme = Path('README_PROYECTO.md')
     if not readme.exists():
@@ -139,6 +223,7 @@ Este proyecto usa **alucarD** (generador-examenes) para crear exámenes personal
 ```
 .
 ├── bancos/              # Bancos de preguntas (GIFT o Moodle XML)
+├── consignas/           # Consignas prácticas en formato deckard (<id>/ejercicio.yaml)
 ├── templates/           # Plantillas Jinja2 personalizables
 ├── i18n/                # Archivos de internacionalización
 ├── output/              # Exámenes generados
@@ -168,7 +253,8 @@ generador-examenes -d definicion_ejemplo.yaml \\
 ## Siguientes Pasos
 
 1. Edita `definicion_ejemplo.yaml` con tu configuración
-2. Agrega tus bancos de preguntas en `bancos/`
+2. Agrega tus bancos de preguntas en `bancos/` y tus consignas prácticas en `consignas/`
+   (o sumá repositorios de la computadora con `repositorios_externos` en la definición)
 3. Personaliza las plantillas en `templates/` (opcional)
 4. Genera tus exámenes con el comando anterior
 
@@ -188,6 +274,7 @@ Para más información, consulta la documentación oficial de alucarD.
     print("  - templates/          (plantillas HTML)")
     print("  - i18n/               (archivos de idioma)")
     print("  - bancos/             (bancos de preguntas)")
+    print("  - consignas/          (consignas prácticas deckard)")
     print("  - output/             (exámenes generados)")
     print("  - definicion_ejemplo.yaml")
     print("  - banco_ejemplo.txt")

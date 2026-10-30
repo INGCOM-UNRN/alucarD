@@ -23,7 +23,7 @@ class Opcion(BaseModel):
 class Pregunta(BaseModel):
     """Modelo para una pregunta del banco"""
     id: str
-    tipo: Literal["seleccion_multiple", "verdadero_falso", "respuesta_corta", "ensayo", "emparejamiento", "numerica", "desarrollo"]
+    tipo: Literal["seleccion_multiple", "verdadero_falso", "respuesta_corta", "ensayo", "emparejamiento", "numerica", "desarrollo", "consigna_practica"]
     nombre: str
     categoria: str
     enunciado_html: str
@@ -34,6 +34,8 @@ class Pregunta(BaseModel):
     metadata: Dict[str, Any] = Field(default_factory=dict)
     tamano_desarrollo: Optional[Literal["pequeno", "mediano", "grande"]] = "mediano"
     fuente_banco: Optional[str] = None
+    # Renglones del espacio de respuesta (consignas prácticas); None o 0: sin espacio.
+    lineas_respuesta: Optional[int] = None
     
     def __str__(self) -> str:
         nombre_preview = self.nombre[:60] + "..." if len(self.nombre) > 60 else self.nombre
@@ -44,6 +46,38 @@ class Pregunta(BaseModel):
     
     def __repr__(self) -> str:
         return f"Pregunta(id='{self.id}', tipo='{self.tipo}', cat='{self.categoria}', opciones={len(self.opciones)})"
+
+
+class PresentacionConsigna(BaseModel):
+    """Qué muestra el examen de una consigna práctica (deckard) y cuánto espacio deja para resolverla.
+
+    Va en `configuracion_examen.presentacion_consignas` (para todo el examen) y, en cada pool, en
+    `presentacion`: ahí sólo hace falta escribir lo que cambia respecto de la del examen.
+    """
+    titulo: bool = True
+    metadatos: bool = False                 # tema, nivel de Bloom y minutos estimados
+    enunciado: bool = True
+    secciones_excluidas: List[str] = Field(default_factory=list)  # títulos (o parte) de secciones del enunciado a omitir
+    funciones: bool = False                 # tabla con las firmas de las funciones
+    cabecera: bool = False                  # el archivo .h del ejercicio
+    pistas: int = Field(default=0, ge=0)    # cuántas pistas mostrar (0: ninguna)
+    espacio_respuesta: bool = True
+    lineas: int = Field(default=20, ge=1, le=200)  # renglones del espacio de respuesta
+    solucion_en_clave: bool = True          # la solución de la cátedra en la clave del profesor
+
+
+class RepositorioExterno(BaseModel):
+    """Repositorio de la misma computadora que complementa los bancos del proyecto.
+
+    - `preguntas`: carpeta con bancos GIFT (.gift/.txt) o Moodle XML (.xml), en cualquier subcarpeta.
+    - `deckard`: banco de consignas prácticas de deckard (`<ruta>/banco/<tema>/<id>/ejercicio.yaml`,
+      o directamente `<ruta>/<tema>/<id>/`).
+    - `auto` (por omisión): `deckard` si encuentra algún `ejercicio.yaml`, si no `preguntas`.
+    """
+    ruta: str
+    tipo: Literal["auto", "preguntas", "deckard"] = "auto"
+    nombre: Optional[str] = None            # para la etiqueta repo:<nombre>; por omisión, el nombre de la carpeta
+    incluir_no_publicados: bool = False     # consignas deckard con `publicar: false` (prototipos)
 
 
 class PoolConfig(BaseModel):
@@ -57,6 +91,12 @@ class PoolConfig(BaseModel):
     cantidad: Optional[int] = None
     accion_si_insuficiente: Literal["error", "advertir", "usar_todas"] = "error"
     puntaje_fijo_por_pregunta: Optional[float] = None
+    # Filtros por tiempo requerido (minutos estimados de las consignas prácticas). Con alguno de
+    # ellos, las preguntas sin tiempo estimado quedan afuera del pool.
+    minutos_min: Optional[int] = Field(default=None, ge=0)
+    minutos_max: Optional[int] = Field(default=None, ge=0)
+    presupuesto_minutos: Optional[int] = Field(default=None, ge=1)  # suma máxima de minutos de lo elegido
+    presentacion: Optional[PresentacionConsigna] = None
     
     def __str__(self) -> str:
         filtros = []
@@ -102,6 +142,7 @@ class ConfiguracionExamen(BaseModel):
     mezclar_preguntas_dentro_seccion: bool = True
     mezclar_opciones_dentro_pregunta: bool = True
     generar_clave_profesor: bool = True
+    presentacion_consignas: PresentacionConsigna = Field(default_factory=PresentacionConsigna)
     
     def __str__(self) -> str:
         flags = []
@@ -132,6 +173,8 @@ class DefinicionExamen(BaseModel):
     
     # Configuración de generación (puede ser overrideada por CLI)
     input_banco: Optional[List[str]] = Field(default=None, description="Rutas a archivos de banco de preguntas")
+    input_consignas: Optional[List[str]] = Field(default=None, description="Carpetas locales de consignas prácticas deckard (--init crea consignas/)")
+    repositorios_externos: List[RepositorioExterno] = Field(default_factory=list, description="Repositorios de preguntas o de consignas deckard de la misma computadora")
     output_dir: Optional[str] = Field(default="./output", description="Directorio de salida")
     path_images: Optional[str] = Field(default=None, description="Directorio de imágenes")
     numero_temas: Optional[int] = Field(default=1, description="Número de temas a generar")

@@ -40,13 +40,19 @@
   radius: 4pt,
   inset: 6pt,
   fill: rgb("fafafa"),
-  breakable: false
+  breakable: {{ 'true' if preg.tipo == 'consigna_practica' else 'false' }}
 )[
   #text(weight: "bold")[{{ loop.index }}. {{ preg.nombre | typst_texto }}]
   #v(2pt)
   {% set correctas = [] %}
   {% for op in preg.opciones %}{% if op.es_correcta %}{% set _ = correctas.append(loop.index0) %}{% endif %}{% endfor %}
-  {% if correctas %}
+  {% if preg.tipo == 'consigna_practica' %}
+  {% if preg.metadata.solucion_c_clave %}
+  #raw(block: true, lang: "c", {{ preg.metadata.solucion_c_clave | typst_cadena }})
+  {% else %}
+  #text(fill: rgb("22543d"), weight: "bold")[✓ Respuesta:] Ver criterio de corrección
+  {% endif %}
+  {% elif correctas %}
   {% for i in correctas %}
   #text(fill: rgb("22543d"), weight: "bold")[✓ {{ letra(i) }})] {{ preg.opciones[i].texto_html | typst }}
   {% endfor %}

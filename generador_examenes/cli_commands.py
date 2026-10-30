@@ -404,9 +404,10 @@ def generar_examen(args, logger) -> int:
         semilla = args.semilla if args.semilla is not None else (definicion.semilla or 42)
         formato = args.formato if args.formato else (definicion.formato or ['html'])
         
-        # Validar que tengamos bancos de preguntas
-        if not input_banco:
-            _usage_error("Se requiere input_banco en YAML o --input-banco en CLI")
+        # Validar que tengamos bancos de preguntas (o consignas / repositorios externos que los complementen)
+        if not input_banco and not definicion.input_consignas and not definicion.repositorios_externos:
+            _usage_error("Se requiere input_banco en YAML o --input-banco en CLI "
+                         "(o input_consignas / repositorios_externos en el YAML)")
         
         logger.info(f"Bancos: {input_banco}")
         logger.info(f"Output: {output_dir}")
@@ -415,6 +416,15 @@ def generar_examen(args, logger) -> int:
         # Cargar bancos de preguntas
         logger.info("Cargando bancos de preguntas...")
         banco_completo = logic.cargar_bancos(input_banco or [])
+        if definicion.input_consignas or definicion.repositorios_externos:
+            from generador_examenes.core.consignas import cargar_fuentes_complementarias
+
+            logger.info("Cargando consignas prácticas y repositorios externos...")
+            complemento = cargar_fuentes_complementarias(definicion.input_consignas, definicion.repositorios_externos)
+            for pid, pregunta in complemento.items():
+                if pid in banco_completo:
+                    logger.warning(f"Pregunta duplicada encontrada: {pregunta} - sobrescribiendo")
+                banco_completo[pid] = pregunta
         
         if not banco_completo:
             logger.error("No se cargaron preguntas de los bancos")

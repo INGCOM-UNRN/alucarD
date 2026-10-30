@@ -41,12 +41,14 @@ def normalizar_fullwidth(text: str) -> str:
     return normalized
 
 
-def markdown_to_html(text: str) -> str:
+def markdown_to_html(text: str, saltos_de_linea: bool = True) -> str:
     """
     Convierte texto markdown a HTML con syntax highlighting para bloques de código.
     
     Args:
         text: Texto en formato markdown
+        saltos_de_linea: cada salto de línea es un <br> (nl2br); False para Markdown
+            envuelto a mano, como los enunciados de deckard
         
     Returns:
         HTML generado con syntax highlighting aplicado
@@ -63,8 +65,7 @@ def markdown_to_html(text: str) -> str:
             'fenced_code',
             'codehilite',
             'tables',
-            'nl2br'
-        ],
+        ] + (['nl2br'] if saltos_de_linea else []),
         extension_configs={
             'codehilite': {
                 'guess_lang': True,
