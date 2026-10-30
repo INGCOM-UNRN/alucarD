@@ -215,6 +215,161 @@ cada consigna; cada pool puede cambiar sólo algunas claves en `presentacion`:
 | `lineas` | `20` | Cuántos renglones. |
 | `solucion_en_clave` | `true` | La solución de la cátedra en la clave del profesor. |
 
+### Ejemplo completo: parcial práctico
+
+Un segundo parcial de 120 minutos y 10 puntos que combina las tres fuentes: preguntas
+GIFT del proyecto, una consigna local fija y consignas sorteadas del repositorio de
+enunciados. Se arma sobre un proyecto creado con `alucard --init`:
+
+```text
+parcial2/
+├── bancos/punteros.gift          # preguntas de opción múltiple y V/F
+├── consignas/sumar-pares/        # la crea --init: ejercicio.yaml, enunciado.md, solucion.c
+└── parcial_practico.yaml
+```
+
+Las preguntas del banco usan `[markdown]` para que el código en línea salga como código en el papel:
+
+```text
+$CATEGORY: teoria/punteros
+
+::p-01:: [markdown]Si `int x = 5; int *p = &x;`, ¿qué vale `*p`? {
+=5
+~La dirección de `x`
+~La dirección de `p`
+~No está definido
+}
+
+::p-03:: [markdown]Desreferenciar un puntero `NULL` es comportamiento indefinido. {T}
+
+::p-06:: [markdown]Después de `free(p)`, `p` vale `NULL` automáticamente. {F}
+```
+
+`parcial_practico.yaml`:
+
+```yaml
+nombre_examen: "Segundo parcial — práctico"
+institucion: "UNRN Andina"
+materia: "Programación 1"
+fecha: "2026-11-12"
+duracion_minutos: 120
+instrucciones_generales: |
+  Resolvé en C11. Cada función debe respetar la firma indicada.
+  No se permite usar bibliotecas fuera de la estándar.
+idioma: "es"
+numero_temas: 3                  # los temas comparten consignas; cambia el orden
+semilla: 20261112                # fija qué consignas salen sorteadas
+formato: ["pdf"]
+
+configuracion_examen:
+  mezclar_preguntas_dentro_seccion: true
+  mezclar_opciones_dentro_pregunta: true
+  generar_clave_profesor: true
+  sortear_preguntas: true
+  # Lo que se imprime de cada consigna, salvo que el pool diga otra cosa.
+  presentacion_consignas:
+    titulo: true
+    metadatos: false
+    enunciado: true
+    # Fuera del papel: la autoevaluación, el contrato (ya está la tabla de
+    # funciones) y las ayudas con pseudocódigo (:::{tip} Ayuda …).
+    secciones_excluidas: ["Criterios de Aceptación", "Contrato", "Ayuda"]
+    funciones: true
+    cabecera: false
+    pistas: 0
+    espacio_respuesta: true
+    lineas: 25
+    solucion_en_clave: true
+
+input_banco: ["bancos/punteros.gift"]
+input_consignas: ["consignas"]
+repositorios_externos:
+  - ruta: "~/dev/tools/enunciados"
+    tipo: deckard
+    nombre: enunciados
+
+secciones_examen:
+  # 4 × 0.5 = 2 puntos, ~10 minutos
+  - nombre: "Parte 1 — Conceptos"
+    instrucciones: "Marcá la respuesta correcta."
+    layout: compact-2col
+    pools:
+      - categoria: "teoria/punteros"
+        cantidad: 4
+        puntaje_fijo_por_pregunta: 0.5
+
+  # La misma consigna en todos los temas, con una pista y poco espacio; 1 punto, 20 minutos
+  - nombre: "Parte 2 — Calentamiento"
+    instrucciones: "Resolvé la función en el espacio indicado."
+    pools:
+      - preguntas_fijadas: ["deckard:sumar-pares"]
+        puntaje_fijo_por_pregunta: 1
+        presentacion:
+          pistas: 1
+          lineas: 12
+
+  # Dos consignas sorteadas de 20 a 35 minutos, que entre las dos no pasen de 60; 2 × 2.5 = 5 puntos
+  - nombre: "Parte 3 — Punteros y cadenas"
+    instrucciones: "Resolvé las funciones pedidas; podés usar funciones auxiliares."
+    pools:
+      - tipos: ["consigna_practica"]
+        categorias: ["consignas/punteros", "consignas/cadenas"]
+        etiquetas: ["repo:enunciados"]
+        minutos_min: 20
+        minutos_max: 35
+        presupuesto_minutos: 60
+        cantidad: 2
+        puntaje_fijo_por_pregunta: 2.5
+        presentacion:
+          metadatos: true          # tema, Bloom y tiempo estimado, para que administren el tiempo
+          lineas: 30
+
+  # Se resuelve en máquina: enunciado completo con ayudas, la cabecera .h y sin renglones; 2 puntos, ≤ 30 minutos
+  - nombre: "Parte 4 — Memoria dinámica (en máquina)"
+    instrucciones: "Resolvé en la computadora y entregá el .c por el campus."
+    pools:
+      - tipos: ["consigna_practica"]
+        categoria: "consignas/memoria_dinamica"
+        minutos_max: 30
+        cantidad: 1
+        puntaje_fijo_por_pregunta: 2
+        presentacion:
+          cabecera: true
+          secciones_excluidas: []  # reemplaza la lista general: se ve todo el enunciado
+          espacio_respuesta: false
+```
+
+Qué muestra cada parte:
+
+| Parte | Fuente | Recurso |
+| :--- | :--- | :--- |
+| 1 | Banco GIFT del proyecto | Pool por `categoria`, en dos columnas. |
+| 2 | `consignas/` local | `preguntas_fijadas` con el id `deckard:<id>`; la presentación del pool suma una pista y achica el espacio. |
+| 3 | Repositorio de enunciados | Sorteo entre dos temas, filtrado por `repo:enunciados`, con tiempo mínimo, máximo y presupuesto; muestra los metadatos. |
+| 4 | Repositorio de enunciados | Consigna para la computadora: con cabecera, sin espacio de respuesta y sin excluir secciones. |
+
+La presentación del pool cambia sólo las claves que declara. Una lista, como
+`secciones_excluidas`, reemplaza a la general completa, no se suma a ella.
+
+Flujo de trabajo:
+
+```bash
+cd parcial2
+alucard --category-tree ~/dev/tools/enunciados       # output/category_tree.html: temas y consignas disponibles
+alucard -d parcial_practico.yaml --validate          # puntajes y cantidad de preguntas por parte
+alucard --spellcheck -d parcial_practico.yaml        # ortografía de preguntas y consignas
+alucard balance-check -d parcial_practico.yaml       # reparto de la letra correcta entre temas
+alucard -d parcial_practico.yaml                     # output/examen_tema_0{1,2,3}.pdf y clave_tema_0{1,2,3}.pdf
+alucard -d parcial_practico.yaml -s 7 -o recuperatorio   # mismo esquema, otras consignas
+```
+
+La clave de cada tema trae la respuesta de las preguntas cerradas y la solución de la cátedra
+(`solucion.c`) de cada consigna. Con otra semilla (`-s`) las Partes 1, 3 y 4 sortean de nuevo entre
+lo que cumple los mismos filtros, y la Parte 2, que es fija, no cambia. Así se arma el recuperatorio
+con el mismo esquema.
+Antes de imprimir conviene revisar las consignas que salieron. Los filtros garantizan el tema y el
+tiempo, pero no la calidad de cada enunciado.
+
 ---
 
 ## 4. Formatos de Salida y Contratos de Integración

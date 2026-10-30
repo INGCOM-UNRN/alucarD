@@ -19,6 +19,15 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - **pools**: sorteo de las preguntas que entran en cada pool con la semilla del examen (reproducible, y el mismo en `build` y `balance-check`); `configuracion_examen.sortear_preguntas: false` vuelve a tomar las primeras que pasan los filtros.
 - **comandos**: `build` y `balance-check` usan `input_consignas` y `repositorios_externos` de la definición, ya no exigen `-i` y suman `--consignas` y `--repositorio` (también sin YAML); `--spellcheck` revisa también las consignas y los repositorios de la definición; `--category-tree` acepta carpetas (repositorios de preguntas o de consignas) y, con `-d`, suma las fuentes de la definición; `--wizard` pregunta por bancos, consignas, repositorios externos y sorteo, y arma pools de consignas con filtros de tiempo y renglones.
 
+### Corregido
+
+- **pools**: `puntaje_fijo_por_pregunta` también se aplica a las `preguntas_fijadas` (antes quedaban con el puntaje del banco) (`fdae19c`)
+- **consignas**: `secciones_excluidas` también omite las directivas MyST con título, como `:::{tip} Ayuda (pseudocódigo)` (`c0aa8ca`)
+
+### Documentación
+
+- **manual**: ejemplo completo de parcial práctico con banco GIFT, consigna local fija y consignas sorteadas del repositorio de enunciados
+
 ## [5.11.0] - 2026-09-28
 
 ### Agregado
