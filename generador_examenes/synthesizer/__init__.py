@@ -1,25 +1,30 @@
 """daedalus — generador paramétrico de preguntas de C compiladas al vuelo.
 
-Cada plantilla produce un snippet C con parámetros aleatorios, el motor lo
-compila con GCC y lo ejecuta en un directorio temporal para determinar la
-salida correcta (respuesta verificada al 100%) y deriva distractores
-verosímiles a partir de errores típicos de los alumnos.
+Cada plantilla (`plantillas.py`) produce un snippet C con parámetros aleatorios;
+el motor (`engine.py`) lo verifica en un directorio temporal (`sandbox.py`):
+ejecutándolo, con los avisos de gcc para el comportamiento indefinido o
+contando la memoria dinámica sin liberar, y deriva distractores verosímiles a
+partir de errores típicos de los alumnos.
 """
 
 from .engine import (
-    SnippetGenerado,
-    compilar_y_ejecutar,
-    sintetizar,
-    plantillas_disponibles,
+    ajustar_opciones,
     exportar_gift,
     exportar_xml,
+    plantillas_disponibles,
+    sintetizar,
 )
+from .plantillas import SnippetGenerado
+from .sandbox import compilar_y_ejecutar, diagnosticos, memoria_sin_liberar
 
 __all__ = [
     "SnippetGenerado",
+    "ajustar_opciones",
     "compilar_y_ejecutar",
-    "sintetizar",
-    "plantillas_disponibles",
+    "diagnosticos",
     "exportar_gift",
     "exportar_xml",
+    "memoria_sin_liberar",
+    "plantillas_disponibles",
+    "sintetizar",
 ]

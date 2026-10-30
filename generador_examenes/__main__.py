@@ -300,20 +300,6 @@ def _cli(
         None, "--category-tree", metavar="BANCO",
         help="Generar árbol HTML de categorías de uno o más bancos (archivos, o carpetas de preguntas o consignas deckard; con -d, también las fuentes de la definición)",
     ),
-    sintetizar: Optional[str] = typer.Option(
-        None, "--sintetizar", metavar="PLANTILLA",
-        help="Generar un banco de preguntas de C con daedalus (sintetizador verificado con gcc). "
-             "Ver plantillas disponibles con --listar-sintetizadores",
-    ),
-    listar_sintetizadores: bool = typer.Option(
-        False, "--listar-sintetizadores",
-        help="Lista las plantillas disponibles del sintetizador daedalus",
-    ),
-    cantidad: int = typer.Option(5, "--cantidad", help="Cantidad de preguntas a sintetizar."),
-    formato_banco: str = typer.Option(
-        "gift", "--formato-banco",
-        help="Formato del banco generado por daedalus: gift o xml.",
-    ),
     definicion: Optional[Path] = typer.Option(
         None, "-d", "--definicion", help="Ruta al archivo de definición YAML del examen",
     ),
@@ -399,9 +385,7 @@ def _cli(
         return
 
     args = SimpleNamespace(
-        init=init, wizard=wizard, category_tree=category_tree, sintetizar=sintetizar,
-        listar_sintetizadores=listar_sintetizadores, cantidad=cantidad, formato_banco=formato_banco,
-        definicion=definicion, input_banco=input_banco, output_dir=output_dir, path_images=path_images,
+        init=init, wizard=wizard, category_tree=category_tree, definicion=definicion, input_banco=input_banco, output_dir=output_dir, path_images=path_images,
         numero_temas=numero_temas, semilla=semilla, formato=formato, typst_template=typst_template,
         spellcheck=spellcheck, lt_server=lt_server, lt_username=lt_username, lt_api_key=lt_api_key,
         lt_premium=lt_premium, lt_lang=lt_lang, lt_ignore_rules=lt_ignore_rules, lt_ignore_words=lt_ignore_words,
@@ -410,8 +394,6 @@ def _cli(
         show_completion=show_completion, install_completion=install_completion,
     )
 
-    if formato_banco not in ("gift", "xml"):
-        _usage_error(f"argumento --formato-banco: valor inválido: '{formato_banco}' (elegir entre 'gift', 'xml')")
     if formato:
         for fmt in formato:
             if fmt not in ("html", "pdf"):
@@ -432,10 +414,6 @@ def _cli(
         codigo = cli_commands.ejecutar_init(args, logger)
     elif args.wizard is not None:
         codigo = cli_commands.ejecutar_wizard(args, logger)
-    elif args.listar_sintetizadores:
-        codigo = cli_commands.listar_sintetizadores_disponibles()
-    elif args.sintetizar:
-        codigo = cli_commands.ejecutar_sintetizar(args, logger)
     elif getattr(args, 'spellcheck', False):
         codigo = cli_commands.ejecutar_spellcheck(args, logger)
     elif args.category_tree:
@@ -570,6 +548,39 @@ def _lint_gift(
     from generador_examenes.gift_linter import revisar_archivos
 
     _ultimo_codigo_salida["code"] = revisar_archivos(archivos, fix=fix)
+
+
+@app.command("sintetizar")
+def _sintetizar(
+    plantilla: Optional[str] = typer.Argument(None, help="Plantilla a usar; sin ella, lista las disponibles."),
+    cantidad: int = typer.Option(5, "-c", "--cantidad", min=1, help="Cantidad de preguntas a sintetizar."),
+    opciones: int = typer.Option(4, "--opciones", min=2, max=8,
+                                 help="Opciones de cada pregunta, la correcta incluida (2 a 8)."),
+    formato_banco: str = typer.Option("gift", "-f", "--formato", help="Formato del banco: gift o xml."),
+    output_dir: Path = typer.Option(Path("output"), "-o", "--output-dir", help="Directorio de salida."),
+    semilla: int = typer.Option(42, "-s", "--semilla", help="Semilla de los parámetros al azar."),
+    json_output: bool = typer.Option(False, "--json", help="Emitir el resultado como JSON."),
+    debug: bool = typer.Option(False, "--debug", help="Activar modo debug con logging detallado."),
+) -> None:
+    """Genera un banco de preguntas de C con daedalus: cada respuesta se verifica con gcc.
+
+    Las de traza se compilan y ejecutan; las de comportamiento indefinido (punteros salvajes y
+    colgantes) se verifican con los avisos de gcc -fanalyzer; las de fugas cuentan la memoria que queda
+    sin liberar. Sin PLANTILLA, lista las disponibles.
+    """
+    import logging
+
+    from generador_examenes.config.logging_config import setup_logging
+
+    if formato_banco not in ("gift", "xml"):
+        _usage_error(f"argumento -f/--formato: valor inválido: '{formato_banco}' (elegir entre 'gift', 'xml')")
+    if plantilla is None:
+        _ultimo_codigo_salida["code"] = cli_commands.listar_sintetizadores_disponibles()
+        return
+    setup_logging(debug=debug)
+    args = SimpleNamespace(sintetizar=plantilla, cantidad=cantidad, opciones=opciones, formato_banco=formato_banco,
+                           output_dir=output_dir, semilla=semilla, json_output=json_output, debug=debug)
+    _ultimo_codigo_salida["code"] = cli_commands.ejecutar_sintetizar(args, logging.getLogger("alucard.sintetizar"))
 
 
 @app.command("doctor")

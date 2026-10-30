@@ -7,18 +7,22 @@ import pytest
 
 from generador_examenes.synthesizer import (
     compilar_y_ejecutar,
+    diagnosticos,
     exportar_gift,
     exportar_xml,
+    memoria_sin_liberar,
     plantillas_disponibles,
     sintetizar,
 )
+from generador_examenes.synthesizer.plantillas import UB_DOBLE, UB_LIBERADA, UB_LOCAL, UB_SALVAJE
 
 pytestmark = pytest.mark.skipif(
     shutil.which("gcc") is None, reason="requiere gcc en el PATH"
 )
 
 
-PLANTILLAS_ESPERADAS = {"precedencia", "traza-punteros", "recursion", "incrementos"}
+TRAZAS = {"precedencia", "traza-punteros", "recursion", "incrementos"}
+PLANTILLAS_ESPERADAS = TRAZAS | {"array-decay", "punteros-salvajes", "punteros-colgantes", "fugas-malloc"}
 
 
 def test_catalogo_de_plantillas():
@@ -37,7 +41,7 @@ def test_compilar_y_ejecutar_rechaza_codigo_invalido():
     assert not ok and "compilación falló" in diagnostico
 
 
-@pytest.mark.parametrize("planta", sorted(PLANTILLAS_ESPERADAS))
+@pytest.mark.parametrize("planta", sorted(TRAZAS))
 def test_sintetizar_verifica_la_salida_con_gcc(planta):
     snippets = sintetizar(planta, cantidad=2, semilla=42)
     assert len(snippets) == 2
@@ -100,3 +104,110 @@ def test_exportaciones_no_duplican_la_respuesta_correcta(tmp_path):
     correcta = snippets[0].salida_correcta
     marcadas = [l for l in gift.splitlines() if l.startswith("=")]
     assert any(correcta in l for l in marcadas)
+
+
+@pytest.mark.parametrize("planta", sorted(PLANTILLAS_ESPERADAS))
+@pytest.mark.parametrize("opciones", [2, 5, 8])
+def test_la_cantidad_de_opciones_es_configurable(planta, opciones):
+    for s in sintetizar(planta, cantidad=3, semilla=11, opciones=opciones):
+        assert len(s.opciones) == opciones
+        assert len(set(s.opciones)) == opciones and s.opciones.count(s.salida_correcta) == 1
+
+
+def test_opciones_fuera_de_rango():
+    with pytest.raises(ValueError):
+        sintetizar("recursion", cantidad=1, opciones=9)
+
+
+def test_array_decay_verificado_con_la_salida_real():
+    for s in sintetizar("array-decay", cantidad=6, semilla=3):
+        ok, salida = compilar_y_ejecutar(s.codigo, flags_extra=["-Wno-sizeof-array-argument",
+                                                                "-Wno-sizeof-pointer-div"])
+        assert ok and salida == s.salida_correcta
+        assert "bytes" in s.enunciado
+
+
+DEFECTOS = {UB_SALVAJE, UB_LIBERADA, UB_LOCAL, UB_DOBLE}
+
+
+@pytest.mark.parametrize("planta", ["punteros-salvajes", "punteros-colgantes"])
+def test_comportamiento_indefinido_verificado_por_gcc(planta):
+    snippets = sintetizar(planta, cantidad=8, semilla=4)
+    defectuosos = [s for s in snippets if s.salida_correcta in DEFECTOS]
+    correctos = [s for s in snippets if s.salida_correcta not in DEFECTOS]
+    assert defectuosos and correctos  # hay de los dos: el alumno no puede responder siempre «indefinido»
+    for s in defectuosos:
+        assert diagnosticos(s.codigo)
+    for s in correctos:
+        ok, salida = compilar_y_ejecutar(s.codigo)
+        assert ok and s.salida_correcta == f"Imprime `{salida}`."
+
+
+def test_fugas_cuentan_la_memoria_sin_liberar():
+    for s in sintetizar("fugas-malloc", cantidad=6, semilla=2):
+        _, fuga, _ = memoria_sin_liberar(s.codigo)
+        assert s.salida_correcta == str(fuga) and fuga > 0
+        assert "bytes" not in s.titulo
+
+
+def test_memoria_sin_liberar_sigue_realloc_y_calloc():
+    codigo = (
+        "#include <stdlib.h>\n"
+        "int main(void) {\n"
+        "    char *a = malloc(5);\n"
+        "    char *b = realloc(a, 30);\n"
+        "    if (b == NULL) { free(a); return 1; }\n"
+        "    char *c = calloc(3, 4);\n"
+        "    free(c);\n"
+        "    return 0;\n"
+        "}\n"
+    )
+    assert memoria_sin_liberar(codigo)[1:] == (30, 1)
+
+
+def test_gift_declara_markdown_y_el_codigo_se_ve_como_codigo(tmp_path):
+    from generador_examenes.parsers.gift_parser import GiftParser
+
+    snippets = sintetizar("punteros-colgantes", cantidad=4, semilla=1)
+    gift = exportar_gift(snippets)
+    assert all(linea.split("::")[2].startswith(" [markdown]") for linea in gift.splitlines() if linea.startswith("::"))
+    banco = tmp_path / "banco.gift"
+    banco.write_text(gift, encoding="utf-8")
+    preguntas = GiftParser().parse(banco)
+    assert len(preguntas) == 4
+    for p in preguntas.values():
+        assert "<code" in p.enunciado_html and "```" not in p.enunciado_html
+
+
+def test_titulos_repetidos_se_numeran():
+    snippets = sintetizar("traza-punteros", cantidad=6, semilla=5)
+    titulos = [l.split("::")[1] for l in exportar_gift(snippets).splitlines() if l.startswith("::")]
+    assert len(set(titulos)) == len(titulos)
+
+
+def test_comando_sintetizar(tmp_path, monkeypatch, capsys):
+    import sys
+
+    from generador_examenes.__main__ import main
+
+    monkeypatch.setattr(sys, "argv", ["alucard", "sintetizar", "fugas-malloc", "-c", "2", "--opciones", "5",
+                                      "-o", str(tmp_path)])
+    assert main() == 0
+    gift = (tmp_path / "sintetizados_fugas-malloc.gift").read_text(encoding="utf-8")
+    assert gift.count("[markdown]") == 2
+    assert all(len([l for l in bloque.splitlines() if l and l[0] in "=~"]) == 5 for bloque in gift.split("// daedalus")[1:])
+
+    monkeypatch.setattr(sys, "argv", ["alucard", "sintetizar"])
+    assert main() == 0
+    assert "punteros-colgantes" in capsys.readouterr().out
+
+
+def test_sintetizar_ya_no_es_una_opcion(monkeypatch):
+    import sys
+
+    from generador_examenes.__main__ import main
+
+    monkeypatch.setattr(sys, "argv", ["alucard", "--sintetizar", "recursion"])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 2

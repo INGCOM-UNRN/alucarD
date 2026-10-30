@@ -200,27 +200,35 @@ Esto te ayuda a:
 
 ### 2️⃣b Sintetizar Preguntas de C con `daedalus`
 
-Genera bancos de preguntas de análisis de código (trazas de punteros,
-precedencia de operadores, recursión, incrementos) cuya **respuesta correcta se
-verifica compilando y ejecutando el snippet con GCC** — cero erratas en la clave.
+Genera bancos de preguntas de análisis de código cuya **respuesta correcta verifica
+gcc**, sin erratas en la clave:
+
+- las de traza (precedencia, aritmética de punteros, recursión, incrementos,
+  decaimiento de arreglos) se compilan y ejecutan;
+- las de comportamiento indefinido (punteros salvajes y colgantes) se verifican con
+  los avisos de `gcc -fanalyzer`, y mezclan variantes correctas para que «es
+  comportamiento indefinido» no sea siempre la respuesta;
+- las de fugas de memoria cuentan los bytes que quedan sin liberar, envolviendo
+  `malloc`/`calloc`/`realloc`/`free` (no hace falta valgrind ni ASan).
 
 ```bash
 # Ver las plantillas disponibles
-generador-examenes --listar-sintetizadores
+alucard sintetizar
 
-# Sintetizar 5 preguntas de aritmética de punteros (banco GIFT)
-generador-examenes --sintetizar traza-punteros -n 8 -s 42 -o output/
+# 8 preguntas de punteros colgantes con 5 opciones cada una (banco GIFT)
+alucard sintetizar punteros-colgantes -c 8 --opciones 5 -s 42 -o output/
 
 # También en formato Moodle XML
-generador-examenes --sintetizar recursion --cantidad 4 --formato-banco xml
+alucard sintetizar fugas-malloc -c 4 -f xml
 
 # El banco generado se usa directo en un examen:
-generador-examenes -d examen.yaml -i output/sintetizados_traza-punteros.gift -n 3
+alucard -d examen.yaml -i output/sintetizados_punteros-colgantes.gift -n 3
 ```
 
-Cada pregunta incluye el snippet C en un bloque de código, la salida correcta
-(ejecutada de verdad) y distractores verosímiles basados en errores típicos:
-precedencia mal interpretada, off-by-one en punteros, post vs pre-incremento.
+Cada pregunta incluye el snippet C en un bloque de código, la respuesta verificada y
+distractores verosímiles basados en errores típicos. El banco GIFT declara
+`[markdown]`, así que el código en línea se ve como código. Las plantillas están en
+`generador_examenes/synthesizer/plantillas.py`.
 
 ### 3️⃣ Crear Configuración con Wizard
 ```bash
@@ -1400,10 +1408,6 @@ Al reportar un issue, incluye:
 | `--init` | Inicializar proyecto con archivos de ejemplo |
 | `--wizard` | Asistente interactivo para crear/editar configuración de examen |
 | `--category-tree` | Generar árbol HTML de categorías de uno o más bancos de preguntas |
-| `--sintetizar` | Generar un banco de preguntas de C con daedalus (sintetizador verificado con gcc). Ver plantillas disponibles con --listar-sintetizadores |
-| `--listar-sintetizadores` | Lista las plantillas disponibles del sintetizador daedalus |
-| `--cantidad` | Cantidad de preguntas a sintetizar. [por defecto: 5] |
-| `--formato-banco` | Formato del banco generado por daedalus: gift o xml. [por defecto: gift] |
 | `--definicion`, `-d` | Ruta al archivo de definición YAML del examen |
 | `--input-banco`, `-i` | Ruta(s) a los archivos de banco de preguntas (tiene prioridad sobre el YAML) |
 | `--output-dir`, `-o` | Directorio de salida para los exámenes generados (tiene prioridad sobre el YAML; si no está en ninguno: ./output) |
@@ -1436,6 +1440,7 @@ Al reportar un issue, incluye:
 |:--|:--|
 | `alucard build` | Genera los temas en PDF desde un banco (sin YAML hace falta sólo -i) y audita el balance de claves. |
 | `alucard balance-check` | Audita que ninguna letra sea la correcta en más del 30 % de los casos en las variantes generadas. |
+| `alucard sintetizar` | Genera un banco de preguntas de C con daedalus: cada respuesta se verifica con gcc. Sin plantilla, lista las disponibles. |
 | `alucard lint-gift` | Revisa (y con --fix corrige) bancos de preguntas GIFT (antes, el ejecutable gift-linter). |
 | `alucard doctor` | Diagnostica gcc, Typst, WeasyPrint, pypdf y conectividad LanguageTool. |
 

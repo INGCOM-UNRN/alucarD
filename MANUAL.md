@@ -125,6 +125,41 @@ Salida esperada:
 
 ---
 
+### Subcomando: `alucard sintetizar`
+
+Genera un banco GIFT (o Moodle XML) de preguntas de opción múltiple sobre código C. gcc verifica
+cada respuesta: no se calcula a mano. Las plantillas están en
+`generador_examenes/synthesizer/plantillas.py`, una función por plantilla registrada en `PLANTILLAS`.
+
+| Plantilla | Pregunta | Cómo se verifica la respuesta |
+| :--- | :--- | :--- |
+| `precedencia` | ¿Qué imprime una expresión aritmética? | Se ejecuta. |
+| `traza-punteros` | ¿Qué imprime `*p` después de `p += k`? | Se ejecuta. |
+| `recursion` | ¿Qué devuelve una suma recursiva? | Se ejecuta. |
+| `incrementos` | `i++` frente a `++i`. | Se ejecuta. |
+| `array-decay` | `sizeof` de un arreglo en `main`, en un parámetro y en una expresión. | Se ejecuta (el enunciado dice el tamaño de `int` y de los punteros de la plataforma). |
+| `punteros-salvajes` | ¿Qué ocurre? Puntero sin inicializar, o la variante correcta. | `gcc -fanalyzer` tiene que señalar el defecto; la variante correcta compila sin avisos y se ejecuta. |
+| `punteros-colgantes` | ¿Qué ocurre? Uso tras `free`, dirección de una local, doble `free`, o la variante correcta. | Ídem. |
+| `fugas-malloc` | ¿Cuántos bytes quedan sin liberar? | Se ejecuta con `malloc`/`calloc`/`realloc`/`free` envueltos que cuentan la memoria. |
+
+```bash
+alucard sintetizar                                   # lista las plantillas
+alucard sintetizar fugas-malloc -c 6 --opciones 5    # output/sintetizados_fugas-malloc.gift
+alucard sintetizar array-decay -f xml -s 7 -o bancos/
+```
+
+| Opción | Por omisión | Qué hace |
+| :--- | :--- | :--- |
+| `-c`, `--cantidad` | `5` | Preguntas a generar (variantes distintas). |
+| `--opciones` | `4` | Opciones por pregunta, la correcta incluida (2 a 8). Se usan los distractores más verosímiles de la plantilla; en las respuestas numéricas se completan con valores cercanos. |
+| `-f`, `--formato` | `gift` | `gift` o `xml`. |
+| `-o`, `--output-dir` | `output` | Carpeta del banco. |
+| `-s`, `--semilla` | `42` | La misma semilla genera el mismo banco. |
+| `--json` | | El resultado, con cada pregunta, como JSON. |
+
+El GIFT declara `[markdown]` en cada pregunta, así que el código en línea de enunciados y opciones
+se ve como código. Las plantillas de comportamiento indefinido necesitan gcc 10 o posterior.
+
 ### CLI 2: `gift-linter`
 
 Valida la sintaxis de archivos de preguntas en formato GIFT, detecta errores de marcado y permite corregirlos automáticamente.

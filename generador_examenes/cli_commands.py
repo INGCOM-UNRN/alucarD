@@ -25,6 +25,8 @@ def ejecutar_doctor() -> int:
 
 
 def ejecutar_completion(args) -> int:
+    from generador_examenes.synthesizer.plantillas import PLANTILLAS as plantillas
+
     prog = Path(sys.argv[0]).name
     if prog not in ("generador-examenes", "alucard"):
         prog = "generador-examenes"
@@ -37,19 +39,15 @@ else
     prev="${{COMP_WORDS[COMP_CWORD-1]}}"
 fi
 
-local opts="--init --wizard --category-tree --sintetizar --listar-sintetizadores --cantidad --formato-banco -d --definicion -i --input-banco -o --output-dir -p --path-images -n --numero-temas -s --semilla -f --formato --validate --debug --help --show-completion --install-completion"
+local opts="build balance-check lint-gift sintetizar doctor --init --wizard --category-tree -d --definicion -i --input-banco -o --output-dir -p --path-images -n --numero-temas -s --semilla -f --formato --validate --debug --help --show-completion --install-completion"
 
 case "$prev" in
     --formato|-f)
         COMPREPLY=($(compgen -W "html pdf" -- "$cur"))
         return 0
         ;;
-    --formato-banco)
-        COMPREPLY=($(compgen -W "gift xml" -- "$cur"))
-        return 0
-        ;;
-    --sintetizar)
-        COMPREPLY=($(compgen -W "incrementos precedencia recursion traza-punteros" -- "$cur"))
+    sintetizar)
+        COMPREPLY=($(compgen -W "{' '.join(sorted(plantillas))}" -- "$cur"))
         return 0
         ;;
     -d|--definicion|-i|--input-banco|-o|--output-dir|-p|--path-images|--wizard|--category-tree)
@@ -119,7 +117,7 @@ def listar_sintetizadores_disponibles() -> int:
     print("\nPlantillas disponibles del sintetizador daedalus (verificadas con gcc):")
     for nombre, descripcion in sorted(plantillas_disponibles().items()):
         print(f"  - {nombre}: {descripcion}")
-    print("\nUso: generador-examenes --sintetizar <plantilla> --cantidad N [-o output] [--formato-banco gift|xml]\n")
+    print("\nUso: alucard sintetizar <plantilla> [-c N] [--opciones K] [-o output] [-f gift|xml] [-s semilla]\n")
     return 0
 
 
@@ -138,13 +136,14 @@ def ejecutar_sintetizar(args, logger) -> int:
                          f"Disponibles: {', '.join(sorted(plantillas_disponibles()))}")
             return 1
 
-        output_dir = args.output_dir or Path('./output')
+        output_dir = Path(args.output_dir or './output')
         output_dir.mkdir(parents=True, exist_ok=True)
         semilla = args.semilla if args.semilla is not None else 42
 
         logger.info(f"Sintetizando {args.cantidad} preguntas con la plantilla '{args.sintetizar}' "
                     f"(semilla: {semilla})...")
-        snippets = sintetizar(args.sintetizar, cantidad=args.cantidad, semilla=semilla)
+        snippets = sintetizar(args.sintetizar, cantidad=args.cantidad, semilla=semilla,
+                              opciones=getattr(args, 'opciones', 4))
 
         extension = 'gift' if args.formato_banco == 'gift' else 'xml'
         destino = output_dir / f"sintetizados_{args.sintetizar}.{extension}"

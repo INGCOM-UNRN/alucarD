@@ -1,240 +1,16 @@
-"""Motor de síntesis: compilación sandbox, distractores y exportación."""
+"""Motor de síntesis: genera con las plantillas, ajusta las opciones y exporta el banco."""
 
 from __future__ import annotations
 
 import random
-import shutil
-import subprocess
-import tempfile
+import re
 import xml.sax.saxutils as saxutils
-from dataclasses import dataclass, field
-from pathlib import Path
+from dataclasses import replace
 
-GCC = shutil.which("gcc")
+from .plantillas import PLANTILLAS, SnippetGenerado
+from .sandbox import GCC
 
-
-@dataclass
-class SnippetGenerado:
-    """Un snippet C verificado listo para volverse pregunta."""
-
-    plantilla: str
-    titulo: str
-    enunciado: str
-    codigo: str
-    salida_correcta: str
-    distractores: list[str] = field(default_factory=list)
-    explicacion: str = ""
-
-    @property
-    def opciones(self) -> list[str]:
-        """Opciones mezcladas (correcta incluida) sin duplicados."""
-        vistos: set[str] = {self.salida_correcta}
-        opciones = [self.salida_correcta]
-        for d in self.distractores:
-            if d not in vistos:
-                vistos.add(d)
-                opciones.append(d)
-        return opciones
-
-
-def _compilar_fuente(fuente: Path, binario: Path, timeout: int) -> tuple[bool, str]:
-    """Compila delegando en daedalus (extra `ecosistema`) con fallback a GCC."""
-    try:
-        from daedalus.core.compiler import compilar_archivos
-    except ImportError:
-        pass  # sin el extra `ecosistema`: gcc directo
-    else:
-        res = compilar_archivos([fuente], binario_salida=binario, timeout=timeout)
-        if not res.exito:
-            return False, f"compilación falló:\n{res.stderr_crudo.strip()}"
-        return True, ""
-
-    if GCC is None:
-        raise RuntimeError("gcc no está disponible en el PATH")
-
-    compilar = subprocess.run(
-        [GCC, "-Wall", "-Wextra", "-Werror", "-std=c11", "-O0",
-         "-o", str(binario), str(fuente)],
-        capture_output=True, text=True, timeout=timeout,
-    )
-    if compilar.returncode != 0:
-        return False, f"compilación falló:\n{compilar.stderr.strip()}"
-    return True, ""
-
-
-def compilar_y_ejecutar(codigo: str, timeout_compilado: int = 20,
-                        timeout_ejecucion: int = 5) -> tuple[bool, str]:
-    """Compila y ejecuta un snippet C en un directorio temporal.
-
-    Devuelve ``(True, stdout)`` si el programa termina con éxito; ``False`` y
-    el diagnóstico en caso contrario. Delega la compilación en daedalus.
-    """
-    with tempfile.TemporaryDirectory(prefix="daedalus-") as tmp:
-        fuente = Path(tmp) / "snippet.c"
-        binario = Path(tmp) / "snippet.bin"
-        fuente.write_text(codigo, encoding="utf-8")
-
-        ok, err = _compilar_fuente(fuente, binario, timeout_compilado)
-        if not ok:
-            return False, err
-
-        ejecutar = subprocess.run(
-            [str(binario)],
-            capture_output=True, text=True, timeout=timeout_ejecucion,
-        )
-        if ejecutar.returncode != 0:
-            return False, f"ejecución falló (rc={ejecutar.returncode}):\n{ejecutar.stderr.strip()}"
-
-        return True, ejecutar.stdout.rstrip("\n")
-
-
-# ---------------------------------------------------------------------------
-# Plantillas incorporadas
-# ---------------------------------------------------------------------------
-
-def _plantilla_precedencia(rng: random.Random) -> SnippetGenerado:
-    a, b, c = rng.randint(2, 9), rng.randint(2, 9), rng.randint(2, 5)
-
-    variantes = {
-        "a + b * c": (a + b * c, f"({a} + {b}) * {c}", f"{a} + ({b} * {c}) invertido", f"{a*b + c*a}"),
-        "(a + b) * c": ((a + b) * c, f"{a} + {b} * {c}", f"{a} * {b} + {c}", f"{a+b*c}"),
-        "a - b - c": (a - b - c, f"{a} - ({b} - {c})", f"{b} - {a} - {c}", f"{a - (b+c)}"),
-        "a * b % c": ((a * b) % c, f"{a} * ({b} % {c})", f"{a} % {b} * {c}", f"{(a*b) // c}"),
-    }
-    expr = rng.choice(list(variantes))
-    correcto, d1, d2, d3 = variantes[expr]
-    # Los distractores analíticos pueden colisionar o ser negativos raros: se validan al correr.
-    codigo = (
-        "#include <stdio.h>\n\n"
-        "int main(void) {\n"
-        f"    int a = {a}, b = {b}, c = {c};\n"
-        f'    printf("%d\\n", {expr});\n'
-        "    return 0;\n"
-        "}\n"
-    )
-    ok, salida = compilar_y_ejecutar(codigo)
-    if not ok:
-        raise RuntimeError(salida)
-
-    distractores = []
-    for candidato in (d1, d2, d3):
-        try:
-            valor = eval(candidato, {"__builtins__": {}}, {"a": a, "b": b, "c": c})
-            distractores.append(str(valor))
-        except Exception:
-            continue
-
-    return SnippetGenerado(
-        plantilla="precedencia",
-        titulo=f"Precedencia de operadores ({a}, {b}, {c})",
-        enunciado="¿Qué imprime por pantalla el siguiente programa?",
-        codigo=codigo,
-        salida_correcta=salida,
-        distractores=[d for d in distractores],
-        explicacion=f"`{expr}` aplica la precedencia estándar de C: `*`, `/` y `%` antes que `+` y `-`, "
-                    "y asociatividad izquierda a derecha entre operadores de igual nivel.",
-    )
-
-
-def _plantilla_traza_punteros(rng: random.Random) -> SnippetGenerado:
-    valores = [rng.randint(10, 99) for _ in range(4)]
-    k = rng.randint(1, len(valores) - 1)
-    codigo = (
-        "#include <stdio.h>\n\n"
-        "int main(void) {\n"
-        f"    int v[] = {{{', '.join(map(str, valores))}}};\n"
-        "    int *p = v;\n"
-        f"    p += {k};\n"
-        '    printf("%d\\n", *p);\n'
-        "    return 0;\n"
-        "}\n"
-    )
-    ok, salida = compilar_y_ejecutar(codigo)
-    if not ok:
-        raise RuntimeError(salida)
-
-    distractores = [str(valores[0]), str(valores[k - 1] if k > 0 else valores[-1]),
-                    str(valores[min(k + 1, len(valores) - 1)])]
-    return SnippetGenerado(
-        plantilla="traza-punteros",
-        titulo=f"Aritmética de punteros (avanza {k})",
-        enunciado="¿Qué imprime por pantalla el siguiente programa?",
-        codigo=codigo,
-        salida_correcta=salida,
-        distractores=distractores,
-        explicacion="`p += k` mueve el puntero `k` posiciones dentro del arreglo; "
-                    "`*p` desreferencia esa posición (`v[" + str(k) + "]`).",
-    )
-
-
-def _plantilla_recursion(rng: random.Random) -> SnippetGenerado:
-    n = rng.randint(3, 8)
-    codigo = (
-        "#include <stdio.h>\n\n"
-        "int suma(int n) {\n"
-        "    if (n <= 0) {\n"
-        "        return 0;\n"
-        "    }\n"
-        "    return n + suma(n - 1);\n"
-        "}\n\n"
-        "int main(void) {\n"
-        f'    printf("%d\\n", suma({n}));\n'
-        "    return 0;\n"
-        "}\n"
-    )
-    ok, salida = compilar_y_ejecutar(codigo)
-    if not ok:
-        raise RuntimeError(salida)
-
-    real = sum(range(1, n + 1))
-    distractores = [str(real - n), str(n * n), str(real + n)]
-    return SnippetGenerado(
-        plantilla="recursion",
-        titulo=f"Recursión: suma de 1 a {n}",
-        enunciado="¿Qué imprime por pantalla el siguiente programa?",
-        codigo=codigo,
-        salida_correcta=salida,
-        distractores=distractores,
-        explicacion="La recursión acumula `n + suma(n-1)` hasta el caso base `suma(0) = 0`.",
-    )
-
-
-def _plantilla_incrementos(rng: random.Random) -> SnippetGenerado:
-    inicial = rng.randint(0, 5)
-    codigo = (
-        "#include <stdio.h>\n\n"
-        "int main(void) {\n"
-        f"    int i = {inicial};\n"
-        '    printf("%d ", i++);\n'
-        '    printf("%d ", i);\n'
-        '    printf("%d\\n", ++i);\n'
-        "    return 0;\n"
-        "}\n"
-    )
-    ok, salida = compilar_y_ejecutar(codigo)
-    if not ok:
-        raise RuntimeError(salida)
-
-    distractores = [f"{inicial+1} {inicial+1} {inicial+2}",
-                    f"{inicial} {inicial+2} {inicial+2}",
-                    f"{inicial+1} {inicial+1} {inicial+1}"]
-    return SnippetGenerado(
-        plantilla="incrementos",
-        titulo="Post-incremento vs pre-incremento",
-        enunciado="¿Qué imprime por pantalla el siguiente programa?",
-        codigo=codigo,
-        salida_correcta=salida,
-        distractores=distractores,
-        explicacion="`i++` entrega el valor viejo y luego incrementa; `++i` incrementa primero y entrega el valor nuevo.",
-    )
-
-
-PLANTILLAS = {
-    "precedencia": ("Expresiones aritméticas con precedencia de operadores", _plantilla_precedencia),
-    "traza-punteros": ("Traza de aritmética de punteros sobre un arreglo", _plantilla_traza_punteros),
-    "recursion": ("Recursión simple (suma acumulada)", _plantilla_recursion),
-    "incrementos": ("Post-incremento vs pre-incremento", _plantilla_incrementos),
-}
+OPCIONES_MIN, OPCIONES_MAX = 2, 8
 
 
 def plantillas_disponibles() -> dict[str, str]:
@@ -242,12 +18,52 @@ def plantillas_disponibles() -> dict[str, str]:
     return {nombre: desc for nombre, (desc, _) in PLANTILLAS.items()}
 
 
-def sintetizar(planta: str, cantidad: int = 5, semilla: int | None = None) -> list[SnippetGenerado]:
-    """Genera `cantidad` snippets verificados con la plantilla indicada."""
+def _variantes_numericas(correcta: str, rng: random.Random) -> list[str]:
+    """Respuestas cercanas a una salida numérica (`7`, `0 1 2`…), para completar distractores."""
+    numeros = correcta.split()
+    if not numeros or not all(re.fullmatch(r"-?\d+", x) for x in numeros):
+        return []
+    candidatas = []
+    for delta in (1, -1, 2, -2, 3, -3):
+        for i in reversed(range(len(numeros))):
+            otros = list(numeros)
+            otros[i] = str(int(otros[i]) + delta)
+            candidatas.append(" ".join(otros))
+    if len(numeros) == 1:
+        candidatas += [str(int(numeros[0]) * 2), str(-int(numeros[0]))]
+    rng.shuffle(candidatas)
+    return candidatas
+
+
+def ajustar_opciones(snippet: SnippetGenerado, opciones: int, rng: random.Random) -> SnippetGenerado:
+    """El snippet con exactamente `opciones` opciones (correcta incluida).
+
+    Se queda con los primeros distractores de la plantilla (los más verosímiles); si no alcanzan y la
+    respuesta es numérica, completa con valores cercanos. Si aun así faltan, ValueError.
+    """
+    vistos = {snippet.salida_correcta}
+    elegidos: list[str] = []
+    for d in [*snippet.distractores, *_variantes_numericas(snippet.salida_correcta, rng)]:
+        if len(elegidos) == opciones - 1:
+            break
+        if d not in vistos and d.strip():
+            vistos.add(d)
+            elegidos.append(d)
+    if len(elegidos) < opciones - 1:
+        raise ValueError(f"la plantilla '{snippet.plantilla}' no produce {opciones} opciones distintas "
+                         f"(como máximo {len(elegidos) + 1})")
+    return replace(snippet, distractores=elegidos)
+
+
+def sintetizar(planta: str, cantidad: int = 5, semilla: int | None = None,
+               opciones: int = 4) -> list[SnippetGenerado]:
+    """Genera `cantidad` snippets verificados con la plantilla indicada, cada uno con `opciones` opciones."""
     if GCC is None:
         raise RuntimeError("gcc no está disponible: daedalus lo necesita para verificar las respuestas")
     if planta not in PLANTILLAS:
         raise KeyError(f"Plantilla desconocida: '{planta}'. Disponibles: {', '.join(sorted(PLANTILLAS))}")
+    if not OPCIONES_MIN <= opciones <= OPCIONES_MAX:
+        raise ValueError(f"la cantidad de opciones debe estar entre {OPCIONES_MIN} y {OPCIONES_MAX}")
 
     generador = PLANTILLAS[planta][1]
     rng = random.Random(semilla)
@@ -256,9 +72,9 @@ def sintetizar(planta: str, cantidad: int = 5, semilla: int | None = None) -> li
     while len(resultados) < cantidad and intentos < cantidad * 10:
         intentos += 1
         snippet = generador(rng)
-        if any(s.salida_correcta == snippet.salida_correcta for s in resultados):
+        if any(s.codigo == snippet.codigo for s in resultados):
             continue  # variante repetida: no aporta como ítem de examen
-        resultados.append(snippet)
+        resultados.append(ajustar_opciones(snippet, opciones, rng))
     return resultados
 
 
@@ -273,16 +89,25 @@ def _bloque_codigo(codigo: str) -> str:
     return "```c\n" + limpio + "\n```"
 
 
-def exportar_gift(snippets: list[SnippetGenerado]) -> str:
-    """Serializa los snippets como banco GIFT (selección múltiple)."""
-    bloques = []
+def _titulos_unicos(snippets: list[SnippetGenerado]) -> list[str]:
+    """Los títulos, numerados cuando se repiten (en GIFT el título identifica la pregunta)."""
+    vistos: dict[str, int] = {}
+    titulos = []
     for s in snippets:
-        opciones = s.opciones
+        vistos[s.titulo] = vistos.get(s.titulo, 0) + 1
+        titulos.append(s.titulo if vistos[s.titulo] == 1 else f"{s.titulo} #{vistos[s.titulo]}")
+    return titulos
+
+
+def exportar_gift(snippets: list[SnippetGenerado]) -> str:
+    """Serializa los snippets como banco GIFT (selección múltiple) en formato `[markdown]`."""
+    bloques = []
+    for s, titulo in zip(snippets, _titulos_unicos(snippets)):
         cuerpo = [f"={_escape_gift(op)}" if op == s.salida_correcta else f"~{_escape_gift(op)}"
-                  for op in opciones]
+                  for op in s.opciones]
         bloque = (
             "// daedalus: sintetizado y verificado con gcc\n"
-            f"::{s.titulo.replace('::', '')}:: {_escape_gift(s.enunciado)}\n"
+            f"::{titulo.replace('::', '')}:: [markdown]{_escape_gift(s.enunciado)}\n"
             f"{_bloque_codigo(s.codigo)}\n"
             "{\n" + "\n".join(cuerpo) + "\n}"
         )
@@ -293,7 +118,7 @@ def exportar_gift(snippets: list[SnippetGenerado]) -> str:
 def exportar_xml(snippets: list[SnippetGenerado]) -> str:
     """Serializa los snippets como banco Moodle XML (multichoice)."""
     preguntas = []
-    for s in snippets:
+    for s, titulo in zip(snippets, _titulos_unicos(snippets)):
         opciones_xml = []
         for op in s.opciones:
             fraccion = "100" if op == s.salida_correcta else "0"
@@ -304,7 +129,7 @@ def exportar_xml(snippets: list[SnippetGenerado]) -> str:
             )
         preguntas.append(
             '<question type="multichoice">\n'
-            f'  <name><text><![CDATA[{saxutils.escape(s.titulo)}]]></text></name>\n'
+            f'  <name><text><![CDATA[{saxutils.escape(titulo)}]]></text></name>\n'
             '  <questiontext format="html">\n'
             f'    <text><![CDATA[<p>{saxutils.escape(s.enunciado)}</p><pre>{saxutils.escape(s.codigo)}</pre>]]></text>\n'
             '  </questiontext>\n'
@@ -320,3 +145,4 @@ def _escape_gift(texto: str) -> str:
     for ch in ('=', '#', '{', '}', '~'):
         out = out.replace(ch, '\\' + ch)
     return out
+

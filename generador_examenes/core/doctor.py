@@ -75,7 +75,7 @@ def diagnosticar() -> List[Dict[str, Any]]:
     chequeos.append({
         "nombre": "gcc", "requerido": True, "ok": gcc_info["disponible"],
         "detalle": f"{gcc_info['version']} ({gcc_info['ruta']})" if gcc_info["disponible"] else "No encontrado en $PATH",
-        "proposito": "Compilación del sintetizador de preguntas de C (--sintetizar)",
+        "proposito": "Compilación del sintetizador de preguntas de C (alucard sintetizar)",
         "sugerencia": "" if gcc_info["disponible"] else "sudo apt install build-essential  (Fedora: sudo dnf install gcc)",
     })
 

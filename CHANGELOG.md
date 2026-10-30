@@ -17,10 +17,18 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - **pools**: filtros por tiempo requerido `minutos_min`, `minutos_max` y `presupuesto_minutos` (suma máxima de lo elegido).
 - **typst**: las tablas, títulos y listas del HTML de las preguntas pasan al PDF.
 - **pools**: sorteo de las preguntas que entran en cada pool con la semilla del examen (reproducible, y el mismo en `build` y `balance-check`); `configuracion_examen.sortear_preguntas: false` vuelve a tomar las primeras que pasan los filtros.
+- **sintetizador**: plantillas `array-decay`, `punteros-salvajes`, `punteros-colgantes` y `fugas-malloc`. Las de comportamiento indefinido se verifican con los avisos de `gcc -fanalyzer` y mezclan variantes correctas; las de fugas cuentan los bytes sin liberar envolviendo `malloc`/`calloc`/`realloc`/`free`.
+- **sintetizador**: `--opciones` fija cuántas opciones tiene cada pregunta (2 a 8).
 - **comandos**: `build` y `balance-check` usan `input_consignas` y `repositorios_externos` de la definición, ya no exigen `-i` y suman `--consignas` y `--repositorio` (también sin YAML); `--spellcheck` revisa también las consignas y los repositorios de la definición; `--category-tree` acepta carpetas (repositorios de preguntas o de consignas) y, con `-d`, suma las fuentes de la definición; `--wizard` pregunta por bancos, consignas, repositorios externos y sorteo, y arma pools de consignas con filtros de tiempo y renglones.
+
+### Cambiado
+
+- **sintetizador**: `alucard sintetizar <plantilla>` es un comando (sin plantilla, lista las disponibles); reemplaza a `--sintetizar`, `--listar-sintetizadores`, `--cantidad` y `--formato-banco` (ahora `-c` y `-f`). Las plantillas pasan a `synthesizer/plantillas.py` y la compilación a `synthesizer/sandbox.py`.
 
 ### Corregido
 
+- **sintetizador**: el banco GIFT declara `[markdown]` en cada pregunta (el código en línea salía con los acentos graves).
+- **gift**: las opciones en `[markdown]` ya no quedan envueltas en `<p>`.
 - **pools**: `puntaje_fijo_por_pregunta` también se aplica a las `preguntas_fijadas` (antes quedaban con el puntaje del banco) (`fdae19c`)
 - **consignas**: `secciones_excluidas` también omite las directivas MyST con título, como `:::{tip} Ayuda (pseudocódigo)` (`c0aa8ca`)
 
