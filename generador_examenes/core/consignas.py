@@ -12,7 +12,7 @@ import html
 import logging
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
 
 import yaml
 
@@ -170,19 +170,26 @@ _DIRECTIVA = re.compile(r"^(?P<valla>:{3,}|`{3,})\{(?P<nombre>[\w-]+)\}[ \t]*(?P
 _OPCION = re.compile(r"^:[\w-]+:.*$")
 
 
-def myst_a_markdown(texto: str) -> str:
+def myst_a_markdown(texto: str, excluir: Sequence[str] = ()) -> str:
     """El MyST de los enunciados de deckard como Markdown común, para el papel.
 
     Las directivas de bloque (`:::{tip} Título`, `::::{tab-set}`, `:::{dropdown}`…) dejan su
     título en negrita y su contenido; `{code-block} c` pasa a un bloque ```c; se quitan las
-    opciones (`:class:`, `:linenos:`…) y las vallas de cierre.
+    opciones (`:class:`, `:linenos:`…) y las vallas de cierre. Las directivas cuyo título
+    contiene alguno de `excluir` (sin distinguir mayúsculas) se omiten enteras.
     """
+    buscados = [t.lower() for t in excluir]
     salida: List[str] = []
     directivas: List[str] = []    # vallas de las directivas abiertas
     codigo: Optional[str] = None  # valla del bloque de código abierto
+    omitida: Optional[str] = None  # valla de la directiva excluida que se está salteando
     tras_directiva = False        # las opciones `:clave: valor` van justo después de abrir
     for linea in texto.splitlines():
         limpia = linea.strip()
+        if omitida is not None:
+            if limpia == omitida:
+                omitida = None
+            continue
         if tras_directiva and _OPCION.match(limpia):
             continue
         tras_directiva = False
@@ -198,6 +205,10 @@ def myst_a_markdown(texto: str) -> str:
             if nombre in ("code-block", "code", "code-cell"):
                 salida.append(f"{valla}{titulo}" if valla.startswith("`") else f"```{titulo}")
                 codigo = valla if valla.startswith("`") else "```"
+                continue
+            if titulo and any(b in titulo.lower() for b in buscados):
+                omitida = valla
+                tras_directiva = False
                 continue
             directivas.append(valla)
             if titulo:
@@ -256,7 +267,9 @@ def componer_markdown(pregunta: Pregunta, presentacion: PresentacionConsigna) ->
             datos.append(f"Tiempo estimado: {meta['minutos']} min")
         partes.append("*" + " · ".join(datos) + "*")
     if presentacion.enunciado and meta.get("enunciado_md"):
-        partes.append(quitar_secciones(myst_a_markdown(meta["enunciado_md"]), presentacion.secciones_excluidas))
+        partes.append(quitar_secciones(
+            myst_a_markdown(meta["enunciado_md"], excluir=presentacion.secciones_excluidas), presentacion.secciones_excluidas
+        ))
     if presentacion.funciones and meta.get("funciones"):
         partes.append("**Funciones a implementar**\n\n" + _tabla_funciones(meta["funciones"]))
     if presentacion.cabecera and meta.get("cabecera_c"):

@@ -113,6 +113,13 @@ def test_myst_a_markdown_deja_markdown_comun():
     assert "```c\nint x = 0;\n```" in md
 
 
+def test_myst_a_markdown_omite_directivas_excluidas():
+    md = myst_a_markdown(ENUNCIADO, excluir=["ayuda"])
+    assert "Ayuda" not in md and "int x = 0;" not in md
+    assert md.startswith("Escribir la función pedida.")
+    assert "Contrato de las Funciones" in md
+
+
 def test_quitar_secciones():
     md = quitar_secciones(ENUNCIADO, ["criterios"])
     assert "Criterios" not in md and "Compila." not in md
