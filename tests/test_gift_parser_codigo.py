@@ -83,3 +83,12 @@ def test_regresion_banco_clasico_sin_codigo(tmp_path):
     assert len(preguntas) == 2
     valores = list(preguntas.values())
     assert any(o.es_correcta and o.texto_html == "París" for o in valores[0].opciones)
+
+
+def test_opciones_markdown_sin_parrafo(tmp_path):
+    """Las opciones son texto en línea: el Markdown no las envuelve en <p>."""
+    banco = tmp_path / "banco.gift"
+    banco.write_text("::p:: [markdown]¿Cuál es un puntero constante? {\n=`int *const p`\n~`const int *p`\n}\n",
+                     encoding="utf-8")
+    opciones = next(iter(GiftParser().parse(banco).values())).opciones
+    assert [o.texto_html for o in opciones] == ["<code>int *const p</code>", "<code>const int *p</code>"]

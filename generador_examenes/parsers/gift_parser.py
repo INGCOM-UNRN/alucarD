@@ -10,6 +10,12 @@ from generador_examenes.parsers.base import BaseParser
 from generador_examenes.core.markdown_utils import detect_and_convert_format
 
 
+def _sin_parrafo(html: str) -> str:
+    """Una opción es texto en línea: sin el <p> que agrega Markdown cuando es un solo párrafo."""
+    m = re.fullmatch(r"\s*<p>(.*)</p>\s*", html, re.DOTALL)
+    return m.group(1) if m and "<p>" not in m.group(1) else html
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -270,7 +276,7 @@ class GiftParser(BaseParser):
                 
                 if texto:
                     # Convertir el texto según el formato
-                    texto_html = detect_and_convert_format(texto, formato)
+                    texto_html = _sin_parrafo(detect_and_convert_format(texto, formato))
                     opciones.append(Opcion(
                         texto_html=texto_html,
                         es_correcta=es_correcta
