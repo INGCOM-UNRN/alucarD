@@ -320,6 +320,8 @@ def _filtrar_preguntas_pool(pool: PoolConfig, banco: Dict[str, Pregunta],
     # Filtro 1: Preguntas fijadas
     if pool.preguntas_fijadas:
         fijadas = _presentar([banco[id_p] for id_p in pool.preguntas_fijadas if id_p in banco], pool, presentacion_general)
+        if pool.puntaje_fijo_por_pregunta:
+            fijadas = [p.model_copy(update={"puntaje": pool.puntaje_fijo_por_pregunta}) for p in fijadas]
         logger.debug(f"  → {len(fijadas)} preguntas fijadas seleccionadas")
         if logger.isEnabledFor(logging.DEBUG):
             for p in fijadas[:3]:

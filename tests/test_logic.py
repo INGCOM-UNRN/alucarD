@@ -351,7 +351,27 @@ class TestConstruirPoolExamen:
         ids = [p.id for p in preguntas]
         assert "p1" in ids
         assert "p3" in ids
-    
+
+    def test_preguntas_fijadas_con_puntaje_fijo(self):
+        """El puntaje fijo del pool también vale para las fijadas, sin tocar el banco"""
+        banco = {
+            "p1": Pregunta(id="p1", tipo="ensayo", nombre="P1",
+                          categoria="Cat", enunciado_html="Test 1"),
+        }
+        pool = PoolConfig(preguntas_fijadas=["p1"], puntaje_fijo_por_pregunta=2.5)
+        definicion = DefinicionExamen(
+            nombre_examen="Test",
+            institucion="Inst",
+            materia="Mat",
+            configuracion_examen=ConfiguracionExamen(),
+            secciones_examen=[SeccionExamen(nombre="Sección A", pools=[pool])]
+        )
+
+        resultado = logic.construir_pool_examen(definicion, banco)
+
+        assert resultado['secciones'][0]['preguntas'][0].puntaje == 2.5
+        assert banco["p1"].puntaje == 1.0
+
     def test_insuficientes_preguntas_error(self):
         """Debe fallar con preguntas insuficientes (acción error)"""
         banco = {
