@@ -13,6 +13,8 @@ from generador_examenes.generators.html_renderer import HtmlRenderer
 
 logger = logging.getLogger(__name__)
 
+TIMEOUT_TYPST = 300  # segundos para el binario typst (el primer arranque indexa las fuentes del sistema)
+
 
 def compilar_typst_a_pdf(typst_source: str, output_pdf: Path, root_dir: Optional[Path] = None) -> Path:
     """Compila código Typst a un archivo PDF usando la librería python o el binario CLI."""
@@ -22,27 +24,32 @@ def compilar_typst_a_pdf(typst_source: str, output_pdf: Path, root_dir: Optional
         tmp.write(typst_source)
         tmp_path = Path(tmp.name)
 
+    root = str(root_dir) if (root_dir and tmp_path.is_relative_to(root_dir)) else None
     try:
         try:
             import typst
-            root = str(root_dir) if (root_dir and tmp_path.is_relative_to(root_dir)) else None
-            typst.compile(str(tmp_path), output=str(output_pdf), root=root)
+        except ImportError:
+            typst = None
+        if typst is not None:
+            # Un error de compilación de la librería se informa tal cual: el binario fallaría igual,
+            # y sólo arrancar puede llevar decenas de segundos (recorre todas las fuentes del sistema).
+            try:
+                typst.compile(str(tmp_path), output=str(output_pdf), root=root)
+            except Exception as e_py:
+                raise RuntimeError(f"Fallo en compilación Typst: {e_py}") from e_py
             return output_pdf
-        except Exception as e_py:
-            # Fallback a binario typst de sistema
-            cmd = ["typst", "compile"]
-            if root_dir and tmp_path.is_relative_to(root_dir):
-                cmd.extend(["--root", str(root_dir)])
-            cmd.extend([str(tmp_path), str(output_pdf)])
-            res = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=False
-            )
-            if res.returncode != 0:
-                raise RuntimeError(f"Fallo en compilación Typst: {res.stderr or e_py}") from e_py
-            return output_pdf
+
+        # Sin la librería: binario typst del sistema
+        cmd = ["typst", "compile", *(["--root", root] if root else []), str(tmp_path), str(output_pdf)]
+        try:
+            res = subprocess.run(cmd, capture_output=True, text=True, check=False, timeout=TIMEOUT_TYPST)
+        except FileNotFoundError as e:
+            raise RuntimeError("Typst no está instalado (ni la librería de Python ni el binario)") from e
+        except subprocess.TimeoutExpired as e:
+            raise RuntimeError(f"Typst no terminó en {TIMEOUT_TYPST} s") from e
+        if res.returncode != 0:
+            raise RuntimeError(f"Fallo en compilación Typst: {res.stderr}")
+        return output_pdf
     finally:
         if tmp_path.exists():
             tmp_path.unlink()

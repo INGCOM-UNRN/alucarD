@@ -1,7 +1,5 @@
 """Pruebas de los diagramas de estructuras (formato de bloques de statics)."""
 
-import shutil
-import subprocess
 import sys
 import xml.etree.ElementTree as ET
 
@@ -129,13 +127,12 @@ def test_typst_recibe_el_svg_como_imagen():
     assert "<svg" not in typst.replace('"<svg', "")  # sólo dentro de la cadena de bytes
 
 
-@pytest.mark.skipif(shutil.which("typst") is None, reason="requiere typst")
 def test_typst_compila_los_diagramas(tmp_path):
+    pytest.importorskip("typst")
+    from generador_examenes.generators.pdf_renderer import compilar_typst_a_pdf
+
     cuerpo = "\n\n".join(html_a_typst(f'<div class="estructura">{renderizar(b)}</div>') for b in BLOQUES)
-    fuente = tmp_path / "d.typ"
-    fuente.write_text(f"#set page(width: 12cm, height: auto)\n{cuerpo}\n", encoding="utf-8")
-    res = subprocess.run(["typst", "compile", str(fuente)], capture_output=True, text=True, check=False)
-    assert res.returncode == 0, res.stderr
+    assert compilar_typst_a_pdf(f"#set page(width: 12cm, height: auto)\n{cuerpo}\n", tmp_path / "d.pdf").is_file()
 
 
 def test_pregunta_gift_con_diagrama(tmp_path):

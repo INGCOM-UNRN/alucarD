@@ -28,6 +28,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Corregido
 
+- **pdf**: cuando Typst falla al compilar, el respaldo con WeasyPrint ya no queda colgado. Un error de la librería `typst` reintentaba con el binario del sistema, que fallaba igual después de recorrer todas las fuentes instaladas (casi un minuto por tema y por clave). Ahora el binario sólo se usa sin la librería y tiene un tiempo máximo.
 - **spellcheck**: con `-d` revisa los bancos del proyecto y, de las consignas y los repositorios externos, sólo lo que algún pool puede elegir (antes mandaba el repositorio entero a LanguageTool); las consignas se revisan sobre su Markdown y no sobre el HTML resaltado (la API pública respondía 413), y los diagramas SVG se enmascaran.
 - **sintetizador**: el banco GIFT declara `[markdown]` en cada pregunta (el código en línea salía con los acentos graves).
 - **gift**: las opciones en `[markdown]` ya no quedan envueltas en `<p>`.
