@@ -583,6 +583,42 @@ def _sintetizar(
     _ultimo_codigo_salida["code"] = cli_commands.ejecutar_sintetizar(args, logging.getLogger("alucard.sintetizar"))
 
 
+@app.command("diagrama")
+def _diagrama(
+    archivo: Path = typer.Argument(..., exists=True, dir_okay=False,
+                                   help="Bloque, lista de bloques o documento de statics, en YAML o JSON."),
+    output_dir: Path = typer.Option(Path("output"), "-o", "--output-dir", help="Directorio de los SVG."),
+    color: bool = typer.Option(False, "--color", help="Paleta de color de statics (por omisión, ahorro de tinta)."),
+) -> None:
+    """Dibuja estructuras de datos (arreglo, lista, pila, cola, árbol) como SVG, con el formato de bloques de statics.
+
+    Escribe un SVG por bloque (`<id>.svg` o `<archivo>_<n>.svg`). Los bloques de statics que no son
+    estructuras (texto, tablas de traza, recortables) se saltean con un aviso. En las preguntas, el
+    mismo bloque va en un bloque de código ```estructura.
+    """
+    from generador_examenes.diagramas import TIPOS, ErrorDiagrama, leer_bloques, renderizar
+
+    try:
+        bloques = leer_bloques(archivo.read_text(encoding="utf-8"))
+    except ErrorDiagrama as e:
+        _usage_error(f"{archivo}: {e}")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    escritos = 0
+    for n, bloque in enumerate(bloques, 1):
+        if bloque.get("type") not in TIPOS:
+            print(f"Aviso: bloque {n} ({bloque.get('type')!r}) no es una estructura; se saltea.", file=sys.stderr)
+            continue
+        destino = output_dir / f"{bloque.get('id') or f'{archivo.stem}_{n}'}.svg"
+        try:
+            destino.write_text(renderizar(bloque, tinta=not color), encoding="utf-8")
+        except ErrorDiagrama as e:
+            print(f"Error: bloque {n}: {e}", file=sys.stderr)
+            continue
+        print(f"✓ {destino}")
+        escritos += 1
+    _ultimo_codigo_salida["code"] = 0 if escritos else 1
+
+
 @app.command("doctor")
 def _doctor(
     json_output: bool = typer.Option(False, "--json", help="Emitir el diagnóstico como JSON (schema_version 1.0.0)."),

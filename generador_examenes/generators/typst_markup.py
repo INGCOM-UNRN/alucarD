@@ -4,7 +4,8 @@ Los enunciados y opciones llegan como HTML (el Moodle XML de idkfa, o el GIFT ya
 cual, Typst mostraba las etiquetas (`</code></p>`) e interpretaba como marcado los `*`, `_`, `#`, `$`
 o el `//` de una URL (que abre un comentario). Acá cada bloque `<pre>` pasa a `#raw(block: true)` con
 su lenguaje, `<code>` a `#raw(...)`, `<strong>`/`<b>` y `<em>`/`<i>` a `#strong[...]`/`#emph[...]`,
-los párrafos y `<br>` a saltos, y el resto del texto se escapa. Las demás etiquetas se quitan.
+los párrafos y `<br>` a saltos, los `<svg>` (diagramas de estructuras) a `#image`, y el resto del texto
+se escapa. Las demás etiquetas se quitan.
 """
 from __future__ import annotations
 
@@ -20,6 +21,8 @@ _LENGUAJE = re.compile(r"language-([\w+#-]+)")
 _TABLA = re.compile(r"<table\b[^>]*>(?P<cuerpo>.*?)</table>", re.S | re.I)
 _FILA = re.compile(r"<tr\b[^>]*>(?P<celdas>.*?)</tr>", re.S | re.I)
 _CELDA = re.compile(r"<t(?P<tipo>[hd])\b[^>]*>(?P<contenido>.*?)</t[hd]>", re.S | re.I)
+_SVG = re.compile(r"<svg\b(?P<attrs>[^>]*)>.*?</svg>", re.S | re.I)
+_ANCHO_SVG = re.compile(r'\bwidth="(?P<px>[\d.]+)"')
 
 
 def _cadena(texto: str) -> str:
@@ -65,6 +68,15 @@ def html_a_typst(fragmento: object) -> str:
         celdas = ", ".join(f"[#strong[{c}]]" if tipo == "h" else f"[{c}]" for f in filas for tipo, c in f)
         return apartar(f"\n#table(columns: {columnas}, inset: 4pt, {celdas})\n")
 
+    def svg(m: re.Match) -> str:
+        # Los diagramas de estructuras (statics): a 0.6 pt por px, sin pasar del ancho disponible.
+        ancho = _ANCHO_SVG.search(m.group("attrs"))
+        puntos = f"{float(ancho.group('px')) * 0.6:.0f}pt" if ancho else "100%"
+        medida = f"calc.min({puntos}, disponible.width)" if ancho else "100%"
+        return apartar(f"\n#layout(disponible => align(center, image(bytes({_cadena(m.group(0))}), "
+                       f"format: \"svg\", width: {medida})))\n")
+
+    texto = _SVG.sub(svg, texto)
     texto = _TABLA.sub(tabla, texto)
     texto = _PRE.sub(bloque_pre, texto)
     texto = _FENCE.sub(bloque_fence, texto)

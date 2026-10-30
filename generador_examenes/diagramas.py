@@ -1,0 +1,716 @@
+"""Diagramas SVG de estructuras de datos, con el formato de bloques de statics.
+
+Porta a Python los renderizadores de statics (`estructuras.html`: arreglo, lista enlazada simple,
+doble y circular, pila, cola lineal y circular) y suma árboles (binario, ABB, AVL con factor de
+balance y montículo), para usarlos en preguntas y consignas sin navegador.
+
+Un bloque es un diccionario con las mismas claves que statics (`type`, `values`, `variant`,
+`capacity`…), así que un bloque exportado de statics se puede pegar tal cual. En Markdown va en un
+bloque de código ```` ```estructura ```` con el bloque en YAML o JSON::
+
+    ```estructura
+    type: linked_list
+    variant: doubly
+    values: [10, 20, 30]
+    ```
+
+`renderizar(bloque)` devuelve el `<svg>`; `expandir_en_markdown(texto)` reemplaza esos bloques.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import html
+import json
+import math
+import re
+from dataclasses import dataclass, field
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
+import yaml
+
+MONO = "DejaVu Sans Mono, Menlo, Consolas, Courier New, monospace"
+SANS = "DejaVu Sans, Inter, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+
+# Paletas de statics: `tinta` (ahorro de tinta, para imprimir) y color.
+PALETAS = {
+    True: {"strokeMain": "#000000", "strokeSub": "#334155", "strokeMuted": "#64748b", "fillHeader": "#f8fafc",
+           "fillCell": "#ffffff", "fillPointerBox": "#f1f5f9", "fillBadge": "#ffffff", "accentPrimary": "#000000",
+           "textMain": "#000000", "textSub": "#334155", "textMuted": "#475569", "fillHighlight": "#e2e8f0"},
+    False: {"strokeMain": "#0f172a", "strokeSub": "#1e40af", "strokeMuted": "#64748b", "fillHeader": "#eff6ff",
+            "fillCell": "#ffffff", "fillPointerBox": "#e0f2fe", "fillBadge": "#dbeafe", "accentPrimary": "#1d4ed8",
+            "textMain": "#0f172a", "textSub": "#1e3a8a", "textMuted": "#475569", "fillHighlight": "#fef3c7"},
+}
+
+TIPOS = ("array", "linked_list", "stack", "queue", "tree")
+
+
+class ErrorDiagrama(ValueError):
+    """Un bloque que no se puede dibujar (tipo desconocido, datos inválidos)."""
+
+
+def _esc(valor: Any) -> str:
+    return html.escape("" if valor is None else str(valor), quote=True)
+
+
+def _hex(texto: Any, defecto: int = 0x1000) -> int:
+    if isinstance(texto, int) and not isinstance(texto, bool):
+        return texto  # YAML lee 0x7FF0 como entero
+    try:
+        return int(str(texto).strip().lower().removeprefix("0x"), 16)
+    except (TypeError, ValueError):
+        return defecto
+
+
+def _fmt_hex(numero: int) -> str:
+    return "0x" + format(max(0, numero), "X").rjust(4, "0")
+
+
+def _entero(valor: Any, defecto: int, minimo: int, maximo: int) -> int:
+    try:
+        n = int(valor)
+    except (TypeError, ValueError):
+        n = defecto
+    return max(minimo, min(maximo, n))
+
+
+def _valores(bloque: Dict[str, Any]) -> List[str]:
+    return ["" if v is None else str(v) for v in bloque.get("values") or []]
+
+
+@dataclass
+class _Lienzo:
+    """Las piezas de un SVG y su paleta; `t()` y `r()` escriben texto y rectángulos."""
+
+    pal: Dict[str, str]
+    sufijo: str
+    partes: List[str] = field(default_factory=list)
+
+    def add(self, *piezas: str) -> None:
+        self.partes.extend(piezas)
+
+    def t(self, x: float, y: float, texto: Any, size: float = 10, peso: int = 400, color: str = "textMain",
+          ancla: str = "start", fuente: str = MONO) -> None:
+        self.add(f'<text x="{x:.1f}" y="{y:.1f}" text-anchor="{ancla}" font-family="{fuente}" font-size="{size}" '
+                 f'font-weight="{peso}" fill="{self.pal[color]}">{_esc(texto)}</text>')
+
+    def r(self, x: float, y: float, w: float, h: float, relleno: str = "fillCell", trazo: float = 1.5,
+          rx: float = 0) -> None:
+        self.add(f'<rect x="{x:.1f}" y="{y:.1f}" width="{w:.1f}" height="{h:.1f}" rx="{rx}" '
+                 f'fill="{self.pal[relleno]}" stroke="{self.pal["strokeMain"]}" stroke-width="{trazo}"/>')
+
+    def linea(self, x1: float, y1: float, x2: float, y2: float, color: str = "accentPrimary", ancho: float = 1.6,
+              flecha: Optional[str] = "main", guiones: str = "") -> None:
+        marca = f' marker-end="url(#flecha-{flecha}-{self.sufijo})"' if flecha else ""
+        dash = f' stroke-dasharray="{guiones}"' if guiones else ""
+        self.add(f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="{self.pal[color]}" '
+                 f'stroke-width="{ancho}"{dash}{marca}/>')
+
+    def vacio(self, x1: float, x2: float, y: float) -> None:
+        """La raya punteada de una celda sin valor (para completar)."""
+        self.linea(x1, y, x2, y, color="strokeMuted", ancho=1, flecha=None, guiones="3 2")
+
+    def punto(self, x: float, y: float, color: str = "accentPrimary", radio: float = 3.2) -> None:
+        self.add(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{radio}" fill="{self.pal[color]}"/>')
+
+    def null(self, x: float, y: float) -> None:
+        """El símbolo de tierra de NULL que usa statics."""
+        self.linea(x, y - 10, x, y + 10, color="strokeMain", ancho=2, flecha=None)
+        self.linea(x + 5, y - 6, x + 5, y + 6, color="strokeMain", ancho=1.5, flecha=None)
+        self.t(x + 12, y + 4, "NULL", size=10, peso=700, color="textMuted")
+
+
+def _encabezado(c: _Lienzo, bloque: Dict[str, Any], extra: str = "") -> float:
+    """Título y subtítulo (si el bloque los trae); devuelve dónde empieza el dibujo."""
+    titulo, subtitulo = bloque.get("title"), bloque.get("subtitle")
+    if not titulo and not subtitulo and not extra:
+        return 0
+    if titulo:
+        c.t(0, 16, titulo, size=14, peso=700, fuente=SANS)
+    texto = " | ".join(p for p in (subtitulo, extra) if p)
+    if texto:
+        c.t(0, 32 if titulo else 14, texto, size=10.5, color="textMuted")
+    return 40 if titulo else 22
+
+
+# ---------------------------------------------------------------------------
+# Arreglo
+# ---------------------------------------------------------------------------
+
+def _arreglo(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
+    valores = _valores(b)
+    cap = _entero(b.get("capacity", len(valores) or 8), 8, 1, 16)
+    base, paso = _hex(b.get("baseAddr")), _entero(b.get("typeSize"), 4, 1, 64)
+    direcciones, offsets = bool(b.get("showAddresses")), bool(b.get("showOffsets"))
+    indices = b.get("showIndices", True)
+    top = _encabezado(c, b, f"Base: {_fmt_hex(base)} | sizeof: {paso}B" if direcciones else "")
+
+    punteros: Dict[int, List[str]] = {}
+    for par in str(b.get("pointers") or "").split(","):
+        etiqueta, _, idx = par.partition(":")
+        if idx.strip().isdigit() and int(idx) < cap:
+            punteros.setdefault(int(idx), []).append(etiqueta.strip())
+
+    x0, celda_w, celda_h = 78, 64, 54
+    y = top + (64 if punteros else 30)
+    if indices:
+        c.t(x0 - 10, y - 8, "Índice [i]:", size=10, peso=600, color="textSub", ancla="end")
+    c.t(x0 - 10, y + celda_h / 2 + 4, "Valor:", size=10.5, peso=700, ancla="end")
+    if direcciones:
+        c.t(x0 - 10, y + celda_h + 17, "Dirección:", size=10, peso=600, color="textSub", ancla="end")
+    if offsets:
+        c.t(x0 - 10, y + celda_h + 32, "Offset:", size=9.5, color="textMuted", ancla="end")
+
+    for i in range(cap):
+        cx = x0 + i * celda_w
+        centro = cx + celda_w / 2
+        if i in punteros:
+            texto = ", ".join(punteros[i])
+            ancho = max(40, len(texto) * 7.5 + 12)
+            c.r(centro - ancho / 2, y - 48, ancho, 18, relleno="fillBadge", trazo=1.2, rx=3)
+            c.t(centro, y - 35, texto, size=10, peso=700, ancla="middle")
+            c.linea(centro, y - 30, centro, y - 19, ancho=1.5)
+        if indices:
+            c.t(centro, y - 7, f"[{i}]", size=11, peso=700, color="textSub", ancla="middle")
+        c.r(cx, y, celda_w, celda_h, trazo=1.75)
+        valor = valores[i] if i < len(valores) else ""
+        if valor and not b.get("blankValues"):
+            c.t(centro, y + celda_h / 2 + 5, valor, size=15, peso=700, ancla="middle")
+        else:
+            c.vacio(cx + 10, cx + celda_w - 10, y + celda_h - 12)
+        if direcciones:
+            c.t(centro, y + celda_h + 17, "0x____" if b.get("blankAddrs") else _fmt_hex(base + i * paso),
+                size=10, peso=600, color="textSub", ancla="middle")
+        if offsets:
+            c.t(centro, y + celda_h + 32, f"+{i * paso}B", size=9, color="textMuted", ancla="middle")
+
+    alto = y + celda_h + (42 if offsets else 26 if direcciones else 12)
+    return x0 + cap * celda_w + 20, alto
+
+
+# ---------------------------------------------------------------------------
+# Lista enlazada: simple, doble y circular
+# ---------------------------------------------------------------------------
+
+def _lista(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
+    valores = _valores(b) or [""]
+    n = min(7, len(valores))
+    variante = b.get("variant", "singly")
+    doble, circular = variante in ("doubly", "circular_doubly"), variante in ("circular", "circular_doubly")
+    sin_dirs, sin_flechas = bool(b.get("blankNextAddrs")), b.get("drawArrows") is False
+    sin_valores = bool(b.get("blankValues"))
+    top = _encabezado(c, b)
+
+    direcciones = [_fmt_hex(d) if isinstance(d, int) else str(d) for d in b.get("addresses") or []]
+    direcciones += [_fmt_hex(0x4000 + i * 0x180) for i in range(len(direcciones), n)]
+    y, alto_nodo, cabeza_w, x0 = top + 28, 54, 72, 104
+    nodo_w = 126 if doble else 102
+    gap = 44
+
+    c.t(cabeza_w / 2, y, b.get("headLabel") or "HEAD", size=10, peso=700, ancla="middle")
+    c.r(0, y + 7, cabeza_w, 40, relleno="fillPointerBox", trazo=1.75, rx=3)
+    if not sin_dirs:
+        c.t(cabeza_w / 2, y + 31, direcciones[0], size=10, peso=600, color="textSub", ancla="middle")
+    if not sin_flechas:
+        c.linea(cabeza_w, y + 27, x0 - 3, y + 27, ancho=1.75)
+
+    for i in range(n):
+        nx = x0 + i * (nodo_w + gap)
+        valor = valores[i]
+        siguiente = direcciones[i + 1] if i < n - 1 else (direcciones[0] if circular else "NULL")
+        anterior = direcciones[i - 1] if i > 0 else (direcciones[n - 1] if circular else "NULL")
+        c.t(nx + nodo_w / 2, y - 7, f"Dir: {direcciones[i]}", size=10, peso=700, color="textSub", ancla="middle")
+
+        if not doble:
+            dato_w = 62
+            ptr_w = nodo_w - dato_w
+            c.r(nx, y, nodo_w, alto_nodo, trazo=1.75, rx=3)
+            c.r(nx + dato_w, y, ptr_w, alto_nodo, relleno="fillPointerBox")
+            c.t(nx + dato_w / 2, y + 12, "dato", size=8.5, color="textMuted", ancla="middle")
+            c.t(nx + dato_w + ptr_w / 2, y + 12, "*sig", size=8.5, color="textMuted", ancla="middle")
+            if valor and not sin_valores:
+                c.t(nx + dato_w / 2, y + 36, valor, size=14, peso=700, ancla="middle")
+            else:
+                c.vacio(nx + 8, nx + dato_w - 8, y + 42)
+            px, py = nx + dato_w + ptr_w / 2, y + 33
+            if not sin_flechas:
+                if i < n - 1:
+                    c.punto(px, py)
+                    c.linea(px, py, nx + nodo_w + gap - 3, py, ancho=1.75)
+                elif circular:
+                    vuelta = y + alto_nodo + 28
+                    c.punto(px, py)
+                    c.add(f'<path d="M {px:.1f} {py:.1f} L {nx + nodo_w + 16:.1f} {py:.1f} L {nx + nodo_w + 16:.1f} '
+                          f'{vuelta:.1f} L {x0 + 20:.1f} {vuelta:.1f} L {x0 + 20:.1f} {y + alto_nodo + 3:.1f}" '
+                          f'fill="none" stroke="{c.pal["accentPrimary"]}" stroke-width="1.6" '
+                          f'marker-end="url(#flecha-main-{c.sufijo})"/>')
+                else:
+                    c.linea(nx + dato_w + 5, y + alto_nodo - 5, nx + nodo_w - 5, y + 16, color="strokeMain",
+                            ancho=1.5, flecha=None)
+                    c.punto(px, py, radio=3)
+                    c.linea(px, py, nx + nodo_w + 22, py, ancho=1.5, flecha=None)
+                    c.null(nx + nodo_w + 22, py)
+            c.t(px, y + alto_nodo + 14, f"sig:{'______' if sin_dirs else siguiente}", size=8.5, color="textMuted",
+                ancla="middle")
+        else:
+            ptr_w = 32
+            dato_w = nodo_w - 2 * ptr_w
+            c.r(nx, y, nodo_w, alto_nodo, trazo=1.75, rx=3)
+            c.r(nx, y, ptr_w, alto_nodo, relleno="fillPointerBox")
+            c.r(nx + ptr_w + dato_w, y, ptr_w, alto_nodo, relleno="fillPointerBox")
+            c.t(nx + ptr_w / 2, y + 12, "*ant", size=8, color="textMuted", ancla="middle")
+            c.t(nx + ptr_w + dato_w / 2, y + 12, "dato", size=8.5, color="textMuted", ancla="middle")
+            c.t(nx + ptr_w + dato_w + ptr_w / 2, y + 12, "*sig", size=8, color="textMuted", ancla="middle")
+            if valor and not sin_valores:
+                c.t(nx + ptr_w + dato_w / 2, y + 36, valor, size=14, peso=700, ancla="middle")
+            else:
+                c.vacio(nx + ptr_w + 8, nx + ptr_w + dato_w - 8, y + 42)
+            if not sin_flechas:
+                if i == 0 and not circular:
+                    c.linea(nx + 4, y + alto_nodo - 5, nx + ptr_w - 4, y + 16, color="strokeMain", ancho=1.4,
+                            flecha=None)
+                if i == n - 1 and not circular:
+                    c.linea(nx + ptr_w + dato_w + 4, y + alto_nodo - 5, nx + nodo_w - 4, y + 16,
+                            color="strokeMain", ancho=1.4, flecha=None)
+                if i < n - 1:
+                    siguiente_x = nx + nodo_w + gap
+                    sig_x = nx + ptr_w + dato_w + ptr_w / 2
+                    c.punto(sig_x, y + 26, radio=2.8)
+                    c.linea(sig_x, y + 26, siguiente_x - 3, y + 26)
+                    c.punto(siguiente_x + ptr_w / 2, y + 40, color="strokeSub", radio=2.8)
+                    c.linea(siguiente_x + ptr_w / 2, y + 40, nx + nodo_w + 3, y + 40, color="strokeSub", ancho=1.5,
+                            flecha="sub", guiones="3 1.5")
+                elif circular:
+                    vuelta = y + alto_nodo + 28
+                    sig_x = nx + ptr_w + dato_w + ptr_w / 2
+                    c.punto(sig_x, y + 26, radio=2.8)
+                    c.add(f'<path d="M {sig_x:.1f} {y + 26:.1f} L {nx + nodo_w + 16:.1f} {y + 26:.1f} '
+                          f'L {nx + nodo_w + 16:.1f} {vuelta:.1f} L {x0 + 16:.1f} {vuelta:.1f} '
+                          f'L {x0 + 16:.1f} {y + alto_nodo + 3:.1f}" fill="none" stroke="{c.pal["accentPrimary"]}" '
+                          f'stroke-width="1.6" marker-end="url(#flecha-main-{c.sufijo})"/>')
+            if not sin_dirs:
+                c.t(nx + nodo_w / 2, y + alto_nodo + 14, f"ant:{anterior} | sig:{siguiente}", size=8.5,
+                    color="textMuted", ancla="middle")
+
+    if circular and not sin_flechas:
+        c.t(x0 + (n * (nodo_w + gap)) / 2, y + alto_nodo + 42,
+            f"Enlace circular: el último apunta a HEAD ({direcciones[0]})", size=9, peso=600, color="textSub",
+            ancla="middle")
+    ancho = x0 + n * (nodo_w + gap) - gap + (80 if not circular else 30)
+    return ancho, y + alto_nodo + (50 if circular else 24)
+
+
+# ---------------------------------------------------------------------------
+# Pila
+# ---------------------------------------------------------------------------
+
+def _pila(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
+    valores = _valores(b)
+    cap = _entero(b.get("capacity", len(valores) or 5), 5, 2, 10)
+    base, paso = _hex(b.get("baseAddr")), _entero(b.get("typeSize"), 4, 1, 64)
+    tope = b.get("topIndex", len([v for v in valores if v]) - 1)
+    sin_valores = bool(b.get("blankValues"))
+    top = _encabezado(c, b)
+    celda_w, celda_h, y0 = 104, 34, top + 26
+    dirs = bool(b.get("showAddresses", True))
+    izq = 84 if dirs else 36  # índices (y direcciones) a la izquierda de la pila
+
+    def instancia(x: float, etiqueta: str, inicial: bool) -> None:
+        caja = x + izq
+        fondo = y0 + cap * celda_h
+        if etiqueta:
+            c.t(x, y0 - 8, etiqueta, size=11, peso=700, color="textSub", fuente=SANS)
+        for idx in range(cap - 1, -1, -1):
+            cy = y0 + (cap - 1 - idx) * celda_h
+            valor = valores[idx] if inicial and idx < len(valores) else ""
+            c.t(caja - 8, cy + celda_h / 2 + 4, f"[{idx}]", size=10, peso=600, color="textSub", ancla="end")
+            if inicial and dirs:
+                c.t(caja - 34, cy + celda_h / 2 + 3, _fmt_hex(base + idx * paso), size=9, color="textMuted",
+                    ancla="end")
+            c.r(caja, cy, celda_w, celda_h)
+            if valor and not sin_valores:
+                c.t(caja + celda_w / 2, cy + celda_h / 2 + 5, valor, size=13, peso=700, ancla="middle")
+            else:
+                c.vacio(caja + 14, caja + celda_w - 14, cy + celda_h - 8)
+            if inicial and not b.get("blankPointers") and str(idx) == str(tope):
+                sx, sy = caja + celda_w + 30, cy + celda_h / 2
+                c.r(sx, sy - 10, 64, 20, relleno="fillBadge", trazo=1.3, rx=3)
+                c.t(sx + 32, sy + 4, b.get("topLabel") or "TOPE", size=9.5, peso=700, ancla="middle")
+                c.linea(sx, sy, caja + celda_w + 3, sy)
+        c.add(f'<path d="M {caja - 3} {y0 - 4} L {caja - 3} {fondo + 3} L {caja + celda_w + 3} {fondo + 3} '
+              f'L {caja + celda_w + 3} {y0 - 4}" fill="none" stroke="{c.pal["strokeMain"]}" stroke-width="2.5"/>')
+        tope_txt = tope if inicial and not b.get("blankPointers") else "___"
+        c.t(caja + celda_w / 2, fondo + 18, f"BASE | tope = {tope_txt}", size=9.5, peso=600, color="textMuted",
+            ancla="middle")
+
+    if b.get("layout") == "vertical_multi":
+        etiquetas = [str(e) for e in b.get("traceLabels") or []]
+        cuantas = max(2, min(4, len(etiquetas) or 2))
+        paso_x = max(izq + celda_w + 110, max((len(e) for e in etiquetas), default=0) * 6.2 + 40)
+        for t in range(cuantas):
+            instancia(t * paso_x, etiquetas[t] if t < len(etiquetas) else f"Paso {t + 1}", t == 0)
+        ancho = cuantas * paso_x
+    else:
+        instancia(0, b.get("label", ""), True)
+        ancho = izq + celda_w + 30 + 64 + 10
+    return ancho, y0 + cap * celda_h + 28
+
+
+# ---------------------------------------------------------------------------
+# Cola: lineal y circular
+# ---------------------------------------------------------------------------
+
+def _cola(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
+    valores = _valores(b)
+    cap = _entero(b.get("capacity", len(valores) or 8), 8, 4, 12)
+    frente, final = str(b.get("frontIndex", "")), str(b.get("rearIndex", ""))
+    sin_valores, sin_ptrs = bool(b.get("blankValues")), bool(b.get("blankPointers"))
+    top = _encabezado(c, b)
+
+    if b.get("variant") == "circular":
+        cx, cy, r_ext, r_int = 150, top + 130, 96, 52
+        r_texto, r_indice = (r_ext + r_int) / 2, r_int - 13
+        for i in range(cap):
+            a0 = i / cap * 2 * math.pi - math.pi / 2
+            a1 = (i + 1) / cap * 2 * math.pi - math.pi / 2
+            am = (a0 + a1) / 2
+
+            def pt(radio: float, ang: float) -> str:
+                return f"{cx + radio * math.cos(ang):.2f} {cy + radio * math.sin(ang):.2f}"
+
+            c.add(f'<path d="M {pt(r_ext, a0)} A {r_ext} {r_ext} 0 0 1 {pt(r_ext, a1)} L {pt(r_int, a1)} '
+                  f'A {r_int} {r_int} 0 0 0 {pt(r_int, a0)} Z" fill="{c.pal["fillCell"]}" '
+                  f'stroke="{c.pal["strokeMain"]}" stroke-width="1.6"/>')
+            c.t(cx + r_indice * math.cos(am), cy + r_indice * math.sin(am) + 3.5, f"[{i}]", size=10, peso=700,
+                color="textSub", ancla="middle")
+            valor = valores[i] if i < len(valores) else ""
+            if valor and not sin_valores:
+                c.t(cx + r_texto * math.cos(am), cy + r_texto * math.sin(am) + 4, valor, size=12.5, peso=700,
+                    ancla="middle")
+            if not sin_ptrs and str(i) in (frente, final):
+                c.linea(cx + (r_ext + 28) * math.cos(am), cy + (r_ext + 28) * math.sin(am),
+                        cx + (r_ext + 4) * math.cos(am), cy + (r_ext + 4) * math.sin(am), ancho=1.75)
+                etiqueta = "FRENTE=FINAL" if frente == final else ("FRENTE" if str(i) == frente else "FINAL")
+                c.t(cx + (r_ext + 42) * math.cos(am), cy + (r_ext + 42) * math.sin(am) + 4, etiqueta, size=10,
+                    peso=700, ancla="middle")
+        c.t(cx, cy + 4, f"N = {cap}", size=10, peso=700, color="textMuted", ancla="middle")
+        if not b.get("showPanel", True):
+            return 320, top + 270
+        px, pw = 330, 400
+        c.add(f'<g transform="translate({px}, {top + 30})">')
+        c.r(0, 0, pw, 190, relleno="fillHeader", trazo=1.4, rx=4)
+        c.t(14, 24, f"Índices de la cola circular (módulo N = {cap})", size=12, peso=700, fuente=SANS)
+        c.linea(0, 34, pw, 34, color="strokeMain", ancho=1, flecha=None)
+        c.t(14, 56, f"• FRENTE = {'______' if sin_ptrs else frente}   (próximo a salir)", size=11, peso=600)
+        c.t(14, 78, f"• FINAL  = {'______' if sin_ptrs else final}   (último insertado)", size=11, peso=600)
+        c.t(14, 108, "Aritmética modular:", size=10.5, color="textSub")
+        c.t(22, 126, f"Encolar:     final  = (final + 1) % {cap}", size=10, color="textMuted")
+        c.t(22, 144, f"Desencolar:  frente = (frente + 1) % {cap}", size=10, color="textMuted")
+        c.t(22, 162, f"Llena:       (final + 1) % {cap} == frente", size=10, color="textMuted")
+        c.t(22, 180, "Cantidad:    cant = _________", size=10, color="textMuted")
+        c.add("</g>")
+        return px + pw + 10, top + 270
+
+    x0, celda_w, celda_h, y = 110, 60, 50, top + 58
+    fin_x = x0 + cap * celda_w
+    c.t(x0 - 14, y + 20, "DESENCOLAR", size=10, peso=700, color="textSub", ancla="end")
+    c.t(x0 - 14, y + 34, "← sale frente", size=9, color="textMuted", ancla="end")
+    c.t(fin_x + 14, y + 20, "ENCOLAR(x)", size=10, peso=700, color="textSub")
+    c.t(fin_x + 14, y + 34, "← entra final", size=9, color="textMuted")
+    c.linea(x0 - 6, y - 3, fin_x + 6, y - 3, color="strokeMain", ancho=2.2, flecha=None)
+    c.linea(x0 - 6, y + celda_h + 3, fin_x + 6, y + celda_h + 3, color="strokeMain", ancho=2.2, flecha=None)
+    for i in range(cap):
+        cx = x0 + i * celda_w
+        centro = cx + celda_w / 2
+        c.t(centro, y - 9, f"[{i}]", size=10.5, peso=700, color="textSub", ancla="middle")
+        c.r(cx, y, celda_w, celda_h)
+        valor = valores[i] if i < len(valores) else ""
+        if valor and not sin_valores:
+            c.t(centro, y + celda_h / 2 + 5, valor, size=14, peso=700, ancla="middle")
+        else:
+            c.vacio(cx + 10, cx + celda_w - 10, y + celda_h - 12)
+        if sin_ptrs:
+            continue
+        if str(i) == frente:
+            c.linea(centro, y + celda_h + 24, centro, y + celda_h + 6)
+            c.r(centro - 30, y + celda_h + 24, 60, 18, relleno="fillBadge", trazo=1.2, rx=3)
+            c.t(centro, y + celda_h + 37, "FRENTE", size=9.5, peso=700, ancla="middle")
+        if str(i) == final:
+            centro += 18 if str(i) == frente else 0
+            c.linea(centro, y - 34, centro, y - 21)
+            c.r(centro - 28, y - 52, 56, 18, relleno="fillBadge", trazo=1.2, rx=3)
+            c.t(centro, y - 39, "FINAL", size=9.5, peso=700, ancla="middle")
+    return fin_x + 110, y + celda_h + 50
+
+
+# ---------------------------------------------------------------------------
+# Árboles: binario, ABB, AVL y montículo
+# ---------------------------------------------------------------------------
+
+@dataclass
+class _Nodo:
+    valor: str
+    izq: Optional["_Nodo"] = None
+    der: Optional["_Nodo"] = None
+    indice: Optional[int] = None  # posición en el arreglo (montículo / orden por niveles)
+
+    @property
+    def altura(self) -> int:
+        return 1 + max(self.izq.altura if self.izq else 0, self.der.altura if self.der else 0)
+
+    @property
+    def balance(self) -> int:
+        return (self.izq.altura if self.izq else 0) - (self.der.altura if self.der else 0)
+
+
+def _clave(valor: Any) -> Any:
+    try:
+        return (0, float(valor))
+    except (TypeError, ValueError):
+        return (1, str(valor))
+
+
+def _rotar_der(n: _Nodo) -> _Nodo:
+    raiz = n.izq
+    assert raiz is not None
+    n.izq, raiz.der = raiz.der, n
+    return raiz
+
+
+def _rotar_izq(n: _Nodo) -> _Nodo:
+    raiz = n.der
+    assert raiz is not None
+    n.der, raiz.izq = raiz.izq, n
+    return raiz
+
+
+def _insertar(raiz: Optional[_Nodo], valor: str, avl: bool) -> _Nodo:
+    """Inserción en un ABB (los repetidos se ignoran); con `avl`, rebalancea con rotaciones."""
+    if raiz is None:
+        return _Nodo(valor)
+    if _clave(valor) == _clave(raiz.valor):
+        return raiz
+    if _clave(valor) < _clave(raiz.valor):
+        raiz.izq = _insertar(raiz.izq, valor, avl)
+    else:
+        raiz.der = _insertar(raiz.der, valor, avl)
+    if not avl:
+        return raiz
+    if raiz.balance > 1:
+        assert raiz.izq is not None
+        if raiz.izq.balance < 0:
+            raiz.izq = _rotar_izq(raiz.izq)
+        return _rotar_der(raiz)
+    if raiz.balance < -1:
+        assert raiz.der is not None
+        if raiz.der.balance > 0:
+            raiz.der = _rotar_der(raiz.der)
+        return _rotar_izq(raiz)
+    return raiz
+
+
+def _desde_niveles(valores: List[str], i: int = 0) -> Optional[_Nodo]:
+    if i >= len(valores) or valores[i] in ("", "null", "None", "~"):
+        return None
+    return _Nodo(valores[i], _desde_niveles(valores, 2 * i + 1), _desde_niveles(valores, 2 * i + 2), i)
+
+
+def _desde_anidado(dato: Any) -> Optional[_Nodo]:
+    if dato is None:
+        return None
+    if not isinstance(dato, dict):
+        return _Nodo(str(dato))
+    return _Nodo(str(dato.get("value", "")), _desde_anidado(dato.get("left")), _desde_anidado(dato.get("right")))
+
+
+def construir_arbol(b: Dict[str, Any]) -> Optional[_Nodo]:
+    """El árbol del bloque: `insert` (ABB/AVL por inserciones), `root` (anidado) o `values` (por niveles)."""
+    variante = b.get("variant", "binary")
+    if b.get("insert") is not None:
+        raiz = None
+        for v in b["insert"]:
+            raiz = _insertar(raiz, str(v), avl=variante == "avl")
+        return raiz
+    if b.get("root") is not None:
+        return _desde_anidado(b["root"])
+    return _desde_niveles(_valores(b))
+
+
+def _arbol(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
+    raiz = construir_arbol(b)
+    if raiz is None:
+        raise ErrorDiagrama("el árbol no tiene nodos (usar values, insert o root)")
+    variante = b.get("variant", "binary")
+    estructura = b.get("nodeStyle") == "struct"
+    sin_valores, nulls = bool(b.get("blankValues")), bool(b.get("nullLeaves", estructura))
+    resaltados = {str(v) for v in b.get("highlight") or []}
+    top = _encabezado(c, b)
+
+    # Posición: x por recorrido en orden, y por profundidad.
+    posiciones: List[Tuple[_Nodo, int, int]] = []
+
+    def recorrer(n: Optional[_Nodo], prof: int) -> None:
+        if n is None:
+            return
+        recorrer(n.izq, prof + 1)
+        posiciones.append((n, len(posiciones), prof))
+        recorrer(n.der, prof + 1)
+
+    recorrer(raiz, 0)
+    paso_x = 112 if estructura else (58 if variante in ("avl", "heap") else 50)
+    nivel_h = 78 if estructura else 66
+    margen = 30 + (24 if nulls else 0)
+    radio = 19
+    xy = {id(n): (margen + i * paso_x, top + 34 + p * nivel_h) for n, i, p in posiciones}
+    nodo_w, nodo_h = 100, 36
+
+    puntos: List[Tuple[float, float]] = []  # los orígenes de los punteros (nodo-estructura), arriba de todo
+
+    for n, _, _ in posiciones:
+        x, y = xy[id(n)]
+        for lado, hijo in (("izq", n.izq), ("der", n.der)):
+            signo = -1 if lado == "izq" else 1
+            if estructura:
+                if hijo is None:
+                    continue
+                sx, sy = x + signo * (nodo_w / 2 - 13), y + 6
+                hx, hy = xy[id(hijo)]
+                puntos.append((sx, sy))
+                c.linea(sx, sy, hx, hy - nodo_h / 2 - 2, ancho=1.5)
+            elif hijo is not None:
+                hx, hy = xy[id(hijo)]
+                largo = math.hypot(hx - x, hy - y)
+                ux, uy = (hx - x) / largo, (hy - y) / largo
+                c.linea(x + ux * radio, y + uy * radio, hx - ux * radio, hy - uy * radio, color="strokeMain",
+                        ancho=1.5, flecha=None)
+            elif nulls:
+                sx, sy = x + signo * radio * 0.7, y + radio * 0.7
+                c.linea(sx, sy, sx + signo * 16, sy + 22, color="strokeMuted", ancho=1, flecha=None, guiones="3 2")
+                c.t(sx + signo * 16, sy + 32, "NULL", size=7.5, color="textMuted", ancla="middle")
+
+    for n, _, _ in posiciones:
+        x, y = xy[id(n)]
+        relleno = "fillHighlight" if n.valor in resaltados else "fillCell"
+        trazo = 2.6 if n.valor in resaltados else 1.6
+        if estructura:
+            izq_x, cel = x - nodo_w / 2, 26
+            c.r(izq_x, y - nodo_h / 2, nodo_w, nodo_h, relleno=relleno, trazo=trazo, rx=3)
+            c.r(izq_x, y - nodo_h / 2, cel, nodo_h, relleno="fillPointerBox")
+            c.r(izq_x + nodo_w - cel, y - nodo_h / 2, cel, nodo_h, relleno="fillPointerBox")
+            c.t(izq_x + cel / 2, y - nodo_h / 2 - 4, "*izq", size=7.5, color="textMuted", ancla="middle")
+            c.t(izq_x + nodo_w - cel / 2, y - nodo_h / 2 - 4, "*der", size=7.5, color="textMuted", ancla="middle")
+            for lado, hijo in (("izq", n.izq), ("der", n.der)):
+                if hijo is None:
+                    cx0 = izq_x if lado == "izq" else izq_x + nodo_w - cel
+                    c.linea(cx0 + 4, y + nodo_h / 2 - 4, cx0 + cel - 4, y - nodo_h / 2 + 4, color="strokeMain",
+                            ancho=1.3, flecha=None)
+            if n.valor and not sin_valores:
+                c.t(x, y + 5, n.valor, size=13, peso=700, ancla="middle")
+            else:
+                c.vacio(x - 18, x + 18, y + 10)
+        else:
+            c.add(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{radio}" fill="{c.pal[relleno]}" '
+                  f'stroke="{c.pal["strokeMain"]}" stroke-width="{trazo}"/>')
+            if n.valor and not sin_valores:
+                c.t(x, y + 4.5, n.valor, size=12.5 if len(n.valor) < 4 else 9.5, peso=700, ancla="middle")
+            else:
+                c.vacio(x - 9, x + 9, y + 7)
+        if variante == "avl" and b.get("showBalance", True):
+            c.r(x + radio - 2, y - radio - 8, 22, 14, relleno="fillBadge", trazo=1, rx=3)
+            c.t(x + radio + 9, y - radio + 2.5, "__" if b.get("blankBalance") else f"{n.balance:+d}".replace("+0", "0"),
+                size=8.5, peso=700, color="textSub", ancla="middle")
+        if variante == "heap" and n.indice is not None:
+            c.t(x, y + radio + 13, f"[{n.indice}]", size=8.5, color="textMuted", ancla="middle")
+    for px, py in puntos:
+        c.punto(px, py, radio=2.8)
+
+    ancho = margen * 2 + (len(posiciones) - 1) * paso_x + (24 if variante == "avl" else 0)
+    alto = top + 34 + raiz.altura * nivel_h - nivel_h + (nodo_h if estructura else radio) + (34 if nulls else 22)
+
+    if variante == "heap" and b.get("showArray", True) and b.get("values"):
+        sub = _Lienzo(c.pal, c.sufijo)
+        ancho_a, alto_a = _arreglo(sub, {"values": _valores(b), "capacity": len(_valores(b)),
+                                         "blankValues": b.get("blankValues")})
+        c.add(f'<g transform="translate(0, {alto + 8:.1f})">', *sub.partes, "</g>")
+        return max(ancho, ancho_a), alto + 8 + alto_a
+    return ancho, alto
+
+
+_RENDERIZADORES: Dict[str, Callable[[_Lienzo, Dict[str, Any]], Tuple[float, float]]] = {
+    "array": _arreglo, "linked_list": _lista, "stack": _pila, "queue": _cola, "tree": _arbol,
+}
+
+
+def renderizar(bloque: Dict[str, Any], tinta: bool = True) -> str:
+    """El bloque como un `<svg>` independiente (con su tamaño y sus marcadores de flecha).
+
+    `tinta` usa la paleta de ahorro de tinta de statics (negro), para imprimir; False, la de color.
+    """
+    if not isinstance(bloque, dict):
+        raise ErrorDiagrama("el bloque tiene que ser un diccionario con 'type'")
+    tipo = bloque.get("type")
+    if tipo not in _RENDERIZADORES:
+        raise ErrorDiagrama(f"tipo de bloque no soportado: {tipo!r} (disponibles: {', '.join(TIPOS)})")
+    pal = PALETAS[bool(bloque.get("inkSaver", tinta))]
+    sufijo = hashlib.sha1(json.dumps(bloque, sort_keys=True, default=str).encode()).hexdigest()[:8]
+    lienzo = _Lienzo(pal, sufijo)
+    ancho, alto = _RENDERIZADORES[tipo](lienzo, bloque)
+    m = 8
+    defs = (
+        f'<defs><marker id="flecha-main-{sufijo}" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" '
+        f'markerHeight="6.5" orient="auto-start-reverse"><path d="M 0 1.5 L 9 5 L 0 8.5 z" '
+        f'fill="{pal["accentPrimary"]}"/></marker>'
+        f'<marker id="flecha-sub-{sufijo}" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" '
+        f'markerHeight="6" orient="auto-start-reverse"><path d="M 0 1.5 L 9 5 L 0 8.5 z" '
+        f'fill="{pal["strokeSub"]}"/></marker></defs>'
+    )
+    w, h = math.ceil(ancho + 2 * m), math.ceil(alto + 2 * m)
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" class="estructura" width="{w}" height="{h}" '
+            f'viewBox="{-m} {-m} {w} {h}" role="img" aria-label="{_esc(bloque.get("title") or tipo)}">'
+            f'{defs}<rect x="{-m}" y="{-m}" width="{w}" height="{h}" fill="#ffffff"/>'
+            + "".join(lienzo.partes) + "</svg>")
+
+
+def leer_bloques(texto: str) -> List[Dict[str, Any]]:
+    """Los bloques de un texto YAML/JSON: un bloque, una lista de bloques o un documento de statics (`blocks`)."""
+    try:
+        dato = yaml.safe_load(texto)
+    except yaml.YAMLError as e:
+        raise ErrorDiagrama(f"el bloque no es YAML/JSON válido: {e}") from e
+    if isinstance(dato, dict) and "blocks" in dato:
+        dato = dato["blocks"]
+    bloques = dato if isinstance(dato, list) else [dato]
+    if not all(isinstance(b, dict) for b in bloques):
+        raise ErrorDiagrama("cada bloque tiene que ser un diccionario con 'type'")
+    return bloques
+
+
+_FENCE = re.compile(r"^(?P<valla>`{3,}|~{3,})[ \t]*(?:estructura|statics)[ \t]*\n(?P<cuerpo>.*?)^(?P=valla)[ \t]*$",
+                    re.S | re.M)
+
+
+def expandir_en_markdown(texto: str, tinta: bool = True) -> Tuple[str, Dict[str, str]]:
+    """Reemplaza los bloques ```estructura por marcadores; devuelve el texto y el SVG de cada marcador.
+
+    Los marcadores (`ESTRUCTURA-<n>-<hash>`) sobreviven a la conversión de Markdown; después se
+    cambian por el SVG con `reponer_svgs`. Un bloque inválido queda como un aviso en el texto.
+    """
+    svgs: Dict[str, str] = {}
+
+    def reemplazar(m: re.Match) -> str:
+        marcador = f"ESTRUCTURA{len(svgs)}X{hashlib.sha1(m.group(0).encode()).hexdigest()[:8]}"
+        try:
+            svgs[marcador] = "".join(f'<div class="estructura">{renderizar(b, tinta)}</div>'
+                                     for b in leer_bloques(m.group("cuerpo")))
+        except ErrorDiagrama as e:
+            svgs[marcador] = f'<p class="estructura-error"><strong>Diagrama inválido:</strong> {_esc(e)}</p>'
+        return f"\n\n{marcador}\n\n"
+
+    return _FENCE.sub(reemplazar, texto), svgs
+
+
+def reponer_svgs(html_texto: str, svgs: Dict[str, str]) -> str:
+    """Cambia los marcadores de `expandir_en_markdown` (solos o dentro de un <p>) por su SVG."""
+    for marcador, svg in svgs.items():
+        html_texto = html_texto.replace(f"<p>{marcador}</p>", svg).replace(marcador, svg)
+    return html_texto

@@ -11,6 +11,8 @@ from pygments.lexers import get_lexer_by_name, guess_lexer, ClassNotFound
 from pygments.formatters import HtmlFormatter
 import logging
 
+from generador_examenes.diagramas import expandir_en_markdown, reponer_svgs
+
 logger = logging.getLogger(__name__)
 
 
@@ -58,6 +60,8 @@ def markdown_to_html(text: str, saltos_de_linea: bool = True) -> str:
     
     # Normalizar caracteres fullwidth antes de procesar
     text = normalizar_fullwidth(text)
+    # Los bloques ```estructura pasan a diagramas SVG (statics)
+    text, diagramas = expandir_en_markdown(text)
     
     # Configurar extensiones de markdown con syntax highlighting
     md = markdown.Markdown(
@@ -79,7 +83,7 @@ def markdown_to_html(text: str, saltos_de_linea: bool = True) -> str:
     # Convertir markdown a HTML
     html = md.convert(text)
     
-    return html
+    return reponer_svgs(html, diagramas)
 
 
 def process_code_blocks_manual(text: str) -> str:
@@ -95,6 +99,7 @@ def process_code_blocks_manual(text: str) -> str:
     """
     # Normalizar caracteres fullwidth antes de procesar
     text = normalizar_fullwidth(text)
+    text, diagramas = expandir_en_markdown(text)
     
     # Pattern para bloques de código con lenguaje especificado: ```language\ncode\n```
     pattern_with_lang = r'```(\w+)\n(.*?)```'
@@ -148,7 +153,7 @@ def process_code_blocks_manual(text: str) -> str:
     
     text = re.sub(pattern_no_lang, replace_code_block_no_lang, text, flags=re.DOTALL)
     
-    return text
+    return reponer_svgs(text, diagramas)
 
 
 def detect_and_convert_format(text: str, format_hint: Optional[str] = None) -> str:

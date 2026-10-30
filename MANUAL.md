@@ -160,6 +160,59 @@ alucard sintetizar array-decay -f xml -s 7 -o bancos/
 El GIFT declara `[markdown]` en cada pregunta, así que el código en línea de enunciados y opciones
 se ve como código. Las plantillas de comportamiento indefinido necesitan gcc 10 o posterior.
 
+### Diagramas de estructuras de datos (statics)
+
+Las preguntas (GIFT `[markdown]`, Markdown) y los enunciados de las consignas de deckard pueden
+incluir diagramas de arreglos, listas enlazadas, pilas, colas y árboles. Se escriben en un bloque de
+código `estructura`, en YAML o JSON, con el formato de bloques de
+statics (`estructuras.html`): un bloque exportado de statics se pega tal cual. alucarD lo
+dibuja como SVG, en línea en el HTML y como imagen en el PDF de Typst, sin navegador ni dependencias
+nuevas.
+
+````text
+::lista-01:: [markdown]¿Qué valor se obtiene con `cabeza->sig->sig->dato`?
+```estructura
+type: linked_list
+variant: singly
+values: [10, 20, 30, 40]
+addresses: [0x3B20, 0x7E10, 0x2140, 0x9A80]
+```
+{
+=`30`
+~`20`
+~`40`
+}
+````
+
+| `type` | Variantes (`variant`) | Claves principales |
+| :--- | :--- | :--- |
+| `array` | | `values`, `capacity`, `pointers` (`"p:0, q:3"`), `showIndices`, `showAddresses`, `showOffsets`, `baseAddr`, `typeSize`, `blankValues`, `blankAddrs` |
+| `linked_list` | `singly`, `doubly`, `circular`, `circular_doubly` | `values` (hasta 7), `addresses`, `headLabel`, `drawArrows`, `blankValues`, `blankNextAddrs` |
+| `stack` | `layout: vertical_multi` para varios pasos | `values` (desde la base), `capacity`, `topIndex`, `topLabel`, `traceLabels`, `showAddresses`, `blankValues`, `blankPointers` |
+| `queue` | `linear`, `circular` | `values`, `capacity`, `frontIndex`, `rearIndex`, `showPanel` (circular), `blankValues`, `blankPointers` |
+| `tree` | `binary`, `bst`, `avl`, `heap` | Nodos con `values` (por niveles, `""` = sin nodo), `insert` (inserciones de ABB; con `avl`, rebalancea) o `root` (anidado: `value`, `left`, `right`). Además `nodeStyle: struct` (nodos con `*izq`/`*der`), `nullLeaves`, `highlight`, `blankValues`, `showBalance`/`blankBalance` (AVL), `showArray` (montículo) |
+
+Los árboles son de alucarD, porque statics no los tiene. El AVL muestra el factor de balance de cada
+nodo, calculado sobre el árbol que resulta de las inserciones. El montículo muestra el índice de cada
+nodo y el arreglo debajo. Con `blank*`, el diagrama sale con los casilleros vacíos para que el alumno
+los complete.
+
+Cuidados:
+
+- En GIFT, el bloque no puede tener renglones en blanco (separan preguntas). Conviene usar YAML en
+  bloque y no `{...}`, para no confundir las llaves con las de las respuestas.
+- Por omisión, los diagramas usan la paleta de ahorro de tinta de statics (negro); `inkSaver: false`
+  en el bloque usa la de color.
+- Un bloque inválido no corta la generación: el examen muestra «Diagrama inválido» con el motivo.
+
+`alucard diagrama` dibuja un archivo suelto: un bloque, una lista de bloques o un documento de
+statics. Escribe un SVG por bloque y saltea los que no son estructuras (texto, tablas de traza):
+
+```bash
+alucard diagrama ~/dev/tools/statics/ejercicio_pila.json -o diagramas/
+alucard diagrama arbol.yaml --color
+```
+
 ### CLI 2: `gift-linter`
 
 Valida la sintaxis de archivos de preguntas en formato GIFT, detecta errores de marcado y permite corregirlos automáticamente.
