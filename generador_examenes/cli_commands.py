@@ -338,6 +338,28 @@ def ejecutar_spellcheck(args, logger) -> int:
         return 1
 
 
+def bancos_de_definicion(definicion: Path) -> list[Path]:
+    """Los bancos de una definición: su input_banco o, si no tiene, los del alucard.toml del curso."""
+    from generador_examenes.config import proyecto
+
+    datos = _leer_definicion(definicion)
+    if datos.input_banco:
+        return [Path(b) for b in datos.input_banco]
+    return list(proyecto.cargar(definicion.parent).input_banco)
+
+
+def ejecutar_inventario(bancos: list[Path], definicion: Optional[Path]) -> int:
+    """`alucard categorias --resumen`: preguntas por categoría y tipo, y si alcanzan para los pools."""
+    from generador_examenes.config.category_tree_viewer import cargar_fuentes
+    from generador_examenes.core.informe import inventario
+
+    modelo = _leer_definicion(definicion) if definicion else None
+    preguntas, _ = cargar_fuentes(bancos, modelo)
+    texto, alcanza = inventario(preguntas, modelo)
+    print(texto)
+    return 0 if alcanza else 1
+
+
 def ejecutar_category_tree(args, logger) -> int:
     # Modo árbol de categorías
     logger.info("Modo árbol de categorías - generando visualización HTML")

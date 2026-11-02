@@ -518,11 +518,22 @@ def _asistente(yaml: Path = typer.Argument(..., help="Definición YAML a crear o
 
 @app.command("categorias")
 def _categorias(
-    bancos: List[Path] = typer.Argument(..., help="Bancos (archivos, o carpetas de preguntas o consignas deckard)."),
+    bancos: Optional[List[Path]] = typer.Argument(
+        None, help="Bancos (archivos, o carpetas de preguntas o consignas deckard); sin ellos, los de la definición."),
     definicion: Optional[Path] = typer.Option(None, "-d", "--definicion",
-                                              help="Suma las fuentes de la definición."),
+                                              help="Suma las fuentes de la definición (y con --resumen, revisa sus pools)."),
+    resumen: bool = typer.Option(False, "--resumen",
+                                 help="Tabla en la terminal: preguntas por categoría y tipo, y si cada pool tiene las que pide."),
 ) -> None:
-    """Árbol HTML de las categorías de uno o más bancos."""
+    """Árbol HTML de las categorías de uno o más bancos; con --resumen, el inventario en la terminal."""
+    if not bancos:
+        if definicion is None:
+            _usage_error("indicá uno o más bancos, o una definición con -d")
+            return
+        bancos = cli_commands.bancos_de_definicion(definicion)
+    if resumen:
+        _ultimo_codigo_salida["code"] = cli_commands.ejecutar_inventario(bancos, definicion)
+        return
     _ejecutar({"category_tree": bancos, "definicion": definicion})
 
 

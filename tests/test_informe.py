@@ -64,3 +64,42 @@ secciones_examen:
     assert "**Tema 2:**" in informe
     assert "- «larga» (deckard:larga): 90 min, fuera de [0, 30]" in informe
     assert "- «borrador» (deckard:borrador): publicar: false" in informe
+
+
+def test_inventario_por_categoria_y_tipo_y_pools():
+    from generador_examenes.core.informe import inventario
+    from generador_examenes.core.models import DefinicionExamen
+
+    preguntas = {
+        "1": Pregunta(id="1", tipo="seleccion_multiple", nombre="a", categoria="teoria", enunciado_html="x"),
+        "2": Pregunta(id="2", tipo="verdadero_falso", nombre="b", categoria="teoria", enunciado_html="x"),
+        "3": _consigna("c"),
+    }
+    definicion = DefinicionExamen(nombre_examen="P", institucion="I", materia="M", configuracion_examen={},
+                                  secciones_examen=[{"nombre": "T", "pools": [{"categoria": "teoria", "cantidad": 2}]},
+                                                    {"nombre": "C", "pools": [{"tipos": ["consigna_practica"],
+                                                                               "cantidad": 3}]}])
+    texto, alcanza = inventario(preguntas, definicion)
+    fila = next(l for l in texto.splitlines() if l.startswith("teoria"))
+    assert fila.split() == ["teoria", "2", "1", "1"]
+    assert "✓ T, pool 1: pide 2, hay 2" in texto
+    assert "✗ C, pool 1: pide 3, hay 1" in texto and not alcanza
+
+
+def test_categorias_resumen_con_la_definicion(tmp_path, monkeypatch, capsys):
+    banco = tmp_path / "b.txt"
+    banco.write_text("::P1::¿2+2?{=4 ~3 ~5}\n", encoding="utf-8")
+    definicion = tmp_path / "def.yaml"
+    definicion.write_text(f"""nombre_examen: "P"
+institucion: "I"
+materia: "M"
+configuracion_examen: {{}}
+input_banco: ["{banco}"]
+secciones_examen:
+  - nombre: "A"
+    pools:
+      - cantidad: 2
+""", encoding="utf-8")
+    monkeypatch.setattr(sys, "argv", ["alucard", "categorias", "--resumen", "-d", str(definicion)])
+    assert main() == 1
+    assert "✗ A, pool 1: pide 2, hay 1" in capsys.readouterr().out

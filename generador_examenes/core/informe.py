@@ -116,3 +116,49 @@ def armar_informe(definicion: DefinicionExamen, banco: Dict[str, Pregunta], exam
         l += fuera
         l += [f"- «{_celda(c.nombre)}» ({c.id}): publicar: false" for c in ocultas]
     return "\n".join(l) + "\n"
+
+
+# Abreviaturas de los tipos para las columnas del inventario.
+_TIPOS = {
+    "seleccion_multiple": "selección", "verdadero_falso": "V/F", "respuesta_corta": "corta",
+    "ensayo": "ensayo", "emparejamiento": "emparej.", "numerica": "numérica", "desarrollo": "desarrollo",
+    "consigna_practica": "consigna",
+}
+
+
+def inventario(preguntas: Dict[str, Pregunta], definicion: Optional[DefinicionExamen] = None) -> tuple[str, bool]:
+    """Cuántas preguntas hay por categoría y tipo y, con `definicion`, si cada pool tiene las que pide.
+
+    Devuelve (texto, alcanza): `alcanza` es False si algún pool pide más de las que puede elegir.
+    """
+    from collections import Counter, defaultdict
+
+    from generador_examenes.core.logic import candidatas_pool
+
+    por_categoria: Dict[str, Counter] = defaultdict(Counter)
+    for p in preguntas.values():
+        por_categoria[p.categoria or "(sin categoría)"][p.tipo] += 1
+    tipos = [t for t in _TIPOS if any(c[t] for c in por_categoria.values())]
+    ancho = max([len("Categoría"), *(len(c) for c in por_categoria)])
+    encabezado = f"{'Categoría':<{ancho}}  {'Total':>5}  " + "  ".join(f"{_TIPOS[t]:>9}" for t in tipos)
+    lineas = [encabezado, "-" * len(encabezado)]
+    for categoria in sorted(por_categoria):
+        cuenta = por_categoria[categoria]
+        celdas = "  ".join(f"{(cuenta[t] or ''):>9}" for t in tipos)
+        lineas.append(f"{categoria:<{ancho}}  {sum(cuenta.values()):>5}  {celdas}")
+    lineas.append(f"{'Total':<{ancho}}  {len(preguntas):>5}")
+
+    alcanza = True
+    if definicion is not None:
+        lineas += ["", f"Pools de «{definicion.nombre_examen}»:"]
+        for seccion in definicion.secciones_examen:
+            for n, pool in enumerate(seccion.pools, 1):
+                hay = len(candidatas_pool(pool, preguntas))
+                pide = pool.cantidad if pool.cantidad else hay
+                ok = hay >= pide or pool.accion_si_insuficiente != "error"
+                alcanza &= ok
+                marca = "✓" if hay >= pide else ("!" if ok else "✗")
+                lineas.append(f"  {marca} {seccion.nombre}, pool {n}: pide {pide}, hay {hay}  ({pool})")
+        if not alcanza:
+            lineas.append("\n✗ Algún pool pide más preguntas de las que hay: el examen no se puede generar.")
+    return "\n".join(lineas), alcanza

@@ -1444,7 +1444,7 @@ Al reportar un issue, incluye:
 | `alucard ortografia` | Revisa ortografía y gramática de las preguntas con LanguageTool. |
 | `alucard iniciar` | Crea un proyecto de ejemplo en la carpeta actual (definición, banco y plantillas). |
 | `alucard asistente` | Asistente interactivo para crear o editar la definición de un examen. |
-| `alucard categorias` | Árbol HTML de las categorías de uno o más bancos. |
+| `alucard categorias` | Árbol HTML de las categorías de uno o más bancos; con --resumen, el inventario en la terminal. |
 | `alucard ver` | Vista previa de una pregunta (o de un banco) como sale en el examen, con sus diagramas. |
 | `alucard build` | Genera los temas en PDF desde un banco (sin YAML basta -i, --consignas o --repositorio) y audita el balance de claves. |
 | `alucard balance-check` | Audita que ninguna letra sea la correcta en más del 30 % de los casos en las variantes generadas. |

@@ -83,6 +83,19 @@ Sale en `output/vista_previa/` (`-o` la cambia) con los diagramas e imágenes (`
 examen, y se abre con el visor del sistema (`--no-abrir` lo evita; sin entorno gráfico, muestra la
 ruta). Si el título no existe, lista los que hay.
 
+#### Inventario del banco: `alucard categorias --resumen`
+
+```bash
+alucard categorias --resumen bancos/*.gift          # preguntas por categoría y tipo
+alucard categorias --resumen -d parcial.yaml        # con los bancos de la definición y sus pools
+```
+
+Muestra en la terminal cuántas preguntas hay en cada categoría, por tipo, y con `-d` si cada pool
+tiene las que pide (✓ alcanza, ! no alcanza pero el pool usa todas o advierte, ✗ no alcanza: el
+examen no se puede generar). Sale con 1 si algún pool no alcanza, así sirve en un script o en CI.
+Sin bancos toma los de la definición (o los del `alucard.toml`). Sin `--resumen`, `categorias`
+arma el árbol HTML.
+
 #### Informe de la generación (`informe.md`)
 
 Junto a los temas, `alucard generar` deja un `informe.md` con:
