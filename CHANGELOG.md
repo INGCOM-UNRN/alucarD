@@ -21,14 +21,26 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - **sintetizador**: plantillas `array-decay`, `punteros-salvajes`, `punteros-colgantes` y `fugas-malloc`. Las de comportamiento indefinido se verifican con los avisos de `gcc -fanalyzer` y mezclan variantes correctas; las de fugas cuentan los bytes sin liberar envolviendo `malloc`/`calloc`/`realloc`/`free`.
 - **sintetizador**: el banco GIFT pone cada plantilla en la categoría `sintetizados/<plantilla>`, para elegirla desde un pool.
 - **sintetizador**: `--opciones` fija cuántas opciones tiene cada pregunta (2 a 8).
+- **comandos**: cada tarea es un comando: `generar`, `validar`, `ortografia`, `categorias`, `asistente` e `iniciar` (`c525bb6`).
+- **config**: `alucard.toml` con la configuración del curso (bancos, salida, temas, semilla, formato, ortografía); la línea de comandos manda sobre la definición y la definición sobre el toml (`9133b45`).
+- **ver**: `alucard ver BANCO` muestra una pregunta (por título, id o línea) o el banco entero como sale en el examen, en HTML o PDF y con `--clave` (`a5a8783`).
+- **watch**: `generar -w` y `ver -w` regeneran al guardar una fuente (definición, toml, bancos, consignas, imágenes, plantilla) (`29d608f`).
+- **informe**: `informe.md` junto a los temas, con los pools, las preguntas elegidas, el orden de cada tema y las consignas que no podían entrar con su motivo (`b7cb245`).
+- **lint-gift**: revisa los bloques `estructura` y, con `--compilar`, el código C de las preguntas con `gcc -fsyntax-only` (`6f076bc`).
+- **sintetizar**: el catálogo dice cómo se verifica cada plantilla, `--muestra` imprime una pregunta de ejemplo y el MANUAL explica cómo agregar una plantilla (`5339ca3`).
+- **categorias**: `--resumen` muestra el inventario por categoría y tipo y si cada pool tiene las que pide (`fbec635`).
+- **ortografia**: diccionario de la cátedra en `alucard.toml` (`palabras` y `diccionario`) (`61ae8b6`).
 - **comandos**: `build` y `balance-check` usan `input_consignas` y `repositorios_externos` de la definición, ya no exigen `-i` y suman `--consignas` y `--repositorio` (también sin YAML); `--spellcheck` revisa también las consignas y los repositorios de la definición; `--category-tree` acepta carpetas (repositorios de preguntas o de consignas) y, con `-d`, suma las fuentes de la definición; `--wizard` pregunta por bancos, consignas, repositorios externos y sorteo, y arma pools de consignas con filtros de tiempo y renglones.
 
 ### Cambiado
 
+- **cli**: `--init`, `--wizard`, `--category-tree`, `--spellcheck` y `--validate` siguen andando con un aviso y no aparecen en la ayuda (`c525bb6`).
 - **sintetizador**: `alucard sintetizar <plantilla>` es un comando (sin plantilla, lista las disponibles); reemplaza a `--sintetizar`, `--listar-sintetizadores`, `--cantidad` y `--formato-banco` (ahora `-c` y `-f`). Las plantillas pasan a `synthesizer/plantillas.py` y la compilación a `synthesizer/sandbox.py`.
 
 ### Corregido
 
+- **errores**: si Typst no compila, el aviso dice qué pregunta y de qué banco; un diagrama inválido se avisa con su pregunta; «Preguntas insuficientes» dice la sección, el pool, su filtro y qué hacer; el proyecto de `iniciar` pedía más preguntas de las que tiene su banco (`07238ad`).
+- **pdf**: las fuentes de Typst se cargan una vez por proceso: cada compilación las volvía a buscar (0,3 s); 4 temas con clave bajan de 3,8 s a 1,5 s (`cea5fe4`).
 - **pdf**: cuando Typst falla al compilar, el respaldo con WeasyPrint ya no queda colgado. Un error de la librería `typst` reintentaba con el binario del sistema, que fallaba igual después de recorrer todas las fuentes instaladas (casi un minuto por tema y por clave). Ahora el binario sólo se usa sin la librería y tiene un tiempo máximo.
 - **spellcheck**: con `-d` revisa los bancos del proyecto y, de las consignas y los repositorios externos, sólo lo que algún pool puede elegir (antes mandaba el repositorio entero a LanguageTool); las consignas se revisan sobre su Markdown y no sobre el HTML resaltado (la API pública respondía 413), y los diagramas SVG se enmascaran.
 - **sintetizador**: el banco GIFT declara `[markdown]` en cada pregunta (el código en línea salía con los acentos graves).
