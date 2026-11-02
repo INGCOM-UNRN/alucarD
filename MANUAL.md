@@ -54,9 +54,22 @@ Diagnostica la presencia y versiones de `gcc`, `typst`, `weasyprint`, `pypdf` y 
 
 ---
 
-### CLI 1: `generador-examenes`
+### CLI 1: `alucard`
 
-#### Opciones Principales de Generación
+Cada tarea es un comando. Las formas anteriores (`--init`, `--wizard`, `--category-tree`,
+`--spellcheck`, `--validate` y generar sin comando) siguen andando, con un aviso.
+
+| Comando | Qué hace |
+| :--- | :--- |
+| `alucard generar -d YAML` | Genera los temas (HTML y/o PDF), con claves, OMR e imprenta si se piden. |
+| `alucard validar -d YAML` | Valida la definición y sus pools sin escribir archivos. |
+| `alucard ortografia -d YAML` | Revisa ortografía y gramática con LanguageTool. |
+| `alucard categorias BANCO…` | Árbol HTML de categorías de bancos o carpetas de consignas. |
+| `alucard asistente YAML` | Asistente interactivo para crear o editar una definición. |
+| `alucard iniciar` | Crea un proyecto de ejemplo en la carpeta actual. |
+| `alucard build`, `balance-check`, `lint-gift`, `sintetizar`, `diagrama`, `doctor` | Ver sus secciones. |
+
+#### Opciones de `alucard generar`
 
 | Opción / Bandera | Tipo | Por Defecto | Descripción |
 | :--- | :--- | :--- | :--- |
@@ -71,15 +84,13 @@ Diagnostica la presencia y versiones de `gcc`, `typst`, `weasyprint`, `pypdf` y 
 | `--omr` | `flag` | `False` | Genera hoja de respuestas OMR de lectura óptica y descriptor JSON de corrección. |
 | `--accessible` | `flag` | `False` | Genera versión adaptada para accesibilidad (fuente ampliada y alto contraste). |
 | `--bundle-print` | `flag` | `False` | Concatena todos los temas generados en un único archivo PDF listo para imprenta. |
-| `--validate` | `flag` | `False` | Valida la coherencia de la definición y bancos sin escribir archivos en disco. |
 | `--json` | `flag` | `False` | Emite el resultado y metadata de los exámenes en formato JSON. |
 | `--md`, `--output-md` | `<path>` | `None` | Genera un reporte detallado en Markdown. |
 
-#### Opciones de Control de Calidad y Ortografía
+#### Opciones de `alucard ortografia` (y de calidad)
 
 | Opción | Tipo | Por Defecto | Descripción |
 | :--- | :--- | :--- | :--- |
-| `--spellcheck` | `flag` | `False` | Audita ortografía y gramática de las preguntas con LanguageTool. |
 | `--lt-server` | `<str>` | `http://localhost:8081` | URL del servidor LanguageTool. |
 | `--lt-lang` | `<str>` | `es-AR` | Código de idioma para LanguageTool. |
 | `--lt-fix` | `flag` | `False` | Aplica correcciones ortográficas automáticas in-place. |
@@ -89,22 +100,22 @@ Diagnostica la presencia y versiones de `gcc`, `typst`, `weasyprint`, `pypdf` y 
 
 1. **Generar 3 temas de examen en PDF con hoja de respuestas OMR:**
    ```bash
-   generador-examenes -d examen_parcial.yaml -f pdf -n 3 --omr -o ./dist
+   alucard generar -d examen_parcial.yaml -f pdf -n 3 --omr -o ./dist
    ```
 
 2. **Validar definición YAML sin generar archivos:**
    ```bash
-   generador-examenes -d examen_parcial.yaml --validate
+   alucard validar -d examen_parcial.yaml
    ```
 
 3. **Generar versión accesible con letra grande y paquete único para imprenta:**
    ```bash
-   generador-examenes -d examen_parcial.yaml -f pdf -n 4 --accessible --bundle-print
+   alucard generar -d examen_parcial.yaml -f pdf -n 4 --accessible --bundle-print
    ```
 
 4. **Auditar ortografía en español rioplatense:**
    ```bash
-   generador-examenes -d examen_parcial.yaml --spellcheck --lt-lang es-AR
+   alucard ortografia -d examen_parcial.yaml --lt-lang es-AR
    ```
 
 ---
@@ -238,7 +249,7 @@ gift-linter bancos/*.gift --fix
 Además de los bancos GIFT/XML (`input_banco` / `-i`), la definición puede sumar:
 
 ```yaml
-# Consignas prácticas de deckard del proyecto (las crea --init en consignas/)
+# Consignas prácticas de deckard del proyecto (las crea alucard iniciar en consignas/)
 input_consignas: ["consignas"]
 
 # Repositorios de la misma computadora que complementan el banco del proyecto
@@ -279,13 +290,13 @@ los filtros. Los temas (`-n`) comparten las preguntas y cambian su orden y el de
 alucard build -d parcial.yaml                         # sin -i: input_banco + consignas + repositorios
 alucard build --consignas consignas --repositorio ~/dev/tools/enunciados   # sin YAML
 alucard balance-check -d parcial.yaml --repositorio ~/catedra/preguntas
-alucard --category-tree ~/dev/tools/enunciados        # una carpeta: repositorio de preguntas o de consignas
-alucard --category-tree bancos/teoria.gift -d parcial.yaml   # suma las fuentes de la definición
-alucard --spellcheck -d parcial.yaml                  # también las consignas que los pools pueden elegir
+alucard categorias ~/dev/tools/enunciados        # una carpeta: repositorio de preguntas o de consignas
+alucard categorias bancos/teoria.gift -d parcial.yaml   # suma las fuentes de la definición
+alucard ortografia -d parcial.yaml                  # también las consignas que los pools pueden elegir
 ```
 
 `-i` reemplaza al `input_banco` de la definición; `--consignas` y `--repositorio` (repetibles) se
-suman a `input_consignas` y `repositorios_externos`. El asistente (`--wizard`) pregunta por las
+suman a `input_consignas` y `repositorios_externos`. El asistente (`alucard asistente`) pregunta por las
 fuentes y ofrece pools de consignas con tema, filtros de tiempo y renglones para resolver.
 
 **Presentación.** `configuracion_examen.presentacion_consignas` fija qué muestra el examen de
@@ -308,12 +319,12 @@ cada consigna; cada pool puede cambiar sólo algunas claves en `presentacion`:
 
 Un segundo parcial de 120 minutos y 10 puntos que combina las tres fuentes: preguntas
 GIFT del proyecto, una consigna local fija y consignas sorteadas del repositorio de
-enunciados. Se arma sobre un proyecto creado con `alucard --init`:
+enunciados. Se arma sobre un proyecto creado con `alucard iniciar`:
 
 ```text
 parcial2/
 ├── bancos/punteros.gift          # preguntas de opción múltiple y V/F
-├── consignas/sumar-pares/        # la crea --init: ejercicio.yaml, enunciado.md, solucion.c
+├── consignas/sumar-pares/        # la crea alucard iniciar: ejercicio.yaml, enunciado.md, solucion.c
 └── parcial_practico.yaml
 ```
 
@@ -444,9 +455,9 @@ Flujo de trabajo:
 
 ```bash
 cd parcial2
-alucard --category-tree ~/dev/tools/enunciados       # output/category_tree.html: temas y consignas disponibles
-alucard -d parcial_practico.yaml --validate          # puntajes y cantidad de preguntas por parte
-alucard --spellcheck -d parcial_practico.yaml        # ortografía del banco y de las consignas elegibles
+alucard categorias ~/dev/tools/enunciados       # output/category_tree.html: temas y consignas disponibles
+alucard validar -d parcial_practico.yaml          # puntajes y cantidad de preguntas por parte
+alucard ortografia -d parcial_practico.yaml        # ortografía del banco y de las consignas elegibles
 alucard balance-check -d parcial_practico.yaml       # reparto de la letra correcta entre temas
 alucard -d parcial_practico.yaml                     # output/examen_tema_0{1,2,3}.pdf y clave_tema_0{1,2,3}.pdf
 alucard -d parcial_practico.yaml -s 7 -o recuperatorio   # mismo esquema, otras consignas

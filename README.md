@@ -175,7 +175,7 @@ alucard --help
 
 ### 1️⃣ Inicializar Proyecto
 ```bash
-generador-examenes --init
+alucard iniciar
 ```
 
 Esto crea:
@@ -189,7 +189,7 @@ Esto crea:
 ### 2️⃣ Explorar Categorías del Banco
 ```bash
 # Genera un árbol HTML interactivo con todas las categorías
-generador-examenes --category-tree bancos/mi_banco.gift
+alucard categorias bancos/mi_banco.gift
 # Abre output/category_tree.html en tu navegador
 ```
 
@@ -232,7 +232,7 @@ distractores verosímiles basados en errores típicos. El banco GIFT declara
 
 ### 3️⃣ Crear Configuración con Wizard
 ```bash
-generador-examenes --wizard mi_examen.yaml
+alucard asistente mi_examen.yaml
 ```
 
 El asistente interactivo te guía:
@@ -268,14 +268,13 @@ generador-examenes -d examenes_prueba/ejemplo_5_completo.yaml
 **Opción A: Todo en YAML (más simple)**
 ```bash
 # Si el YAML incluye input_banco, solo necesitas:
-generador-examenes -d mi_examen.yaml --validate
+alucard validar -d mi_examen.yaml
 ```
 
 **Opción B: Especificar bancos por CLI**
 ```bash
-generador-examenes -d mi_examen.yaml \
-  -i bancos/banco1.txt bancos/banco2.xml \
-  --validate
+alucard validar -d mi_examen.yaml \
+  -i bancos/banco1.txt bancos/banco2.xml
 ```
 
 ### 4️⃣ Explorar Categorías de Bancos
@@ -284,10 +283,10 @@ Antes de crear tu configuración, puedes explorar las categorías disponibles en
 
 ```bash
 # Generar árbol interactivo de categorías
-generador-examenes --category-tree bancos/*.xml bancos/*.gift
+alucard categorias bancos/*.xml bancos/*.gift
 
 # Especificar directorio de salida
-generador-examenes --category-tree bancos/*.xml -o output
+alucard categorias bancos/*.xml -o output
 ```
 
 Esto genera un HTML interactivo con:
@@ -367,13 +366,13 @@ Antes de crear tu configuración YAML, puedes explorar visualmente las categorí
 
 ```bash
 # Un solo banco
-generador-examenes --category-tree bancos/teorico.gift
+alucard categorias bancos/teorico.gift
 
 # Múltiples bancos
-generador-examenes --category-tree bancos/*.xml bancos/*.txt
+alucard categorias bancos/*.xml bancos/*.txt
 
 # Especificar directorio de salida
-generador-examenes --category-tree bancos/*.xml -o mis_reportes
+alucard categorias bancos/*.xml -o mis_reportes
 ```
 
 El comando genera un archivo `category_tree.html` que puedes abrir en tu navegador. Usa los botones "Copiar" para obtener el nombre exacto de cada categoría y pegarlo en tu configuración YAML.
@@ -396,12 +395,12 @@ El wizard facilita la creación y edición de configuraciones YAML.
 
 #### Crear Nueva Configuración
 ```bash
-generador-examenes --wizard
+alucard asistente mi_examen.yaml
 ```
 
 #### Editar Configuración Existente
 ```bash
-generador-examenes --wizard examenes_prueba/parcial1_basico.yaml
+alucard asistente examenes_prueba/parcial1_basico.yaml
 ```
 
 ### Flujo del Wizard
@@ -1089,9 +1088,8 @@ tests/
 # Validar todas las configuraciones de prueba
 for config in examenes_prueba/*.yaml; do
     echo "Validando $config"
-    generador-examenes -d "$config" \
-        -i bancos/*.xml bancos/*.txt bancos/*.gift \
-        --validate
+    alucard validar -d "$config" \
+        -i bancos/*.xml bancos/*.txt bancos/*.gift
 done
 ```
 
@@ -1405,9 +1403,6 @@ Al reportar un issue, incluye:
 
 | Opción | Descripción |
 |:--|:--|
-| `--init` | Inicializar proyecto con archivos de ejemplo |
-| `--wizard` | Asistente interactivo para crear/editar configuración de examen |
-| `--category-tree` | Generar árbol HTML de categorías de uno o más bancos de preguntas |
 | `--definicion`, `-d` | Ruta al archivo de definición YAML del examen |
 | `--input-banco`, `-i` | Ruta(s) a los archivos de banco de preguntas (tiene prioridad sobre el YAML) |
 | `--output-dir`, `-o` | Directorio de salida para los exámenes generados (tiene prioridad sobre el YAML; si no está en ninguno: ./output) |
@@ -1416,7 +1411,6 @@ Al reportar un issue, incluye:
 | `--semilla`, `-s` | Semilla pseudo-aleatoria para generación (tiene prioridad sobre el YAML; si no está en ninguno: 42) |
 | `--formato`, `-f` | Formato(s) de salida: html y/o pdf (tiene prioridad sobre el YAML; si no está en ninguno: html) |
 | `--template`, `--typst-template`, `-t` | Ruta a una plantilla Typst personalizada (.typ / .typ.j2) para generación de PDF |
-| `--spellcheck`, `--languagetool` | Auditar ortografía y gramática de las preguntas del examen o banco usando LanguageTool |
 | `--lt-server` | URL del servidor LanguageTool (por defecto http://localhost:8081 y API pública) |
 | `--lt-username` | Usuario / email de LanguageTool Premium |
 | `--lt-api-key` | API Key / Token de LanguageTool Premium |
@@ -1427,7 +1421,6 @@ Al reportar un issue, incluye:
 | `--lt-fix` | Aplica correcciones ortográficas automáticas |
 | `--md`, `--output-md` | Genera reporte de auditoría en formato Markdown |
 | `--json` | Emite salida estructurada en formato JSON |
-| `--validate` | Validar la definición sin generar archivos |
 | `--debug` | Activar modo debug con logging detallado |
 | `--omr` | Generar hoja de respuestas OMR de lectura óptica y descriptor JSON |
 | `--accessible`, `--large-text` | Generar versión con letra grande y contraste adaptado para accesibilidad |
@@ -1438,18 +1431,24 @@ Al reportar un issue, incluye:
 
 | Comando | Descripción |
 |:--|:--|
-| `alucard build` | Genera los temas en PDF desde un banco (sin YAML hace falta sólo -i) y audita el balance de claves. |
+| `alucard generar` | Genera los temas del examen de una definición YAML (HTML y/o PDF, claves, OMR). |
+| `alucard validar` | Valida la definición y sus pools sin generar archivos. |
+| `alucard ortografia` | Revisa ortografía y gramática de las preguntas con LanguageTool. |
+| `alucard iniciar` | Crea un proyecto de ejemplo en la carpeta actual (definición, banco y plantillas). |
+| `alucard asistente` | Asistente interactivo para crear o editar la definición de un examen. |
+| `alucard categorias` | Árbol HTML de las categorías de uno o más bancos. |
+| `alucard build` | Genera los temas en PDF desde un banco (sin YAML basta -i, --consignas o --repositorio) y audita el balance de claves. |
 | `alucard balance-check` | Audita que ninguna letra sea la correcta en más del 30 % de los casos en las variantes generadas. |
-| `alucard sintetizar` | Genera un banco de preguntas de C con daedalus: cada respuesta se verifica con gcc. Sin plantilla, lista las disponibles. |
-| `alucard diagrama` | Dibuja estructuras de datos (arreglo, lista, pila, cola, árbol) como SVG, con el formato de bloques de statics. |
 | `alucard lint-gift` | Revisa (y con --fix corrige) bancos de preguntas GIFT (antes, el ejecutable gift-linter). |
+| `alucard sintetizar` | Genera un banco de preguntas de C con daedalus: cada respuesta se verifica con gcc. |
+| `alucard diagrama` | Dibuja estructuras de datos (arreglo, lista, pila, cola, árbol) como SVG, con el formato de bloques de statics. |
 | `alucard doctor` | Diagnostica gcc, Typst, WeasyPrint, pypdf y conectividad LanguageTool. |
 
 Ayuda de cada comando: `alucard <comando> -h`.
 
 ### Salida JSON de `alucard`
 
-Con `--json`, estos comandos emiten el resultado como JSON por la salida estándar, para usarlo desde scripts, ripley o dredd: `alucard balance-check`, `alucard doctor`. El de `doctor --json` lleva `schema_version` y `ok`.
+Con `--json`, estos comandos emiten el resultado como JSON por la salida estándar, para usarlo desde scripts, ripley o dredd: `alucard generar`, `alucard validar`, `alucard ortografia`, `alucard balance-check`, `alucard sintetizar`, `alucard doctor`. El de `doctor --json` lleva `schema_version` y `ok`.
 
 ### Códigos de salida
 

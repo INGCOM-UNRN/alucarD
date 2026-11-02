@@ -49,7 +49,7 @@ def test_la_ayuda_funciona_sin_myst_tools_ni_daedalus():
     )
     assert resultado.returncode == 0, resultado.stderr
     # Texto plano: en GitHub Actions, Typer resalta la ayuda con códigos ANSI que parten las opciones.
-    assert "--spellcheck" in Text.from_ansi(resultado.stdout).plain
+    assert "ortografia" in Text.from_ansi(resultado.stdout).plain
 
 
 def test_spellcheck_sin_myst_tools_explica_el_extra(tmp_path):

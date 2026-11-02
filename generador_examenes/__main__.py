@@ -1,6 +1,7 @@
 """
 Punto de entrada principal de la aplicación
 """
+import inspect
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -282,8 +283,8 @@ Para más información, consulta la documentación oficial de alucarD.
     print("\nPróximos pasos:")
     print("  1. Edita definicion_ejemplo.yaml con tu configuración")
     print("  2. Agrega tus bancos de preguntas en bancos/")
-    print("  3. Ejecuta: generador-examenes -d definicion_ejemplo.yaml -i bancos/banco_ejemplo.txt --validate")
-    print("  4. Genera exámenes: generador-examenes -d definicion_ejemplo.yaml -i bancos/banco_ejemplo.txt -n 3")
+    print("  3. Validá: alucard validar -d definicion_ejemplo.yaml -i bancos/banco_ejemplo.txt")
+    print("  4. Generá los temas: alucard generar -d definicion_ejemplo.yaml -i bancos/banco_ejemplo.txt -n 3")
     print()
 
 
@@ -291,13 +292,13 @@ Para más información, consulta la documentación oficial de alucarD.
 def _cli(
     ctx: typer.Context,
     version: bool = opcion_version("alucard", __version__),  # noqa: ARG001
-    init: bool = typer.Option(False, "--init", help="Inicializar proyecto con archivos de ejemplo"),
+    init: bool = typer.Option(False, "--init", hidden=True, help="Inicializar proyecto con archivos de ejemplo"),
     wizard: Optional[Path] = typer.Option(
-        None, "--wizard", metavar="YAML",
+        None, "--wizard", metavar="YAML", hidden=True,
         help="Asistente interactivo para crear/editar configuración de examen",
     ),
     category_tree: Optional[List[Path]] = typer.Option(
-        None, "--category-tree", metavar="BANCO",
+        None, "--category-tree", metavar="BANCO", hidden=True,
         help="Generar árbol HTML de categorías de uno o más bancos (archivos, o carpetas de preguntas o consignas deckard; con -d, también las fuentes de la definición)",
     ),
     definicion: Optional[Path] = typer.Option(
@@ -332,7 +333,7 @@ def _cli(
         help="Ruta a una plantilla Typst personalizada (.typ / .typ.j2) para generación de PDF",
     ),
     spellcheck: bool = typer.Option(
-        False, "--spellcheck", "--languagetool",
+        False, "--spellcheck", "--languagetool", hidden=True,
         help="Auditar ortografía y gramática de las preguntas del examen o banco usando LanguageTool",
     ),
     lt_server: Optional[str] = typer.Option(
@@ -353,7 +354,7 @@ def _cli(
         None, "--md", "--output-md", help="Genera reporte de auditoría en formato Markdown",
     ),
     json_output: bool = typer.Option(False, "--json", help="Emite salida estructurada en formato JSON"),
-    validate: bool = typer.Option(False, "--validate", help="Validar la definición sin generar archivos"),
+    validate: bool = typer.Option(False, "--validate", hidden=True, help="Validar la definición sin generar archivos"),
     debug: bool = typer.Option(False, "--debug", help="Activar modo debug con logging detallado"),
     omr: bool = typer.Option(
         False, "--omr", help="Generar hoja de respuestas OMR de lectura óptica y descriptor JSON",
@@ -383,19 +384,31 @@ def _cli(
         # Se invocó un subcomando explícito (p. ej. `doctor`); no ejecutar
         # el modo principal.
         return
+    valores = {k: v for k, v in locals().items() if k in _PARAMETROS}
+    # Las opciones que en realidad son comandos siguen andando, con aviso (QoL: CLI coherente).
+    for opcion, comando in _OPCIONES_COMANDO.items():
+        if valores.get(opcion):
+            print(f"Aviso: {comando[0]} pasó a ser un comando: usá «alucard {comando[1]}». "
+                  "La opción sigue andando por ahora.", file=sys.stderr)
+    _ejecutar(valores)
 
-    args = SimpleNamespace(
-        init=init, wizard=wizard, category_tree=category_tree, definicion=definicion, input_banco=input_banco, output_dir=output_dir, path_images=path_images,
-        numero_temas=numero_temas, semilla=semilla, formato=formato, typst_template=typst_template,
-        spellcheck=spellcheck, lt_server=lt_server, lt_username=lt_username, lt_api_key=lt_api_key,
-        lt_premium=lt_premium, lt_lang=lt_lang, lt_ignore_rules=lt_ignore_rules, lt_ignore_words=lt_ignore_words,
-        lt_fix=lt_fix, output_md=output_md, json_output=json_output, validate=validate, debug=debug,
-        omr=omr, accessible=accessible, bundle_print=bundle_print, audit_typography=audit_typography,
-        show_completion=show_completion, install_completion=install_completion,
-    )
 
-    if formato:
-        for fmt in formato:
+# Opciones del modo raíz que son comandos: opción → (cómo se escribía, comando nuevo).
+_OPCIONES_COMANDO = {
+    "init": ("--init", "iniciar"),
+    "wizard": ("--wizard", "asistente YAML"),
+    "category_tree": ("--category-tree", "categorias BANCO…"),
+    "spellcheck": ("--spellcheck", "ortografia -d YAML"),
+    "validate": ("--validate", "validar -d YAML"),
+}
+
+
+def _ejecutar(valores: dict) -> None:
+    """El modo principal con los valores de las opciones (los que falten toman su valor por defecto)."""
+    args = SimpleNamespace(**{**_DEFECTOS, **valores})
+
+    if args.formato:
+        for fmt in args.formato:
             if fmt not in ("html", "pdf"):
                 _usage_error(f"argumento -f/--formato: valor inválido: '{fmt}' (elegir entre 'html', 'pdf')")
 
@@ -422,6 +435,67 @@ def _cli(
         codigo = cli_commands.generar_examen(args, logger)
 
     _ultimo_codigo_salida["code"] = codigo
+
+
+_PARAMETROS = [n for n in inspect.signature(_cli).parameters if n not in ("ctx", "version")]
+_DEFECTOS = {
+    n: (p.default.default if hasattr(p.default, "default") else p.default)
+    for n, p in inspect.signature(_cli).parameters.items() if n in _PARAMETROS
+}
+# Las listas de Typer llegan como None cuando no se pasan.
+_DEFECTOS = {n: (None if v is ... else v) for n, v in _DEFECTOS.items()}
+
+_OPCIONES_LT = [n for n in _PARAMETROS if n.startswith("lt_")]
+_OPCIONES_GENERAR = [
+    "definicion", "input_banco", "output_dir", "path_images", "numero_temas", "semilla", "formato",
+    "typst_template", "json_output", "debug", "omr", "accessible", "bundle_print", "audit_typography",
+]
+
+
+def _comando_de_opciones(nombre: str, opciones: List[str], fijos: dict, ayuda: str) -> None:
+    """Registra `alucard <nombre>` con las mismas opciones (nombre, tipo, ayuda) que el modo raíz."""
+    firma = inspect.signature(_cli)
+    parametros = [firma.parameters[n] for n in opciones]
+
+    def comando(**valores):
+        _ejecutar({**valores, **fijos})
+
+    setattr(comando, "__signature__", firma.replace(parameters=parametros))
+    comando.__annotations__ = {n: _cli.__annotations__[n] for n in opciones if n in _cli.__annotations__}
+    comando.__doc__ = ayuda
+    comando.__name__ = f"_comando_{nombre}"
+    app.command(nombre)(comando)
+
+
+_comando_de_opciones("generar", _OPCIONES_GENERAR, {},
+                     "Genera los temas del examen de una definición YAML (HTML y/o PDF, claves, OMR).")
+_comando_de_opciones("validar", ["definicion", "input_banco", "json_output", "debug"], {"validate": True},
+                     "Valida la definición y sus pools sin generar archivos.")
+_comando_de_opciones("ortografia", ["definicion", "input_banco", *_OPCIONES_LT, "output_md", "json_output", "debug"],
+                     {"spellcheck": True},
+                     "Revisa ortografía y gramática de las preguntas con LanguageTool.")
+
+
+@app.command("iniciar")
+def _iniciar() -> None:
+    """Crea un proyecto de ejemplo en la carpeta actual (definición, banco y plantillas)."""
+    _ejecutar({"init": True})
+
+
+@app.command("asistente")
+def _asistente(yaml: Path = typer.Argument(..., help="Definición YAML a crear o editar.")) -> None:
+    """Asistente interactivo para crear o editar la definición de un examen."""
+    _ejecutar({"wizard": yaml})
+
+
+@app.command("categorias")
+def _categorias(
+    bancos: List[Path] = typer.Argument(..., help="Bancos (archivos, o carpetas de preguntas o consignas deckard)."),
+    definicion: Optional[Path] = typer.Option(None, "-d", "--definicion",
+                                              help="Suma las fuentes de la definición."),
+) -> None:
+    """Árbol HTML de las categorías de uno o más bancos."""
+    _ejecutar({"category_tree": bancos, "definicion": definicion})
 
 
 def _cargar_definicion(definicion: Optional[Path], bancos: List[Path], titulo: Optional[str], materia: str,

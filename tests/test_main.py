@@ -219,3 +219,58 @@ input_banco:
         assert "tree" in data
         assert data["total_preguntas"] >= 1
 
+
+
+def _definicion_minima(tmp_path):
+    banco = tmp_path / "banco.txt"
+    banco.write_text("::P1::Test{=Si ~No}\n::P2::Test2{T}\n", encoding="utf-8")
+    definicion = tmp_path / "def.yaml"
+    definicion.write_text(f"""nombre_examen: "Prueba"
+institucion: "UNRN"
+materia: "Programación"
+configuracion_examen:
+  generar_clave_profesor: false
+secciones_examen:
+  - nombre: "Sección A"
+    pools:
+      - cantidad: 1
+input_banco:
+  - "{banco}"
+""", encoding="utf-8")
+    return definicion
+
+
+class TestComandos:
+    """La CLI coherente: cada tarea es un comando y las opciones viejas siguen andando con aviso."""
+
+    def test_validar_es_un_comando(self, tmp_path, monkeypatch, capsys):
+        import json
+        definicion = _definicion_minima(tmp_path)
+        monkeypatch.setattr(sys, 'argv', ['alucard', 'validar', '-d', str(definicion), '--json'])
+        assert main() == 0
+        datos = json.loads(capsys.readouterr().out)
+        assert datos["command"] == "validate" and datos["valido"]
+
+    def test_la_opcion_vieja_avisa_y_sigue_andando(self, tmp_path, monkeypatch, capsys):
+        definicion = _definicion_minima(tmp_path)
+        monkeypatch.setattr(sys, 'argv', ['alucard', '-d', str(definicion), '--validate', '--json'])
+        assert main() == 0
+        salida = capsys.readouterr()
+        assert "usá «alucard validar -d YAML»" in salida.err
+
+    def test_generar_e_iniciar(self, tmp_path, monkeypatch):
+        definicion = _definicion_minima(tmp_path)
+        monkeypatch.setattr(sys, 'argv', ['alucard', 'generar', '-d', str(definicion), '-o', str(tmp_path / "out")])
+        assert main() == 0
+        assert list((tmp_path / "out").glob("*.html"))
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.setattr(sys, 'argv', ['alucard', 'iniciar'])
+        assert main() == 0
+        assert (tmp_path / "definicion_ejemplo.yaml").exists()
+
+    def test_la_ayuda_raiz_no_lista_las_opciones_que_son_comandos(self):
+        from typer.testing import CliRunner
+        from generador_examenes.__main__ import app
+        ayuda = CliRunner().invoke(app, ["--help"]).output
+        assert "validar" in ayuda and "categorias" in ayuda and "asistente" in ayuda
+        assert "--category-tree" not in ayuda and "--wizard" not in ayuda
