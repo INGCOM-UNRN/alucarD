@@ -453,3 +453,17 @@ PLANTILLAS = {
                            _plantilla_punteros_colgantes),
     "fugas-malloc": ("Fugas de memoria con malloc: cuántos bytes quedan sin liberar", _plantilla_fugas_malloc),
 }
+
+# Cómo se verifica la respuesta de cada plantilla (lo muestra `alucard sintetizar` sin argumentos).
+_EJECUTA = "se compila y se ejecuta: la salida es la respuesta"
+_ANALIZA = "gcc -fanalyzer tiene que señalar el defecto; las variantes correctas se ejecutan"
+VERIFICACION = {
+    "precedencia": _EJECUTA,
+    "traza-punteros": _EJECUTA,
+    "recursion": _EJECUTA,
+    "incrementos": _EJECUTA,
+    "array-decay": _EJECUTA,
+    "punteros-salvajes": _ANALIZA,
+    "punteros-colgantes": _ANALIZA,
+    "fugas-malloc": "se cuentan los bytes que quedan sin liberar (malloc y free interceptados)",
+}

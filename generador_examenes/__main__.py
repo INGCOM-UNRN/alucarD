@@ -712,6 +712,8 @@ def _sintetizar(
     semilla: int = typer.Option(42, "-s", "--semilla", help="Semilla de los parámetros al azar."),
     json_output: bool = typer.Option(False, "--json", help="Emitir el resultado como JSON."),
     debug: bool = typer.Option(False, "--debug", help="Activar modo debug con logging detallado."),
+    muestra: bool = typer.Option(False, "--muestra",
+                                 help="Mostrar una pregunta de ejemplo (con la correcta marcada) sin escribir el banco."),
 ) -> None:
     """Genera un banco de preguntas de C con daedalus: cada respuesta se verifica con gcc.
 
@@ -730,7 +732,8 @@ def _sintetizar(
         return
     setup_logging(debug=debug)
     args = SimpleNamespace(sintetizar=plantilla, cantidad=cantidad, opciones=opciones, formato_banco=formato_banco,
-                           output_dir=output_dir, semilla=semilla, json_output=json_output, debug=debug)
+                           output_dir=output_dir, semilla=semilla, json_output=json_output, debug=debug,
+                           muestra=muestra)
     _ultimo_codigo_salida["code"] = cli_commands.ejecutar_sintetizar(args, logging.getLogger("alucard.sintetizar"))
 
 

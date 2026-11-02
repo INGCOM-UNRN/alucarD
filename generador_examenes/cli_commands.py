@@ -113,13 +113,30 @@ def ejecutar_wizard(args, logger) -> int:
 
 def listar_sintetizadores_disponibles() -> int:
     # Modo catálogo del sintetizador daedalus
-    from generador_examenes.synthesizer import plantillas_disponibles
+    from generador_examenes.synthesizer import catalogo
 
-    print("\nPlantillas disponibles del sintetizador daedalus (verificadas con gcc):")
-    for nombre, descripcion in sorted(plantillas_disponibles().items()):
-        print(f"  - {nombre}: {descripcion}")
-    print("\nUso: alucard sintetizar <plantilla> [-c N] [--opciones K] [-o output] [-f gift|xml] [-s semilla]\n")
+    print("\nPlantillas del sintetizador (cada respuesta se verifica con gcc):\n")
+    for nombre, descripcion, verificacion in catalogo():
+        print(f"  {nombre}")
+        print(f"      {descripcion}")
+        if verificacion:
+            print(f"      Verificación: {verificacion}")
+    print("\nUso: alucard sintetizar <plantilla> [-c N] [--opciones K] [-o output] [-f gift|xml] [-s semilla]")
+    print("     alucard sintetizar <plantilla> --muestra      # una pregunta de ejemplo, sin escribir el banco")
+    print("Cada plantilla queda en la categoría sintetizados/<plantilla>. Para agregar una: MANUAL,")
+    print("«Agregar una plantilla al sintetizador».\n")
     return 0
+
+
+def mostrar_muestra(snippet) -> str:
+    """Una pregunta sintetizada como texto: enunciado, código y opciones con la correcta marcada."""
+    lineas = [f"[{snippet.plantilla}] {snippet.titulo}", "", snippet.enunciado, "", snippet.codigo.rstrip(), ""]
+    for i, opcion in enumerate(snippet.opciones):
+        marca = "✓" if opcion == snippet.salida_correcta else " "
+        lineas.append(f"  {marca} {chr(ord('a') + i)}) {opcion}")
+    if snippet.explicacion:
+        lineas += ["", f"Explicación: {snippet.explicacion}"]
+    return "\n".join(lineas)
 
 
 def ejecutar_sintetizar(args, logger) -> int:
@@ -137,15 +154,21 @@ def ejecutar_sintetizar(args, logger) -> int:
                          f"Disponibles: {', '.join(sorted(plantillas_disponibles()))}")
             return 1
 
-        output_dir = Path(args.output_dir or './output')
-        output_dir.mkdir(parents=True, exist_ok=True)
         semilla = args.semilla if args.semilla is not None else 42
+
+        if getattr(args, 'muestra', False):
+            [ejemplo] = sintetizar(args.sintetizar, cantidad=1, semilla=semilla,
+                                   opciones=getattr(args, 'opciones', 4))
+            print(mostrar_muestra(ejemplo))
+            return 0
 
         logger.info(f"Sintetizando {args.cantidad} preguntas con la plantilla '{args.sintetizar}' "
                     f"(semilla: {semilla})...")
         snippets = sintetizar(args.sintetizar, cantidad=args.cantidad, semilla=semilla,
                               opciones=getattr(args, 'opciones', 4))
 
+        output_dir = Path(args.output_dir or './output')
+        output_dir.mkdir(parents=True, exist_ok=True)
         extension = 'gift' if args.formato_banco == 'gift' else 'xml'
         destino = output_dir / f"sintetizados_{args.sintetizar}.{extension}"
         contenido = exportar_gift(snippets) if extension == 'gift' else exportar_xml(snippets)

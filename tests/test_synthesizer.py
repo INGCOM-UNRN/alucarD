@@ -219,3 +219,31 @@ def test_gift_con_categoria_por_plantilla(tmp_path):
     banco = tmp_path / "b.gift"
     banco.write_text(exportar_gift(sintetizar("fugas-malloc", cantidad=2, semilla=1)), encoding="utf-8")
     assert {p.categoria for p in GiftParser().parse(banco).values()} == {"sintetizados/fugas-malloc"}
+
+
+# --- Catálogo y muestra (sintetizar más explorable) -------------------------------------------
+
+def test_cada_plantilla_dice_como_se_verifica():
+    from generador_examenes.synthesizer import catalogo
+    from generador_examenes.synthesizer.plantillas import PLANTILLAS
+
+    filas = catalogo()
+    assert [n for n, _, _ in filas] == sorted(PLANTILLAS)
+    assert all(verificacion for _, _, verificacion in filas)
+
+
+def test_muestra_sin_escribir_el_banco(tmp_path, monkeypatch, capsys):
+    import shutil
+    import sys
+
+    import pytest
+
+    if shutil.which("gcc") is None:
+        pytest.skip("hace falta gcc")
+    from generador_examenes.__main__ import main
+
+    monkeypatch.setattr(sys, "argv", ["alucard", "sintetizar", "incrementos", "--muestra", "-o", str(tmp_path)])
+    assert main() == 0
+    salida = capsys.readouterr().out
+    assert salida.startswith("[incrementos] ") and "✓ a) " in salida and "int main" in salida
+    assert not list(tmp_path.iterdir())

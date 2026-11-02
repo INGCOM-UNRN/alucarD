@@ -223,10 +223,35 @@ alucard sintetizar array-decay -f xml -s 7 -o bancos/
 | `-o`, `--output-dir` | `output` | Carpeta del banco. |
 | `-s`, `--semilla` | `42` | La misma semilla genera el mismo banco. |
 | `--json` | | El resultado, con cada pregunta, como JSON. |
+| `--muestra` | | Muestra una pregunta de ejemplo, con la correcta marcada, sin escribir el banco. |
 
 El GIFT declara `[markdown]` en cada pregunta, así que el código en línea de enunciados y opciones
 se ve como código, y pone cada plantilla en la categoría `sintetizados/<plantilla>` (un pool la elige
 con `categoria: "sintetizados/fugas-malloc"`). Las plantillas de comportamiento indefinido necesitan gcc 10 o posterior.
+
+`alucard sintetizar` sin plantilla lista cada una con qué pregunta y cómo se verifica su respuesta.
+
+#### Agregar una plantilla al sintetizador
+
+Las plantillas están en `generador_examenes/synthesizer/plantillas.py`. Una plantilla es una función
+`(rng: random.Random) -> SnippetGenerado`:
+
+1. **Armar el programa** con parámetros sacados de `rng` (los valores al azar van en el código, no
+   en el enunciado). `_programa(cuerpo, antes, includes)` arma un `main` con sus `#include`.
+2. **Verificar la respuesta, nunca calcularla a mano**, con uno de los tres modos:
+   - traza: `_ejecutar(codigo)` compila y ejecuta, y su salida es la respuesta;
+   - comportamiento indefinido: `_diagnostico(...)` exige que `gcc -fanalyzer` señale el defecto
+     (o, en la variante correcta, que no haya avisos y se ejecute);
+   - memoria: `memoria_sin_liberar(codigo)` cuenta los bytes que quedan reservados.
+3. **Distractores** del más al menos verosímil (errores típicos de los alumnos): el sintetizador
+   toma los primeros que necesita según `--opciones`; en respuestas numéricas completa con valores
+   cercanos.
+4. **Título neutro** con `_huella(codigo)`: no puede adelantar la respuesta.
+5. **Registrarla** en `PLANTILLAS` (nombre → descripción y función) y en `VERIFICACION` (cómo se
+   verifica), y sumar una prueba en `tests/test_synthesizer.py` que genere varias semillas y revise
+   que la correcta sea la que dio gcc.
+
+Probala con `alucard sintetizar <nombre> --muestra` antes de generar el banco.
 
 ### Diagramas de estructuras de datos (statics)
 

@@ -18,6 +18,13 @@ def plantillas_disponibles() -> dict[str, str]:
     return {nombre: desc for nombre, (desc, _) in PLANTILLAS.items()}
 
 
+def catalogo() -> list[tuple[str, str, str]]:
+    """(nombre, descripción, cómo se verifica la respuesta) de cada plantilla, en orden alfabético."""
+    from .plantillas import VERIFICACION
+
+    return [(nombre, desc, VERIFICACION.get(nombre, "")) for nombre, (desc, _) in sorted(PLANTILLAS.items())]
+
+
 def _variantes_numericas(correcta: str, rng: random.Random) -> list[str]:
     """Respuestas cercanas a una salida numérica (`7`, `0 1 2`…), para completar distractores."""
     numeros = correcta.split()

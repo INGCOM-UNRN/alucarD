@@ -9,6 +9,7 @@ partir de errores típicos de los alumnos.
 
 from .engine import (
     ajustar_opciones,
+    catalogo,
     exportar_gift,
     exportar_xml,
     plantillas_disponibles,
@@ -20,6 +21,7 @@ from .sandbox import compilar_y_ejecutar, diagnosticos, memoria_sin_liberar
 __all__ = [
     "SnippetGenerado",
     "ajustar_opciones",
+    "catalogo",
     "compilar_y_ejecutar",
     "diagnosticos",
     "exportar_gift",
