@@ -10,7 +10,82 @@ import re
 import sys
 from pathlib import Path
 
-def lint_gift_file(filepath, fix=False):
+def _titulo_en(lines, numero):
+    """El título `::…::` de la pregunta que contiene la línea `numero` (1-based)."""
+    for linea in reversed(lines[:numero]):
+        m = re.match(r"\s*::(.+?)::", linea)
+        if m:
+            return m.group(1).strip()
+    return "?"
+
+
+def revisar_diagramas(content):
+    """Problemas de los bloques ```estructura: renglones en blanco o llaves (GIFT corta la pregunta
+    ahí) y diagramas que no se pueden dibujar. Cada uno con su línea y su pregunta."""
+    from generador_examenes.diagramas import _FENCE, ErrorDiagrama, leer_bloques, renderizar
+
+    lines = content.split("\n")
+    problemas = []
+    for m in _FENCE.finditer(content):
+        linea = content[:m.start()].count("\n") + 1
+        titulo = _titulo_en(lines, linea)
+        cuerpo = m.group("cuerpo")
+        donde = f"Línea {linea} («{titulo}»)"
+        if any(not renglon.strip() for renglon in cuerpo.rstrip("\n").split("\n")):
+            problemas.append(f"{donde}: el bloque estructura tiene un renglón en blanco: en GIFT la pregunta se corta ahí")
+        if "{" in cuerpo or "}" in cuerpo:
+            problemas.append(f"{donde}: el bloque estructura tiene llaves: en GIFT abren las respuestas "
+                             "(escribí las listas con corchetes)")
+            continue
+        try:
+            for bloque in leer_bloques(cuerpo):
+                renderizar(bloque)
+        except ErrorDiagrama as e:
+            problemas.append(f"{donde}: diagrama inválido: {e}")
+    return problemas
+
+
+_BLOQUE_C = re.compile(r"^```[ \t]*c[ \t]*\n(?P<codigo>.*?)^```[ \t]*$", re.S | re.M)
+
+
+def revisar_codigo(content, gcc="gcc"):
+    """Con `--compilar`: los bloques ```c que son programas completos (tienen main) se compilan con
+    `gcc -fsyntax-only`; los fragmentos se saltean. Devuelve (problemas, compilados)."""
+    import shutil
+    import subprocess
+    import tempfile
+
+    from generador_examenes.core.markdown_utils import normalizar_fullwidth
+
+    if shutil.which(gcc) is None:
+        return [f"No se puede compilar: no está {gcc}"], 0
+    lines = content.split("\n")
+    problemas, compilados = [], 0
+    for m in _BLOQUE_C.finditer(content):
+        # El código de un GIFT viene con los caracteres especiales escapados (\{) o en ancho completo
+        # (＃, （, ↵, ··· de sangría): se vuelve a C antes de compilar.
+        codigo = normalizar_fullwidth(m.group("codigo")).replace("·", " ")
+        codigo = re.sub(r"\\([{}=~#:])", r"\1", codigo)
+        if not re.search(r"\bmain\s*\(", codigo):
+            continue
+        compilados += 1
+        linea = content[:m.start()].count("\n") + 1
+        with tempfile.TemporaryDirectory(prefix="alucard-lint-") as tmp:
+            fuente = Path(tmp) / "pregunta.c"
+            fuente.write_text(codigo, encoding="utf-8")
+            res = subprocess.run([gcc, "-fsyntax-only", "-std=c11", str(fuente)],
+                                 capture_output=True, text=True, check=False)
+        if res.returncode != 0:
+            error = next((l for l in res.stderr.splitlines() if "error" in l), res.stderr.strip()[:120])
+            # «pregunta.c:3:12: error: …» → la línea del banco: la del bloque más la del código.
+            m_pos = re.search(r"pregunta\.c:(\d+):\d+:\s*(.*)", error)
+            if m_pos:
+                linea, error = linea + int(m_pos.group(1)), m_pos.group(2)
+            problemas.append(f"Línea {linea} («{_titulo_en(lines, linea)}»): el código no compila: {error}")
+    return problemas, compilados
+
+
+def lint_gift_file(filepath, fix=False, compilar=False):
     """Analiza y opcionalmente formatea un archivo GIFT."""
     print(f"\n{'='*60}")
     print(f"Analizando: {filepath.name}")
@@ -58,7 +133,7 @@ def lint_gift_file(filepath, fix=False):
                 current_question = []
                 formatted_lines.append('')
         else:
-            if stripped and not stripped.startswith('//'):
+            if stripped and not stripped.startswith('//') and not stripped.startswith('$CATEGORY:'):
                 issues.append(f"Línea {i}: Texto fuera de pregunta: {stripped[:50]}")
                 stats['warnings'] += 1
             if fix:
@@ -73,6 +148,15 @@ def lint_gift_file(filepath, fix=False):
             stats['errors'] += len(errs)
         issues.extend(errs)
     
+    for problema in revisar_diagramas(content):
+        issues.append(problema)
+        stats['errors'] += 1
+    if compilar:
+        problemas_c, compilados = revisar_codigo(content)
+        issues.extend(problemas_c)
+        stats['errors'] += len(problemas_c)
+        print(f"  Código compilado: {compilados} programa(s)")
+
     if issues:
         print("\nProblemas encontrados:")
         for issue in issues:
@@ -237,7 +321,7 @@ complete -F _{prog.replace('-', '_')}_completion {prog}
     sys.exit(revisar_archivos(files, fix=fix))
 
 
-def revisar_archivos(files, fix=False) -> int:
+def revisar_archivos(files, fix=False, compilar=False) -> int:
     """Revisa (y con fix, corrige) bancos GIFT e imprime el resumen; 0 si están todos sin errores.
 
     La usan `alucard lint-gift` y el alias `gift-linter` (N-ALUCARD-02).
@@ -248,7 +332,7 @@ def revisar_archivos(files, fix=False) -> int:
 
     all_clean = True
     for filepath in files:
-        clean = lint_gift_file(filepath, fix=fix)
+        clean = lint_gift_file(filepath, fix=fix, compilar=compilar)
         if not clean:
             all_clean = False
 

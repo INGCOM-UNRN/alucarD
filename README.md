@@ -1448,7 +1448,7 @@ Al reportar un issue, incluye:
 | `alucard ver` | Vista previa de una pregunta (o de un banco) como sale en el examen, con sus diagramas. |
 | `alucard build` | Genera los temas en PDF desde un banco (sin YAML basta -i, --consignas o --repositorio) y audita el balance de claves. |
 | `alucard balance-check` | Audita que ninguna letra sea la correcta en más del 30 % de los casos en las variantes generadas. |
-| `alucard lint-gift` | Revisa (y con --fix corrige) bancos de preguntas GIFT (antes, el ejecutable gift-linter). |
+| `alucard lint-gift` | Revisa (y con --fix corrige) bancos GIFT: formato, bloques estructura y, con --compilar, el código C. |
 | `alucard sintetizar` | Genera un banco de preguntas de C con daedalus: cada respuesta se verifica con gcc. |
 | `alucard diagrama` | Dibuja estructuras de datos (arreglo, lista, pila, cola, árbol) como SVG, con el formato de bloques de statics. |
 | `alucard doctor` | Diagnostica gcc, Typst, WeasyPrint, pypdf y conectividad LanguageTool. |

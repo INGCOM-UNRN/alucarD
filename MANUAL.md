@@ -281,23 +281,27 @@ alucard diagrama ~/dev/tools/statics/ejercicio_pila.json -o diagramas/
 alucard diagrama arbol.yaml --color
 ```
 
-### CLI 2: `gift-linter`
+### `alucard lint-gift` (antes `gift-linter`)
 
-Valida la sintaxis de archivos de preguntas en formato GIFT, detecta errores de marcado y permite corregirlos automáticamente.
+Valida bancos GIFT: el formato de cada pregunta, los bloques ```` ```estructura ```` y, con
+`--compilar`, el código C. Cada problema lleva su línea y el título de su pregunta.
 
-#### Opciones
+- **Diagramas:** un bloque que no se puede dibujar (tipo desconocido, datos inválidos), uno con un
+  renglón en blanco (GIFT corta la pregunta ahí) o con llaves (abren las respuestas).
+- **Código (`--compilar`):** los bloques ```` ```c ```` que son programas completos (tienen `main`)
+  pasan por `gcc -fsyntax-only -std=c11`, ya decodificados (el código de un GIFT viene escapado o en
+  caracteres de ancho completo, como el de los sintetizados). Los fragmentos se saltean.
+
 | Opción | Descripción |
 | :--- | :--- |
-| `FILES...` | Uno o más archivos `.gift` a auditar. |
-| `--fix` | Corrige problemas comunes de sintaxis y espaciado directamente en los archivos. |
+| `ARCHIVOS...` | Uno o más bancos `.gift`. |
+| `--fix` | Corrige problemas comunes de sintaxis y espaciado en el lugar. |
+| `--compilar` | Compila el código C de las preguntas. |
 
-#### Ejemplos
 ```bash
-# Validar sintaxis de un banco GIFT
-gift-linter bancos/preguntas_c.gift
-
-# Auto-corregir todos los archivos del directorio bancos/
-gift-linter bancos/*.gift --fix
+alucard lint-gift bancos/*.gift                       # formato y diagramas
+alucard lint-gift sintetizados/*.gift --compilar      # además, que el código compile
+alucard lint-gift bancos/*.gift --fix
 ```
 
 ### Consignas prácticas y repositorios externos

@@ -88,3 +88,90 @@ def test_install_completion_sin_bashrc_es_un_error(monkeypatch, capsys, tmp_path
         gift_linter()
     assert salida.value.code == 0
     assert "complete -F _gift_linter_completion gift-linter" in (tmp_path / ".bashrc").read_text(encoding="utf-8")
+
+
+# --- Diagramas y código (lint-gift revisa también lo que se dibuja y lo que se compila) ---------
+
+def test_diagramas_rotos_con_linea_y_pregunta():
+    from generador_examenes.gift_linter import revisar_diagramas
+
+    banco = """::bien:: [markdown]¿Raíz?
+```estructura
+type: tree
+variant: bst
+insert: [5, 3]
+```
+{=5 ~3}
+
+::tipo:: [markdown]¿?
+```estructura
+type: arbolito
+```
+{=1 ~2}
+
+::blanco:: [markdown]¿?
+```estructura
+type: stack
+
+values: [1]
+```
+{=1 ~2}
+
+::llaves:: [markdown]¿?
+```estructura
+{type: stack}
+```
+{=1 ~2}
+"""
+    problemas = revisar_diagramas(banco)
+    assert len(problemas) == 3, problemas
+    assert problemas[0].startswith("Línea 10 («tipo»): diagrama inválido")
+    assert "renglón en blanco" in problemas[1] and "«blanco»" in problemas[1]
+    assert "llaves" in problemas[2] and "«llaves»" in problemas[2]
+
+
+def test_compilar_programas_completos_y_saltear_fragmentos():
+    import shutil
+
+    import pytest
+
+    if shutil.which("gcc") is None:
+        pytest.skip("hace falta gcc")
+    from generador_examenes.gift_linter import revisar_codigo
+
+    banco = """::ok:: [markdown]¿Qué imprime?
+```c
+＃include ＜stdio.h＞↵
+int main（void） ｛↵
+····printf（＂%d＼n＂, 1 ⩵ 1）；↵
+····return 0；↵
+｝↵
+```
+{=1 ~0}
+
+::roto:: [markdown]¿Qué imprime?
+```c
+int main(void) \\{ return x; \\}
+```
+{=1 ~0}
+
+::fragmento:: [markdown]¿Qué vale x?
+```c
+x = y + 1;
+```
+{=1 ~0}
+"""
+    problemas, compilados = revisar_codigo(banco)
+    assert compilados == 2
+    # Las comillas del mensaje de gcc dependen del idioma del sistema.
+    assert len(problemas) == 1 and problemas[0].startswith("Línea 13 («roto»): el código no compila: error:")
+    assert "undeclared" in problemas[0] or "no se declaró" in problemas[0]
+
+
+def test_category_no_es_texto_fuera_de_pregunta(tmp_path, capsys):
+    from generador_examenes.gift_linter import lint_gift_file
+
+    banco = tmp_path / "b.gift"
+    banco.write_text("$CATEGORY: tema/sub\n\n::p:: ¿2+2? {=4 ~3}\n", encoding="utf-8")
+    assert lint_gift_file(banco)
+    assert "fuera de pregunta" not in capsys.readouterr().out

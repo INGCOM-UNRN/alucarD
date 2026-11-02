@@ -692,11 +692,13 @@ def _balance_check(
 def _lint_gift(
     archivos: List[Path] = typer.Argument(..., exists=True, dir_okay=False, help="Bancos de preguntas GIFT a revisar."),
     fix: bool = typer.Option(False, "--fix", help="Corrige problemas comunes en el lugar."),
+    compilar: bool = typer.Option(False, "--compilar",
+                                  help="Compila con gcc -fsyntax-only los bloques de C que son programas completos."),
 ) -> None:
-    """Revisa (y con --fix corrige) bancos de preguntas GIFT (antes, el ejecutable gift-linter)."""
+    """Revisa (y con --fix corrige) bancos GIFT: formato, bloques estructura y, con --compilar, el código C."""
     from generador_examenes.gift_linter import revisar_archivos
 
-    _ultimo_codigo_salida["code"] = revisar_archivos(archivos, fix=fix)
+    _ultimo_codigo_salida["code"] = revisar_archivos(archivos, fix=fix, compilar=compilar)
 
 
 @app.command("sintetizar")
