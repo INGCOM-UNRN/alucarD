@@ -84,3 +84,27 @@ def test_informa_las_observaciones(monkeypatch, capsys, tmp_path):
 
     assert codigo == 1
     assert "ejenplo" in salida and "ejemplo" in salida
+
+
+def test_el_diccionario_de_la_catedra_del_toml(monkeypatch, capsys, tmp_path):
+    """Las palabras de [ortografia] (y las del archivo diccionario) se ignoran, junto a --lt-ignore-words."""
+    (tmp_path / ".git").mkdir()
+    (tmp_path / "diccionario.txt").write_text("# palabras de la cátedra\nprintf\nstruct  # comentario\n\n",
+                                              encoding="utf-8")
+    (tmp_path / "alucard.toml").write_text('[ortografia]\npalabras = ["malloc"]\ndiccionario = "diccionario.txt"\n'
+                                           'idioma = "es-ES"\n', encoding="utf-8")
+    datos = yaml.safe_load((EJEMPLOS / "definicion_ejemplo.yaml").read_text(encoding="utf-8"))
+    datos["input_banco"] = [str(BANCO)]
+    definicion = tmp_path / "def.yaml"
+    definicion.write_text(yaml.safe_dump(datos, allow_unicode=True), encoding="utf-8")
+    recibidas = {}
+
+    def analizar(pregunta, **kwargs):
+        recibidas.update(kwargs)
+        return []
+
+    monkeypatch.setattr(languagetool_checker, "analizar_pregunta_languagetool", analizar)
+    codigo, salida = _correr(monkeypatch, capsys, ["ortografia", "-d", str(definicion), "--lt-ignore-words", "voight"])
+    assert codigo == 0, salida
+    assert recibidas["ignore_words"] == {"malloc", "printf", "struct", "voight"}
+    assert recibidas["lang"] == "es-ES"

@@ -17,6 +17,7 @@ servidor = "http://localhost:8081"
 idioma = "es-AR"
 ignorar_reglas = ["WHITESPACE_RULE"]
 palabras = ["malloc", "struct", "GIFT"]   # el diccionario de la cátedra
+diccionario = "diccionario.txt"            # más palabras, una por renglón (# comenta)
 ```
 """
 
@@ -76,6 +77,14 @@ def cargar(desde: Optional[Path] = None) -> ConfiguracionProyecto:
         return base / str(valor) if valor else None
 
     orto = datos.get("ortografia") or {}
+    palabras = [str(p) for p in orto.get("palabras") or []]
+    if orto.get("diccionario"):
+        archivo = base / str(orto["diccionario"])
+        try:
+            renglones = archivo.read_text(encoding="utf-8").splitlines()
+        except OSError as e:
+            raise ValueError(f"{ruta}: no se pudo leer el diccionario {archivo}: {e.strerror}") from e
+        palabras += [r.split("#", 1)[0].strip() for r in renglones if r.split("#", 1)[0].strip()]
     formato = datos.get("formato")
     return ConfiguracionProyecto(
         ruta=ruta,
@@ -88,5 +97,5 @@ def cargar(desde: Optional[Path] = None) -> ConfiguracionProyecto:
         lt_servidor=orto.get("servidor"),
         lt_idioma=orto.get("idioma"),
         lt_ignorar_reglas=list(orto.get("ignorar_reglas") or []),
-        palabras=[str(p) for p in orto.get("palabras") or []],
+        palabras=palabras,
     )

@@ -280,6 +280,9 @@ def ejecutar_spellcheck(args, logger) -> int:
         if curso.lt_ignorar_reglas:
             reglas_ign = (reglas_ign or set()) | set(curso.lt_ignorar_reglas)
         palabras_ign = set(w.strip() for w in args.lt_ignore_words.split(",") if w.strip()) if getattr(args, 'lt_ignore_words', None) else None
+        # El diccionario de la cátedra (alucard.toml) se suma a las palabras de --lt-ignore-words.
+        if curso.palabras:
+            palabras_ign = (palabras_ign or set()) | set(curso.palabras)
 
         todos_los_issues = []
         total_arreglos = 0

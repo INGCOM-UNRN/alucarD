@@ -134,9 +134,12 @@ servidor = "http://localhost:8081"
 idioma = "es-AR"
 ignorar_reglas = ["WHITESPACE_RULE"]
 palabras = ["malloc", "struct", "GIFT"]
+diccionario = "diccionario.txt"   # más palabras, una por renglón (# comenta)
 ```
 
-Con eso, `alucard generar -d parcial.yaml` alcanza.
+Con eso, `alucard generar -d parcial.yaml` alcanza. Las `palabras` y las del `diccionario` son el
+diccionario de la cátedra: `alucard ortografia` no las marca, y se suman a las de
+`--lt-ignore-words`.
 
 #### Opciones de `alucard generar`
 
