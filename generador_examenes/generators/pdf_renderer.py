@@ -27,14 +27,14 @@ def compilar_typst_a_pdf(typst_source: str, output_pdf: Path, root_dir: Optional
     root = str(root_dir) if (root_dir and tmp_path.is_relative_to(root_dir)) else None
     try:
         try:
-            import typst
+            import typst as libreria_typst
         except ImportError:
-            typst = None
-        if typst is not None:
+            libreria_typst = None  # type: ignore[assignment]
+        if libreria_typst is not None:
             # Un error de compilación de la librería se informa tal cual: el binario fallaría igual,
             # y sólo arrancar puede llevar decenas de segundos (recorre todas las fuentes del sistema).
             try:
-                typst.compile(str(tmp_path), output=str(output_pdf), root=root)
+                libreria_typst.compile(str(tmp_path), output=str(output_pdf), root=root)
             except Exception as e_py:
                 raise RuntimeError(f"Fallo en compilación Typst: {e_py}") from e_py
             return output_pdf

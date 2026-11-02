@@ -460,7 +460,7 @@ def _comando_de_opciones(nombre: str, opciones: List[str], fijos: dict, ayuda: s
     def comando(**valores):
         _ejecutar({**valores, **fijos})
 
-    setattr(comando, "__signature__", firma.replace(parameters=parametros))
+    comando.__signature__ = firma.replace(parameters=parametros)  # type: ignore[attr-defined]
     comando.__annotations__ = {n: _cli.__annotations__[n] for n in opciones if n in _cli.__annotations__}
     comando.__doc__ = ayuda
     comando.__name__ = f"_comando_{nombre}"

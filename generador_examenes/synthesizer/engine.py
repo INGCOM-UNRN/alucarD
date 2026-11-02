@@ -106,7 +106,7 @@ def exportar_gift(snippets: list[SnippetGenerado]) -> str:
     """
     bloques = []
     categoria = None
-    for s, titulo in zip(snippets, _titulos_unicos(snippets)):
+    for s, titulo in zip(snippets, _titulos_unicos(snippets), strict=True):
         if s.plantilla != categoria:
             categoria = s.plantilla
             bloques.append(f"$CATEGORY: sintetizados/{categoria}")
@@ -125,7 +125,7 @@ def exportar_gift(snippets: list[SnippetGenerado]) -> str:
 def exportar_xml(snippets: list[SnippetGenerado]) -> str:
     """Serializa los snippets como banco Moodle XML (multichoice)."""
     preguntas = []
-    for s, titulo in zip(snippets, _titulos_unicos(snippets)):
+    for s, titulo in zip(snippets, _titulos_unicos(snippets), strict=True):
         opciones_xml = []
         for op in s.opciones:
             fraccion = "100" if op == s.salida_correcta else "0"
