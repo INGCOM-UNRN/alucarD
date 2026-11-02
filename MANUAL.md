@@ -83,6 +83,14 @@ Sale en `output/vista_previa/` (`-o` la cambia) con los diagramas e imágenes (`
 examen, y se abre con el visor del sistema (`--no-abrir` lo evita; sin entorno gráfico, muestra la
 ruta). Si el título no existe, lista los que hay.
 
+#### Mientras se escribe: `--watch`
+
+`alucard generar -d parcial.yaml --watch` (o `-w`) genera y vuelve a generar cada vez que se guarda
+la definición, el `alucard.toml`, un banco, una consigna, una imagen o la plantilla. La carpeta de
+salida no se mira, así lo generado no dispara otra vuelta. `alucard ver BANCO -q titulo -w` hace lo
+mismo con la vista previa: la abre la primera vez y después la regenera (el visor la recarga).
+Ctrl+C termina.
+
 #### Configuración del curso: `alucard.toml`
 
 Lo que se repite en cada corrida va en un `alucard.toml` (lo crea `alucard iniciar`). alucard lo

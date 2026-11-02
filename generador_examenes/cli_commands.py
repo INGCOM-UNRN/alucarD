@@ -644,6 +644,35 @@ def generar_examen(args, logger) -> int:
 
 
 
+def fuentes_de_generacion(args) -> tuple[list[Path], list[Path]]:
+    """(fuentes, salida) de una generación, para --watch: la definición, el alucard.toml, los bancos,
+    las consignas, las imágenes y la plantilla; y la carpeta de salida, que no se mira."""
+    import yaml
+
+    from generador_examenes.config import proyecto
+
+    definicion = Path(args.definicion)
+    try:
+        datos = yaml.safe_load(definicion.read_text(encoding="utf-8")) or {}
+    except (OSError, yaml.YAMLError):
+        datos = {}  # mientras se escribe, la definición puede estar a medio guardar
+    try:
+        curso = proyecto.cargar(definicion.parent)
+    except ValueError:
+        curso = proyecto.ConfiguracionProyecto()
+    rutas = [definicion, *([curso.ruta] if curso.ruta else [])]
+    bancos = args.input_banco or datos.get("input_banco") or curso.input_banco or []
+    rutas += [Path(b) for b in bancos]
+    rutas += [Path(c) for c in datos.get("input_consignas") or []]
+    imagenes = args.path_images or datos.get("path_images") or curso.path_images
+    if imagenes:
+        rutas.append(Path(imagenes))
+    if getattr(args, "typst_template", None):
+        rutas.append(Path(args.typst_template))
+    salida = args.output_dir or datos.get("output_dir") or curso.output_dir or "output"
+    return rutas, [Path(salida)]
+
+
 def diagramas_invalidos(examen: dict) -> list[str]:
     """«La pregunta X (banco) tiene un diagrama inválido: …» por cada bloque ```estructura que no se
     pudo dibujar (en el examen quedaría como un recuadro de error)."""

@@ -1433,6 +1433,7 @@ Al reportar un issue, incluye:
 | `--accessible`, `--large-text` | Generar versión con letra grande y contraste adaptado para accesibilidad |
 | `--bundle-print`, `--empaquetar-imprenta` | Empaquetar y concatenar los PDFs de todos los temas en un único archivo para imprenta |
 | `--audit-typography` | Auditar calidad tipográfica y líneas huérfanas en bloques de código de preguntas |
+| `--watch`, `-w` | Volver a generar cada vez que cambia la definición, un banco, una consigna o una imagen (Ctrl+C termina) |
 
 ### Comandos de `alucard`
 

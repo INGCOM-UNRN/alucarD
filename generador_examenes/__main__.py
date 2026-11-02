@@ -390,6 +390,10 @@ def _cli(
         False, "--audit-typography",
         help="Auditar calidad tipográfica y líneas huérfanas en bloques de código de preguntas",
     ),
+    vigilar: bool = typer.Option(
+        False, "--watch", "-w",
+        help="Volver a generar cada vez que cambia la definición, un banco, una consigna o una imagen (Ctrl+C termina)",
+    ),
     show_completion: bool = typer.Option(
         False, "--show-completion",
         help="Show completion for the current shell, to copy it or customize the installation.",
@@ -450,6 +454,11 @@ def _ejecutar(valores: dict) -> None:
         codigo = cli_commands.ejecutar_spellcheck(args, logger)
     elif args.category_tree:
         codigo = cli_commands.ejecutar_category_tree(args, logger)
+    elif getattr(args, "vigilar", False) and args.definicion:
+        from generador_examenes.core.vigilancia import vigilar
+        _, salida = cli_commands.fuentes_de_generacion(args)
+        codigo = vigilar(lambda: cli_commands.fuentes_de_generacion(args)[0],
+                         lambda: cli_commands.generar_examen(args, logger), excluir=salida)
     else:
         codigo = cli_commands.generar_examen(args, logger)
 
@@ -467,7 +476,7 @@ _DEFECTOS = {n: (None if v is ... else v) for n, v in _DEFECTOS.items()}
 _OPCIONES_LT = [n for n in _PARAMETROS if n.startswith("lt_")]
 _OPCIONES_GENERAR = [
     "definicion", "input_banco", "output_dir", "path_images", "numero_temas", "semilla", "formato",
-    "typst_template", "json_output", "debug", "omr", "accessible", "bundle_print", "audit_typography",
+    "typst_template", "json_output", "debug", "omr", "accessible", "bundle_print", "audit_typography", "vigilar",
 ]
 
 
@@ -557,6 +566,8 @@ def _ver(
     path_images: Optional[Path] = typer.Option(None, "-p", "--path-images", help="Imágenes de las preguntas."),
     clave: bool = typer.Option(False, "--clave", help="También la versión con las respuestas correctas."),
     abrir: bool = typer.Option(True, "--abrir/--no-abrir", help="Abrirla con el visor del sistema."),
+    vigilar_cambios: bool = typer.Option(False, "--watch", "-w",
+                                         help="Volver a armarla cada vez que se guarda el banco (Ctrl+C termina)."),
 ) -> None:
     """Vista previa de una pregunta (o de un banco) como sale en el examen, con sus diagramas."""
     import logging
@@ -568,8 +579,26 @@ def _ver(
     if pregunta and linea:
         _usage_error("--pregunta y --linea eligen la pregunta de dos formas: usá una sola")
     setup_logging(debug=False)
-    _ultimo_codigo_salida["code"] = cli_commands.ejecutar_vista_previa(
-        banco, pregunta, linea, formato, output_dir, path_images, clave, abrir, logging.getLogger("alucard.ver"))
+    logger = logging.getLogger("alucard.ver")
+
+    def armar(abrir_ahora: bool = abrir) -> int:
+        return cli_commands.ejecutar_vista_previa(banco, pregunta, linea, formato, output_dir, path_images,
+                                                  clave, abrir_ahora, logger)
+
+    if not vigilar_cambios:
+        _ultimo_codigo_salida["code"] = armar()
+        return
+    from generador_examenes.core.vigilancia import vigilar
+    primera = [True]
+
+    def armar_una_vez_abierta() -> int:
+        # Se abre la primera vez; después se recarga en el visor que ya está abierto.
+        codigo = armar(abrir and primera[0])
+        primera[0] = False
+        return codigo
+
+    _ultimo_codigo_salida["code"] = vigilar(lambda: [banco, *([path_images] if path_images else [])],
+                                            armar_una_vez_abierta, excluir=[output_dir])
 
 
 @app.command("build")
