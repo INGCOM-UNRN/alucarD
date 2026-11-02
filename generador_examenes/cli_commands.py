@@ -11,6 +11,7 @@ sin cambios de comportamiento; el objetivo es reducir el tamaño de
 import json
 import sys
 from pathlib import Path
+from typing import Optional
 
 from generador_examenes.cli_errors import usage_error as _usage_error
 
@@ -637,3 +638,96 @@ def generar_examen(args, logger) -> int:
 
 
 
+
+
+# --- Vista previa de preguntas (alucard ver) -------------------------------------------------
+
+def preguntas_por_linea(banco: Path) -> list[tuple[int, str]]:
+    """(línea, título) de cada pregunta GIFT con título (`::titulo::`), en orden."""
+    import re
+
+    try:
+        lineas = banco.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return []
+    titulos = []
+    for n, linea in enumerate(lineas, 1):
+        m = re.match(r"\s*::(.+?)::", linea)
+        if m:
+            titulos.append((n, m.group(1).strip()))
+    return titulos
+
+
+def elegir_preguntas(banco_cargado: dict, ruta_banco: Path, pregunta: Optional[str],
+                     linea: Optional[int]) -> tuple[list, str]:
+    """Las preguntas de la vista previa y, si no hay ninguna, por qué."""
+    preguntas = list(banco_cargado.values())
+    if linea is not None:
+        anteriores = [t for n, t in preguntas_por_linea(ruta_banco) if n <= linea]
+        if not anteriores:
+            return [], f"no hay ninguna pregunta con título en {ruta_banco.name} antes de la línea {linea}"
+        pregunta = anteriores[-1]
+        elegidas = [p for p in preguntas if p.nombre.strip() == pregunta]
+        return elegidas, "" if elegidas else f"la pregunta «{pregunta}» de la línea {linea} no se pudo leer"
+    if pregunta:
+        clave = pregunta.casefold()
+        exactas = [p for p in preguntas if p.nombre.casefold() == clave or p.id == pregunta]
+        elegidas = exactas or [p for p in preguntas if clave in p.nombre.casefold()]
+        if not elegidas:
+            disponibles = ", ".join(p.nombre for p in preguntas[:8])
+            return [], f"ninguna pregunta se llama «{pregunta}» (hay: {disponibles}{'…' if len(preguntas) > 8 else ''})"
+        return elegidas, ""
+    return preguntas, ""
+
+
+def abrir_archivo(ruta: Path) -> bool:
+    """Abre `ruta` con el visor del sistema si hay entorno gráfico; False si no se pudo."""
+    import os
+    import subprocess
+
+    if sys.platform == "win32":
+        os.startfile(str(ruta))  # type: ignore[attr-defined]
+        return True
+    comando = "open" if sys.platform == "darwin" else "xdg-open"
+    if comando == "xdg-open" and not (os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")):
+        return False
+    try:
+        subprocess.Popen([comando, str(ruta)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except OSError:
+        return False
+    return True
+
+
+def ejecutar_vista_previa(banco: Path, pregunta: Optional[str], linea: Optional[int], formato: str,
+                          salida: Path, path_images: Optional[Path], clave: bool, abrir: bool, logger) -> int:
+    """Renderiza una pregunta (o todas las del banco) sola, como sale en el examen."""
+    from generador_examenes.core import logic
+    from generador_examenes.core.balance import definicion_implicita
+    from generador_examenes.core.models import DefinicionExamen
+    from generador_examenes.generators import obtener_renderer
+
+    banco_cargado = logic.cargar_bancos([banco])
+    elegidas, motivo = elegir_preguntas(banco_cargado, banco, pregunta, linea)
+    if not elegidas:
+        print(f"Error: {motivo}.", file=sys.stderr)
+        return 1
+    titulo = elegidas[0].nombre if len(elegidas) == 1 else f"{banco.name} ({len(elegidas)} preguntas)"
+    datos = definicion_implicita([banco], f"Vista previa: {titulo}")
+    datos["configuracion_examen"].update(mezclar_preguntas_dentro_seccion=False,
+                                         mezclar_opciones_dentro_pregunta=False, generar_clave_profesor=clave)
+    definicion = DefinicionExamen(**datos)
+    solo = {p.id: p for p in elegidas}
+    if path_images:
+        logic.procesar_imagenes(solo, path_images)
+    examen = logic.construir_pool_examen(definicion, solo, 0)
+    salida.mkdir(parents=True, exist_ok=True)
+    renderer = obtener_renderer(formato)
+    archivo = renderer.renderizar_examen(examen, definicion, salida, 0)
+    archivos = [archivo]
+    if clave:
+        archivos.append(renderer.renderizar_clave(examen, definicion, salida, 0))
+    for a in archivos:
+        print(f"✓ Vista previa: {a}")
+    if abrir and not abrir_archivo(Path(archivo)):
+        print("  (sin entorno gráfico: abrilo a mano)")
+    return 0

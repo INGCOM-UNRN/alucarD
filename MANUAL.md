@@ -69,6 +69,20 @@ Cada tarea es un comando. Las formas anteriores (`--init`, `--wizard`, `--catego
 | `alucard iniciar` | Crea un proyecto de ejemplo en la carpeta actual. |
 | `alucard build`, `balance-check`, `lint-gift`, `sintetizar`, `diagrama`, `doctor` | Ver sus secciones. |
 
+#### Vista previa de una pregunta: `alucard ver`
+
+Para ver cómo queda una pregunta sin generar el examen entero:
+
+```bash
+alucard ver bancos/estructuras.gift -q abb-preorden      # por título (o parte) o id
+alucard ver bancos/estructuras.gift -l 40 -f pdf --clave  # la pregunta de esa línea, en PDF y con la clave
+alucard ver bancos/estructuras.gift                       # todo el banco
+```
+
+Sale en `output/vista_previa/` (`-o` la cambia) con los diagramas e imágenes (`-p`) igual que en el
+examen, y se abre con el visor del sistema (`--no-abrir` lo evita; sin entorno gráfico, muestra la
+ruta). Si el título no existe, lista los que hay.
+
 #### Configuración del curso: `alucard.toml`
 
 Lo que se repite en cada corrida va en un `alucard.toml` (lo crea `alucard iniciar`). alucard lo

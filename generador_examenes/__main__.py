@@ -545,6 +545,33 @@ _AYUDA_REPOSITORIO = ("Repositorio externo de la computadora: carpeta de bancos 
                       "(se suma a repositorios_externos, tipo auto). Repetible.")
 
 
+@app.command("ver")
+def _ver(
+    banco: Path = typer.Argument(..., exists=True, dir_okay=False, help="Banco GIFT o Moodle XML."),
+    pregunta: Optional[str] = typer.Option(None, "--pregunta", "-q",
+                                           help="Título (o parte) o id de la pregunta; sin esto, todo el banco."),
+    linea: Optional[int] = typer.Option(None, "--linea", "-l", min=1,
+                                        help="GIFT: la pregunta que contiene esa línea del archivo."),
+    formato: str = typer.Option("html", "-f", "--formato", help="html o pdf."),
+    output_dir: Path = typer.Option(Path("output/vista_previa"), "-o", "--output-dir", help="Dónde dejarla."),
+    path_images: Optional[Path] = typer.Option(None, "-p", "--path-images", help="Imágenes de las preguntas."),
+    clave: bool = typer.Option(False, "--clave", help="También la versión con las respuestas correctas."),
+    abrir: bool = typer.Option(True, "--abrir/--no-abrir", help="Abrirla con el visor del sistema."),
+) -> None:
+    """Vista previa de una pregunta (o de un banco) como sale en el examen, con sus diagramas."""
+    import logging
+
+    from generador_examenes.config.logging_config import setup_logging
+
+    if formato not in ("html", "pdf"):
+        _usage_error(f"argumento -f/--formato: valor inválido: '{formato}' (elegir entre 'html', 'pdf')")
+    if pregunta and linea:
+        _usage_error("--pregunta y --linea eligen la pregunta de dos formas: usá una sola")
+    setup_logging(debug=False)
+    _ultimo_codigo_salida["code"] = cli_commands.ejecutar_vista_previa(
+        banco, pregunta, linea, formato, output_dir, path_images, clave, abrir, logging.getLogger("alucard.ver"))
+
+
 @app.command("build")
 def _build(
     input_banco: Optional[List[Path]] = typer.Option(None, "-i", "--input-banco", exists=True, dir_okay=False,
