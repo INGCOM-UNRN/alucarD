@@ -1,6 +1,7 @@
 """
 Renderizador PDF usando Typst con soporte de plantillas personalizables.
 """
+import functools
 import logging
 import sys
 import subprocess
@@ -15,6 +16,18 @@ from generador_examenes.generators.html_renderer import HtmlRenderer
 logger = logging.getLogger(__name__)
 
 TIMEOUT_TYPST = 300  # segundos para el binario typst (el primer arranque indexa las fuentes del sistema)
+
+
+@functools.lru_cache(maxsize=1)
+def _fuentes_typst(libreria):
+    """Las fuentes del sistema, cargadas una vez por proceso.
+
+    Cada `typst.compile` las volvía a buscar (unos 0,3 s): con varios temas, sus claves, la búsqueda
+    de la pregunta que no compila o `--watch`, eso era casi todo el tiempo de la generación. Con las
+    fuentes ya cargadas, una compilación tarda milisegundos.
+    """
+    fuentes = getattr(libreria, "Fonts", None)
+    return fuentes() if fuentes is not None else None
 
 
 def compilar_typst_a_pdf(typst_source: str, output_pdf: Path, root_dir: Optional[Path] = None) -> Path:
@@ -35,7 +48,9 @@ def compilar_typst_a_pdf(typst_source: str, output_pdf: Path, root_dir: Optional
             # Un error de compilación de la librería se informa tal cual: el binario fallaría igual,
             # y sólo arrancar puede llevar decenas de segundos (recorre todas las fuentes del sistema).
             try:
-                libreria_typst.compile(str(tmp_path), output=str(output_pdf), root=root)
+                fuentes = _fuentes_typst(libreria_typst)
+                extra = {"font_paths": fuentes} if fuentes is not None else {}
+                libreria_typst.compile(str(tmp_path), output=str(output_pdf), root=root, **extra)
             except Exception as e_py:
                 raise RuntimeError(f"Fallo en compilación Typst: {e_py}") from e_py
             return output_pdf
