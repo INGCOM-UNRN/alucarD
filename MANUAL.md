@@ -69,6 +69,30 @@ Cada tarea es un comando. Las formas anteriores (`--init`, `--wizard`, `--catego
 | `alucard iniciar` | Crea un proyecto de ejemplo en la carpeta actual. |
 | `alucard build`, `balance-check`, `lint-gift`, `sintetizar`, `diagrama`, `doctor` | Ver sus secciones. |
 
+#### Configuración del curso: `alucard.toml`
+
+Lo que se repite en cada corrida va en un `alucard.toml` (lo crea `alucard iniciar`). alucard lo
+busca desde la carpeta de la definición hacia arriba, sin salir del repositorio git; las rutas son
+relativas al archivo. La línea de comandos manda sobre la definición YAML, y la definición sobre
+`alucard.toml`.
+
+```toml
+input_banco = ["bancos/teoria.gift", "bancos/sintetizados"]
+output_dir = "output"
+path_images = "imagenes"
+numero_temas = 2
+semilla = 2026
+formato = ["pdf"]
+
+[ortografia]
+servidor = "http://localhost:8081"
+idioma = "es-AR"
+ignorar_reglas = ["WHITESPACE_RULE"]
+palabras = ["malloc", "struct", "GIFT"]
+```
+
+Con eso, `alucard generar -d parcial.yaml` alcanza.
+
 #### Opciones de `alucard generar`
 
 | Opción / Bandera | Tipo | Por Defecto | Descripción |

@@ -212,6 +212,24 @@ int sumar_pares(const int arreglo[], size_t cantidad)
     else:
         logger.info("  Consigna ya existe: consignas/sumar-pares/")
 
+    # Configuración del curso: lo que se repite en cada corrida (la línea de comandos y la
+    # definición mandan sobre esto).
+    configuracion = Path('alucard.toml')
+    if not configuracion.exists():
+        configuracion.write_text('''# Configuración del curso para alucard (la línea de comandos y la definición YAML mandan).
+input_banco = ["bancos/banco_ejemplo.txt"]
+output_dir = "output"
+numero_temas = 2
+semilla = 2026
+formato = ["html"]
+
+[ortografia]
+idioma = "es-AR"
+# Palabras de la cátedra que LanguageTool no debe marcar.
+palabras = ["malloc", "struct", "printf"]
+''', encoding='utf-8')
+        logger.info("✓ Configuración del curso creada: alucard.toml")
+
     # Crear README
     readme = Path('README_PROYECTO.md')
     if not readme.exists():
@@ -278,6 +296,7 @@ Para más información, consulta la documentación oficial de alucarD.
     print("  - consignas/          (consignas prácticas deckard)")
     print("  - output/             (exámenes generados)")
     print("  - definicion_ejemplo.yaml")
+    print("  - alucard.toml          (bancos, salida, temas y formato del curso)")
     print("  - banco_ejemplo.txt")
     print("  - README_PROYECTO.md")
     print("\nPróximos pasos:")

@@ -238,8 +238,14 @@ def ejecutar_spellcheck(args, logger) -> int:
         ruta_definicion = args.definicion if args.definicion and args.definicion.is_file() else next(
             (c for c in (Path('definicion.yaml'), Path('definicion_ejemplo.yaml')) if c.is_file()), None)
         definicion = _leer_definicion(ruta_definicion) if ruta_definicion else None
+        from generador_examenes.config import proyecto
+        curso = proyecto.cargar(Path(ruta_definicion).parent if ruta_definicion else None)
         rutas_bancos: list[Path] = list(args.input_banco) if args.input_banco else (
-            [Path(b) for b in definicion.input_banco or []] if definicion else [])
+            [Path(b) for b in definicion.input_banco or []] if definicion and definicion.input_banco else
+            list(curso.input_banco))
+        # Servidor, idioma y reglas del alucard.toml cuando no vienen por la línea de comandos.
+        lt_server = args.lt_server or curso.lt_servidor
+        lt_lang = args.lt_lang if args.lt_lang != "es-AR" or not curso.lt_idioma else curso.lt_idioma
         preguntas_a_revisar = _preguntas_a_revisar(rutas_bancos, definicion)
 
         if not preguntas_a_revisar:
@@ -247,6 +253,8 @@ def ejecutar_spellcheck(args, logger) -> int:
             return 0
 
         reglas_ign = set(r.strip() for r in args.lt_ignore_rules.split(",") if r.strip()) if getattr(args, 'lt_ignore_rules', None) else None
+        if curso.lt_ignorar_reglas:
+            reglas_ign = (reglas_ign or set()) | set(curso.lt_ignorar_reglas)
         palabras_ign = set(w.strip() for w in args.lt_ignore_words.split(",") if w.strip()) if getattr(args, 'lt_ignore_words', None) else None
 
         todos_los_issues = []
@@ -255,8 +263,8 @@ def ejecutar_spellcheck(args, logger) -> int:
         for p in preguntas_a_revisar:
             issues = analizar_pregunta_languagetool(
                 p,
-                lang=args.lt_lang,
-                server_url=args.lt_server,
+                lang=lt_lang,
+                server_url=lt_server,
                 username=args.lt_username,
                 api_key=args.lt_api_key,
                 premium=args.lt_premium,
@@ -396,18 +404,27 @@ def generar_examen(args, logger) -> int:
             logger.error(f"Error de validación en definición:\n{e}")
             return 1
         
-        # Aplicar overrides de CLI sobre configuración YAML
-        # Los argumentos de CLI tienen prioridad sobre YAML
-        input_banco = args.input_banco if args.input_banco else (
-            [Path(b) for b in definicion.input_banco] if definicion.input_banco else None
-        )
-        output_dir = args.output_dir if args.output_dir else Path(definicion.output_dir or './output')
-        path_images = args.path_images if args.path_images else (
-            Path(definicion.path_images) if definicion.path_images else None
-        )
-        numero_temas = args.numero_temas if args.numero_temas is not None else (definicion.numero_temas or 1)
-        semilla = args.semilla if args.semilla is not None else (definicion.semilla or 42)
-        formato = args.formato if args.formato else (definicion.formato or ['html'])
+        # Prioridad: línea de comandos, definición YAML, alucard.toml del curso y, al final, el
+        # valor por defecto. De la definición cuenta sólo lo que el YAML escribió.
+        from generador_examenes.config import proyecto
+        curso = proyecto.cargar(Path(args.definicion).parent)
+        if curso.ruta is not None:
+            logger.info(f"Configuración del curso: {curso.ruta}")
+
+        def del_yaml(campo):
+            return getattr(definicion, campo) if campo in definicion.model_fields_set else None
+
+        input_banco = args.input_banco or (
+            [Path(b) for b in del_yaml("input_banco")] if del_yaml("input_banco") else None
+        ) or curso.input_banco or None
+        output_dir = args.output_dir or (
+            Path(del_yaml("output_dir")) if del_yaml("output_dir") else None) or curso.output_dir or Path('./output')
+        path_images = args.path_images or (
+            Path(del_yaml("path_images")) if del_yaml("path_images") else None) or curso.path_images
+        numero_temas = next(v for v in (args.numero_temas, del_yaml("numero_temas"), curso.numero_temas, 1)
+                            if v is not None)
+        semilla = next(v for v in (args.semilla, del_yaml("semilla"), curso.semilla, 42) if v is not None)
+        formato = args.formato or del_yaml("formato") or curso.formato or ['html']
         
         # Validar que tengamos bancos de preguntas (o consignas / repositorios externos que los complementen)
         if not input_banco and not definicion.input_consignas and not definicion.repositorios_externos:

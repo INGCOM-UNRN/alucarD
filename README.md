@@ -277,6 +277,13 @@ alucard validar -d mi_examen.yaml \
   -i bancos/banco1.txt bancos/banco2.xml
 ```
 
+### Configuración del curso (`alucard.toml`)
+
+Los bancos, la carpeta de salida, la cantidad de temas, la semilla, el formato y las
+opciones de ortografía del curso pueden ir en un `alucard.toml` (lo crea `alucard iniciar`).
+La línea de comandos manda sobre la definición, y la definición sobre `alucard.toml`. Ver el
+MANUAL.
+
 ### 4️⃣ Explorar Categorías de Bancos
 
 Antes de crear tu configuración, puedes explorar las categorías disponibles en tus bancos:
