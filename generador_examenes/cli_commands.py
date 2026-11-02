@@ -515,6 +515,7 @@ def generar_examen(args, logger) -> int:
         logger.info(f"Generando {numero_temas} tema(s)...")
         archivos_generados = []
         uso_global: dict = {}  # posición de la correcta en los temas ya generados (balance entre temas)
+        temas_generados = []
 
         for i in range(numero_temas):
             semilla_tema = semilla + i
@@ -527,6 +528,7 @@ def generar_examen(args, logger) -> int:
                 definicion.configuracion_examen,
                 uso_global=uso_global,
             )
+            temas_generados.append(examen_mezclado)
             
             # Generar en cada formato solicitado
             for fmt in formato:
@@ -581,6 +583,19 @@ def generar_examen(args, logger) -> int:
                 archivos_generados.append(str(spec_file))
                 if not getattr(args, 'json_output', False):
                     print(f"✓ OMR y Descriptor JSON generados para tema {i + 1}: {spec_file.name}")
+
+        # Informe de la generación: qué se eligió, de dónde y por qué quedó afuera cada consigna.
+        try:
+            from generador_examenes.core.informe import armar_informe
+            informe = output_dir / "informe.md"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            informe.write_text(armar_informe(definicion, banco_completo, examen_base, temas_generados,
+                                             semilla, list(formato)), encoding="utf-8")
+            archivos_generados.append(str(informe))
+            if not getattr(args, 'json_output', False):
+                print(f"✓ Informe: {informe}")
+        except Exception as e:  # el informe no debe impedir el examen
+            logger.warning(f"No se pudo armar el informe de la generación: {e}")
 
         # Auditoría tipográfica de código si fue solicitada
         if getattr(args, 'audit_typography', False):

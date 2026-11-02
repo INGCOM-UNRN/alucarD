@@ -83,6 +83,16 @@ Sale en `output/vista_previa/` (`-o` la cambia) con los diagramas e imágenes (`
 examen, y se abre con el visor del sistema (`--no-abrir` lo evita; sin entorno gráfico, muestra la
 ruta). Si el título no existe, lista los que hay.
 
+#### Informe de la generación (`informe.md`)
+
+Junto a los temas, `alucard generar` deja un `informe.md` con:
+
+- cada pool, cuántas preguntas podía elegir y cuántas eligió;
+- las preguntas elegidas, con su sección, tipo, categoría, banco y puntaje;
+- el orden de cada tema (los temas comparten preguntas y cambian el orden);
+- las consignas prácticas que no podían entrar, con el filtro que las dejó afuera (categoría, tipo,
+  etiquetas, minutos) o `publicar: false`.
+
 #### Mientras se escribe: `--watch`
 
 `alucard generar -d parcial.yaml --watch` (o `-w`) genera y vuelve a generar cada vez que se guarda
