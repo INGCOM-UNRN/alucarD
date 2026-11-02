@@ -100,8 +100,8 @@ info: ## Mostrar información del proyecto
 
 docs: ## Abrir documentación
 	@echo "📚 Documentación disponible:"
-	@echo "  • README.md - Introducción"
-	@echo "  • GUIA_UV.md - Guía de UV"
-	@echo "  • EJEMPLOS.md - Ejemplos"
-	@echo "  • INSTALACION.md - Instalación"
-	@echo "  • RESUMEN_PROYECTO.md - Resumen técnico"
+	@echo "  • README.md - Introducción y referencia de comandos"
+	@echo "  • MANUAL.md - Manual de uso (comandos, alucard.toml, diagramas, sintetizador)"
+	@echo "  • CHANGELOG.md - Cambios por versión"
+	@echo "  • manual/ - Páginas del manual del ecosistema"
+	@echo "  • .docs_backup/ - Documentos históricos (resúmenes de sesiones anteriores)"
