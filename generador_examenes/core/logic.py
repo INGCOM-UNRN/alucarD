@@ -271,7 +271,8 @@ def construir_pool_examen(
             # Un generador por pool: agregar o quitar un pool no cambia lo que sortean los demás.
             rng = random.Random(f"{semilla}:{idx}:{pool_idx}") if sortear else None
             preguntas_pool = _filtrar_preguntas_pool(
-                pool, banco, definicion.configuracion_examen.presentacion_consignas, rng=rng
+                pool, banco, definicion.configuracion_examen.presentacion_consignas, rng=rng,
+                donde=f"la sección «{seccion_def.nombre}», pool {pool_idx}",
             )
             preguntas_seccion.extend(preguntas_pool)
         
@@ -349,7 +350,7 @@ def candidatas_pool(pool: PoolConfig, banco: Dict[str, Pregunta]) -> List[Pregun
 
 def _filtrar_preguntas_pool(pool: PoolConfig, banco: Dict[str, Pregunta],
                             presentacion_general: Optional[PresentacionConsigna] = None,
-                            rng: Optional[random.Random] = None) -> List[Pregunta]:
+                            rng: Optional[random.Random] = None, donde: str = "") -> List[Pregunta]:
     """
     Filtra y selecciona preguntas según la configuración del pool; con `rng`, las que entran se
     sortean (las fijadas no)
@@ -391,9 +392,12 @@ def _filtrar_preguntas_pool(pool: PoolConfig, banco: Dict[str, Pregunta],
     
     if len(candidatas) < cantidad_solicitada:
         mensaje = (
-            f"Preguntas insuficientes: se solicitaron {cantidad_solicitada}, "
-            f"pero solo hay {len(candidatas)} disponibles"
+            f"Preguntas insuficientes{f' en {donde}' if donde else ''}: se solicitaron {cantidad_solicitada}, "
+            f"pero solo hay {len(candidatas)} disponibles con {pool}"
         )
+        if pool.accion_si_insuficiente == "error":
+            mensaje += (". Sumá preguntas a esa categoría, bajá la cantidad del pool o poné "
+                        "accion_si_insuficiente: usar_todas (o advertir)")
         
         if pool.accion_si_insuficiente == "error":
             raise ValueError(mensaje)

@@ -119,7 +119,7 @@ secciones_examen:
   - nombre: "Sección 1 - Preguntas de Ejemplo"
     instrucciones: "Selecciona la respuesta correcta"
     pools:
-      - cantidad: 5
+      - cantidad: 2               # el banco de ejemplo trae 2 de selección múltiple
         tipos: ["seleccion_multiple"]
 
   - nombre: "Sección 2 - Consigna Práctica"

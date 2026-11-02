@@ -2,6 +2,7 @@
 Renderizador PDF usando Typst con soporte de plantillas personalizables.
 """
 import logging
+import sys
 import subprocess
 import tempfile
 from pathlib import Path
@@ -147,7 +148,7 @@ class PdfRenderer(BaseRenderer):
             logger.info(f"Examen PDF generado con Typst: {output_file}")
             return output_file
         except Exception as e:
-            logger.warning(f"Error compilando con Typst ({e}), intentando fallback HTML/WeasyPrint...")
+            self._avisar_fallo_typst(e, template, contexto)
             return self._renderizar_examen_weasyprint(examen_data, definicion, output_dir, tema)
 
     def renderizar_clave(
@@ -191,6 +192,7 @@ class PdfRenderer(BaseRenderer):
             lstrip_blocks=True
         ))
 
+        template = None
         try:
             template = env.get_template('clave_profesor.typ.j2')
             typst_content = template.render(**contexto)
@@ -199,8 +201,44 @@ class PdfRenderer(BaseRenderer):
             logger.info(f"Clave PDF generada con Typst: {output_file}")
             return output_file
         except Exception as e:
-            logger.warning(f"Error compilando clave con Typst ({e}), intentando fallback HTML/WeasyPrint...")
+            self._avisar_fallo_typst(e, template, contexto, "la clave")
             return self._renderizar_clave_weasyprint(examen_data, definicion, output_dir, tema)
+
+    def _avisar_fallo_typst(self, error: Exception, template, contexto: dict, que: str = "el examen") -> None:
+        """Typst no compiló: se dice en qué pregunta, para no tener que buscarla en el .typ generado."""
+        culpable = self._pregunta_que_falla(template, contexto) if template is not None else None
+        donde = f" en la pregunta {culpable}" if culpable else ""
+        mensaje = (f"Typst no pudo compilar {que}{donde}: {str(error).splitlines()[0] if str(error) else error}. "
+                   "Se genera con WeasyPrint.")
+        logger.warning(mensaje)
+        print(f"Aviso: {mensaje}", file=sys.stderr)
+
+    def _pregunta_que_falla(self, template, contexto: dict) -> Optional[str]:
+        """La primera pregunta que, sola, no compila (o «la plantilla» si falla sin preguntas).
+
+        La librería de Typst no informa la línea del error; compilar de a una pregunta sólo cuesta
+        tiempo cuando ya hubo un error."""
+        import tempfile
+
+        def compila(secciones) -> bool:
+            with tempfile.TemporaryDirectory(prefix="alucard-typst-") as tmp:
+                try:
+                    compilar_typst_a_pdf(template.render(**{**contexto, "secciones": secciones}),
+                                         Path(tmp) / "pregunta.pdf", root_dir=self.templates_dir)
+                except Exception:
+                    return False
+            return True
+
+        secciones = contexto.get("secciones", [])
+        if not compila([{**s, "preguntas": []} for s in secciones]):
+            return None
+        for seccion in secciones:
+            for preg in seccion.get("preguntas", []):
+                if not compila([{**seccion, "preguntas": [preg]}]):
+                    nombre = getattr(preg, "nombre", "?")
+                    banco = getattr(preg, "fuente_banco", None)
+                    return f"«{nombre}»" + (f" de {banco}" if banco else "")
+        return None
 
     def _renderizar_examen_weasyprint(self, examen_data, definicion, output_dir, tema) -> Path:
         from jinja2 import Environment, FileSystemLoader

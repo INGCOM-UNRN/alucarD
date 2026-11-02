@@ -462,6 +462,10 @@ def generar_examen(args, logger) -> int:
                   file=sys.stderr)
             return 1
 
+        # Un diagrama mal escrito sale en el examen como un aviso: se dice en qué pregunta antes.
+        for problema in diagramas_invalidos(examen_base):
+            print(f"Aviso: {problema}", file=sys.stderr)
+
         # Calcular puntaje total
         puntaje_total = logic.calcular_puntaje_total(examen_base)
         logger.info(f"Puntaje total del examen: {puntaje_total}")
@@ -638,6 +642,23 @@ def generar_examen(args, logger) -> int:
 
 
 
+
+
+def diagramas_invalidos(examen: dict) -> list[str]:
+    """«La pregunta X (banco) tiene un diagrama inválido: …» por cada bloque ```estructura que no se
+    pudo dibujar (en el examen quedaría como un recuadro de error)."""
+    import html as html_mod
+    import re
+
+    problemas = []
+    for seccion in examen.get("secciones", []):
+        for p in seccion.get("preguntas", []):
+            for m in re.finditer(r'class="estructura-error"><strong>Diagrama inválido:</strong> (.*?)</p>',
+                                 getattr(p, "enunciado_html", "") or ""):
+                banco = f" de {p.fuente_banco}" if getattr(p, "fuente_banco", None) else ""
+                problemas.append(f"la pregunta «{p.nombre}»{banco} tiene un diagrama inválido: "
+                                 f"{html_mod.unescape(m.group(1))}")
+    return problemas
 
 
 # --- Vista previa de preguntas (alucard ver) -------------------------------------------------
