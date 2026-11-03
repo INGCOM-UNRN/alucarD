@@ -251,7 +251,8 @@ con `categoria: "sintetizados/fugas-malloc"`). Las plantillas de comportamiento 
 En el GIFT, los dos puntos del título, del enunciado y de las opciones van en ancho completo (`：`):
 en el título cortarían el `::` que lo delimita, y en el resto GIFT les da significado. Al mostrar la
 pregunta, alucard los normaliza y se ven como `:`; `alucard ver -q "Punteros colgantes: free"`
-encuentra el título igual.
+encuentra el título igual. Tampoco se usa `#` en el título (en GIFT abre la retroalimentación): las preguntas con el
+mismo título se numeran `n2`, `n3`…, y un `#` delante de un número pasa a `n`.
 
 Después de escribir el banco, alucard le da el formato de voight, en este orden:
 

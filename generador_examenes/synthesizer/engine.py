@@ -102,7 +102,8 @@ def _titulos_unicos(snippets: list[SnippetGenerado]) -> list[str]:
     titulos = []
     for s in snippets:
         vistos[s.titulo] = vistos.get(s.titulo, 0) + 1
-        titulos.append(s.titulo if vistos[s.titulo] == 1 else f"{s.titulo} #{vistos[s.titulo]}")
+        # «n2», no «#2»: en GIFT el # abre la retroalimentación y colisiona en el título.
+        titulos.append(s.titulo if vistos[s.titulo] == 1 else f"{s.titulo} n{vistos[s.titulo]}")
     return titulos
 
 
@@ -121,7 +122,7 @@ def exportar_gift(snippets: list[SnippetGenerado]) -> str:
                   for op in s.opciones]
         bloque = (
             "// daedalus: sintetizado y verificado con gcc\n"
-            f"::{_sin_dos_puntos(titulo)}:: [markdown]{_texto_gift(s.enunciado)}\n"
+            f"::{_titulo_gift(titulo)}:: [markdown]{_texto_gift(s.enunciado)}\n"
             f"{_bloque_codigo(s.codigo)}\n"
             "{\n" + "\n".join(cuerpo) + "\n}"
         )
@@ -162,6 +163,15 @@ DOS_PUNTOS = "\uff1a"
 
 def _sin_dos_puntos(texto: str) -> str:
     return texto.replace(":", DOS_PUNTOS)
+
+
+def _titulo_gift(titulo: str) -> str:
+    """El título sin los caracteres que colisionan en GIFT: `:` en ancho completo y `#` como `n`
+    delante de un número («#3» → «n3», referencia a número) o en ancho completo en otro lugar."""
+    import re
+
+    titulo = re.sub(r"#(?=\d)", "n", titulo)
+    return _sin_dos_puntos(titulo).replace("#", "\uff03")
 
 
 def _texto_gift(texto: str) -> str:

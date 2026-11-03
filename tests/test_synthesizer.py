@@ -252,6 +252,20 @@ def test_muestra_sin_escribir_el_banco(tmp_path, monkeypatch, capsys):
 
 # --- GIFT sin dos puntos y formato final con voight --------------------------------------------
 
+def test_el_titulo_no_usa_numeral():
+    from generador_examenes.synthesizer.engine import exportar_gift
+    from generador_examenes.synthesizer.plantillas import SnippetGenerado
+
+    def snippet(titulo):
+        return SnippetGenerado(plantilla="p", titulo=titulo, enunciado="¿?", codigo="int main(void) { return 0; }",
+                               salida_correcta="0", distractores=["1"])
+
+    gift = exportar_gift([snippet("Traza"), snippet("Traza"), snippet("Caso #4 de C#")])
+    titulos = [l.split("::")[1] for l in gift.splitlines() if l.startswith("::")]
+    assert titulos == ["Traza", "Traza n2", "Caso n4 de C\uff03"]
+    assert not any("#" in t for t in titulos)
+
+
 def test_el_gift_no_usa_dos_puntos_en_titulo_ni_texto():
     from generador_examenes.synthesizer.engine import DOS_PUNTOS, exportar_gift
     from generador_examenes.synthesizer.plantillas import SnippetGenerado

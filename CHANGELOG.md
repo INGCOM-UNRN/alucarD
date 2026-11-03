@@ -41,6 +41,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 ### Corregido
 
 - **sintetizador**: los dos puntos del título, el enunciado y las opciones del GIFT van en ancho completo (`：`) (`db82751`).
+- **sintetizador**: los títulos repetidos se numeran `n2`, `n3`… en lugar de `#2` (el `#` colisiona en GIFT).
 - **errores**: si Typst no compila, el aviso dice qué pregunta y de qué banco; un diagrama inválido se avisa con su pregunta; «Preguntas insuficientes» dice la sección, el pool, su filtro y qué hacer; el proyecto de `iniciar` pedía más preguntas de las que tiene su banco (`07238ad`).
 - **pdf**: las fuentes de Typst se cargan una vez por proceso: cada compilación las volvía a buscar (0,3 s); 4 temas con clave bajan de 3,8 s a 1,5 s (`cea5fe4`).
 - **pdf**: cuando Typst falla al compilar, el respaldo con WeasyPrint ya no queda colgado. Un error de la librería `typst` reintentaba con el binario del sistema, que fallaba igual después de recorrer todas las fuentes instaladas (casi un minuto por tema y por clave). Ahora el binario sólo se usa sin la librería y tiene un tiempo máximo.
