@@ -30,6 +30,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - **sintetizar**: el catálogo dice cómo se verifica cada plantilla, `--muestra` imprime una pregunta de ejemplo y el MANUAL explica cómo agregar una plantilla (`5339ca3`).
 - **categorias**: `--resumen` muestra el inventario por categoría y tipo y si cada pool tiene las que pide (`fbec635`).
 - **ortografia**: diccionario de la cátedra en `alucard.toml` (`palabras` y `diccionario`) (`61ae8b6`).
+- **sintetizar**: el banco se formatea con `voight fix code-indent`, `code-chars --to-fullwidth` y `format` (`--sin-voight` lo saltea) (`70badbf`).
 - **comandos**: `build` y `balance-check` usan `input_consignas` y `repositorios_externos` de la definición, ya no exigen `-i` y suman `--consignas` y `--repositorio` (también sin YAML); `--spellcheck` revisa también las consignas y los repositorios de la definición; `--category-tree` acepta carpetas (repositorios de preguntas o de consignas) y, con `-d`, suma las fuentes de la definición; `--wizard` pregunta por bancos, consignas, repositorios externos y sorteo, y arma pools de consignas con filtros de tiempo y renglones.
 
 ### Cambiado
@@ -39,6 +40,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Corregido
 
+- **sintetizador**: los dos puntos del título, el enunciado y las opciones del GIFT van en ancho completo (`：`) (`db82751`).
 - **errores**: si Typst no compila, el aviso dice qué pregunta y de qué banco; un diagrama inválido se avisa con su pregunta; «Preguntas insuficientes» dice la sección, el pool, su filtro y qué hacer; el proyecto de `iniciar` pedía más preguntas de las que tiene su banco (`07238ad`).
 - **pdf**: las fuentes de Typst se cargan una vez por proceso: cada compilación las volvía a buscar (0,3 s); 4 temas con clave bajan de 3,8 s a 1,5 s (`cea5fe4`).
 - **pdf**: cuando Typst falla al compilar, el respaldo con WeasyPrint ya no queda colgado. Un error de la librería `typst` reintentaba con el binario del sistema, que fallaba igual después de recorrer todas las fuentes instaladas (casi un minuto por tema y por clave). Ahora el binario sólo se usa sin la librería y tiene un tiempo máximo.
