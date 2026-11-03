@@ -247,3 +247,22 @@ def test_muestra_sin_escribir_el_banco(tmp_path, monkeypatch, capsys):
     salida = capsys.readouterr().out
     assert salida.startswith("[incrementos] ") and "✓ a) " in salida and "int main" in salida
     assert not list(tmp_path.iterdir())
+
+
+# --- GIFT sin dos puntos y formato final con voight --------------------------------------------
+
+def test_el_gift_no_usa_dos_puntos_en_titulo_ni_texto():
+    from generador_examenes.synthesizer.engine import DOS_PUNTOS, exportar_gift
+    from generador_examenes.synthesizer.plantillas import SnippetGenerado
+
+    s = SnippetGenerado(plantilla="p", titulo="Punteros: uso tras free", enunciado="Elegí: ¿qué pasa?",
+                        codigo='int main(void) { int x = 1 ? 2 : 3; return x; }',
+                        salida_correcta="Comportamiento indefinido: uso tras free",
+                        distractores=["Imprime 0: el puntero queda en NULL"])
+    gift = exportar_gift([s])
+    titulo = next(l for l in gift.splitlines() if l.startswith("::"))
+    assert titulo.startswith(f"::Punteros{DOS_PUNTOS} uso tras free:: ")
+    assert ":" not in titulo.replace("::", "", 2)
+    assert f"Elegí{DOS_PUNTOS}" in gift
+    assert f"=Comportamiento indefinido{DOS_PUNTOS}" in gift and f"~Imprime 0{DOS_PUNTOS}" in gift
+    assert "1 ? 2 : 3" in gift  # el código lo convierte voight (code-chars), no esto

@@ -780,12 +780,18 @@ def elegir_preguntas(banco_cargado: dict, ruta_banco: Path, pregunta: Optional[s
         if not anteriores:
             return [], f"no hay ninguna pregunta con título en {ruta_banco.name} antes de la línea {linea}"
         pregunta = anteriores[-1]
-        elegidas = [p for p in preguntas if p.nombre.strip() == pregunta]
+        elegidas = [p for p in preguntas if p.nombre.strip() == pregunta.strip()]
         return elegidas, "" if elegidas else f"la pregunta «{pregunta}» de la línea {linea} no se pudo leer"
     if pregunta:
-        clave = pregunta.casefold()
-        exactas = [p for p in preguntas if p.nombre.casefold() == clave or p.id == pregunta]
-        elegidas = exactas or [p for p in preguntas if clave in p.nombre.casefold()]
+        import unicodedata
+
+        def normal(texto: str) -> str:
+            # «Punteros colgantes: free» encuentra el título sintetizado con dos puntos en ancho completo.
+            return unicodedata.normalize("NFKC", texto).casefold()
+
+        clave = normal(pregunta)
+        exactas = [p for p in preguntas if normal(p.nombre) == clave or p.id == pregunta]
+        elegidas = exactas or [p for p in preguntas if clave in normal(p.nombre)]
         if not elegidas:
             disponibles = ", ".join(p.nombre for p in preguntas[:8])
             return [], f"ninguna pregunta se llama «{pregunta}» (hay: {disponibles}{'…' if len(preguntas) > 8 else ''})"

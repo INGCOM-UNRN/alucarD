@@ -117,11 +117,11 @@ def exportar_gift(snippets: list[SnippetGenerado]) -> str:
         if s.plantilla != categoria:
             categoria = s.plantilla
             bloques.append(f"$CATEGORY: sintetizados/{categoria}")
-        cuerpo = [f"={_escape_gift(op)}" if op == s.salida_correcta else f"~{_escape_gift(op)}"
+        cuerpo = [f"={_texto_gift(op)}" if op == s.salida_correcta else f"~{_texto_gift(op)}"
                   for op in s.opciones]
         bloque = (
             "// daedalus: sintetizado y verificado con gcc\n"
-            f"::{titulo.replace('::', '')}:: [markdown]{_escape_gift(s.enunciado)}\n"
+            f"::{_sin_dos_puntos(titulo)}:: [markdown]{_texto_gift(s.enunciado)}\n"
             f"{_bloque_codigo(s.codigo)}\n"
             "{\n" + "\n".join(cuerpo) + "\n}"
         )
@@ -152,6 +152,21 @@ def exportar_xml(snippets: list[SnippetGenerado]) -> str:
         )
     cuerpo = "\n".join(preguntas)
     return f'<?xml version="1.0" encoding="UTF-8"?>\n<quiz>\n{cuerpo}\n</quiz>\n'
+
+
+# Los dos puntos van en ancho completo: en el título cortarían el `::` que lo delimita, y en el
+# resto del texto GIFT les da significado (Moodle y otros lectores los toman como separadores).
+# Al mostrar la pregunta, alucard los normaliza (NFKC) y se ven como `:`.
+DOS_PUNTOS = "\uff1a"
+
+
+def _sin_dos_puntos(texto: str) -> str:
+    return texto.replace(":", DOS_PUNTOS)
+
+
+def _texto_gift(texto: str) -> str:
+    """Texto de enunciado u opción: dos puntos en ancho completo y caracteres especiales escapados."""
+    return _escape_gift(_sin_dos_puntos(texto))
 
 
 def _escape_gift(texto: str) -> str:
