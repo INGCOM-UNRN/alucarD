@@ -240,12 +240,29 @@ alucard sintetizar array-decay -f xml -s 7 -o bancos/
 | `-s`, `--semilla` | `42` | La misma semilla genera el mismo banco. |
 | `--json` | | El resultado, con cada pregunta, como JSON. |
 | `--muestra` | | Muestra una pregunta de ejemplo, con la correcta marcada, sin escribir el banco. |
+| `--voight` / `--sin-voight` | `--voight` | Formatea el banco con voight (ver abajo). |
 
 El GIFT declara `[markdown]` en cada pregunta, así que el código en línea de enunciados y opciones
 se ve como código, y pone cada plantilla en la categoría `sintetizados/<plantilla>` (un pool la elige
 con `categoria: "sintetizados/fugas-malloc"`). Las plantillas de comportamiento indefinido necesitan gcc 10 o posterior.
 
 `alucard sintetizar` sin plantilla lista cada una con qué pregunta y cómo se verifica su respuesta.
+
+En el GIFT, los dos puntos del título, del enunciado y de las opciones van en ancho completo (`：`):
+en el título cortarían el `::` que lo delimita, y en el resto GIFT les da significado. Al mostrar la
+pregunta, alucard los normaliza y se ven como `:`; `alucard ver -q "Punteros colgantes: free"`
+encuentra el título igual.
+
+Después de escribir el banco, alucard le da el formato de voight, en este orden:
+
+```bash
+voight fix code-indent banco.gift                   # indentación del código con ·
+voight fix code-chars --to-fullwidth banco.gift     # símbolos del código en ancho completo
+voight fix format banco.gift                        # formato GIFT/XML de la cátedra
+```
+
+Sin voight instalado (`uv tool install git+https://github.com/INGCOM-UNRN/voight`) el banco queda
+sin ese formato y se avisa; `--sin-voight` lo saltea.
 
 #### Agregar una plantilla al sintetizador
 

@@ -725,6 +725,8 @@ def _sintetizar(
     debug: bool = typer.Option(False, "--debug", help="Activar modo debug con logging detallado."),
     muestra: bool = typer.Option(False, "--muestra",
                                  help="Mostrar una pregunta de ejemplo (con la correcta marcada) sin escribir el banco."),
+    voight: bool = typer.Option(True, "--voight/--sin-voight",
+                                help="Formatear el banco con voight: fix code-indent, code-chars --to-fullwidth y format."),
 ) -> None:
     """Genera un banco de preguntas de C con daedalus: cada respuesta se verifica con gcc.
 
@@ -744,7 +746,7 @@ def _sintetizar(
     setup_logging(debug=debug)
     args = SimpleNamespace(sintetizar=plantilla, cantidad=cantidad, opciones=opciones, formato_banco=formato_banco,
                            output_dir=output_dir, semilla=semilla, json_output=json_output, debug=debug,
-                           muestra=muestra)
+                           muestra=muestra, voight=voight)
     _ultimo_codigo_salida["code"] = cli_commands.ejecutar_sintetizar(args, logging.getLogger("alucard.sintetizar"))
 
 

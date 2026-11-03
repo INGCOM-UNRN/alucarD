@@ -173,6 +173,14 @@ def ejecutar_sintetizar(args, logger) -> int:
         destino = output_dir / f"sintetizados_{args.sintetizar}.{extension}"
         contenido = exportar_gift(snippets) if extension == 'gift' else exportar_xml(snippets)
         destino.write_text(contenido, encoding='utf-8')
+        # El formato final del banco lo da voight (sangría con ·, código en ancho completo, formato).
+        if getattr(args, 'voight', True):
+            from generador_examenes.synthesizer.voight import formatear
+            problema = formatear(destino)
+            if problema:
+                print(f"Aviso: {problema}", file=sys.stderr)
+            else:
+                logger.info("✓ Formateado con voight (code-indent, code-chars --to-fullwidth, format)")
 
         logger.info(f"✓ Banco generado: {destino} ({len(snippets)} preguntas verificadas)")
         if getattr(args, 'json_output', False):

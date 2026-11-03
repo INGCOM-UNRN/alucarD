@@ -1,6 +1,7 @@
 """Pruebas del sintetizador daedalus (c-synthesizer verificado con gcc)."""
 
 import shutil
+import sys
 from pathlib import Path
 
 import pytest
@@ -191,7 +192,7 @@ def test_comando_sintetizar(tmp_path, monkeypatch, capsys):
     from generador_examenes.__main__ import main
 
     monkeypatch.setattr(sys, "argv", ["alucard", "sintetizar", "fugas-malloc", "-c", "2", "--opciones", "5",
-                                      "-o", str(tmp_path)])
+                                      "-o", str(tmp_path), "--sin-voight"])
     assert main() == 0
     gift = (tmp_path / "sintetizados_fugas-malloc.gift").read_text(encoding="utf-8")
     assert gift.count("[markdown]") == 2
@@ -266,3 +267,45 @@ def test_el_gift_no_usa_dos_puntos_en_titulo_ni_texto():
     assert f"Elegí{DOS_PUNTOS}" in gift
     assert f"=Comportamiento indefinido{DOS_PUNTOS}" in gift and f"~Imprime 0{DOS_PUNTOS}" in gift
     assert "1 ? 2 : 3" in gift  # el código lo convierte voight (code-chars), no esto
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="el voight falso es un script de sh")
+def test_voight_corre_los_tres_pasos_en_orden(tmp_path):
+    import os
+    import stat
+
+    from generador_examenes.synthesizer.voight import formatear
+
+    registro = tmp_path / "llamadas.txt"
+    falso = tmp_path / "voight"
+    falso.write_text(f"#!/bin/sh\necho \"$@\" >> {registro}\n", encoding="utf-8")
+    falso.chmod(falso.stat().st_mode | stat.S_IEXEC)
+    banco = tmp_path / "b.gift"
+    banco.write_text("x", encoding="utf-8")
+    assert formatear(banco, voight=str(falso)) is None
+    assert registro.read_text(encoding="utf-8").splitlines() == [
+        f"fix code-indent {banco}", f"fix code-chars --to-fullwidth {banco}", f"fix format {banco}"]
+    assert os.access(falso, os.X_OK)
+
+
+def test_sin_voight_avisa_y_deja_el_banco(tmp_path, monkeypatch):
+    from generador_examenes.synthesizer import voight
+
+    monkeypatch.setattr(voight.shutil, "which", lambda _nombre: None)
+    banco = tmp_path / "b.gift"
+    banco.write_text("x", encoding="utf-8")
+    problema = voight.formatear(banco)
+    assert problema and "voight no está instalado" in problema and "uv tool install" in problema
+    assert banco.read_text(encoding="utf-8") == "x"
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="el voight falso es un script de sh")
+def test_un_paso_que_falla_dice_cual(tmp_path):
+    import stat
+
+    from generador_examenes.synthesizer.voight import formatear
+
+    falso = tmp_path / "voight"
+    falso.write_text('#!/bin/sh\nif [ "$2" = "format" ]; then echo "GIFT inválido" >&2; exit 1; fi\n', encoding="utf-8")
+    falso.chmod(falso.stat().st_mode | stat.S_IEXEC)
+    assert formatear(tmp_path / "b.gift", voight=str(falso)) == "`voight fix format` falló: GIFT inválido"
