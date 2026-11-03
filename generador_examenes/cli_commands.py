@@ -529,7 +529,6 @@ def generar_examen(args, logger) -> int:
         # Modo validación
         if args.validate:
             if getattr(args, 'json_output', False):
-                import json
                 secciones_json = []
                 for seccion in examen_base['secciones']:
                     num_preguntas = len(seccion['preguntas'])
@@ -678,7 +677,6 @@ def generar_examen(args, logger) -> int:
                     print(f"✓ Paquete para imprenta generado (doble faz verificado): {salida_imprenta}")
 
         if getattr(args, 'json_output', False):
-            import json
             res = {
                 "version": "1.0",
                 "command": "generar_examen",
@@ -700,7 +698,6 @@ def generar_examen(args, logger) -> int:
     except Exception as e:
         logger.error(f"Error durante la ejecución: {e}")
         if getattr(args, 'json_output', False):
-            import json
             print(json.dumps({
                 "version": "1.0",
                 "command": "generar_examen",

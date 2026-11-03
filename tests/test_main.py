@@ -274,3 +274,13 @@ class TestComandos:
         ayuda = CliRunner().invoke(app, ["--help"]).output
         assert "validar" in ayuda and "categorias" in ayuda and "asistente" in ayuda
         assert "--category-tree" not in ayuda and "--wizard" not in ayuda
+
+
+def test_generar_con_omr_no_se_corta(tmp_path, monkeypatch):
+    """`import json` dentro de generar_examen hacía de json una variable local: --omr se cortaba con
+    «cannot access local variable 'json'» antes de escribir el descriptor."""
+    definicion = _definicion_minima(tmp_path)
+    salida = tmp_path / "out"
+    monkeypatch.setattr(sys, 'argv', ['alucard', 'generar', '-d', str(definicion), '-o', str(salida), '--omr'])
+    assert main() == 0
+    assert list(salida.glob("omr_descriptor_tema_01.json"))
