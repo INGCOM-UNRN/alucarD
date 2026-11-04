@@ -1,7 +1,8 @@
 """Diagramas SVG de estructuras de datos, con el formato de bloques de statics.
 
 Porta a Python los renderizadores de statics (`estructuras.html`: arreglo, lista enlazada simple,
-doble y circular, pila, cola lineal y circular) y suma árboles (binario, ABB, AVL con factor de
+doble y circular, pila, cola lineal y circular) y suma matrices (estáticas, con su disposición en
+memoria, y dinámicas como arreglo de punteros a filas) y árboles (binario, ABB, AVL con factor de
 balance y montículo), para usarlos en preguntas y consignas sin navegador.
 
 Un bloque es un diccionario con las mismas claves que statics (`type`, `values`, `variant`,
@@ -42,7 +43,7 @@ PALETAS = {
             "textMain": "#0f172a", "textSub": "#1e3a8a", "textMuted": "#475569", "fillHighlight": "#fef3c7"},
 }
 
-TIPOS = ("array", "linked_list", "stack", "queue", "tree")
+TIPOS = ("array", "matrix", "linked_list", "stack", "queue", "tree")
 
 
 class ErrorDiagrama(ValueError):
@@ -186,6 +187,206 @@ def _arreglo(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
 
     alto = y + celda_h + (42 if offsets else 26 if direcciones else 12)
     return x0 + cap * celda_w + 20, alto
+
+
+# ---------------------------------------------------------------------------
+# Matriz: estática (int m[F][C], row-major) y dinámica (int **m, punteros a filas)
+# ---------------------------------------------------------------------------
+
+MAX_FILAS, MAX_COLUMNAS = 10, 10
+
+
+def _filas(b: Dict[str, Any]) -> List[Optional[List[str]]]:
+    """Las filas del bloque: `values` como lista de filas, o plana y cortada en `cols`.
+
+    Una fila `null` es un puntero a NULL (sólo tiene sentido en la variante dinámica).
+    """
+    valores = b.get("values") or []
+    if not isinstance(valores, list):
+        raise ErrorDiagrama("'values' de una matriz tiene que ser una lista de filas")
+    if valores and not any(isinstance(v, list) for v in valores):  # plana: se corta en `cols`
+        cols = _entero(b.get("cols"), len(valores), 1, MAX_COLUMNAS)
+        valores = [valores[i:i + cols] for i in range(0, len(valores), cols)]
+    filas: List[Optional[List[str]]] = []
+    for fila in valores[:MAX_FILAS]:
+        if fila is None:
+            filas.append(None)
+        elif isinstance(fila, list):
+            filas.append(["" if v is None else str(v) for v in fila[:MAX_COLUMNAS]])
+        else:
+            raise ErrorDiagrama("cada fila de una matriz tiene que ser una lista (o null)")
+    return filas
+
+
+def _pares(valor: Any) -> set:
+    """Celdas `(i, j)` de `highlight`: `[[0, 1], [2, 2]]` o `"0,1; 2,2"`."""
+    if isinstance(valor, str):
+        valor = [p.split(",") for p in valor.split(";") if p.strip()]
+    celdas = set()
+    for par in valor or []:
+        try:
+            i, j = (int(str(x).strip()) for x in par)
+        except (TypeError, ValueError):
+            raise ErrorDiagrama(f"celda de 'highlight' inválida: {par!r} (se espera [fila, columna])") from None
+        celdas.add((i, j))
+    return celdas
+
+
+def _matriz(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
+    if b.get("variant", "static") in ("dynamic", "pointers", "jagged"):
+        return _matriz_dinamica(c, b)
+    filas = [f or [] for f in _filas(b)]
+    nf = _entero(b.get("rows"), len(filas) or 3, 1, MAX_FILAS)
+    nc = _entero(b.get("cols"), max((len(f) for f in filas), default=0) or 3, 1, MAX_COLUMNAS)
+    base, paso = _hex(b.get("baseAddr")), _entero(b.get("typeSize"), 4, 1, 64)
+    nombre, tipo = b.get("name") or "m", b.get("elementType") or "int"
+    direcciones, indices = bool(b.get("showAddresses")), b.get("showIndices", True)
+    sin_valores, sin_dirs = bool(b.get("blankValues")), bool(b.get("blankAddrs"))
+    resaltadas = _pares(b.get("highlight"))
+    filas_r, cols_r = set(b.get("highlightRows") or []), set(b.get("highlightCols") or [])
+    extra = f"{tipo} {nombre}[{nf}][{nc}]"
+    if direcciones:
+        extra += f" | Base: {_fmt_hex(base)} | sizeof: {paso}B"
+    top = _encabezado(c, b, extra)
+
+    x0, celda_w, celda_h = 46, 64, 50 if direcciones else 42
+    y0 = top + (26 if indices else 8)
+
+    def valor(i: int, j: int) -> str:
+        return filas[i][j] if i < len(filas) and j < len(filas[i]) else ""
+
+    for j in range(nc):
+        if indices:
+            c.t(x0 + j * celda_w + celda_w / 2, y0 - 8, f"[{j}]", size=11, peso=700, color="textSub",
+                ancla="middle")
+    for i in range(nf):
+        y = y0 + i * celda_h
+        if indices:
+            c.t(x0 - 8, y + celda_h / 2 + 4, f"[{i}]", size=11, peso=700, color="textSub", ancla="end")
+        for j in range(nc):
+            x = x0 + j * celda_w
+            marcada = (i, j) in resaltadas or i in filas_r or j in cols_r
+            c.r(x, y, celda_w, celda_h, relleno="fillHighlight" if marcada else "fillCell", trazo=1.5)
+            v = valor(i, j)
+            centro_v = y + (celda_h / 2 - 2 if direcciones else celda_h / 2 + 5)
+            if v and not sin_valores:
+                c.t(x + celda_w / 2, centro_v, v, size=14, peso=700, ancla="middle")
+            else:
+                c.vacio(x + 10, x + celda_w - 10, centro_v + 3)
+            if direcciones:
+                c.t(x + celda_w / 2, y + celda_h - 7, "0x____" if sin_dirs else _fmt_hex(base + (i * nc + j) * paso),
+                    size=9, color="textMain", ancla="middle")
+    # Borde exterior más grueso: la matriz es un único bloque contiguo.
+    c.add(f'<rect x="{x0}" y="{y0:.1f}" width="{nc * celda_w}" height="{nf * celda_h}" fill="none" '
+          f'stroke="{c.pal["strokeMain"]}" stroke-width="2.25"/>')
+    ancho, alto = x0 + nc * celda_w + 12, y0 + nf * celda_h + 8
+
+    if b.get("showLinear"):
+        # La misma matriz en memoria: fila tras fila (row-major), con su índice [i][j].
+        lw, lh = 52, 36
+        y = alto + 34
+        c.t(0, y - 22, f"En memoria (fila por fila): {nombre}[i][j] = *(&{nombre}[0][0] + i*{nc} + j)", size=10,
+            color="textMuted")
+        for k in range(nf * nc):
+            i, j = divmod(k, nc)
+            x = k * lw
+            marcada = (i, j) in resaltadas or i in filas_r or j in cols_r
+            c.t(x + lw / 2, y - 5, f"[{i}][{j}]", size=9, color="textMain", ancla="middle")
+            c.r(x, y, lw, lh, relleno="fillHighlight" if marcada else "fillCell", trazo=1.25)
+            v = valor(i, j)
+            if v and not sin_valores:
+                c.t(x + lw / 2, y + lh / 2 + 5, v, size=13, peso=700, ancla="middle")
+            else:
+                c.vacio(x + 8, x + lw - 8, y + lh - 9)
+            if direcciones:
+                c.t(x + lw / 2, y + lh + 13, "0x____" if sin_dirs else _fmt_hex(base + k * paso), size=8.5,
+                    color="textSub", ancla="middle")
+        for i in range(1, nf):  # separador entre filas
+            c.linea(i * nc * lw, y - 3, i * nc * lw, y + lh + 3, color="strokeMain", ancho=2.5, flecha=None)
+        ancho = max(ancho, nf * nc * lw + 4)
+        alto = y + lh + (20 if direcciones else 6)
+    return ancho, alto
+
+
+def _matriz_dinamica(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
+    """`int **m`: el puntero, el arreglo de punteros a filas y cada fila (de largo propio, o NULL)."""
+    filas = _filas(b)
+    nf = _entero(b.get("rows"), len(filas) or 3, 1, MAX_FILAS)
+    filas += [[] for _ in range(nf - len(filas))]
+    nc_fijo = b.get("cols")
+    nombre, tipo = b.get("name") or "m", b.get("elementType") or "int"
+    direcciones, indices = bool(b.get("showAddresses")), b.get("showIndices", True)
+    sin_valores, sin_dirs = bool(b.get("blankValues")), bool(b.get("blankAddrs"))
+    resaltadas = _pares(b.get("highlight"))
+    base = _hex(b.get("baseAddr"))
+    dirs_filas = list(b.get("rowAddresses") or [])
+    base_filas = _hex(b.get("rowsBaseAddr"), base + 0x40)
+    top = _encabezado(c, b, f"{tipo} **{nombre}")
+
+    def dir_fila(i: int) -> str:
+        if sin_dirs:
+            return "0x____"
+        return _fmt_hex(_hex(dirs_filas[i])) if i < len(dirs_filas) else _fmt_hex(base_filas + i * 0x40)
+
+    largos = [0 if f is None else _entero(nc_fijo, len(f), 0, MAX_COLUMNAS) if nc_fijo else len(f)
+              for f in filas[:nf]]
+    celda_w, celda_h, paso_y = 56, 40, 54
+    ptr_w = 72 if direcciones else 52
+    x_ptr, x_filas = 112, 112 + ptr_w + 70
+    y0 = top + (44 if indices and any(largos) else 30)
+
+    # El puntero `m`, que apunta al arreglo de punteros a filas.
+    c.t(28, y0 - 8, nombre, size=12, peso=700, ancla="middle")
+    c.r(0, y0, 56, celda_h, relleno="fillPointerBox", trazo=1.75, rx=3)
+    if direcciones:
+        c.t(28, y0 + celda_h / 2 + 4, "0x____" if sin_dirs else _fmt_hex(base), size=9, ancla="middle")
+        c.linea(56, y0 + celda_h / 2, x_ptr - 3, y0 + celda_h / 2, ancho=1.6)
+    else:
+        c.punto(28, y0 + celda_h / 2)
+        c.linea(28, y0 + celda_h / 2, x_ptr - 3, y0 + celda_h / 2, ancho=1.6)
+    if direcciones:
+        c.t(x_ptr + ptr_w / 2, y0 - 8, "0x____" if sin_dirs else _fmt_hex(base), size=9, color="textSub",
+            ancla="middle")
+
+    if indices and any(largos):
+        for j in range(max(largos)):
+            c.t(x_filas + j * celda_w + celda_w / 2, y0 - 8, f"[{j}]", size=11, peso=700, color="textSub",
+                ancla="middle")
+
+    ancho = x_ptr + ptr_w + 20
+    for i in range(nf):
+        y = y0 + i * paso_y
+        cy = y + celda_h / 2
+        c.r(x_ptr, y, ptr_w, celda_h, relleno="fillPointerBox", trazo=1.5)
+        c.t(x_ptr + ptr_w / 2, y + 12, f"{nombre}[{i}]", size=9.5, color="textMain", ancla="middle")
+        if filas[i] is None:  # fila NULL: la barra cruzada de statics
+            c.linea(x_ptr + 5, y + celda_h - 5, x_ptr + ptr_w - 5, y + 16, color="strokeMain", ancho=1.5,
+                    flecha=None)
+            c.t(x_ptr + ptr_w + 10, cy + 4, "NULL", size=10, peso=700, color="textMuted")
+            continue
+        if direcciones:
+            c.t(x_ptr + ptr_w / 2, y + 31, dir_fila(i), size=9, ancla="middle")
+            c.linea(x_ptr + ptr_w, cy + 5, x_filas - 3, cy + 5, ancho=1.6)
+        else:
+            c.punto(x_ptr + ptr_w / 2, cy + 5)
+            c.linea(x_ptr + ptr_w / 2, cy + 5, x_filas - 3, cy + 5, ancho=1.6)
+        largo = largos[i]
+        for j in range(largo):
+            x = x_filas + j * celda_w
+            c.r(x, y, celda_w, celda_h, relleno="fillHighlight" if (i, j) in resaltadas else "fillCell",
+                trazo=1.5)
+            v = filas[i][j] if j < len(filas[i]) else ""
+            if v and not sin_valores:
+                c.t(x + celda_w / 2, cy + 5, v, size=14, peso=700, ancla="middle")
+            else:
+                c.vacio(x + 9, x + celda_w - 9, y + celda_h - 9)
+        if largo:
+            c.add(f'<rect x="{x_filas}" y="{y:.1f}" width="{largo * celda_w}" height="{celda_h}" fill="none" '
+                  f'stroke="{c.pal["strokeMain"]}" stroke-width="2"/>')
+        if direcciones and not sin_dirs:
+            c.t(x_filas + largo * celda_w + 8, cy + 4, f"← {dir_fila(i)}", size=9, color="textSub")
+        ancho = max(ancho, x_filas + largo * celda_w + (70 if direcciones else 16))
+    return ancho, y0 + (nf - 1) * paso_y + celda_h + 10
 
 
 # ---------------------------------------------------------------------------
@@ -637,7 +838,7 @@ def _arbol(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
 
 
 _RENDERIZADORES: Dict[str, Callable[[_Lienzo, Dict[str, Any]], Tuple[float, float]]] = {
-    "array": _arreglo, "linked_list": _lista, "stack": _pila, "queue": _cola, "tree": _arbol,
+    "array": _arreglo, "matrix": _matriz, "linked_list": _lista, "stack": _pila, "queue": _cola, "tree": _arbol,
 }
 
 

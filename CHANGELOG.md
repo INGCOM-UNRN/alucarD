@@ -11,6 +11,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Agregado
 
+- **diagramas**: tipo `matrix` en los bloques ```` ```estructura ````: matriz estática (`int m[F][C]`, con índices, direcciones en orden de filas y, con `showLinear`, su disposición en memoria) y dinámica (`variant: dynamic`, `int **m`: arreglo de punteros a filas, filas de largo propio o NULL). Resaltado de celdas, filas y columnas, y valores/direcciones en blanco para completar.
 - **consignas prácticas**: tipo de pregunta `consigna_practica` para ejercicios en el formato de deckard (`<tema>/<id>/ejercicio.yaml` + `enunciado.md`, `solucion.c`, `.h`), leídos sin depender de deckard. `--init` crea `consignas/` con una de ejemplo y la definición de ejemplo la usa (`input_consignas`).
 - **repositorios externos**: clave `repositorios_externos` de la definición para sumar al banco del proyecto carpetas de la misma computadora: bancos GIFT/XML (`tipo: preguntas`) o bancos de consignas deckard, como el repositorio de enunciados (`tipo: deckard`; `auto` lo detecta). Cada pregunta lleva la etiqueta `repo:<nombre>`.
 - **presentación de las consignas**: `configuracion_examen.presentacion_consignas` y `presentacion` por pool deciden qué se muestra (título, metadatos, enunciado y secciones a omitir, tabla de funciones, cabecera, cuántas pistas), si hay espacio para resolver y con cuántos renglones, y si la solución va a la clave.

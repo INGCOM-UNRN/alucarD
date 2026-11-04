@@ -757,7 +757,7 @@ def _diagrama(
     output_dir: Path = typer.Option(Path("output"), "-o", "--output-dir", help="Directorio de los SVG."),
     color: bool = typer.Option(False, "--color", help="Paleta de color de statics (por omisión, ahorro de tinta)."),
 ) -> None:
-    """Dibuja estructuras de datos (arreglo, lista, pila, cola, árbol) como SVG, con el formato de bloques de statics.
+    """Dibuja estructuras de datos (arreglo, matriz, lista, pila, cola, árbol) como SVG, con el formato de bloques de statics.
 
     Escribe un SVG por bloque (`<id>.svg` o `<archivo>_<n>.svg`). Los bloques de statics que no son
     estructuras (texto, tablas de traza, recortables) se saltean con un aviso. En las preguntas, el

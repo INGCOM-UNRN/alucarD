@@ -8,6 +8,7 @@ import yaml
 
 from generador_examenes.core.markdown_utils import markdown_to_html
 from generador_examenes.diagramas import (
+    PALETAS,
     ErrorDiagrama,
     construir_arbol,
     leer_bloques,
@@ -44,6 +45,62 @@ def test_cada_estructura_es_un_svg_valido(bloque):
     for valor in bloque.get("values") or []:
         if valor != "":
             assert f">{valor}<" in svg
+
+
+MATRICES = [
+    {"type": "matrix", "values": [[1, 2, 3], [4, 5, 6]]},
+    {"type": "matrix", "values": [1, 2, 3, 4, 5, 6], "cols": 3, "showAddresses": True, "showLinear": True},
+    {"type": "matrix", "variant": "dynamic", "values": [[1, 2, 3], [4], None, [7, 8]]},
+    {"type": "matrix", "variant": "dynamic", "values": [[1, 2], [3, 4]], "showAddresses": True},
+]
+
+
+@pytest.mark.parametrize("bloque", MATRICES, ids=lambda b: f"{b.get('variant', 'static')}")
+def test_cada_matriz_es_un_svg_valido(bloque):
+    svg = renderizar(bloque)
+    raiz = ET.fromstring(svg)
+    assert raiz.tag == f"{SVG}svg" and int(raiz.get("width")) > 100
+    for fila in bloque["values"]:
+        for valor in (fila if isinstance(fila, list) else [fila]) if fila is not None else []:
+            assert f">{valor}<" in svg
+
+
+def test_matriz_estatica_direcciones_row_major_y_vista_lineal():
+    svg = renderizar({"type": "matrix", "values": [[1, 2, 3], [4, 5, 6]], "baseAddr": "0x1000",
+                      "typeSize": 4, "showAddresses": True, "showLinear": True})
+    assert ">int m[2][3] | Base: 0x1000 | sizeof: 4B<" in svg
+    assert ">0x1010<" in svg  # m[1][1] = base + (1*3 + 1) * 4
+    assert ">[1][2]<" in svg and "fila por fila" in svg
+    sin = renderizar({"type": "matrix", "values": [[1, 2]]})
+    assert "0x1000" not in sin and "fila por fila" not in sin
+
+
+def test_matriz_resaltado_y_en_blanco():
+    bloque = {"type": "matrix", "values": [[1, 2], [3, 4]]}
+    gris = PALETAS[True]["fillHighlight"]
+    assert gris not in renderizar(bloque)
+    assert renderizar({**bloque, "highlight": "1,0"}).count(gris) == 1
+    assert renderizar({**bloque, "highlight": [[0, 0], [1, 1]]}).count(gris) == 2
+    assert renderizar({**bloque, "highlightRows": [0]}).count(gris) == 2
+    assert renderizar({**bloque, "highlightCols": [1], "showLinear": True}).count(gris) == 4
+    svg = renderizar({**bloque, "blankValues": True})
+    assert ">3<" not in svg and "stroke-dasharray" in svg
+
+
+def test_matriz_dinamica_filas_de_largo_propio_y_null():
+    svg = renderizar({"type": "matrix", "variant": "dynamic", "name": "t", "values": [[1, 2, 3], None, [4]],
+                      "showAddresses": True, "baseAddr": "0x2000", "rowAddresses": ["0x3000", "", "0x5000"]})
+    assert ">int **t<" in svg and ">t[1]<" in svg and ">NULL<" in svg
+    assert ">0x3000<" in svg and ">0x5000<" in svg
+    # Cada fila es un bloque propio: el borde grueso abarca su largo (3 y 1 celdas).
+    assert 'width="168" height="40" fill="none"' in svg and 'width="56" height="40" fill="none"' in svg
+
+
+def test_matriz_errores_claros():
+    with pytest.raises(ErrorDiagrama, match="lista de filas"):
+        renderizar({"type": "matrix", "values": "1 2 3"})
+    with pytest.raises(ErrorDiagrama, match="highlight"):
+        renderizar({"type": "matrix", "values": [[1]], "highlight": "a,b"})
 
 
 def test_la_paleta_de_tinta_es_negra_y_la_de_color_no():
@@ -131,7 +188,7 @@ def test_typst_compila_los_diagramas(tmp_path):
     pytest.importorskip("typst")
     from generador_examenes.generators.pdf_renderer import compilar_typst_a_pdf
 
-    cuerpo = "\n\n".join(html_a_typst(f'<div class="estructura">{renderizar(b)}</div>') for b in BLOQUES)
+    cuerpo = "\n\n".join(html_a_typst(f'<div class="estructura">{renderizar(b)}</div>') for b in BLOQUES + MATRICES)
     assert compilar_typst_a_pdf(f"#set page(width: 12cm, height: auto)\n{cuerpo}\n", tmp_path / "d.pdf").is_file()
 
 

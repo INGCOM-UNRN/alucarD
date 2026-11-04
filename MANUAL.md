@@ -290,7 +290,7 @@ Probala con `alucard sintetizar <nombre> --muestra` antes de generar el banco.
 ### Diagramas de estructuras de datos (statics)
 
 Las preguntas (GIFT `[markdown]`, Markdown) y los enunciados de las consignas de deckard pueden
-incluir diagramas de arreglos, listas enlazadas, pilas, colas y árboles. Se escriben en un bloque de
+incluir diagramas de arreglos, matrices, listas enlazadas, pilas, colas y árboles. Se escriben en un bloque de
 código `estructura`, en YAML o JSON, con el formato de bloques de
 statics (`estructuras.html`): un bloque exportado de statics se pega tal cual. alucarD lo
 dibuja como SVG, en línea en el HTML y como imagen en el PDF de Typst, sin navegador ni dependencias
@@ -314,12 +314,46 @@ addresses: [0x3B20, 0x7E10, 0x2140, 0x9A80]
 | `type` | Variantes (`variant`) | Claves principales |
 | :--- | :--- | :--- |
 | `array` | | `values`, `capacity`, `pointers` (`"p:0, q:3"`), `showIndices`, `showAddresses`, `showOffsets`, `baseAddr`, `typeSize`, `blankValues`, `blankAddrs` |
+| `matrix` | `static` (por omisión), `dynamic` | `values` (lista de filas, o plana con `cols`), `rows`, `cols`, `name`, `elementType`, `showIndices`, `showAddresses`, `baseAddr`, `typeSize`, `highlight` (`"1,2; 0,0"` o `[[1, 2]]`), `highlightRows`, `highlightCols`, `blankValues`, `blankAddrs`. Estática: `showLinear` (la matriz en memoria, fila por fila). Dinámica (`int **m`): filas de largo propio y `null` para un puntero a NULL; `rowAddresses` |
 | `linked_list` | `singly`, `doubly`, `circular`, `circular_doubly` | `values` (hasta 7), `addresses`, `headLabel`, `drawArrows`, `blankValues`, `blankNextAddrs` |
 | `stack` | `layout: vertical_multi` para varios pasos | `values` (desde la base), `capacity`, `topIndex`, `topLabel`, `traceLabels`, `showAddresses`, `blankValues`, `blankPointers` |
 | `queue` | `linear`, `circular` | `values`, `capacity`, `frontIndex`, `rearIndex`, `showPanel` (circular), `blankValues`, `blankPointers` |
 | `tree` | `binary`, `bst`, `avl`, `heap` | Nodos con `values` (por niveles, `""` = sin nodo), `insert` (inserciones de ABB; con `avl`, rebalancea) o `root` (anidado: `value`, `left`, `right`). Además `nodeStyle: struct` (nodos con `*izq`/`*der`), `nullLeaves`, `highlight`, `blankValues`, `showBalance`/`blankBalance` (AVL), `showArray` (montículo) |
 
-Los árboles son de alucarD, porque statics no los tiene. El AVL muestra el factor de balance de cada
+Las matrices y los árboles son de alucarD, porque statics no los tiene. La matriz estática muestra
+la declaración (`int m[3][4]`) y, con `showAddresses`, la dirección de cada celda en orden de filas;
+`showLinear` la dibuja además como está en memoria, una fila detrás de la otra. La dinámica dibuja el
+puntero, el arreglo de punteros a filas y cada fila por separado:
+
+````text
+::matriz-01:: [markdown]¿Qué dirección tiene `m[1][2]`?
+```estructura
+type: matrix
+values: [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]
+baseAddr: 0x1000
+showAddresses: true
+blankAddrs: true
+highlight: "1,2"
+```
+{
+=`0x1018`
+~`0x1024`
+~`0x1014`
+}
+````
+
+````text
+```estructura
+type: matrix
+variant: dynamic
+values:
+  - [1, 2, 3]
+  - [4]
+  - null
+```
+````
+
+Los árboles AVL muestran el factor de balance de cada
 nodo, calculado sobre el árbol que resulta de las inserciones. El montículo muestra el índice de cada
 nodo y el arreglo debajo. Con `blank*`, el diagrama sale con los casilleros vacíos para que el alumno
 los complete.
