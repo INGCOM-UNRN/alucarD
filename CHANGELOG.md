@@ -35,6 +35,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Cambiado
 
+- **diagramas**: más contraste en las listas enlazadas: las etiquetas `dato`, `*sig`, `*ant` y `sig:…`/`ant:… | sig:…` pasan de gris a negro (sin negrita) y un punto más grandes.
 - **cli**: `--init`, `--wizard`, `--category-tree`, `--spellcheck` y `--validate` siguen andando con un aviso y no aparecen en la ayuda (`c525bb6`).
 - **sintetizador**: `alucard sintetizar <plantilla>` es un comando (sin plantilla, lista las disponibles); reemplaza a `--sintetizar`, `--listar-sintetizadores`, `--cantidad` y `--formato-banco` (ahora `-c` y `-f`). Las plantillas pasan a `synthesizer/plantillas.py` y la compilación a `synthesizer/sandbox.py`.
 

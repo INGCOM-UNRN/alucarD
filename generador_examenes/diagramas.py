@@ -226,8 +226,8 @@ def _lista(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
             ptr_w = nodo_w - dato_w
             c.r(nx, y, nodo_w, alto_nodo, trazo=1.75, rx=3)
             c.r(nx + dato_w, y, ptr_w, alto_nodo, relleno="fillPointerBox")
-            c.t(nx + dato_w / 2, y + 12, "dato", size=8.5, color="textMuted", ancla="middle")
-            c.t(nx + dato_w + ptr_w / 2, y + 12, "*sig", size=8.5, color="textMuted", ancla="middle")
+            c.t(nx + dato_w / 2, y + 12, "dato", size=9.5, color="textMain", ancla="middle")
+            c.t(nx + dato_w + ptr_w / 2, y + 12, "*sig", size=9.5, color="textMain", ancla="middle")
             if valor and not sin_valores:
                 c.t(nx + dato_w / 2, y + 36, valor, size=14, peso=700, ancla="middle")
             else:
@@ -250,7 +250,7 @@ def _lista(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
                     c.punto(px, py, radio=3)
                     c.linea(px, py, nx + nodo_w + 22, py, ancho=1.5, flecha=None)
                     c.null(nx + nodo_w + 22, py)
-            c.t(px, y + alto_nodo + 14, f"sig:{'______' if sin_dirs else siguiente}", size=8.5, color="textMuted",
+            c.t(px, y + alto_nodo + 14, f"sig:{'______' if sin_dirs else siguiente}", size=9.5, color="textMain",
                 ancla="middle")
         else:
             ptr_w = 32
@@ -258,9 +258,9 @@ def _lista(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
             c.r(nx, y, nodo_w, alto_nodo, trazo=1.75, rx=3)
             c.r(nx, y, ptr_w, alto_nodo, relleno="fillPointerBox")
             c.r(nx + ptr_w + dato_w, y, ptr_w, alto_nodo, relleno="fillPointerBox")
-            c.t(nx + ptr_w / 2, y + 12, "*ant", size=8, color="textMuted", ancla="middle")
-            c.t(nx + ptr_w + dato_w / 2, y + 12, "dato", size=8.5, color="textMuted", ancla="middle")
-            c.t(nx + ptr_w + dato_w + ptr_w / 2, y + 12, "*sig", size=8, color="textMuted", ancla="middle")
+            c.t(nx + ptr_w / 2, y + 12, "*ant", size=9, color="textMain", ancla="middle")
+            c.t(nx + ptr_w + dato_w / 2, y + 12, "dato", size=9.5, color="textMain", ancla="middle")
+            c.t(nx + ptr_w + dato_w + ptr_w / 2, y + 12, "*sig", size=9, color="textMain", ancla="middle")
             if valor and not sin_valores:
                 c.t(nx + ptr_w + dato_w / 2, y + 36, valor, size=14, peso=700, ancla="middle")
             else:
@@ -289,8 +289,8 @@ def _lista(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
                           f'L {x0 + 16:.1f} {y + alto_nodo + 3:.1f}" fill="none" stroke="{c.pal["accentPrimary"]}" '
                           f'stroke-width="1.6" marker-end="url(#flecha-main-{c.sufijo})"/>')
             if not sin_dirs:
-                c.t(nx + nodo_w / 2, y + alto_nodo + 14, f"ant:{anterior} | sig:{siguiente}", size=8.5,
-                    color="textMuted", ancla="middle")
+                c.t(nx + nodo_w / 2, y + alto_nodo + 14, f"ant:{anterior} | sig:{siguiente}", size=9.5,
+                    color="textMain", ancla="middle")
 
     if circular and not sin_flechas:
         c.t(x0 + (n * (nodo_w + gap)) / 2, y + alto_nodo + 42,
