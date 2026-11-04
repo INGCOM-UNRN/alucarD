@@ -314,7 +314,7 @@ addresses: [0x3B20, 0x7E10, 0x2140, 0x9A80]
 | `type` | Variantes (`variant`) | Claves principales |
 | :--- | :--- | :--- |
 | `array` | | `values`, `capacity`, `pointers` (`"p:0, q:3"`), `showIndices`, `showAddresses`, `showOffsets`, `baseAddr`, `typeSize`, `blankValues`, `blankAddrs` |
-| `matrix` | `static` (por omisión), `dynamic` | `values` (lista de filas, o plana con `cols`), `rows`, `cols`, `name`, `elementType`, `showIndices`, `showAddresses`, `baseAddr`, `typeSize`, `highlight` (`"1,2; 0,0"` o `[[1, 2]]`), `highlightRows`, `highlightCols`, `blankValues`, `blankAddrs`. Estática: `showLinear` (la matriz en memoria, fila por fila). Dinámica (`int **m`): filas de largo propio y `null` para un puntero a NULL; `rowAddresses` |
+| `matrix` | `static` (por omisión), `dynamic`, `jagged` | `values` (lista de filas, o plana con `cols`), `rows`, `cols`, `name`, `elementType`, `showIndices`, `showAddresses`, `baseAddr`, `typeSize`, `highlight` (`"1,2; 0,0"` o `[[1, 2]]`), `highlightRows`, `highlightCols`, `blankValues`, `blankAddrs`. Estática: `showLinear` (la matriz en memoria, fila por fila). Dinámica (`int **m`): filas de largo propio y `null` para un puntero a NULL; `rowAddresses`. Dentada (`jagged`): además `showLengths` (por omisión, el arreglo de largos), `lengths`, `lengthsName`, `blankLengths` o `sentinel` (un centinela al final de cada fila) |
 | `linked_list` | `singly`, `doubly`, `circular`, `circular_doubly` | `values` (hasta 7), `addresses`, `headLabel`, `drawArrows`, `blankValues`, `blankNextAddrs` |
 | `stack` | `layout: vertical_multi` para varios pasos | `values` (desde la base), `capacity`, `topIndex`, `topLabel`, `traceLabels`, `showAddresses`, `blankValues`, `blankPointers` |
 | `queue` | `linear`, `circular` | `values`, `capacity`, `frontIndex`, `rearIndex`, `showPanel` (circular), `blankValues`, `blankPointers` |
@@ -325,6 +325,11 @@ la declaración (`int m[3][4]`) y, con `showAddresses`, la dirección de cada ce
 `showLinear` la dibuja además como está en memoria, una fila detrás de la otra. La dinámica dibuja el
 puntero, el arreglo de punteros a filas y cada fila por separado. El máximo es 10 filas por 10
 columnas: una matriz más grande, o `rows`/`cols` fuera de 1 a 10, es un error y no se dibuja.
+
+La dentada (`jagged`) es la dinámica con filas de distinto largo y cómo se sabe dónde termina cada
+una: por omisión dibuja a la izquierda el arreglo de largos (`size_t largos[n]`, calculado de las
+filas o fijado con `lengths`); con `sentinel` agrega al final de cada fila una celda centinela (por
+ejemplo `'\0'` en un arreglo de cadenas, o `-1`).
 
 Ejemplos:
 
@@ -353,6 +358,17 @@ values:
   - [1, 2, 3]
   - [4]
   - null
+```
+````
+
+````text
+```estructura
+type: matrix
+variant: jagged
+elementType: char
+name: palabras
+values: [[h, o, l, a], [s, i]]
+sentinel: "'\\0'"
 ```
 ````
 

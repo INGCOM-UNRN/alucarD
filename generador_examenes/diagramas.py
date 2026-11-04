@@ -252,8 +252,11 @@ def _pares(valor: Any) -> set:
 
 
 def _matriz(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
-    if b.get("variant", "static") in ("dynamic", "pointers", "jagged"):
-        return _matriz_dinamica(c, b)
+    variante = b.get("variant", "static")
+    if variante in ("dynamic", "pointers", "jagged"):
+        return _matriz_dinamica(c, b, dentada=variante == "jagged")
+    if variante != "static":
+        raise ErrorDiagrama(f"variante de matriz no soportada: {variante!r} (static, dynamic o jagged)")
     filas = [f or [] for f in _filas(b)]
     nf = _dimension(b, "rows", len(filas) or 3, MAX_FILAS)
     nc = _dimension(b, "cols", max((len(f) for f in filas), default=0) or 3, MAX_COLUMNAS)
@@ -327,8 +330,12 @@ def _matriz(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
     return ancho, alto
 
 
-def _matriz_dinamica(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
-    """`int **m`: el puntero, el arreglo de punteros a filas y cada fila (de largo propio, o NULL)."""
+def _matriz_dinamica(c: _Lienzo, b: Dict[str, Any], dentada: bool = False) -> Tuple[float, float]:
+    """`int **m`: el puntero, el arreglo de punteros a filas y cada fila (de largo propio, o NULL).
+
+    `dentada` (variante `jagged`) dice además dónde termina cada fila, como en C: con el arreglo de
+    largos (`showLengths`, por omisión) o con un valor centinela al final (`sentinel`).
+    """
     filas = _filas(b)
     nf = _dimension(b, "rows", len(filas) or 3, MAX_FILAS)
     filas += [[] for _ in range(nf - len(filas))]
@@ -340,7 +347,15 @@ def _matriz_dinamica(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
     base = _hex(b.get("baseAddr"))
     dirs_filas = list(b.get("rowAddresses") or [])
     base_filas = _hex(b.get("rowsBaseAddr"), base + 0x40)
-    top = _encabezado(c, b, f"{tipo} **{nombre}")
+    centinela = b.get("sentinel") if dentada else None
+    con_largos = dentada and b.get("showLengths", centinela is None)
+    nombre_largos = b.get("lengthsName") or "largos"
+    extra = f"{tipo} **{nombre}"
+    if con_largos:
+        extra += f" | size_t {nombre_largos}[{nf}]"
+    if centinela is not None:
+        extra += f" | centinela: {centinela}"
+    top = _encabezado(c, b, extra)
 
     def dir_fila(i: int) -> str:
         if sin_dirs:
@@ -350,19 +365,39 @@ def _matriz_dinamica(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
     largos = [0 if f is None else nc_fijo if nc_fijo else len(f)
               for f in filas[:nf]]
     celda_w, celda_h, paso_y = 56, 40, 54
-    ptr_w = 72 if direcciones else 52
-    x_ptr, x_filas = 112, 112 + ptr_w + 70
+    # Las cajas crecen con el nombre (`palabras[0]` no entra en una de 52).
+    ptr_w = max(72 if direcciones else 52, math.ceil(len(f"{nombre}[{nf - 1}]") * 6.2 + 14))
+    m_w = max(56, math.ceil(len(str(nombre)) * 8.5 + 14))
+    largos_w = max(64, math.ceil(len(str(nombre_largos)) * 8.5 + 14)) if con_largos else 0
+    x_m = largos_w + (36 if con_largos else 0)
+    x_ptr = x_m + m_w + 56
+    x_filas = x_ptr + ptr_w + 70
     y0 = top + (44 if indices and any(largos) else 30)
 
+    if con_largos:
+        # El arreglo de largos, fila por fila, a la izquierda: `largos[i]` celdas tiene la fila i.
+        declarados = list(b.get("lengths") or [])
+        c.t(largos_w / 2, y0 - 8, nombre_largos, size=12, peso=700, ancla="middle")
+        for i in range(nf):
+            y = y0 + i * paso_y
+            c.r(0, y, largos_w, celda_h, trazo=1.5)
+            c.t(largos_w / 2, y + 12, f"[{i}]", size=9.5, color="textMain", ancla="middle")
+            largo = declarados[i] if i < len(declarados) else largos[i]
+            if b.get("blankLengths"):
+                c.vacio(10, largos_w - 10, y + celda_h - 8)
+            else:
+                c.t(largos_w / 2, y + 32, largo, size=13, peso=700, ancla="middle")
+
     # El puntero `m`, que apunta al arreglo de punteros a filas.
-    c.t(28, y0 - 8, nombre, size=12, peso=700, ancla="middle")
-    c.r(0, y0, 56, celda_h, relleno="fillPointerBox", trazo=1.75, rx=3)
+    c.t(x_m + m_w / 2, y0 - 8, nombre, size=12, peso=700, ancla="middle")
+    c.r(x_m, y0, m_w, celda_h, relleno="fillPointerBox", trazo=1.75, rx=3)
     if direcciones:
-        c.t(28, y0 + celda_h / 2 + 4, "0x____" if sin_dirs else _fmt_hex(base), size=9, ancla="middle")
-        c.linea(56, y0 + celda_h / 2, x_ptr - 3, y0 + celda_h / 2, ancho=1.6)
+        c.t(x_m + m_w / 2, y0 + celda_h / 2 + 4, "0x____" if sin_dirs else _fmt_hex(base), size=9,
+            ancla="middle")
+        c.linea(x_m + m_w, y0 + celda_h / 2, x_ptr - 3, y0 + celda_h / 2, ancho=1.6)
     else:
-        c.punto(28, y0 + celda_h / 2)
-        c.linea(28, y0 + celda_h / 2, x_ptr - 3, y0 + celda_h / 2, ancho=1.6)
+        c.punto(x_m + m_w / 2, y0 + celda_h / 2)
+        c.linea(x_m + m_w / 2, y0 + celda_h / 2, x_ptr - 3, y0 + celda_h / 2, ancho=1.6)
     if direcciones:
         c.t(x_ptr + ptr_w / 2, y0 - 8, "0x____" if sin_dirs else _fmt_hex(base), size=9, color="textSub",
             ancla="middle")
@@ -372,7 +407,7 @@ def _matriz_dinamica(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
             c.t(x_filas + j * celda_w + celda_w / 2, y0 - 8, f"[{j}]", size=11, peso=700, color="textSub",
                 ancla="middle")
 
-    ancho = x_ptr + ptr_w + 20
+    ancho = x_ptr + ptr_w + 60
     for i in range(nf):
         y = y0 + i * paso_y
         cy = y + celda_h / 2
@@ -399,12 +434,19 @@ def _matriz_dinamica(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
                 c.t(x + celda_w / 2, cy + 5, v, size=14, peso=700, ancla="middle")
             else:
                 c.vacio(x + 9, x + celda_w - 9, y + celda_h - 9)
-        if largo:
-            c.add(f'<rect x="{x_filas}" y="{y:.1f}" width="{largo * celda_w}" height="{celda_h}" fill="none" '
+        if centinela is not None:  # la celda que marca el fin de la fila (no es un dato)
+            x = x_filas + largo * celda_w
+            c.r(x, y, celda_w, celda_h, relleno="fillHeader", trazo=1.5)
+            c.add(f'<rect x="{x + 3:.1f}" y="{y + 3:.1f}" width="{celda_w - 6}" height="{celda_h - 6}" '
+                  f'fill="none" stroke="{c.pal["strokeMuted"]}" stroke-width="1" stroke-dasharray="3 2"/>')
+            c.t(x + celda_w / 2, cy + 5, centinela, size=13, peso=700, color="textSub", ancla="middle")
+        total = largo + (1 if centinela is not None else 0)
+        if total:
+            c.add(f'<rect x="{x_filas}" y="{y:.1f}" width="{total * celda_w}" height="{celda_h}" fill="none" '
                   f'stroke="{c.pal["strokeMain"]}" stroke-width="2"/>')
         if direcciones and not sin_dirs:
-            c.t(x_filas + largo * celda_w + 8, cy + 4, f"← {dir_fila(i)}", size=9, color="textSub")
-        ancho = max(ancho, x_filas + largo * celda_w + (70 if direcciones else 16))
+            c.t(x_filas + total * celda_w + 8, cy + 4, f"← {dir_fila(i)}", size=9, color="textSub")
+        ancho = max(ancho, x_filas + total * celda_w + (70 if direcciones else 16))
     return ancho, y0 + (nf - 1) * paso_y + celda_h + 10
 
 

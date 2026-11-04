@@ -53,6 +53,9 @@ MATRICES = [
     {"type": "matrix", "values": [1, 2, 3, 4, 5, 6], "cols": 3, "showAddresses": True, "showLinear": True},
     {"type": "matrix", "variant": "dynamic", "values": [[1, 2, 3], [4], None, [7, 8]]},
     {"type": "matrix", "variant": "dynamic", "values": [[1, 2], [3, 4]], "showAddresses": True},
+    {"type": "matrix", "variant": "jagged", "values": [[1, 2, 3], [4], None, [7, 8]]},
+    {"type": "matrix", "variant": "jagged", "name": "palabras", "values": [["h", "o", "l", "a"], ["s", "i"]],
+     "sentinel": "'\\0'", "showAddresses": True},
 ]
 
 
@@ -97,7 +100,33 @@ def test_matriz_dinamica_filas_de_largo_propio_y_null():
     assert 'width="168" height="40" fill="none"' in svg and 'width="56" height="40" fill="none"' in svg
 
 
+def test_matriz_dentada_con_arreglo_de_largos():
+    svg = renderizar({"type": "matrix", "variant": "jagged", "values": [[1, 2, 3], [4], None, [7, 8]]})
+    assert ">int **m | size_t largos[4]<" in svg and ">largos<" in svg
+    for largo in (3, 1, 0, 2):
+        assert f">{largo}<" in svg
+    # `lengths` fija los largos que se muestran; `blankLengths` los deja para completar.
+    svg = renderizar({"type": "matrix", "variant": "jagged", "values": [[1]], "lengths": [5],
+                      "lengthsName": "tam", "blankLengths": False})
+    assert ">tam<" in svg and ">5<" in svg
+    svg = renderizar({"type": "matrix", "variant": "jagged", "values": [[1, 2, 3]], "blankLengths": True})
+    assert ">3<" in svg  # el dato de la fila sigue; el largo no
+    assert svg.count("stroke-dasharray") == 1
+    # La variante dinámica no dibuja los largos.
+    assert ">largos<" not in renderizar({"type": "matrix", "variant": "dynamic", "values": [[1]]})
+
+
+def test_matriz_dentada_con_centinela():
+    svg = renderizar({"type": "matrix", "variant": "jagged", "values": [[3, 1], [2]], "sentinel": -1})
+    assert "centinela: -1" in svg and svg.count(">-1<") == 2
+    assert ">largos<" not in svg  # con centinela, los largos sólo si se piden
+    svg = renderizar({"type": "matrix", "variant": "jagged", "values": [[3]], "sentinel": -1, "showLengths": True})
+    assert ">largos<" in svg
+
+
 def test_matriz_errores_claros():
+    with pytest.raises(ErrorDiagrama, match="variante de matriz"):
+        renderizar({"type": "matrix", "variant": "triangular", "values": [[1]]})
     with pytest.raises(ErrorDiagrama, match="lista de filas"):
         renderizar({"type": "matrix", "values": "1 2 3"})
     with pytest.raises(ErrorDiagrama, match="highlight"):
