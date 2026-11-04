@@ -980,3 +980,86 @@ def reponer_svgs(html_texto: str, svgs: Dict[str, str]) -> str:
     for marcador, svg in svgs.items():
         html_texto = html_texto.replace(f"<p>{marcador}</p>", svg).replace(marcador, svg)
     return html_texto
+
+
+# ---------------------------------------------------------------------------
+# SVG versionados junto a los Markdown (hook `alucard diagramas-md`)
+# ---------------------------------------------------------------------------
+#
+# Contrato con quien publica el Markdown sin alucarD (p. ej. `deckard export myst`): cada bloque
+# ```estructura de `<dir>/<archivo>.md` se dibuja en `<dir>/diagramas/estructura-<hash>.svg`, con
+# `<hash>` = los 12 primeros dígitos del SHA-1 del cuerpo del bloque sin espacios al principio ni al
+# final (`nombre_svg`). Un bloque con varias estructuras queda en un único SVG, una debajo de la otra.
+
+DIR_SVGS = "diagramas"
+
+
+def nombre_svg(cuerpo: str) -> str:
+    """Nombre del SVG de un bloque ```estructura: `estructura-<sha1(cuerpo.strip())[:12]>.svg`."""
+    return f"estructura-{hashlib.sha1(cuerpo.strip().encode('utf-8')).hexdigest()[:12]}.svg"
+
+
+def cuerpos_en_markdown(texto: str) -> List[str]:
+    """El cuerpo (YAML/JSON) de cada bloque ```estructura (o ```statics) de un Markdown."""
+    return [m.group("cuerpo") for m in _FENCE.finditer(texto)]
+
+
+def renderizar_bloque_markdown(cuerpo: str, tinta: bool = True) -> str:
+    """Todas las estructuras de un bloque ```estructura en un único `<svg>`, apiladas."""
+    svgs = [renderizar(b, tinta) for b in leer_bloques(cuerpo)]
+    if len(svgs) == 1:
+        return svgs[0]
+    ancho, y, partes = 0, 0, []
+    for svg in svgs:
+        w = int(re.search(r'width="(\d+)"', svg).group(1))
+        h = int(re.search(r'height="(\d+)"', svg).group(1))
+        partes.append(svg.replace("<svg ", f'<svg x="0" y="{y}" ', 1))
+        ancho, y = max(ancho, w), y + h + 8
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{ancho}" height="{y - 8}" '
+            f'viewBox="0 0 {ancho} {y - 8}">' + "".join(partes) + "</svg>")
+
+
+@dataclass
+class Sincronizacion:
+    escritos: List[str] = field(default_factory=list)
+    borrados: List[str] = field(default_factory=list)
+    errores: List[str] = field(default_factory=list)
+
+
+def sincronizar_svgs(directorio: "Path", tinta: bool = True, escribir: bool = True) -> Sincronizacion:
+    """Deja `directorio/diagramas/` con exactamente un SVG al día por bloque de los `.md` del directorio.
+
+    Escribe los que faltan o cambiaron y borra los `estructura-*.svg` que ningún bloque usa. Con
+    `escribir=False` sólo informa qué cambiaría (para verificar en CI).
+    """
+    from pathlib import Path
+
+    directorio = Path(directorio)
+    destino = directorio / DIR_SVGS
+    res = Sincronizacion()
+    esperados: Dict[str, str] = {}
+    for md in sorted(directorio.glob("*.md")):
+        for cuerpo in cuerpos_en_markdown(md.read_text(encoding="utf-8")):
+            nombre = nombre_svg(cuerpo)
+            if nombre in esperados:
+                continue
+            try:
+                esperados[nombre] = renderizar_bloque_markdown(cuerpo, tinta)
+            except ErrorDiagrama as e:
+                res.errores.append(f"{md}: {e}")
+    for nombre, svg in sorted(esperados.items()):
+        ruta = destino / nombre
+        if not ruta.is_file() or ruta.read_text(encoding="utf-8") != svg:
+            res.escritos.append(str(ruta))
+            if escribir:
+                destino.mkdir(parents=True, exist_ok=True)
+                ruta.write_text(svg, encoding="utf-8")
+    if destino.is_dir():
+        for ruta in sorted(destino.glob("estructura-*.svg")):
+            if ruta.name not in esperados:
+                res.borrados.append(str(ruta))
+                if escribir:
+                    ruta.unlink()
+        if escribir and not any(destino.iterdir()):
+            destino.rmdir()
+    return res

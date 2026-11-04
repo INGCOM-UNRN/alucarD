@@ -393,6 +393,23 @@ alucard diagrama ~/dev/tools/statics/ejercicio_pila.json -o diagramas/
 alucard diagrama arbol.yaml --color
 ```
 
+`alucard diagramas-md` deja los diagramas de los Markdown como SVG versionados, para que los publique
+quien no tiene alucarD (el sitio de enunciados, con `deckard export myst`). Cada bloque ```` ```estructura ````
+de `<dir>/*.md` queda en `<dir>/diagramas/estructura-<hash>.svg`, donde `<hash>` son los 12 primeros
+dígitos del SHA-1 del cuerpo del bloque sin espacios al principio ni al final; los SVG que ya no usa
+ningún bloque se borran. Si escribe o borra algo termina con código 1; `--verificar` no escribe.
+
+Como hook de pre-commit, en el repositorio que tiene los Markdown:
+
+```yaml
+repos:
+  - repo: https://github.com/INGCOM-UNRN/alucarD
+    rev: <commit>
+    hooks:
+      - id: alucard-diagramas
+        files: ^banco/.*\.md$
+```
+
 ### `alucard lint-gift` (antes `gift-linter`)
 
 Valida bancos GIFT: el formato de cada pregunta, los bloques ```` ```estructura ```` y, con

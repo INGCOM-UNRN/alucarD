@@ -750,6 +750,39 @@ def _sintetizar(
     _ultimo_codigo_salida["code"] = cli_commands.ejecutar_sintetizar(args, logging.getLogger("alucard.sintetizar"))
 
 
+@app.command("diagramas-md")
+def _diagramas_md(
+    archivos: List[Path] = typer.Argument(..., exists=True, help="Archivos Markdown (o directorios) con bloques ```estructura."),
+    verificar: bool = typer.Option(False, "--verificar", help="No escribe: falla si algún SVG falta, cambió o sobra."),
+    color: bool = typer.Option(False, "--color", help="Paleta de color de statics (por omisión, ahorro de tinta)."),
+) -> None:
+    """Dibuja los bloques ```estructura de los Markdown como SVG versionados, para publicarlos sin alucarD.
+
+    Cada bloque de `<dir>/*.md` queda en `<dir>/diagramas/estructura-<hash>.svg` (el hash es del
+    contenido del bloque) y se borran los SVG que ya no usa ningún bloque. Pensado como hook de
+    pre-commit (`alucard-diagramas`): si escribe o borra algo, termina con código 1 para que se
+    agreguen al commit. Así `deckard export myst` publica el enunciado con su imagen.
+    """
+    from generador_examenes.diagramas import sincronizar_svgs
+
+    directorios = sorted({(a if a.is_dir() else a.parent).resolve() for a in archivos
+                          if a.is_dir() or a.suffix.lower() == ".md"})
+    cambios = errores = 0
+    for directorio in directorios:
+        res = sincronizar_svgs(directorio, tinta=not color, escribir=not verificar)
+        for ruta in res.escritos:
+            print(f"{'Desactualizado' if verificar else '✓ Escrito'}: {ruta}")
+        for ruta in res.borrados:
+            print(f"{'Sobra' if verificar else '✓ Borrado'}: {ruta}")
+        for error in res.errores:
+            print(f"Error: {error}", file=sys.stderr)
+        cambios += len(res.escritos) + len(res.borrados)
+        errores += len(res.errores)
+    if cambios and not verificar:
+        print("Se actualizaron los SVG de los diagramas: agregalos al commit (git add).", file=sys.stderr)
+    _ultimo_codigo_salida["code"] = 1 if cambios or errores else 0
+
+
 @app.command("diagrama")
 def _diagrama(
     archivo: Path = typer.Argument(..., exists=True, dir_okay=False,

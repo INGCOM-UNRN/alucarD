@@ -1,0 +1,9 @@
+# Hooks de pre-commit de alucarD (https://pre-commit.com).
+- id: alucard-diagramas
+  name: alucard — diagramas de estructuras como SVG
+  description: >-
+    Dibuja cada bloque ```estructura de los Markdown en <dir>/diagramas/estructura-<hash>.svg
+    y borra los que sobran, para que deckard publique los enunciados con sus diagramas.
+  entry: alucard diagramas-md
+  language: python
+  files: \.md$

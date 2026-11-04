@@ -282,3 +282,66 @@ def test_el_titulo_largo_no_se_corta(bloque):
     titulo = "Completar con la transpuesta de la matriz original"
     raiz = ET.fromstring(renderizar({**bloque, "title": titulo}))
     assert int(raiz.get("width")) >= len(titulo) * 8.6
+
+
+ENUNCIADO = """## Consigna
+
+```estructura
+type: stack
+values: [1, 2]
+```
+
+Y después:
+
+```estructura
+- type: array
+  values: [3]
+- type: queue
+  values: [a]
+```
+"""
+
+
+def test_nombre_svg_es_el_contrato_con_deckard():
+    from generador_examenes.diagramas import nombre_svg
+    import hashlib
+    cuerpo = "type: stack\nvalues: [1, 2]\n"
+    esperado = hashlib.sha1(cuerpo.strip().encode()).hexdigest()[:12]
+    assert nombre_svg(cuerpo) == f"estructura-{esperado}.svg"
+    assert nombre_svg("  " + cuerpo + "\n\n") == nombre_svg(cuerpo)
+
+
+def test_sincronizar_svgs_escribe_es_idempotente_y_borra_lo_que_sobra(tmp_path):
+    from generador_examenes.diagramas import cuerpos_en_markdown, nombre_svg, sincronizar_svgs
+    (tmp_path / "enunciado.md").write_text(ENUNCIADO, encoding="utf-8")
+    res = sincronizar_svgs(tmp_path)
+    nombres = sorted(nombre_svg(c) for c in cuerpos_en_markdown(ENUNCIADO))
+    assert sorted(p.rsplit("/", 1)[1] for p in res.escritos) == nombres and not res.errores
+    for nombre in nombres:
+        ET.fromstring((tmp_path / "diagramas" / nombre).read_text(encoding="utf-8"))
+    # El bloque con dos estructuras queda en un único SVG.
+    assert (tmp_path / "diagramas" / nombre_svg(cuerpos_en_markdown(ENUNCIADO)[1])).read_text().count("<svg") == 3
+
+    res = sincronizar_svgs(tmp_path)
+    assert not res.escritos and not res.borrados
+
+    (tmp_path / "enunciado.md").write_text("Sin diagramas.", encoding="utf-8")
+    assert sincronizar_svgs(tmp_path, escribir=False).borrados  # verificar no toca nada
+    assert len(list((tmp_path / "diagramas").iterdir())) == 2
+    res = sincronizar_svgs(tmp_path)
+    assert len(res.borrados) == 2 and not (tmp_path / "diagramas").exists()
+
+
+def test_comando_diagramas_md(tmp_path, monkeypatch):
+    from typer.testing import CliRunner
+    from generador_examenes.__main__ import app, _ultimo_codigo_salida
+    md = tmp_path / "enunciado.md"
+    md.write_text(ENUNCIADO.replace("[1, 2]", "[1, 2]\ntype2: x"), encoding="utf-8")
+    runner = CliRunner()
+    runner.invoke(app, ["diagramas-md", str(md)])
+    assert _ultimo_codigo_salida["code"] == 1  # escribió: el hook falla para que se agreguen
+    runner.invoke(app, ["diagramas-md", "--verificar", str(md)])
+    assert _ultimo_codigo_salida["code"] == 0
+    md.write_text("```estructura\ntype: grafo\n```\n", encoding="utf-8")
+    r = runner.invoke(app, ["diagramas-md", str(md)])
+    assert _ultimo_codigo_salida["code"] == 1 and "grafo" in r.output
