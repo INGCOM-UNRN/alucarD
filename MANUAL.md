@@ -323,7 +323,10 @@ addresses: [0x3B20, 0x7E10, 0x2140, 0x9A80]
 Las matrices y los árboles son de alucarD, porque statics no los tiene. La matriz estática muestra
 la declaración (`int m[3][4]`) y, con `showAddresses`, la dirección de cada celda en orden de filas;
 `showLinear` la dibuja además como está en memoria, una fila detrás de la otra. La dinámica dibuja el
-puntero, el arreglo de punteros a filas y cada fila por separado:
+puntero, el arreglo de punteros a filas y cada fila por separado. El máximo es 10 filas por 10
+columnas: una matriz más grande, o `rows`/`cols` fuera de 1 a 10, es un error y no se dibuja.
+
+Ejemplos:
 
 ````text
 ::matriz-01:: [markdown]¿Qué dirección tiene `m[1][2]`?

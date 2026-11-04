@@ -1,5 +1,6 @@
 """Pruebas de los diagramas de estructuras (formato de bloques de statics)."""
 
+import re
 import sys
 import xml.etree.ElementTree as ET
 
@@ -101,6 +102,27 @@ def test_matriz_errores_claros():
         renderizar({"type": "matrix", "values": "1 2 3"})
     with pytest.raises(ErrorDiagrama, match="highlight"):
         renderizar({"type": "matrix", "values": [[1]], "highlight": "a,b"})
+
+
+@pytest.mark.parametrize("bloque, mensaje", [
+    ({"values": [[1]] * 11}, "11 filas; el máximo es 10"),
+    ({"values": [[1, 2], list(range(11))]}, "fila 1 de la matriz tiene 11 columnas"),
+    ({"values": list(range(30)), "cols": 2}, "15 filas"),
+    ({"values": [[1]], "rows": 11}, "'rows' de una matriz tiene que estar entre 1 y 10: 11"),
+    ({"values": [[1]], "cols": 12}, "'cols' de una matriz tiene que estar entre 1 y 10: 12"),
+    ({"values": [[1]], "cols": 0}, "'cols'"),
+    ({"values": [[1]], "rows": "muchas"}, "tiene que ser un entero"),
+    ({"variant": "dynamic", "values": [[1]] * 11}, "11 filas"),
+    ({"variant": "dynamic", "values": [[1]], "cols": 11}, "'cols'"),
+])
+def test_matriz_de_mas_de_10_es_error(bloque, mensaje):
+    with pytest.raises(ErrorDiagrama, match=re.escape(mensaje)):
+        renderizar({"type": "matrix", **bloque})
+
+
+def test_matriz_de_10_por_10_entra():
+    svg = renderizar({"type": "matrix", "values": [list(range(10))] * 10})
+    assert svg.count(">9<") == 10
 
 
 def test_la_paleta_de_tinta_es_negra_y_la_de_color_no():

@@ -196,6 +196,20 @@ def _arreglo(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
 MAX_FILAS, MAX_COLUMNAS = 10, 10
 
 
+def _dimension(b: Dict[str, Any], clave: str, defecto: int, maximo: int) -> int:
+    """`rows`/`cols` del bloque (o `defecto`), entre 1 y `maximo`; si no, un error."""
+    valor = b.get(clave)
+    if valor is None:
+        valor = defecto
+    try:
+        n = int(valor)
+    except (TypeError, ValueError):
+        raise ErrorDiagrama(f"'{clave}' de una matriz tiene que ser un entero: {valor!r}") from None
+    if not 1 <= n <= maximo:
+        raise ErrorDiagrama(f"'{clave}' de una matriz tiene que estar entre 1 y {maximo}: {n}")
+    return n
+
+
 def _filas(b: Dict[str, Any]) -> List[Optional[List[str]]]:
     """Las filas del bloque: `values` como lista de filas, o plana y cortada en `cols`.
 
@@ -205,14 +219,19 @@ def _filas(b: Dict[str, Any]) -> List[Optional[List[str]]]:
     if not isinstance(valores, list):
         raise ErrorDiagrama("'values' de una matriz tiene que ser una lista de filas")
     if valores and not any(isinstance(v, list) for v in valores):  # plana: se corta en `cols`
-        cols = _entero(b.get("cols"), len(valores), 1, MAX_COLUMNAS)
+        cols = _dimension(b, "cols", min(len(valores), MAX_COLUMNAS), MAX_COLUMNAS)
         valores = [valores[i:i + cols] for i in range(0, len(valores), cols)]
+    if len(valores) > MAX_FILAS:
+        raise ErrorDiagrama(f"la matriz tiene {len(valores)} filas; el máximo es {MAX_FILAS}")
     filas: List[Optional[List[str]]] = []
-    for fila in valores[:MAX_FILAS]:
+    for i, fila in enumerate(valores):
         if fila is None:
             filas.append(None)
         elif isinstance(fila, list):
-            filas.append(["" if v is None else str(v) for v in fila[:MAX_COLUMNAS]])
+            if len(fila) > MAX_COLUMNAS:
+                raise ErrorDiagrama(f"la fila {i} de la matriz tiene {len(fila)} columnas; "
+                                    f"el máximo es {MAX_COLUMNAS}")
+            filas.append(["" if v is None else str(v) for v in fila])
         else:
             raise ErrorDiagrama("cada fila de una matriz tiene que ser una lista (o null)")
     return filas
@@ -236,8 +255,8 @@ def _matriz(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
     if b.get("variant", "static") in ("dynamic", "pointers", "jagged"):
         return _matriz_dinamica(c, b)
     filas = [f or [] for f in _filas(b)]
-    nf = _entero(b.get("rows"), len(filas) or 3, 1, MAX_FILAS)
-    nc = _entero(b.get("cols"), max((len(f) for f in filas), default=0) or 3, 1, MAX_COLUMNAS)
+    nf = _dimension(b, "rows", len(filas) or 3, MAX_FILAS)
+    nc = _dimension(b, "cols", max((len(f) for f in filas), default=0) or 3, MAX_COLUMNAS)
     base, paso = _hex(b.get("baseAddr")), _entero(b.get("typeSize"), 4, 1, 64)
     nombre, tipo = b.get("name") or "m", b.get("elementType") or "int"
     direcciones, indices = bool(b.get("showAddresses")), b.get("showIndices", True)
@@ -311,9 +330,9 @@ def _matriz(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
 def _matriz_dinamica(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
     """`int **m`: el puntero, el arreglo de punteros a filas y cada fila (de largo propio, o NULL)."""
     filas = _filas(b)
-    nf = _entero(b.get("rows"), len(filas) or 3, 1, MAX_FILAS)
+    nf = _dimension(b, "rows", len(filas) or 3, MAX_FILAS)
     filas += [[] for _ in range(nf - len(filas))]
-    nc_fijo = b.get("cols")
+    nc_fijo = _dimension(b, "cols", 1, MAX_COLUMNAS) if b.get("cols") is not None else None
     nombre, tipo = b.get("name") or "m", b.get("elementType") or "int"
     direcciones, indices = bool(b.get("showAddresses")), b.get("showIndices", True)
     sin_valores, sin_dirs = bool(b.get("blankValues")), bool(b.get("blankAddrs"))
@@ -328,7 +347,7 @@ def _matriz_dinamica(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
             return "0x____"
         return _fmt_hex(_hex(dirs_filas[i])) if i < len(dirs_filas) else _fmt_hex(base_filas + i * 0x40)
 
-    largos = [0 if f is None else _entero(nc_fijo, len(f), 0, MAX_COLUMNAS) if nc_fijo else len(f)
+    largos = [0 if f is None else nc_fijo if nc_fijo else len(f)
               for f in filas[:nf]]
     celda_w, celda_h, paso_y = 56, 40, 54
     ptr_w = 72 if direcciones else 52
