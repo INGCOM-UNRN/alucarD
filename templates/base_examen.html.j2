@@ -11,7 +11,8 @@
 */
 
 body {
-  font-family: 'Arial', sans-serif;
+  font-family: {{ estilo.fuente_css | safe }};{% if estilo.tamano_css %}
+  font-size: {{ estilo.tamano_css }};{% endif %}
   margin: 2cm;
   line-height: 1.6;
 }
@@ -314,7 +315,7 @@ body {
   padding: 0.8em;
   overflow-x: auto;
   margin: 0.5em 0;
-  font-family: 'Courier New', monospace;
+  font-family: {{ estilo.fuente_codigo_css | safe }};
   font-size: 0.9em;
   line-height: 1.4;
 }
@@ -326,7 +327,7 @@ pre {
 }
 
 code {
-  font-family: 'Courier New', monospace;
+  font-family: {{ estilo.fuente_codigo_css | safe }};
   font-size: 0.9em;
 }
 
@@ -442,12 +443,12 @@ code {
     padding: 0 !important;
     white-space: pre-wrap !important;
     word-wrap: break-word !important;
-    font-family: 'Courier New', 'Courier', monospace !important;
+    font-family: {{ estilo.fuente_codigo_css | safe }} !important;
   }
   
   /* Código inline también en blanco y negro */
   code {
-    font-family: 'Courier New', 'Courier', monospace !important;
+    font-family: {{ estilo.fuente_codigo_css | safe }} !important;
     font-size: 0.75em !important;
     color: #000 !important;
     line-height: 1.25 !important;
@@ -479,9 +480,32 @@ code {
 }
 
 
+
+/* --- Estilo del curso: franjas, logotipo y alto contraste (alucard.toml [estilo]) --- */
+.franja {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+  font-size: 0.8em;
+}
+.franja-superior { border-bottom: 1px solid #ccc; padding-bottom: 0.4em; margin-bottom: 1em; }
+.franja-inferior { border-top: 1px solid #ccc; padding-top: 0.4em; margin-top: 2em; }
+.franja-izq, .franja-centro, .franja-der { flex: 1; }
+.franja-centro { text-align: center; }
+.franja-der { text-align: right; }
+.franja-logo { height: {{ estilo.logo_alto_mm_css }}; width: auto; }
+{% if estilo.alto_contraste %}
+/* Alto contraste: todo el texto negro, sin grises; bordes negros */
+body, body * { color: #000 !important; }
+body * { border-color: #000 !important; }
+.instructions, .franja, pre, code { background-color: #fff !important; }
+/* Sobre fondo oscuro, el texto queda blanco (negro sobre #333 no se lee) */
+.section-title { background-color: #000 !important; color: #fff !important; }
+{% endif %}
     </style>
 </head>
 <body>
+    {{ estilo.encabezado_html | safe }}
     <div class="header">
         <h1>{{ definicion.nombre_examen }}</h1>
         <div class="info"><strong>{{ i18n.institution }}:</strong> {{ definicion.institucion }}</div>
@@ -581,5 +605,6 @@ code {
         {% endfor %}
     </div>
     {% endfor %}
+    {{ estilo.pie_html | safe }}
 </body>
 </html>

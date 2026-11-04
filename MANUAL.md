@@ -141,6 +141,41 @@ Con eso, `alucard generar -d parcial.yaml` alcanza. Las `palabras` y las del `di
 diccionario de la cátedra: `alucard ortografia` no las marca, y se suman a las de
 `--lt-ignore-words`.
 
+#### Estilo del examen: `[estilo]`
+
+La tipografía, el encabezado y el pie de página, el logotipo y el contraste del examen y de la clave,
+en HTML y en PDF. Van en `[estilo]` de `alucard.toml` y, para un examen en particular, en `estilo`
+de la definición YAML, que manda clave por clave. Sin nada, el examen sale como siempre.
+
+```toml
+[estilo]
+fuente = ["Liberation Serif", "DejaVu Serif"]   # texto, en orden de preferencia (una o varias)
+fuente_codigo = "DejaVu Sans Mono"               # bloques y fragmentos de código
+tamano = 10.5                                    # puntos (de 7 a 16; 10 por omisión)
+encabezado = { izquierda = "{institucion}", derecha = "{materia} | Tema {tema}" }
+pie = { izquierda = "{examen} — {fecha}", derecha = "Página {pagina} de {paginas}" }
+logo = "logo.png"                                # PNG, JPG, GIF o SVG
+logo_posicion = "derecha"                        # "izquierda" (por omisión) o "derecha"
+logo_alto_mm = 12                                # de 4 a 30
+alto_contraste = true
+```
+
+| Clave | Por omisión | Qué hace |
+| :--- | :--- | :--- |
+| `fuente` | Liberation Sans (PDF), Arial (HTML) | Familias del texto; la primera instalada gana. |
+| `fuente_codigo` | DejaVu Sans Mono (PDF), Courier New (HTML) | Familias del código. |
+| `tamano` | `10` (PDF), el del navegador (HTML) | Tamaño del texto, en puntos. |
+| `encabezado`, `pie` | institución, materia y tema arriba; examen y página abajo | Franjas superior e inferior de cada página, con `izquierda`, `centro` y `derecha`. Un texto solo va al centro. |
+| `logo` | — | Logotipo en el encabezado. Relativo al archivo que lo nombra (`alucard.toml` o la definición). |
+| `logo_posicion`, `logo_alto_mm` | `izquierda`, `12` | Dónde y de qué alto; si es alto, el margen superior crece. |
+| `alto_contraste` | `false` | Todo el texto en negro, sin grises (también en los diagramas y en el código, sin resaltado), y bordes negros. |
+
+En el encabezado y el pie se puede escribir `{institucion}`, `{materia}`, `{examen}`, `{fecha}`,
+`{tema}`, `{pagina}` y `{paginas}`; un marcador desconocido es un error de la definición. En HTML
+(que no tiene páginas) las franjas aparecen sólo si se configuraron, y la parte que usa `{pagina}` o
+`{paginas}` se omite. Un logotipo que no existe o en otro formato frena la generación antes de
+escribir nada. La vista previa (`alucard ver`) usa el estilo del curso.
+
 #### Opciones de `alucard generar`
 
 | Opción / Bandera | Tipo | Por Defecto | Descripción |

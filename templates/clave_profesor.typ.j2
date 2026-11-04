@@ -2,21 +2,24 @@
 #set document(title: "{{ definicion.nombre_examen }} - Clave Tema {{ tema + 1 }}", author: "Cátedra")
 #set page(
   paper: "a4",
-  margin: (top: 2cm, bottom: 2cm, left: 2cm, right: 2cm),
-  header: align(right)[
-    #text(size: 8pt, fill: rgb("c53030"))[*CLAVE DOCENTE*{% if definicion.institucion %} — {{ definicion.institucion | typst_texto }}{% endif %} | *Tema {{ tema + 1 }}*]
+  margin: (top: {{ estilo.margen_sup_mm }}mm, bottom: 2cm, left: 2cm, right: 2cm),
+  header: context [
+    {% if estilo.logo_typst %}#let logo = {{ estilo.logo_typst }}
+    {% endif %}#{{ estilo.encabezado_typst }}
   ],
   footer: context [
-    #line(length: 100%, stroke: 0.5pt + rgb("cccccc"))
-    #grid(
-      columns: (1fr, 1fr),
-      align(left)[#text(size: 8pt, fill: rgb("888888"))[SOLUCIONARIO: {{ definicion.nombre_examen | typst_texto }}]],
-      align(right)[#text(size: 8pt, fill: rgb("888888"))[Página #counter(page).display("1 / 1", both: true)]]
-    )
+    #line(length: 100%, stroke: 0.5pt + rgb("{{ c.linea_pie }}"))
+    #{{ estilo.pie_typst }}
   ]
 )
 
-#set text(font: ("Liberation Sans", "DejaVu Sans", "Arial"), size: 10pt, lang: "{{ definicion.idioma | default('es') }}")
+#set text(font: {{ estilo.fuente_typst }}, size: {{ estilo.tamano }}pt, lang: "{{ definicion.idioma | default('es') }}"{% if estilo.alto_contraste %}, fill: black{% endif %})
+#show raw: set text(font: {{ estilo.fuente_codigo_typst }})
+{% if estilo.alto_contraste %}
+// Alto contraste: el código, sin el gris de los comentarios del resaltado
+#show raw: set text(fill: black)
+#set raw(theme: none)
+{% endif %}
 #set par(justify: true, leading: 0.65em)
 
 #align(center)[
@@ -30,13 +33,13 @@
 #v(10pt)
 
 {% for seccion in secciones %}
-#text(size: 11pt, weight: "bold", fill: rgb("2b6cb0"))[{{ seccion.nombre | typst_texto }}]
+#text(size: 11pt, weight: "bold", fill: rgb("{{ c.seccion }}"))[{{ seccion.nombre | typst_texto }}]
 #v(4pt)
 
 {% for preg in seccion.preguntas %}
 #block(
   width: 100%,
-  stroke: 0.5pt + rgb("e2e8f0"),
+  stroke: 0.5pt + rgb("{{ c.borde }}"),
   radius: 4pt,
   inset: 6pt,
   fill: rgb("fafafa"),
@@ -60,7 +63,7 @@
   #text(fill: rgb("22543d"), weight: "bold")[✓ Respuesta:] Ver criterio de corrección
   {% endif %}
   {% if preg.retroalimentacion_general %}
-  \ #text(fill: rgb("4a5568"), size: 8.5pt)[*Explicación:* {{ preg.retroalimentacion_general | typst }}]
+  \ #text(fill: rgb("{{ c.sub }}"), size: 8.5pt)[*Explicación:* {{ preg.retroalimentacion_general | typst }}]
   {% endif %}
 ]
 #v(4pt)

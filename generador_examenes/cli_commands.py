@@ -468,6 +468,16 @@ def generar_examen(args, logger) -> int:
         if curso.ruta is not None:
             logger.info(f"Configuración del curso: {curso.ruta}")
 
+        # Estilo: el [estilo] del curso y, encima, el `estilo` de la definición.
+        from generador_examenes.core.estilo import ErrorEstilo, combinar
+        try:
+            definicion = definicion.model_copy(update={"estilo": combinar(
+                curso.estilo, definicion_yaml.get("estilo") or {}, Path(args.definicion).parent)})
+        except (ErrorEstilo, ValidationError) as e:
+            logger.error(f"Estilo: {e}")
+            print(f"Error: estilo: {e}", file=sys.stderr)
+            return 1
+
         def del_yaml(campo):
             return getattr(definicion, campo) if campo in definicion.model_fields_set else None
 
@@ -840,6 +850,13 @@ def ejecutar_vista_previa(banco: Path, pregunta: Optional[str], linea: Optional[
     datos["configuracion_examen"].update(mezclar_preguntas_dentro_seccion=False,
                                          mezclar_opciones_dentro_pregunta=False, generar_clave_profesor=clave)
     definicion = DefinicionExamen(**datos)
+    # La vista previa sale con el estilo del curso, como el examen.
+    from generador_examenes.config import proyecto
+    from generador_examenes.core.estilo import combinar
+    try:
+        definicion = definicion.model_copy(update={"estilo": combinar(proyecto.cargar(banco.parent).estilo, {})})
+    except ValueError as e:
+        print(f"Aviso: no se aplica el estilo del curso: {e}", file=sys.stderr)
     solo = {p.id: p for p in elegidas}
     if path_images:
         logic.procesar_imagenes(solo, path_images)

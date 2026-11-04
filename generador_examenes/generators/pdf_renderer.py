@@ -9,6 +9,7 @@ import tempfile
 from pathlib import Path
 from typing import Any, Optional
 from generador_examenes.core.models import DefinicionExamen
+from generador_examenes.core.estilo import contexto_estilo, preparar_examen
 from generador_examenes.generators.base import BaseRenderer
 from generador_examenes.generators.html_renderer import HtmlRenderer
 
@@ -129,9 +130,9 @@ class PdfRenderer(BaseRenderer):
             with open(i18n_file, 'r', encoding='utf-8') as f:
                 i18n = json.load(f)
 
-        contexto = {
+        contexto = {**contexto_estilo(definicion, tema, clave=False),
             'definicion': definicion,
-            'secciones': examen_data.get('secciones', []),
+            'secciones': preparar_examen(examen_data, definicion).get('secciones', []),
             'tema': tema,
             'i18n': i18n
         }
@@ -192,9 +193,9 @@ class PdfRenderer(BaseRenderer):
             with open(i18n_file, 'r', encoding='utf-8') as f:
                 i18n = json.load(f)
 
-        contexto = {
+        contexto = {**contexto_estilo(definicion, tema, clave=True),
             'definicion': definicion,
-            'secciones': examen_data.get('secciones', []),
+            'secciones': preparar_examen(examen_data, definicion).get('secciones', []),
             'tema': tema,
             'i18n': i18n
         }
@@ -261,7 +262,7 @@ class PdfRenderer(BaseRenderer):
         templates_dir = Path(__file__).parent.parent.parent / 'templates'
         env = Environment(loader=FileSystemLoader(str(templates_dir)), autoescape=True)
         template = env.get_template('base_examen.html.j2')
-        contexto = {'definicion': definicion, 'secciones': examen_data.get('secciones', []), 'tema': tema, 'i18n': {}}
+        contexto = {**contexto_estilo(definicion, tema, clave=False), 'definicion': definicion, 'secciones': preparar_examen(examen_data, definicion).get('secciones', []), 'tema': tema, 'i18n': {}}
         html_content = template.render(**contexto)
         output_file = output_dir / f"examen_tema_{tema + 1:02d}.pdf"
         import weasyprint
@@ -273,7 +274,7 @@ class PdfRenderer(BaseRenderer):
         templates_dir = Path(__file__).parent.parent.parent / 'templates'
         env = Environment(loader=FileSystemLoader(str(templates_dir)), autoescape=True)
         template = env.get_template('clave_profesor.html.j2')
-        contexto = {'definicion': definicion, 'secciones': examen_data.get('secciones', []), 'tema': tema, 'i18n': {}}
+        contexto = {**contexto_estilo(definicion, tema, clave=True), 'definicion': definicion, 'secciones': preparar_examen(examen_data, definicion).get('secciones', []), 'tema': tema, 'i18n': {}}
         html_content = template.render(**contexto)
         output_file = output_dir / f"clave_tema_{tema + 1:02d}.pdf"
         import weasyprint

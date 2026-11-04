@@ -231,6 +231,18 @@ formato = ["html"]
 idioma = "es-AR"
 # Palabras de la cátedra que LanguageTool no debe marcar.
 palabras = ["malloc", "struct", "printf"]
+
+# Tipografía, encabezado y pie, logotipo y contraste del examen y de la clave (descomentá lo que uses).
+[estilo]
+# fuente = ["Liberation Serif", "DejaVu Serif"]
+# fuente_codigo = "DejaVu Sans Mono"
+# tamano = 10.5
+# encabezado = { izquierda = "{institucion}", derecha = "{materia} | Tema {tema}" }
+# pie = { izquierda = "{examen}", derecha = "Página {pagina} de {paginas}" }
+# logo = "logo.png"              # PNG, JPG, GIF o SVG, relativo a este archivo
+# logo_posicion = "izquierda"    # o "derecha"
+# logo_alto_mm = 12
+alto_contraste = false           # true: texto negro, sin grises, y bordes negros
 ''', encoding='utf-8')
         logger.info("✓ Configuración del curso creada: alucard.toml")
 

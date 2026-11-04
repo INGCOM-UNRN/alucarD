@@ -18,6 +18,17 @@ idioma = "es-AR"
 ignorar_reglas = ["WHITESPACE_RULE"]
 palabras = ["malloc", "struct", "GIFT"]   # el diccionario de la cátedra
 diccionario = "diccionario.txt"            # más palabras, una por renglón (# comenta)
+
+[estilo]                                   # tipografía, encabezado y pie, logotipo y contraste
+fuente = ["Source Sans 3", "DejaVu Sans"]
+fuente_codigo = "JetBrains Mono"
+tamano = 10.5
+encabezado = { izquierda = "{institucion}", derecha = "{materia} | Tema {tema}" }
+pie = { izquierda = "{examen}", derecha = "Página {pagina} de {paginas}" }
+logo = "logo.png"
+logo_posicion = "derecha"                  # o "izquierda"
+logo_alto_mm = 12
+alto_contraste = true                      # texto negro, sin grises
 ```
 """
 
@@ -26,7 +37,7 @@ from __future__ import annotations
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 ARCHIVO = "alucard.toml"
 
@@ -44,6 +55,7 @@ class ConfiguracionProyecto:
     lt_idioma: Optional[str] = None
     lt_ignorar_reglas: list[str] = field(default_factory=list)
     palabras: list[str] = field(default_factory=list)
+    estilo: dict[str, Any] = field(default_factory=dict)  # [estilo], con el logotipo ya resuelto
 
 
 def buscar(desde: Optional[Path] = None) -> Optional[Path]:
@@ -86,6 +98,16 @@ def cargar(desde: Optional[Path] = None) -> ConfiguracionProyecto:
             raise ValueError(f"{ruta}: no se pudo leer el diccionario {archivo}: {e.strerror}") from e
         palabras += [r.split("#", 1)[0].strip() for r in renglones if r.split("#", 1)[0].strip()]
     formato = datos.get("formato")
+    estilo = dict(datos.get("estilo") or {})
+    if estilo.get("logo"):
+        estilo["logo"] = str(base / str(estilo["logo"]))
+    from pydantic import ValidationError
+
+    from generador_examenes.core.models import EstiloExamen
+    try:
+        EstiloExamen(**estilo)
+    except ValidationError as e:
+        raise ValueError(f"{ruta}: [estilo] inválido: {e}") from e
     return ConfiguracionProyecto(
         ruta=ruta,
         input_banco=rutas(datos.get("input_banco")),
@@ -98,4 +120,5 @@ def cargar(desde: Optional[Path] = None) -> ConfiguracionProyecto:
         lt_idioma=orto.get("idioma"),
         lt_ignorar_reglas=list(orto.get("ignorar_reglas") or []),
         palabras=palabras,
+        estilo=estilo,
     )

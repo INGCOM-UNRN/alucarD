@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 from jinja2 import Environment, FileSystemLoader, Template
 from generador_examenes.core.models import DefinicionExamen
+from generador_examenes.core.estilo import contexto_estilo, preparar_examen
 from generador_examenes.generators.base import BaseRenderer
 
 
@@ -87,9 +88,9 @@ class HtmlRenderer(BaseRenderer):
         template = self.env.get_template('base_examen.html.j2')
         
         # Preparar contexto
-        contexto = {
+        contexto = {**contexto_estilo(definicion, tema, clave=False),
             'definicion': definicion,
-            'secciones': examen_data.get('secciones', []),
+            'secciones': preparar_examen(examen_data, definicion).get('secciones', []),
             'tema': tema,
             'i18n': i18n,
             'variables': variables
@@ -137,9 +138,9 @@ class HtmlRenderer(BaseRenderer):
         template = self.env.get_template('clave_profesor.html.j2')
         
         # Preparar contexto
-        contexto = {
+        contexto = {**contexto_estilo(definicion, tema, clave=True),
             'definicion': definicion,
-            'secciones': examen_data.get('secciones', []),
+            'secciones': preparar_examen(examen_data, definicion).get('secciones', []),
             'tema': tema,
             'i18n': i18n,
             'variables': variables

@@ -1,7 +1,9 @@
 """
 Modelos de datos usando Pydantic para validación de estructuras
 """
-from pydantic import BaseModel, Field
+import re
+
+from pydantic import BaseModel, Field, field_validator, model_validator
 from typing import List, Dict, Any, Literal, Optional
 
 
@@ -66,6 +68,57 @@ class PresentacionConsigna(BaseModel):
     espacio_respuesta: bool = True
     lineas: int = Field(default=20, ge=1, le=200)  # renglones del espacio de respuesta
     solucion_en_clave: bool = True          # la solución de la cátedra en la clave del profesor
+
+
+# Lo que se puede escribir entre llaves en el encabezado y el pie de página.
+MARCADORES_FRANJA = ("institucion", "materia", "examen", "fecha", "tema", "pagina", "paginas")
+
+
+class Franja(BaseModel):
+    """Encabezado o pie de página: texto a la izquierda, al centro y a la derecha.
+
+    Cada parte admite marcadores entre llaves (`{institucion}`, `{materia}`, `{examen}`, `{fecha}`,
+    `{tema}`, `{pagina}`, `{paginas}`). Un texto solo, en lugar de las tres partes, va al centro.
+    """
+    izquierda: str = ""
+    centro: str = ""
+    derecha: str = ""
+
+    @model_validator(mode="before")
+    @classmethod
+    def _texto_solo(cls, valor: Any) -> Any:
+        return {"centro": valor} if isinstance(valor, str) else valor
+
+    @field_validator("izquierda", "centro", "derecha")
+    @classmethod
+    def _marcadores_conocidos(cls, texto: str) -> str:
+        desconocidos = sorted(set(re.findall(r"\{(\w*)\}", texto)) - set(MARCADORES_FRANJA))
+        if desconocidos:
+            raise ValueError(f"marcador desconocido {{{desconocidos[0]}}} en {texto!r} "
+                             f"(disponibles: {', '.join('{' + m + '}' for m in MARCADORES_FRANJA)})")
+        return texto
+
+
+class EstiloExamen(BaseModel):
+    """Tipografía, encabezado y pie, logotipo y contraste del examen y de la clave.
+
+    Va en `[estilo]` de `alucard.toml` (para todo el curso) o en `estilo` de la definición YAML, que
+    manda clave por clave. Sin nada, el examen sale como siempre.
+    """
+    fuente: List[str] = Field(default_factory=list)          # familias del texto, en orden de preferencia
+    fuente_codigo: List[str] = Field(default_factory=list)   # familias del código
+    tamano: Optional[float] = Field(default=None, ge=7, le=16)  # puntos del texto (10 por omisión)
+    encabezado: Optional[Franja] = None
+    pie: Optional[Franja] = None
+    logo: Optional[str] = None                              # PNG, JPG, GIF o SVG
+    logo_posicion: Literal["izquierda", "derecha"] = "izquierda"
+    logo_alto_mm: float = Field(default=12, ge=4, le=30)
+    alto_contraste: bool = False                            # texto negro, sin grises; bordes negros
+
+    @field_validator("fuente", "fuente_codigo", mode="before")
+    @classmethod
+    def _una_o_varias(cls, valor: Any) -> Any:
+        return [valor] if isinstance(valor, str) else valor
 
 
 class RepositorioExterno(BaseModel):
@@ -181,6 +234,8 @@ class DefinicionExamen(BaseModel):
     configuracion_examen: ConfiguracionExamen
     secciones_examen: List[SeccionExamen]
     variables_personalizadas: Dict[str, str] = Field(default_factory=dict)
+    # Tipografía, encabezado y pie, logotipo y contraste (se suma al [estilo] de alucard.toml)
+    estilo: EstiloExamen = Field(default_factory=EstiloExamen)
     
     # Configuración de generación (puede ser overrideada por CLI)
     input_banco: Optional[List[str]] = Field(default=None, description="Rutas a archivos de banco de preguntas")
