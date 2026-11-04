@@ -383,6 +383,18 @@ def test_pila_de_llamadas_en_el_tiempo():
     assert svg.count(">fact(n)<") == 3
 
 
+def test_pila_de_llamadas_rotulos_largos_no_se_pisan():
+    rotulo = "segunda llamada, antes de c++"
+    svg = renderizar({"type": "call_stack", "steps": [
+        {"label": rotulo, "frames": [{"function": "f"}]},
+        {"label": rotulo, "frames": [{"function": "f"}]},
+    ]})
+    xs = [float(x) for x in re.findall(r'<text x="([\d.]+)"[^>]*>' + re.escape(rotulo) + "<", svg)]
+    x0, ancho = map(float, re.search(r'viewBox="([-\d.]+) [-\d.]+ ([\d.]+)', svg).groups())
+    assert len(xs) == 2 and xs[1] - xs[0] >= len(rotulo) * 7  # la 2.ª columna no pisa el rótulo de la 1.ª
+    assert x0 + ancho >= xs[1] + len(rotulo) * 7  # ni se corta el último
+
+
 def test_pila_de_llamadas_en_blanco():
     svg = renderizar({**PILA_LLAMADAS, "blankValues": True, "blankAddrs": True})
     assert ">7<" not in svg and ">0x____<" in svg

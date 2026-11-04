@@ -44,6 +44,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Corregido
 
+- **diagramas**: en `call_stack` con `steps`, la columna de cada momento crece con su rótulo; un rótulo largo («segunda llamada, antes de c++») ya no se corta ni lo pisa la columna siguiente.
 - **diagramas**: un `title` o `subtitle` más ancho que el dibujo quedaba cortado; el SVG ahora se ensancha para que entren.
 - **parser GIFT**: las marcas escapadas `\=`, `\~` y `\#` de una opción se tomaban como una opción nueva o como retroalimentación (`p->sig \=\= HEAD` se partía en tres opciones, dos «correctas»). Ahora son texto y se desescapan, en selección múltiple y en respuesta corta.
 - **sintetizador**: los dos puntos del título, el enunciado y las opciones del GIFT van en ancho completo (`：`) (`db82751`).

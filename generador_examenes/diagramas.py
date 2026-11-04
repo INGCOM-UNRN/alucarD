@@ -776,7 +776,10 @@ def _pila_llamadas(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
     alto_pila = max(sum(alto_marco(m) + sep for m in ms) for _, ms, _ in pasos)
     etiquetas = any(et for et, _, _ in pasos)
     y_base = top + (24 if etiquetas else 8) + alto_pila  # la base (main) alineada en todos los pasos
-    col_w = marco_w + margen_flechas + 40
+    # La columna crece con su rótulo (negrita de 11): «segunda llamada, antes de c++» no entra en un marco angosto.
+    rotulo_w = max(len(et) for et, _, _ in pasos) * 7.0
+    col_w = max(marco_w + margen_flechas + 40, rotulo_w + 24)
+    c.ancho_min = max(c.ancho_min, (len(pasos) - 1) * col_w + rotulo_w)
 
     for col, (etiqueta, marcos, flechas) in enumerate(pasos):
         x0 = col * col_w
