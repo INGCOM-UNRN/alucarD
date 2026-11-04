@@ -478,6 +478,33 @@ alucard lint-gift sintetizados/*.gift --compilar      # además, que el código 
 alucard lint-gift bancos/*.gift --fix
 ```
 
+### Justificación en las preguntas de selección múltiple
+
+Para pedir que el alumno explique la opción que marcó, `configuracion_examen.lineas_justificacion`
+agrega debajo de cada pregunta de selección múltiple una sección «Justificación» con esa cantidad de
+renglones, en el HTML y en el PDF. Con `0` (por omisión) no hay sección. Cada pool puede cambiar la
+cantidad con su propio `lineas_justificacion` (`0` la quita en ese pool); el resto de los tipos de
+pregunta (verdadero/falso, consignas, desarrollo) no cambia. El título sale del idioma del examen
+(«Justificación», «Justification») o de `titulo_justificacion`.
+
+```yaml
+configuracion_examen:
+  lineas_justificacion: 3                     # de 0 a 60
+  titulo_justificacion: "Justificá tu respuesta"
+
+secciones_examen:
+  - nombre: "Parte 1"
+    pools:
+      - categoria: "estructuras/listas"
+        cantidad: 2
+      - categoria: "estructuras/pila-de-llamadas"
+        cantidad: 2
+        lineas_justificacion: 6               # más lugar para trazar la pila
+      - categoria: "estructuras/arreglos"
+        cantidad: 2
+        lineas_justificacion: 0               # sin justificación
+```
+
 ### Consignas prácticas y repositorios externos
 
 Además de los bancos GIFT/XML (`input_banco` / `-i`), la definición puede sumar:

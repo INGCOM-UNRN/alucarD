@@ -274,6 +274,18 @@ body {
   border-bottom: 1px dotted #aaa;
 }
 
+/* Selección múltiple: renglones para justificar la opción elegida (lineas_justificacion) */
+.justificacion {
+  margin-top: 0.6em;
+  page-break-inside: avoid;
+}
+
+.justificacion-titulo {
+  font-size: 0.85em;
+  font-weight: bold;
+  color: #4a5568;
+}
+
 /* En layouts compactos, las preguntas de desarrollo ocupan todo el ancho */
 .section.layout-compact-2col .desarrollo-box,
 .section.layout-compact-3col .desarrollo-box,
@@ -532,6 +544,14 @@ code {
                 </div>
                 {% endfor %}
             </div>
+            {% if pregunta.lineas_justificacion %}
+            <div class="justificacion">
+                <div class="justificacion-titulo">{{ definicion.configuracion_examen.titulo_justificacion or i18n.justification or 'Justificación' }}</div>
+                <div class="renglones">
+                    {% for _ in range(pregunta.lineas_justificacion) %}<div class="renglon"></div>{% endfor %}
+                </div>
+            </div>
+            {% endif %}
             {% elif pregunta.tipo == 'verdadero_falso' %}
             <div class="options">
                 <div class="option">

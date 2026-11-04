@@ -36,6 +36,8 @@ class Pregunta(BaseModel):
     fuente_banco: Optional[str] = None
     # Renglones del espacio de respuesta (consignas prácticas); None o 0: sin espacio.
     lineas_respuesta: Optional[int] = None
+    # Renglones para justificar la opción elegida (selección múltiple); None o 0: sin justificación.
+    lineas_justificacion: Optional[int] = None
     
     def __str__(self) -> str:
         nombre_preview = self.nombre[:60] + "..." if len(self.nombre) > 60 else self.nombre
@@ -97,6 +99,9 @@ class PoolConfig(BaseModel):
     minutos_max: Optional[int] = Field(default=None, ge=0)
     presupuesto_minutos: Optional[int] = Field(default=None, ge=1)  # suma máxima de minutos de lo elegido
     presentacion: Optional[PresentacionConsigna] = None
+    # Renglones de justificación de las preguntas de selección múltiple de este pool; por omisión, los
+    # de `configuracion_examen.lineas_justificacion` (0: sin justificación en este pool).
+    lineas_justificacion: Optional[int] = Field(default=None, ge=0, le=60)
     
     def __str__(self) -> str:
         filtros = []
@@ -145,6 +150,10 @@ class ConfiguracionExamen(BaseModel):
     # Cada pool sortea qué preguntas entran (con la semilla del examen); false: las primeras que pasan los filtros.
     sortear_preguntas: bool = True
     presentacion_consignas: PresentacionConsigna = Field(default_factory=PresentacionConsigna)
+    # Sección «Justificación» con renglones debajo de cada pregunta de selección múltiple (0: sin ella).
+    # Cada pool puede cambiar la cantidad con su propio `lineas_justificacion`.
+    lineas_justificacion: int = Field(default=0, ge=0, le=60)
+    titulo_justificacion: Optional[str] = None  # por omisión, el del idioma («Justificación»)
     
     def __str__(self) -> str:
         flags = []

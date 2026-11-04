@@ -90,6 +90,10 @@ configuracion_examen:
   mezclar_opciones_dentro_pregunta: true
   generar_clave_profesor: true
   incluir_metadata_debug: false
+  # Renglones para justificar cada pregunta de selección múltiple (0: sin justificación);
+  # cada pool puede cambiarlos con su propio `lineas_justificacion`.
+  lineas_justificacion: 0
+  # titulo_justificacion: "Justificá tu respuesta"
   # Qué se muestra de cada consigna práctica (deckard); cada pool puede cambiar parte en `presentacion`.
   presentacion_consignas:
     titulo: true

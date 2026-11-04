@@ -274,7 +274,7 @@ def construir_pool_examen(
                 pool, banco, definicion.configuracion_examen.presentacion_consignas, rng=rng,
                 donde=f"la sección «{seccion_def.nombre}», pool {pool_idx}",
             )
-            preguntas_seccion.extend(preguntas_pool)
+            preguntas_seccion.extend(_con_justificacion(preguntas_pool, pool, definicion.configuracion_examen))
         
         secciones_examen.append({
             'nombre': seccion_def.nombre,
@@ -289,6 +289,19 @@ def construir_pool_examen(
         )
     
     return {'secciones': secciones_examen}
+
+
+def lineas_justificacion(pool: PoolConfig, configuracion: ConfiguracionExamen) -> int:
+    """Renglones de justificación de las preguntas de selección múltiple del pool (0: sin justificación)."""
+    return pool.lineas_justificacion if pool.lineas_justificacion is not None else configuracion.lineas_justificacion
+
+
+def _con_justificacion(preguntas: List[Pregunta], pool: PoolConfig,
+                       configuracion: ConfiguracionExamen) -> List[Pregunta]:
+    """Las de selección múltiple, con sus renglones para justificar la respuesta (el resto, tal cual)."""
+    lineas = lineas_justificacion(pool, configuracion)
+    return [p.model_copy(update={"lineas_justificacion": lineas}) if p.tipo == "seleccion_multiple" else p
+            for p in preguntas]
 
 
 def _minutos(pregunta: Pregunta) -> Optional[int]:

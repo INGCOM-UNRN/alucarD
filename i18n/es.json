@@ -18,5 +18,6 @@
   "for_teacher": "Para el Profesor",
   "version": "Versión",
   "topic": "Tema",
-  "total_points": "Puntaje Total"
+  "total_points": "Puntaje Total",
+  "justification": "Justificación"
 }

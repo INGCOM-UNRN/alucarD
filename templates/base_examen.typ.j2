@@ -93,6 +93,14 @@
       [ {{ op.texto_html | typst }} ],
       {% endfor %}
     )
+    {% if preg.lineas_justificacion %}
+    #v(6pt)
+    #text(size: 8.5pt, weight: "bold", fill: rgb("4a5568"))[{{ (definicion.configuracion_examen.titulo_justificacion or i18n.justification or 'Justificación') | typst_texto }}]
+    #block(width: 100%, stroke: 0.5pt + rgb("a0aec0"), radius: 3pt, inset: (x: 6pt), above: 3pt)[
+      {% for _ in range(preg.lineas_justificacion) %}#block(width: 100%, height: 16pt, below: 0pt, stroke: (bottom: (dash: "dotted", paint: rgb("a0aec0"), thickness: 0.5pt)))[]
+      {% endfor %}
+    ]
+    {% endif %}
     {% elif preg.tipo in ['verdadero_falso', 'truefalse'] %}
     #v(4pt)
     #grid(
