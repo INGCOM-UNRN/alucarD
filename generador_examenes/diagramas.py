@@ -43,7 +43,7 @@ PALETAS = {
             "textMain": "#0f172a", "textSub": "#1e3a8a", "textMuted": "#475569", "fillHighlight": "#fef3c7"},
 }
 
-TIPOS = ("array", "matrix", "linked_list", "stack", "queue", "tree")
+TIPOS = ("array", "matrix", "linked_list", "stack", "call_stack", "queue", "tree")
 
 
 class ErrorDiagrama(ValueError):
@@ -622,6 +622,229 @@ def _pila(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
 
 
 # ---------------------------------------------------------------------------
+# Pila de llamadas (call stack): marcos de activación y su evolución en el tiempo
+# ---------------------------------------------------------------------------
+
+MAX_MARCOS, MAX_PASOS = 10, 8
+
+
+@dataclass
+class _Var:
+    nombre: str
+    valor: str
+    tipo: str = ""
+    direccion: Optional[str] = None
+    en_blanco: bool = False
+    param: bool = False
+    tamano: Optional[int] = None       # bytes; por omisión, 8 si el tipo es un puntero y si no typeSize
+
+
+@dataclass
+class _Marco:
+    funcion: str
+    variables: List[_Var]
+    retorno: Optional[str] = None      # lo que devolvió (marco que acaba de terminar)
+    terminado: bool = False            # `popped`: ya retornó; se dibuja punteado
+    linea: Optional[str] = None        # `returnTo`: a dónde vuelve
+
+
+def _texto(valor: Any) -> str:
+    if valor is None:
+        return ""
+    if isinstance(valor, bool):
+        return "true" if valor else "false"
+    if isinstance(valor, list):
+        return "[" + ", ".join(_texto(v) for v in valor) + "]"
+    return str(valor)
+
+
+def _variables(dato: Any, param: bool, donde: str) -> List[_Var]:
+    """`{x: 5, p: "&x"}` o `[{name: x, value: 5, type: int, addr: 0x7FFC, blank: true}, "y = 3"]`."""
+    if dato is None:
+        return []
+    if isinstance(dato, dict):
+        return [_Var(str(k), _texto(v), param=param) for k, v in dato.items()]
+    if not isinstance(dato, list):
+        raise ErrorDiagrama(f"{donde}: las variables van como diccionario o lista")
+    salida = []
+    for v in dato:
+        if isinstance(v, str) and "=" in v:
+            nombre, _, valor = v.partition("=")
+            salida.append(_Var(nombre.strip(), valor.strip(), param=param))
+        elif isinstance(v, dict) and "name" in v:
+            addr = v.get("addr")
+            tam = v.get("size")
+            salida.append(_Var(str(v["name"]), _texto(v.get("value")), str(v.get("type") or ""),
+                               _fmt_hex(_hex(addr)) if addr not in (None, "") else None,
+                               bool(v.get("blank")), param, _entero(tam, 4, 1, 4096) if tam is not None else None))
+        else:
+            raise ErrorDiagrama(f"{donde}: variable inválida {v!r} (se espera 'x = 5' o name/value)")
+    return salida
+
+
+def _marcos(dato: Any, donde: str) -> List[_Marco]:
+    if not isinstance(dato, list) or not dato:
+        raise ErrorDiagrama(f"{donde}: 'frames' tiene que ser una lista de marcos (de main hacia el tope)")
+    if len(dato) > MAX_MARCOS:
+        raise ErrorDiagrama(f"{donde}: {len(dato)} marcos; el máximo es {MAX_MARCOS}")
+    marcos = []
+    for i, f in enumerate(dato):
+        if not isinstance(f, dict) or not f.get("function"):
+            raise ErrorDiagrama(f"{donde}: el marco {i} necesita 'function'")
+        variables = (_variables(f.get("params"), True, f"{donde}, {f['function']}")
+                     + _variables(f.get("vars"), False, f"{donde}, {f['function']}"))
+        retorno = f.get("returns")
+        marcos.append(_Marco(str(f["function"]), variables, None if retorno is None else _texto(retorno),
+                             bool(f.get("popped")), f.get("returnTo")))
+    return marcos
+
+
+def _flechas(dato: Any, marcos: List[_Marco], donde: str) -> List[Tuple[int, int, int, int]]:
+    """`"1.p -> 0.x"`: de la variable p del marco 1 a la x del 0 (índice desde main, o nombre de función)."""
+    if not dato:
+        return []
+    partes = [p for p in (dato.split(";") if isinstance(dato, str) else dato) if str(p).strip()]
+
+    def ubicar(ref: str) -> Tuple[int, int]:
+        marco, _, var = ref.strip().rpartition(".")
+        if not marco or not var:
+            raise ErrorDiagrama(f"{donde}: referencia {ref!r} inválida (se espera marco.variable)")
+        if marco.isdigit():
+            im = int(marco)
+        else:  # por nombre: el marco más alto de esa función
+            im = next((k for k in range(len(marcos) - 1, -1, -1) if marcos[k].funcion == marco), -1)
+        if not 0 <= im < len(marcos):
+            raise ErrorDiagrama(f"{donde}: no hay marco {marco!r}")
+        iv = next((k for k, v in enumerate(marcos[im].variables) if v.nombre == var), -1)
+        if iv < 0:
+            raise ErrorDiagrama(f"{donde}: el marco {marcos[im].funcion} no tiene la variable {var!r}")
+        return im, iv
+
+    flechas = []
+    for p in partes:
+        origen, sep, destino = str(p).partition("->")
+        if not sep:
+            raise ErrorDiagrama(f"{donde}: flecha {p!r} inválida (se espera 'marco.var -> marco.var')")
+        flechas.append((*ubicar(origen), *ubicar(destino)))
+    return flechas
+
+
+def _pila_llamadas(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
+    """Marcos de activación apilados desde main; con `steps`, la pila en varios momentos."""
+    if b.get("steps") is not None:
+        pasos_dato = b["steps"]
+        if not isinstance(pasos_dato, list) or not pasos_dato:
+            raise ErrorDiagrama("'steps' tiene que ser una lista de momentos, cada uno con 'frames'")
+        if len(pasos_dato) > MAX_PASOS:
+            raise ErrorDiagrama(f"{len(pasos_dato)} pasos; el máximo es {MAX_PASOS}")
+        pasos = []
+        for k, p in enumerate(pasos_dato):
+            if not isinstance(p, dict):
+                raise ErrorDiagrama(f"el paso {k} tiene que tener 'frames'")
+            donde = f"paso {k}"
+            marcos = _marcos(p.get("frames"), donde)
+            pasos.append((str(p.get("label") or f"Paso {k + 1}"), marcos, _flechas(p.get("pointers"), marcos, donde)))
+    else:
+        marcos = _marcos(b.get("frames"), "pila de llamadas")
+        pasos = [(str(b.get("label") or ""), marcos, _flechas(b.get("pointers"), marcos, "pila de llamadas"))]
+
+    direcciones = bool(b.get("showAddresses"))
+    base, paso_dir = _hex(b.get("baseAddr"), 0x7FFC), _entero(b.get("typeSize"), 4, 1, 64)
+    sin_valores, con_tipos = bool(b.get("blankValues")), bool(b.get("showTypes"))
+    top = _encabezado(c, b)
+
+    # Medidas comunes a todos los pasos, para que se puedan comparar.
+    todas = [v for _, ms, _ in pasos for m in ms for v in m.variables]
+    rotulo = (lambda v: f"{v.tipo} {v.nombre}".strip() if con_tipos else v.nombre)
+    nombre_w = max([len(rotulo(v)) for v in todas] + [4]) * 7.4 + 18
+    valor_w = max(58, max([len(v.valor) for v in todas] + [1]) * 8.2 + 22)
+    dir_w = 62 if direcciones else 0
+    cab_h, fila_h, sep = 24, 26, 6
+    def nota(m: _Marco) -> str:
+        """Lo que va a la derecha del título: lo que devolvió o a dónde vuelve."""
+        return f"devolvió {m.retorno}" if m.retorno is not None else f"vuelve a {m.linea}" if m.linea else ""
+
+    marco_w = max(dir_w + nombre_w + valor_w + 8,
+                  max(len(m.funcion + "(" + ", ".join(v.nombre for v in m.variables if v.param) + ")") * 7.6
+                      + 24 + len(nota(m)) * 6.4 for _, ms, _ in pasos for m in ms))
+    max_flechas = max(len(f) for _, _, f in pasos)
+    margen_flechas = (16 + 10 * max_flechas) if max_flechas else 0
+
+    def alto_marco(m: _Marco) -> float:
+        return cab_h + max(1, len(m.variables)) * fila_h + 6
+
+    alto_pila = max(sum(alto_marco(m) + sep for m in ms) for _, ms, _ in pasos)
+    etiquetas = any(et for et, _, _ in pasos)
+    y_base = top + (24 if etiquetas else 8) + alto_pila  # la base (main) alineada en todos los pasos
+    col_w = marco_w + margen_flechas + 40
+
+    for col, (etiqueta, marcos, flechas) in enumerate(pasos):
+        x0 = col * col_w
+        if etiqueta:
+            c.t(x0, top + 14, etiqueta, size=11, peso=700, color="textSub", fuente=SANS)
+        activo = max((k for k, m in enumerate(marcos) if not m.terminado), default=-1)
+        filas_y: Dict[Tuple[int, int], float] = {}
+        # La pila crece hacia abajo: la primera variable de main está en baseAddr y cada una de las
+        # siguientes, `tamaño` bytes más abajo.
+        dir_actual: Optional[int] = None
+        y = y_base
+        for k, m in enumerate(marcos):
+            h = alto_marco(m)
+            y -= h
+            borde = 2.5 if k == activo else 1.5
+            if m.terminado:
+                c.add(f'<rect x="{x0:.1f}" y="{y:.1f}" width="{marco_w:.1f}" height="{h:.1f}" rx="4" fill="none" '
+                      f'stroke="{c.pal["strokeMuted"]}" stroke-width="1.5" stroke-dasharray="5 3"/>')
+            else:
+                c.r(x0, y, marco_w, h, trazo=borde, rx=4)
+            c.add(f'<rect x="{x0 + 1:.1f}" y="{y + 1:.1f}" width="{marco_w - 2:.1f}" height="{cab_h - 1}" rx="3" '
+                  f'fill="{c.pal["fillHighlight" if k == activo else "fillHeader"]}"/>')
+            c.linea(x0, y + cab_h, x0 + marco_w, y + cab_h, color="strokeMuted" if m.terminado else "strokeMain",
+                    ancho=1, flecha=None)
+            color_txt = "textMuted" if m.terminado else "textMain"
+            titulo = m.funcion + "(" + ", ".join(v.nombre for v in m.variables if v.param) + ")"
+            c.t(x0 + 8, y + 16, titulo, size=11.5, peso=700, color=color_txt)
+            if nota(m):
+                c.t(x0 + marco_w - 8, y + 16, nota(m), size=9.5, peso=700 if m.retorno is not None else 400,
+                    color="textSub", ancla="end")
+            if not m.variables:
+                c.t(x0 + 10, y + cab_h + 18, "(sin variables)", size=9.5, color="textMuted")
+            for iv, v in enumerate(m.variables):
+                fy = y + cab_h + 3 + iv * fila_h
+                if direcciones:
+                    tam = v.tamano or (8 if "*" in v.tipo else paso_dir)
+                    dir_actual = base if dir_actual is None else dir_actual - tam
+                    if v.direccion:
+                        dir_actual = _hex(v.direccion)
+                    c.t(x0 + 8, fy + 16, "0x____" if b.get("blankAddrs") else _fmt_hex(dir_actual), size=8.5,
+                        color="textSub")
+                c.t(x0 + dir_w + 10, fy + 16, rotulo(v), size=11, color=color_txt,
+                    peso=600 if v.param else 400)
+                vx = x0 + dir_w + nombre_w
+                c.r(vx, fy + 2, valor_w - 8, fila_h - 6, relleno="fillCell", trazo=1.2, rx=2)
+                if v.valor and not (sin_valores or v.en_blanco):
+                    c.t(vx + (valor_w - 8) / 2, fy + 17, v.valor, size=12, peso=700, color=color_txt,
+                        ancla="middle")
+                else:
+                    c.vacio(vx + 6, vx + valor_w - 14, fy + fila_h - 7)
+                filas_y[(k, iv)] = fy + fila_h / 2 - 1
+            y -= sep
+        # La base de la pila (debajo de main).
+        c.linea(x0 - 6, y_base + 2, x0 + marco_w + 6, y_base + 2, color="strokeMain", ancho=2.5, flecha=None)
+        # Punteros: salen del valor, rodean por la derecha y entran al valor apuntado.
+        borde_valor = x0 + dir_w + nombre_w + valor_w - 8
+        for n, (im, iv, jm, jv) in enumerate(flechas):
+            y1, y2 = filas_y[(im, iv)], filas_y[(jm, jv)]
+            xm = x0 + marco_w + 12 + n * 10
+            c.punto(borde_valor - 8, y1, radio=2.8)
+            c.add(f'<path d="M {borde_valor - 8:.1f} {y1:.1f} L {xm:.1f} {y1:.1f} L {xm:.1f} {y2:.1f} '
+                  f'L {borde_valor + 3:.1f} {y2:.1f}" fill="none" stroke="{c.pal["accentPrimary"]}" '
+                  f'stroke-width="1.6" marker-end="url(#flecha-main-{c.sufijo})"/>')
+    c.t(0, y_base + 18, "base de la pila", size=9, color="textMuted")
+    return len(pasos) * col_w - 40 + 4, y_base + 24
+
+
+# ---------------------------------------------------------------------------
 # Cola: lineal y circular
 # ---------------------------------------------------------------------------
 
@@ -902,7 +1125,7 @@ def _arbol(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
 
 
 _RENDERIZADORES: Dict[str, Callable[[_Lienzo, Dict[str, Any]], Tuple[float, float]]] = {
-    "array": _arreglo, "matrix": _matriz, "linked_list": _lista, "stack": _pila, "queue": _cola, "tree": _arbol,
+    "array": _arreglo, "matrix": _matriz, "linked_list": _lista, "stack": _pila, "call_stack": _pila_llamadas, "queue": _cola, "tree": _arbol,
 }
 
 

@@ -290,7 +290,7 @@ Probala con `alucard sintetizar <nombre> --muestra` antes de generar el banco.
 ### Diagramas de estructuras de datos (statics)
 
 Las preguntas (GIFT `[markdown]`, Markdown) y los enunciados de las consignas de deckard pueden
-incluir diagramas de arreglos, matrices, listas enlazadas, pilas, colas y árboles. Se escriben en un bloque de
+incluir diagramas de arreglos, matrices, listas enlazadas, pilas, la pila de llamadas, colas y árboles. Se escriben en un bloque de
 código `estructura`, en YAML o JSON, con el formato de bloques de
 statics (`estructuras.html`): un bloque exportado de statics se pega tal cual. alucarD lo
 dibuja como SVG, en línea en el HTML y como imagen en el PDF de Typst, sin navegador ni dependencias
@@ -317,6 +317,7 @@ addresses: [0x3B20, 0x7E10, 0x2140, 0x9A80]
 | `matrix` | `static` (por omisión), `dynamic`, `jagged` | `values` (lista de filas, o plana con `cols`), `rows`, `cols`, `name`, `elementType`, `showIndices`, `showAddresses`, `baseAddr`, `typeSize`, `highlight` (`"1,2; 0,0"` o `[[1, 2]]`), `highlightRows`, `highlightCols`, `blankValues`, `blankAddrs`. Estática: `showLinear` (la matriz en memoria, fila por fila). Dinámica (`int **m`): filas de largo propio y `null` para un puntero a NULL; `rowAddresses`. Dentada (`jagged`): además `showLengths` (por omisión, el arreglo de largos), `lengths`, `lengthsName`, `blankLengths` o `sentinel` (un centinela al final de cada fila) |
 | `linked_list` | `singly`, `doubly`, `circular`, `circular_doubly` | `values` (hasta 7), `addresses`, `headLabel`, `drawArrows`, `blankValues`, `blankNextAddrs` |
 | `stack` | `layout: vertical_multi` para varios pasos | `values` (desde la base), `capacity`, `topIndex`, `topLabel`, `traceLabels`, `showAddresses`, `blankValues`, `blankPointers` |
+| `call_stack` | | `frames` (de `main` hacia el tope; cada uno con `function`, `params`, `vars`, `returnTo`, `returns`, `popped`), `pointers` (`"1.p -> 0.x"`), `steps` (`label` + `frames`, la pila en varios momentos), `showAddresses`, `baseAddr`, `typeSize`, `showTypes`, `blankValues`, `blankAddrs` |
 | `queue` | `linear`, `circular` | `values`, `capacity`, `frontIndex`, `rearIndex`, `showPanel` (circular), `blankValues`, `blankPointers` |
 | `tree` | `binary`, `bst`, `avl`, `heap` | Nodos con `values` (por niveles, `""` = sin nodo), `insert` (inserciones de ABB; con `avl`, rebalancea) o `root` (anidado: `value`, `left`, `right`). Además `nodeStyle: struct` (nodos con `*izq`/`*der`), `nullLeaves`, `highlight`, `blankValues`, `showBalance`/`blankBalance` (AVL), `showArray` (montículo) |
 
@@ -330,6 +331,50 @@ La dentada (`jagged`) es la dinámica con filas de distinto largo y cómo se sab
 una: por omisión dibuja a la izquierda el arreglo de largos (`size_t largos[n]`, calculado de las
 filas o fijado con `lengths`); con `sentinel` agrega al final de cada fila una celda centinela (por
 ejemplo `'\0'` en un arreglo de cadenas, o `-1`).
+
+La pila de llamadas (`call_stack`) dibuja los marcos de activación desde `main` (abajo) hasta el
+tope, que se resalta. Las variables van como `{x: 5, p: "&x"}`, como `"x = 5"` o como
+`{name, value, type, addr, size, blank}`. Los parámetros se marcan en negrita y figuran en el título
+del marco. Con `showAddresses`, la primera variable de `main` está en `baseAddr` (por omisión
+`0x7FFC`) y las siguientes bajan: 8 bytes si el tipo es un puntero, `typeSize` (4) si no, o `size`.
+`pointers` traza flechas de una variable a otra, citando el marco por su índice desde `main` o por el
+nombre de la función (el más alto, si hay recursión). Con `steps`, la pila aparece en varios
+momentos, uno al lado del otro y alineados en la base, para seguir cómo cambia; un marco con
+`popped: true` y `returns` es el que acaba de retornar y se dibuja punteado. Hasta 10 marcos y 8 pasos.
+
+````text
+```estructura
+type: call_stack
+title: factorial(3)
+steps:
+  - label: "fact(3) llama a fact(2)"
+    frames:
+      - {function: main, vars: {r: "?"}}
+      - {function: fact, params: {n: 3}}
+      - {function: fact, params: {n: 2}}
+  - label: "fact(1) devuelve 1"
+    frames:
+      - {function: main, vars: {r: "?"}}
+      - {function: fact, params: {n: 3}}
+      - {function: fact, params: {n: 2}}
+      - {function: fact, params: {n: 1}, returns: 1, popped: true}
+```
+````
+
+````text
+```estructura
+type: call_stack
+showAddresses: true
+showTypes: true
+frames:
+  - function: main
+    vars: [{name: a, value: 3, type: int}, {name: b, value: 7, type: int}]
+  - function: intercambiar
+    params: [{name: x, value: "&a", type: int *}, {name: y, value: "&b", type: int *}]
+    vars: ["aux = 3"]
+pointers: "1.x -> 0.a; 1.y -> 0.b"
+```
+````
 
 Ejemplos:
 

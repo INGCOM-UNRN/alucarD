@@ -239,7 +239,7 @@ def test_typst_compila_los_diagramas(tmp_path):
     pytest.importorskip("typst")
     from generador_examenes.generators.pdf_renderer import compilar_typst_a_pdf
 
-    cuerpo = "\n\n".join(html_a_typst(f'<div class="estructura">{renderizar(b)}</div>') for b in BLOQUES + MATRICES)
+    cuerpo = "\n\n".join(html_a_typst(f'<div class="estructura">{renderizar(b)}</div>') for b in BLOQUES + MATRICES + [PILA_LLAMADAS])
     assert compilar_typst_a_pdf(f"#set page(width: 12cm, height: auto)\n{cuerpo}\n", tmp_path / "d.pdf").is_file()
 
 
@@ -345,3 +345,57 @@ def test_comando_diagramas_md(tmp_path, monkeypatch):
     md.write_text("```estructura\ntype: grafo\n```\n", encoding="utf-8")
     r = runner.invoke(app, ["diagramas-md", str(md)])
     assert _ultimo_codigo_salida["code"] == 1 and "grafo" in r.output
+
+
+PILA_LLAMADAS = {
+    "type": "call_stack", "showAddresses": True, "showTypes": True,
+    "frames": [
+        {"function": "main", "vars": [{"name": "a", "value": 3, "type": "int"}, {"name": "b", "value": 7, "type": "int"}]},
+        {"function": "intercambiar", "returnTo": "main",
+         "params": [{"name": "x", "value": "&a", "type": "int *"}, {"name": "y", "value": "&b", "type": "int *"}],
+         "vars": ["aux = 3"]},
+    ],
+    "pointers": "1.x -> 0.a; intercambiar.y -> main.b",
+}
+
+
+def test_pila_de_llamadas_marcos_direcciones_y_punteros():
+    svg = renderizar(PILA_LLAMADAS)
+    ET.fromstring(svg)
+    assert ">intercambiar(x, y)<" in svg and ">main()<" in svg and ">vuelve a main<" in svg
+    assert ">int * x<" in svg and ">&amp;a<" in svg and ">3<" in svg
+    # La pila crece hacia abajo: int de 4 bytes y punteros de 8.
+    assert re.findall(r">(0x[0-9A-F]+)<", svg) == ["0x7FFC", "0x7FF8", "0x7FF0", "0x7FE8", "0x7FE4"]
+    assert svg.count("marker-end") == 2  # una flecha por puntero
+
+
+def test_pila_de_llamadas_en_el_tiempo():
+    svg = renderizar({"type": "call_stack", "steps": [
+        {"label": "llama a fact(2)", "frames": [{"function": "main", "vars": {"r": "?"}},
+                                                {"function": "fact", "params": {"n": 2}}]},
+        {"label": "fact(1) devuelve 1", "frames": [{"function": "main", "vars": {"r": "?"}},
+                                                   {"function": "fact", "params": {"n": 2}},
+                                                   {"function": "fact", "params": {"n": 1}, "returns": 1, "popped": True}]},
+    ]})
+    ET.fromstring(svg)
+    assert ">llama a fact(2)<" in svg and ">fact(1) devuelve 1<" in svg
+    assert ">devolvió 1<" in svg and "stroke-dasharray=\"5 3\"" in svg  # el marco que retornó, punteado
+    assert svg.count(">fact(n)<") == 3
+
+
+def test_pila_de_llamadas_en_blanco():
+    svg = renderizar({**PILA_LLAMADAS, "blankValues": True, "blankAddrs": True})
+    assert ">7<" not in svg and ">0x____<" in svg
+
+
+@pytest.mark.parametrize("bloque, mensaje", [
+    ({"frames": []}, "lista de marcos"),
+    ({"frames": [{"vars": {"x": 1}}]}, "necesita 'function'"),
+    ({"frames": [{"function": "main", "vars": {"x": 1}}], "pointers": "0.x -> 0.z"}, "no tiene la variable 'z'"),
+    ({"frames": [{"function": "main", "vars": {"x": 1}}], "pointers": "0.x"}, "flecha"),
+    ({"frames": [{"function": "f"}] * 11}, "el máximo es 10"),
+    ({"steps": [{"frames": [{"function": "main"}]}] * 9}, "el máximo es 8"),
+])
+def test_pila_de_llamadas_errores(bloque, mensaje):
+    with pytest.raises(ErrorDiagrama, match=re.escape(mensaje)):
+        renderizar({"type": "call_stack", **bloque})
