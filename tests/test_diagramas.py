@@ -274,3 +274,11 @@ def test_comando_diagrama(tmp_path, monkeypatch, capsys):
     assert main() == 0
     assert sorted(p.name for p in (tmp_path / "out").iterdir()) == ["doc_3.svg", "lista.svg"]
     assert "no es una estructura" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("bloque", [{"type": "matrix", "rows": 1, "cols": 1}, {"type": "stack", "values": [1]},
+                                    {"type": "array", "values": [1]}])
+def test_el_titulo_largo_no_se_corta(bloque):
+    titulo = "Completar con la transpuesta de la matriz original"
+    raiz = ET.fromstring(renderizar({**bloque, "title": titulo}))
+    assert int(raiz.get("width")) >= len(titulo) * 8.6

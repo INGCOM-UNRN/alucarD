@@ -86,6 +86,7 @@ class _Lienzo:
     pal: Dict[str, str]
     sufijo: str
     partes: List[str] = field(default_factory=list)
+    ancho_min: float = 0  # lo que ocupan el título y el subtítulo, para no cortarlos
 
     def add(self, *piezas: str) -> None:
         self.partes.extend(piezas)
@@ -128,9 +129,11 @@ def _encabezado(c: _Lienzo, bloque: Dict[str, Any], extra: str = "") -> float:
         return 0
     if titulo:
         c.t(0, 16, titulo, size=14, peso=700, fuente=SANS)
+        c.ancho_min = max(c.ancho_min, len(str(titulo)) * 8.6)
     texto = " | ".join(p for p in (subtitulo, extra) if p)
     if texto:
         c.t(0, 32 if titulo else 14, texto, size=10.5, color="textMuted")
+        c.ancho_min = max(c.ancho_min, len(texto) * 6.4)
     return 40 if titulo else 22
 
 
@@ -917,6 +920,7 @@ def renderizar(bloque: Dict[str, Any], tinta: bool = True) -> str:
     sufijo = hashlib.sha1(json.dumps(bloque, sort_keys=True, default=str).encode()).hexdigest()[:8]
     lienzo = _Lienzo(pal, sufijo)
     ancho, alto = _RENDERIZADORES[tipo](lienzo, bloque)
+    ancho = max(ancho, lienzo.ancho_min)
     m = 8
     defs = (
         f'<defs><marker id="flecha-main-{sufijo}" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" '

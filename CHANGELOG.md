@@ -42,6 +42,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Corregido
 
+- **diagramas**: un `title` o `subtitle` más ancho que el dibujo quedaba cortado; el SVG ahora se ensancha para que entren.
 - **parser GIFT**: las marcas escapadas `\=`, `\~` y `\#` de una opción se tomaban como una opción nueva o como retroalimentación (`p->sig \=\= HEAD` se partía en tres opciones, dos «correctas»). Ahora son texto y se desescapan, en selección múltiple y en respuesta corta.
 - **sintetizador**: los dos puntos del título, el enunciado y las opciones del GIFT van en ancho completo (`：`) (`db82751`).
 - **sintetizador**: los títulos repetidos se numeran `n2`, `n3`… en lugar de `#2` (el `#` colisiona en GIFT).
