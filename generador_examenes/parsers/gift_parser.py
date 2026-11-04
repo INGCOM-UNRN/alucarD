@@ -58,6 +58,17 @@ def _extraer_bloque_respuestas(texto: str):
     return None
 
 
+
+# Marcas de GIFT: `=` correcta, `~` incorrecta, `#` retroalimentación. Escapadas con `\` son texto
+# (`\=`, `\~`, `\#`, `\{`, `\}`, `\:`), como en `p->sig \=\= NULL`.
+_MARCA = re.compile(r'(?<!\\)([=~])')
+_RETRO = re.compile(r'(?<!\\)#')
+_ESCAPE = re.compile(r'\\([=~#{}:])')
+
+
+def _desescapar(texto: str) -> str:
+    return _ESCAPE.sub(r'\1', texto)
+
 class GiftParser(BaseParser):
     """Parser para archivos en formato GIFT de Moodle"""
     
@@ -260,18 +271,17 @@ class GiftParser(BaseParser):
         """Parsea opciones de selección múltiple"""
         opciones = []
         
-        # Dividir por = (correcta) o ~ (incorrecta)
-        partes = re.split(r'([=~])', opciones_str)
+        # Dividir por = (correcta) o ~ (incorrecta); `\=` y `\~` son parte del texto.
+        partes = _MARCA.split(opciones_str)
         
         for i in range(1, len(partes), 2):
             if i + 1 < len(partes):
                 marcador = partes[i]
                 texto = partes[i + 1].strip()
                 
-                # Remover retroalimentación si existe (después de #)
-                if '#' in texto:
-                    texto = texto.split('#')[0].strip()
-                
+                # Remover retroalimentación si existe (después de un # sin escapar)
+                texto = _desescapar(_RETRO.split(texto)[0].strip())
+
                 es_correcta = (marcador == '=')
                 
                 if texto:
@@ -298,10 +308,11 @@ class GiftParser(BaseParser):
         opciones = []
         
         # En respuesta corta, las respuestas correctas empiezan con =
-        respuestas = re.findall(r'=([^=~#]+)', opciones_str)
-        
+        partes = _MARCA.split(opciones_str)
+        respuestas = [partes[i + 1] for i in range(1, len(partes) - 1, 2) if partes[i] == '=']
+
         for respuesta in respuestas:
-            texto = respuesta.strip()
+            texto = _desescapar(_RETRO.split(respuesta)[0].strip())
             if texto:
                 # Convertir el texto según el formato
                 texto_html = detect_and_convert_format(texto, formato)

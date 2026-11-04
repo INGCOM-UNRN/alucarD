@@ -92,3 +92,32 @@ def test_opciones_markdown_sin_parrafo(tmp_path):
                      encoding="utf-8")
     opciones = next(iter(GiftParser().parse(banco).values())).opciones
     assert [o.texto_html for o in opciones] == ["<code>int *const p</code>", "<code>const int *p</code>"]
+
+
+def test_marcas_escapadas_son_parte_de_la_opcion(tmp_path):
+    r"""`\=`, `\~` y `\#` en una opción son texto, no una opción ni una retroalimentación nuevas."""
+    banco = tmp_path / "escapes.gift"
+    banco.write_text(
+        "::corte:: [markdown]¿Cuándo se detiene el recorrido?\n"
+        "{\n"
+        "    =`p->sig \\=\\= HEAD`#bien\n"
+        "    ~`p->sig !\\= NULL`\n"
+        "    ~`x \\~ y` y `\\#define`\n"
+        "    ~`FRENTE \\= 3`\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    (pregunta,) = GiftParser().parse(banco).values()
+    textos = [o.texto_html for o in pregunta.opciones]
+    assert len(textos) == 4 and [o.es_correcta for o in pregunta.opciones] == [True, False, False, False]
+    assert "p-&gt;sig == HEAD" in textos[0] and "bien" not in textos[0]
+    assert "!= NULL" in textos[1]
+    assert "x ~ y" in textos[2] and "#define" in textos[2]
+    assert "FRENTE = 3" in textos[3]
+
+
+def test_respuesta_corta_con_igual_escapado(tmp_path):
+    banco = tmp_path / "corta.gift"
+    banco.write_text("::c:: ¿Operador de igualdad en C? {=\\=\\= =eq}\n", encoding="utf-8")
+    (pregunta,) = GiftParser().parse(banco).values()
+    assert [o.texto_html for o in pregunta.opciones] == ["==", "eq"]

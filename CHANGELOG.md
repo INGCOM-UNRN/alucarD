@@ -42,6 +42,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Corregido
 
+- **parser GIFT**: las marcas escapadas `\=`, `\~` y `\#` de una opción se tomaban como una opción nueva o como retroalimentación (`p->sig \=\= HEAD` se partía en tres opciones, dos «correctas»). Ahora son texto y se desescapan, en selección múltiple y en respuesta corta.
 - **sintetizador**: los dos puntos del título, el enunciado y las opciones del GIFT van en ancho completo (`：`) (`db82751`).
 - **sintetizador**: los títulos repetidos se numeran `n2`, `n3`… en lugar de `#2` (el `#` colisiona en GIFT).
 - **errores**: si Typst no compila, el aviso dice qué pregunta y de qué banco; un diagrama inválido se avisa con su pregunta; «Preguntas insuficientes» dice la sección, el pool, su filtro y qué hacer; el proyecto de `iniciar` pedía más preguntas de las que tiene su banco (`07238ad`).
