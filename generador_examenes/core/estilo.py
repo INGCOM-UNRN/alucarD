@@ -149,7 +149,7 @@ def _franja_html(franja: Franja, valores: Dict[str, str], clase: str, logo: Opti
     partes = [_html(t, valores) for t in (franja.izquierda, franja.centro, franja.derecha)]
     if not any(partes) and not logo:
         return ""
-    celdas = "".join(f'<div class="franja-{n}">{p}</div>' for n, p in zip(("izq", "centro", "der"), partes))
+    celdas = "".join(f'<div class="franja-{n}">{p}</div>' for n, p in zip(("izq", "centro", "der"), partes, strict=True))
     if logo:
         img = f'<img class="franja-logo" src="{logo}" alt="">'
         celdas = img + celdas if posicion == "izquierda" else celdas + img
