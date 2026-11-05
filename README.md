@@ -1450,6 +1450,7 @@ Al reportar un issue, incluye:
 | `alucard balance-check` | Audita que ninguna letra sea la correcta en más del 30 % de los casos en las variantes generadas. |
 | `alucard lint-gift` | Revisa (y con --fix corrige) bancos GIFT: formato, bloques estructura y, con --compilar, el código C. |
 | `alucard sintetizar` | Genera un banco de preguntas de C con daedalus: cada respuesta se verifica con gcc. |
+| `alucard repartir` | Reparte los temas en PDF entre los estudiantes, para entregarlos cifrados con uatu. |
 | `alucard diagramas-md` | Dibuja los bloques ```estructura de los Markdown como SVG versionados, para publicarlos sin alucarD. |
 | `alucard diagrama` | Dibuja estructuras de datos (arreglo, matriz, lista, pila, pila de llamadas, cola, árbol) como SVG, con el formato de bloques de statics. |
 | `alucard doctor` | Diagnostica gcc, Typst, WeasyPrint, pypdf y conectividad LanguageTool. |

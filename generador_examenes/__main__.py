@@ -766,6 +766,36 @@ def _sintetizar(
     _ultimo_codigo_salida["code"] = cli_commands.ejecutar_sintetizar(args, logging.getLogger("alucard.sintetizar"))
 
 
+@app.command("repartir")
+def _repartir(
+    temas: Path = typer.Argument(..., exists=True, file_okay=False, help="Carpeta con los examen_tema_*.pdf de `alucard build`."),
+    padron: Path = typer.Option(..., "--padron", exists=True, dir_okay=False, help="Usuarios de GitHub, uno por línea."),
+    salida: Path = typer.Option(Path("repartidos"), "-o", "--salida", help="Carpeta con una subcarpeta por usuario."),
+    semilla: int = typer.Option(42, "-s", "--semilla", help="Semilla del sorteo: la misma da el mismo reparto."),
+) -> None:
+    """Reparte los temas en PDF entre los estudiantes, para entregarlos cifrados con uatu.
+
+    Deja `<salida>/<usuario>/examen.pdf`, lo que espera `uatu-admin paquetes sellar`, y al lado
+    `<salida>.asignacion.csv` con el tema de cada uno. Los temas quedan en partes iguales y las
+    claves de corrección no se copian. Sale con 1 si el padrón o la salida no sirven.
+    """
+    from collections import Counter
+
+    from generador_examenes.core.reparto import RepartoError, repartir
+
+    try:
+        reparto = repartir(temas, padron, salida, semilla)
+    except RepartoError as error:
+        print(f"Error: {error}", file=sys.stderr)
+        _ultimo_codigo_salida["code"] = 1
+        return
+    for tema, cantidad in sorted(Counter(reparto.asignacion.values()).items()):
+        print(f"{tema}: {cantidad} estudiante(s)")
+    print(f"✓ {len(reparto.asignacion)} examen(es) en {salida}/; asignación en {reparto.registro}")
+    print("Guardá la asignación: corregís con ella. No la subas a los repositorios del examen.")
+    _ultimo_codigo_salida["code"] = 0
+
+
 @app.command("diagramas-md")
 def _diagramas_md(
     archivos: List[Path] = typer.Argument(..., exists=True, help="Archivos Markdown (o directorios) con bloques ```estructura."),

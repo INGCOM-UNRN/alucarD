@@ -768,6 +768,21 @@ tiempo, pero no la calidad de cada enunciado.
 
 ---
 
+### Entregar los temas con uatu
+
+alucarD arma exámenes para imprimir. Si el examen se rinde en la computadora, `alucard repartir` deja
+listo el tema de cada estudiante; cifrarlo y liberarlo a la hora es de `uatu-admin paquetes`:
+
+```bash
+alucard build -d parcial.yaml -n 3 -o temas
+alucard repartir temas --padron padron.txt -o repartidos
+uatu-admin paquetes sellar repartidos --key-id prof-lead-2026
+```
+
+`padron.txt` tiene un usuario de GitHub por línea. El sorteo reparte los temas en partes iguales y
+depende de `-s`. Las claves de corrección no se copian, y `repartidos.asignacion.csv` queda fuera de
+la carpeta para que no se selle con los exámenes: corregís con ese archivo.
+
 ## 4. Formatos de Salida y Contratos de Integración
 
 ### Descriptor OMR para Autograding
