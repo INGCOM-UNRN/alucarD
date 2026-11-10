@@ -1215,6 +1215,157 @@ Los exámenes y evaluaciones que integran código C son auditados previamente co
 | `1` | Error en la definición YAML, pregunta no encontrada en el banco o syntax error en GIFT. |
 | `2` | Faltan binarios indispensables del sistema (`typst`, `gcc`). |
 
+## 6. Referencia de configuración
+
+Todas las claves de la definición YAML y de `alucard.toml`. Lo que no se escribe toma el valor de
+la columna **Por omisión**. Una clave desconocida en el YAML se ignora sin aviso, así que un nombre
+mal escrito no da error: conviene revisar con `alucard validar`.
+
+**Quién manda.** La línea de comandos, después la definición YAML, después `alucard.toml` y, al final,
+el valor por omisión. `estilo` se combina clave por clave.
+
+**Rutas.** Las de `alucard.toml` son relativas a ese archivo, igual que `logo` a su archivo. Las demás
+rutas del YAML son relativas a la carpeta desde la que se ejecuta alucard.
+
+### Definición del examen (YAML)
+
+| Clave | Tipo | Por omisión | Qué hace |
+| :--- | :--- | :--- | :--- |
+| `nombre_examen` | texto | **obligatoria** | Título del examen. |
+| `institucion` | texto | **obligatoria** | Institución, en el encabezado. |
+| `materia` | texto | **obligatoria** | Materia, en el encabezado. |
+| `configuracion_examen` | sección | **obligatoria** (puede ir vacía: `{}`) | Ver [`configuracion_examen`](#configuracion_examen). |
+| `secciones_examen` | lista | **obligatoria** | Ver [`secciones_examen`](#secciones_examen). |
+| `fecha` | texto | — | Fecha, en el encabezado. |
+| `duracion_minutos` | entero | — | Duración, en el encabezado. |
+| `instrucciones_generales` | texto | — | Recuadro de instrucciones al principio. |
+| `idioma` | texto | `es` | Textos fijos del examen: `es` o `en`. |
+| `variables_personalizadas` | diccionario | `{}` | Textos con `{nombre_examen}`, `{fecha_actual}`, `{anio_actual}` y otros campos. Sólo el HTML muestra `profesor` y `aula`. |
+| `estilo` | sección | `{}` | Ver [`estilo`](#estilo). Se suma al `[estilo]` del curso. |
+| `input_banco` | lista de rutas | la del toml | Bancos `.gift` y `.xml`, o carpetas con sus subcarpetas. `-i` la reemplaza. |
+| `input_consignas` | lista de rutas | — | Carpetas de consignas prácticas de deckard. `--consignas` se suma. |
+| `repositorios_externos` | lista | `[]` | Ver [`repositorios_externos`](#repositorios_externos). `--repositorio` se suma. |
+| `output_dir` | ruta | la del toml; si no, `./output` | Carpeta de salida. `-o` la reemplaza. |
+| `subdirectorio` | ruta | — | Subcarpeta de este examen dentro de la salida. No puede ser absoluta ni usar `..`. |
+| `path_images` | ruta | la del toml | Carpeta de las imágenes de las preguntas. `-p` la reemplaza. |
+| `numero_temas` | entero | el del toml; si no, `1` | Cuántos temas generar. `-n` lo reemplaza. |
+| `semilla` | entero | la del toml; si no, `42` | Semilla del sorteo: la misma da el mismo examen. `-s` la reemplaza. |
+| `formato` | lista | la del toml; si no, `["html"]` | `html`, `pdf` o ambos. `-f` lo reemplaza. |
+
+#### `configuracion_examen`
+
+| Clave | Tipo | Por omisión | Qué hace |
+| :--- | :--- | :--- | :--- |
+| `mezclar_preguntas_dentro_seccion` | booleano | `true` | Cada tema ordena distinto las preguntas de una sección. |
+| `mezclar_opciones_dentro_pregunta` | booleano | `true` | Cada tema ordena distinto las opciones. |
+| `generar_clave_profesor` | booleano | `true` | Genera la clave de cada tema. |
+| `sortear_preguntas` | booleano | `true` | Cada pool sortea qué preguntas entran; `false` toma las primeras que pasan los filtros. |
+| `lineas_justificacion` | entero, 0 a 60 | `0` | Renglones para justificar cada pregunta de selección múltiple. |
+| `titulo_justificacion` | texto | el del idioma | Título de esos renglones. |
+| `espacio_desarrollo` | `cero`, `chico`, `mediano`, `grande` o `pagina` | `mediano` | Espacio de las preguntas de desarrollo que no piden otro. Ver [Espacio de las preguntas de desarrollo](#espacio-de-las-preguntas-de-desarrollo). |
+| `forzar_espacio_desarrollo` | booleano | `false` | `espacio_desarrollo` vale también para las preguntas que piden otro con su etiqueta. |
+| `desarrollo_en_hoja_separada` | booleano | `false` | Todas las preguntas de desarrollo en su propia hoja. Manda sobre `espacio_desarrollo` y `forzar_espacio_desarrollo`. |
+| `debug_consignas` | `titulo` o `id` | el del toml | Muestra junto a cada pregunta cuál salió del banco. Ver [`debug_consignas`](#debug_consignas). |
+| `presentacion_consignas` | sección | ver abajo | Ver [`presentacion_consignas`](#presentacion_consignas). |
+
+#### `presentacion_consignas`
+
+Va en `configuracion_examen` y, con sólo las claves que cambian, en `presentacion` de un pool.
+
+| Clave | Tipo | Por omisión | Qué hace |
+| :--- | :--- | :--- | :--- |
+| `titulo` | booleano | `true` | El título del ejercicio. |
+| `metadatos` | booleano | `false` | Tema, nivel de Bloom y minutos estimados. |
+| `enunciado` | booleano | `true` | El enunciado. |
+| `secciones_excluidas` | lista | `[]` | Secciones del enunciado a omitir, por su título o parte de él. |
+| `funciones` | booleano | `false` | Tabla con las firmas de las funciones. |
+| `cabecera` | booleano | `false` | El archivo `.h` del ejercicio. |
+| `pistas` | entero | `0` | Cuántas pistas mostrar. |
+| `espacio_respuesta` | booleano | `true` | Renglones para resolver. |
+| `lineas` | entero, 1 a 200 | `20` | Cuántos renglones. |
+| `solucion_en_clave` | booleano | `true` | La solución de la cátedra en la clave. |
+
+#### `secciones_examen`
+
+| Clave | Tipo | Por omisión | Qué hace |
+| :--- | :--- | :--- | :--- |
+| `nombre` | texto | **obligatoria** | Título de la sección. |
+| `pools` | lista | **obligatoria** | De dónde salen sus preguntas. Ver [`pools`](#pools). |
+| `instrucciones` | texto | — | Indicaciones debajo del título. |
+| `layout` | `default`, `compact-2col`, `compact-3col` o `compact-4col` | `default` | Columnas de la sección. Sólo vale en HTML: el PDF va siempre a una columna. |
+
+#### `pools`
+
+Los filtros se combinan: una pregunta tiene que pasarlos todos.
+
+| Clave | Tipo | Por omisión | Qué hace |
+| :--- | :--- | :--- | :--- |
+| `banco` | texto | — | Sólo las de ese archivo. Compara el final de la ruta: `teoria.gift` vale para `unidad1/teoria.gift`. |
+| `categoria` | texto | — | Esa categoría y sus subcategorías; `Math/*` también vale. |
+| `categorias` | lista | `[]` | Cualquiera de esas categorías. Se ignora si hay `categoria`. |
+| `tipos` | lista | `[]` | Cualquiera de esos tipos: `seleccion_multiple`, `verdadero_falso`, `respuesta_corta`, `ensayo`, `emparejamiento`, `numerica`, `desarrollo` o `consigna_practica`. |
+| `etiquetas` | lista | `[]` | Las que tengan al menos una de esas etiquetas. |
+| `preguntas_fijadas` | lista | `[]` | Ids de preguntas exactas. Con ella no se aplican los demás filtros ni el sorteo, y un id que no existe se saltea. |
+| `cantidad` | entero | todas | Cuántas preguntas toma. |
+| `accion_si_insuficiente` | `error`, `advertir` o `usar_todas` | `error` | Qué hacer si hay menos que `cantidad`: frenar, seguir con un aviso o seguir sin aviso. |
+| `puntaje_fijo_por_pregunta` | número | el de la pregunta | Puntaje de cada pregunta del pool. |
+| `minutos_min`, `minutos_max` | entero | — | Tiempo estimado de la consigna. Las preguntas sin tiempo estimado quedan afuera. |
+| `presupuesto_minutos` | entero | — | Suma máxima de minutos de lo elegido. |
+| `presentacion` | sección | la del examen | Cambia parte de [`presentacion_consignas`](#presentacion_consignas) para este pool. |
+| `lineas_justificacion` | entero, 0 a 60 | la del examen | Renglones de justificación de este pool. |
+
+#### `repositorios_externos`
+
+| Clave | Tipo | Por omisión | Qué hace |
+| :--- | :--- | :--- | :--- |
+| `ruta` | ruta | **obligatoria** | Carpeta del repositorio. |
+| `tipo` | `auto`, `preguntas` o `deckard` | `auto` | Qué contiene. `auto` es `deckard` si encuentra un `ejercicio.yaml`. |
+| `nombre` | texto | nombre de la carpeta | Para la etiqueta `repo:<nombre>`. |
+| `incluir_no_publicados` | booleano | `false` | Suma las consignas con `publicar: false`. |
+
+#### `estilo`
+
+Va en `estilo` de la definición y en `[estilo]` de `alucard.toml`. Más detalle en
+[Estilo del examen](#estilo-del-examen-estilo).
+
+| Clave | Tipo | Por omisión | Qué hace |
+| :--- | :--- | :--- | :--- |
+| `fuente` | texto o lista | Liberation Sans (PDF), Arial (HTML) | Familias del texto; gana la primera instalada. |
+| `fuente_codigo` | texto o lista | DejaVu Sans Mono (PDF), Courier New (HTML) | Familias del código. |
+| `tamano` | número, 7 a 16 | `10` (PDF) | Puntos del texto. |
+| `encabezado`, `pie` | texto o `izquierda`, `centro` y `derecha` | institución, materia y tema; examen y página | Franjas de cada página. Un texto solo va al centro. Admiten `{institucion}`, `{materia}`, `{examen}`, `{fecha}`, `{tema}`, `{pagina}` y `{paginas}`. |
+| `logo` | ruta | — | PNG, JPG, GIF o SVG. |
+| `logo_posicion` | `izquierda` o `derecha` | `izquierda` | Dónde va el logotipo. |
+| `logo_alto_mm` | número, 4 a 30 | `12` | Alto del logotipo. |
+| `alto_contraste` | booleano | `false` | Texto negro, sin grises, y bordes negros. |
+
+### Configuración del curso (`alucard.toml`)
+
+| Clave | Tipo | Por omisión | Qué hace |
+| :--- | :--- | :--- | :--- |
+| `definicion` | texto o lista | — | Los exámenes de `alucard generar` y `alucard validar` sin `-d`. |
+| `input_banco` | texto o lista | — | Bancos o carpetas, si el YAML no los dice. |
+| `output_dir` | ruta | — | Carpeta de salida, si el YAML no la dice. |
+| `path_images` | ruta | — | Carpeta de imágenes, si el YAML no la dice. |
+| `numero_temas` | entero | — | Temas, si el YAML no lo dice. |
+| `semilla` | entero | — | Semilla, si el YAML no la dice. |
+| `formato` | texto o lista | — | `html`, `pdf` o ambos, si el YAML no lo dice. |
+| `debug_consignas` | `"titulo"`, `"id"`, `true` o `false` | `false` | Muestra junto a cada pregunta cuál salió del banco. `true` es `"titulo"`. |
+
+#### `[ortografia]`
+
+| Clave | Tipo | Por omisión | Qué hace |
+| :--- | :--- | :--- | :--- |
+| `servidor` | texto | API pública | Servidor de LanguageTool. |
+| `idioma` | texto | `es-AR` | Idioma para LanguageTool. |
+| `ignorar_reglas` | lista | `[]` | Reglas que no se informan. |
+| `palabras` | lista | `[]` | Diccionario de la cátedra. |
+| `diccionario` | ruta | — | Más palabras, una por renglón; `#` comenta. |
+
+#### `[estilo]`
+
+Las mismas claves que [`estilo`](#estilo). La definición manda clave por clave.
+
 ### `debug_consignas`
 
 Para revisar qué salió en cada tema: el examen muestra, junto a «Pregunta N.», el título o el id de la
