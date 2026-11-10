@@ -11,6 +11,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Agregado
 
+- **sortear_por_tema**: en `configuracion_examen` o en un pool, cada tema toma otras preguntas y se usan todas las candidatas antes de repetir. El informe muestra las de todos los temas.
 - **números de línea**: `configuracion_examen.numerar_codigo` para todo el examen, y `// [numerar]` y `// [sin-numerar]` antes de un bloque de código. Moodle descarta las marcas.
 - **generar, validar**: terminan con un resumen de los exámenes que fallaron, con el motivo, y de los avisos a revisar antes de imprimir. Con `--json`, van en `motivo` y `avisos`.
 - **diagramas**: `linked_list` y `matrix` dibujan el stack y el heap (`zones`), una estructura cabecera (`header`) o dueña de la matriz (`owner`), con punteros a los nodos, a las filas y a los largos, y `nodeType`, `lengthsType` y `lengthsAddr`. Las matrices aceptan direcciones simbólicas (`@M`, `@F0`).

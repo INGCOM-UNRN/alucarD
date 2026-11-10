@@ -266,6 +266,7 @@ def construir_pool_examen(
     definicion: DefinicionExamen, 
     banco: Dict[str, Pregunta],
     semilla: Optional[int] = None,
+    tema: int = 0,
 ) -> Dict[str, Any]:
     """
     Construye el pool de preguntas según la definición del examen
@@ -274,6 +275,7 @@ def construir_pool_examen(
         definicion: Definición del examen con secciones y pools
         banco: Banco completo de preguntas disponibles
         semilla: Semilla del sorteo de cada pool (por omisión, la de la definición)
+        tema: Número de tema desde 0, para los pools que sortean por tema
         
     Returns:
         Diccionario con estructura del examen y preguntas seleccionadas
@@ -297,6 +299,7 @@ def construir_pool_examen(
             preguntas_pool = _filtrar_preguntas_pool(
                 pool, banco, definicion.configuracion_examen.presentacion_consignas, rng=rng,
                 donde=f"la sección «{seccion_def.nombre}», pool {pool_idx}",
+                tema=tema if _sortea_por_tema(pool, definicion.configuracion_examen) else 0,
             )
             preguntas_seccion.extend(_con_numeros_de_linea(_con_espacio_de_desarrollo(
                 _con_justificacion(preguntas_pool, pool, definicion.configuracion_examen),
@@ -315,6 +318,20 @@ def construir_pool_examen(
         )
     
     return {'secciones': secciones_examen}
+
+
+def _sortea_por_tema(pool: PoolConfig, configuracion: ConfiguracionExamen) -> bool:
+    return configuracion.sortear_por_tema if pool.sortear_por_tema is None else pool.sortear_por_tema
+
+
+def pools_de_temas(definicion: DefinicionExamen, banco: Dict[str, Pregunta], semilla: int,
+                   numero_temas: int) -> List[Dict[str, Any]]:
+    """El pool de cada tema: el mismo, salvo que algún pool sortee por tema."""
+    por_tema = any(_sortea_por_tema(pool, definicion.configuracion_examen)
+                   for seccion in definicion.secciones_examen for pool in seccion.pools)
+    if not por_tema:
+        return [construir_pool_examen(definicion, banco, semilla)] * numero_temas
+    return [construir_pool_examen(definicion, banco, semilla, tema=i) for i in range(numero_temas)]
 
 
 def lineas_justificacion(pool: PoolConfig, configuracion: ConfiguracionExamen) -> int:
@@ -426,7 +443,7 @@ def candidatas_pool(pool: PoolConfig, banco: Dict[str, Pregunta]) -> List[Pregun
 
 def _filtrar_preguntas_pool(pool: PoolConfig, banco: Dict[str, Pregunta],
                             presentacion_general: Optional[PresentacionConsigna] = None,
-                            rng: Optional[random.Random] = None, donde: str = "") -> List[Pregunta]:
+                            rng: Optional[random.Random] = None, donde: str = "", tema: int = 0) -> List[Pregunta]:
     """
     Filtra y selecciona preguntas según la configuración del pool; con `rng`, las que entran se
     sortean (las fijadas no)
@@ -450,6 +467,11 @@ def _filtrar_preguntas_pool(pool: PoolConfig, banco: Dict[str, Pregunta],
     if rng is not None:
         candidatas = sorted(candidatas, key=lambda p: p.id)  # independiente del orden de carga
         rng.shuffle(candidatas)
+
+    # Por tema: el mismo orden, corrido. Así se usan todas antes de repetir, cosa que no asegura el azar.
+    if tema and pool.cantidad and candidatas:
+        corrimiento = tema * pool.cantidad % len(candidatas)
+        candidatas = candidatas[corrimiento:] + candidatas[:corrimiento]
 
     # Filtro 6: presupuesto de minutos para todo el pool (entran en orden mientras alcance)
     if pool.presupuesto_minutos is not None:

@@ -704,10 +704,12 @@ def generar_examen(args, logger) -> int:
         
         # Construir pool del examen
         logger.info("Construyendo pool del examen...")
-        examen_base = logic.construir_pool_examen(definicion, banco_completo, semilla)
-        
+        bases = logic.pools_de_temas(definicion, banco_completo, semilla, max(numero_temas, 1))
+        examen_base = bases[0]
+        distintas = list({id(b): b for b in bases}.values())  # sin sorteo por tema, es una sola
+
         # Completitud de la clave (QoL #7): sin opción correcta no se imprime.
-        sin_clave = logic.auditar_claves(examen_base)
+        sin_clave = list(dict.fromkeys(p for b in distintas for p in logic.auditar_claves(b)))
         if sin_clave:
             for problema in sin_clave:
                 logger.error(f"Clave incompleta: {problema}")
@@ -716,11 +718,13 @@ def generar_examen(args, logger) -> int:
             return 1
 
         # Un diagrama mal escrito sale en el examen como un aviso: se dice en qué pregunta antes.
-        for problema in diagramas_invalidos(examen_base) + formulas_invalidas(examen_base):
+        for problema in dict.fromkeys(p for b in distintas for p in diagramas_invalidos(b) + formulas_invalidas(b)):
             _avisar(args, problema)
 
         # Calcular puntaje total
         puntaje_total = logic.calcular_puntaje_total(examen_base)
+        if len({logic.calcular_puntaje_total(b) for b in distintas}) > 1:
+            _avisar(args, "con sortear_por_tema, los temas no suman lo mismo: fijá puntaje_fijo_por_pregunta en sus pools.")
         logger.info(f"Puntaje total del examen: {puntaje_total}")
         
         # Modo validación
@@ -775,7 +779,7 @@ def generar_examen(args, logger) -> int:
             
             # Mezclar examen para este tema
             examen_mezclado = logic.mezclar_examen(
-                examen_base,
+                bases[i],
                 semilla_tema,
                 definicion.configuracion_examen,
                 uso_global=uso_global,

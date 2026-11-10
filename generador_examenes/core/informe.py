@@ -68,6 +68,21 @@ def no_publicadas(rutas: Iterable[str]) -> List[Pregunta]:
     return resultado
 
 
+def _temas_distintos(temas: List[Dict[str, Any]]) -> bool:
+    return len({frozenset(p.id for s in t.get("secciones", []) for p in s.get("preguntas", [])) for t in temas}) > 1
+
+
+def _preguntas_de_todos_los_temas(examen_base: Dict[str, Any], temas: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Con sorteo por tema, el examen base no alcanza: cada sección con lo que salió en algún tema."""
+    if not _temas_distintos(temas):
+        return examen_base
+    secciones = []
+    for i, seccion in enumerate(examen_base.get("secciones", [])):
+        todas = {p.id: p for t in temas for p in t["secciones"][i].get("preguntas", [])}
+        secciones.append({**seccion, "preguntas": list(todas.values())})
+    return {**examen_base, "secciones": secciones}
+
+
 def armar_informe(definicion: DefinicionExamen, banco: Dict[str, Pregunta], examen_base: Dict[str, Any],
                   temas: List[Dict[str, Any]], semilla: int, formatos: List[str]) -> str:
     from generador_examenes.core.logic import candidatas_pool
@@ -75,6 +90,7 @@ def armar_informe(definicion: DefinicionExamen, banco: Dict[str, Pregunta], exam
     l: List[str] = [f"# Informe de generación: {definicion.nombre_examen}", ""]
     l.append(f"{datetime.now():%d/%m/%Y %H:%M} · semilla {semilla} · {len(temas)} tema(s) · "
              f"{', '.join(formatos)}")
+    examen_base = _preguntas_de_todos_los_temas(examen_base, temas)
     l += ["", "## Pools", "", "| Sección | Pool | Filtro | Podía elegir | Eligió |", "| --- | --- | --- | ---: | ---: |"]
     pools_consignas: List[PoolConfig] = []
     for seccion_def, seccion in zip(definicion.secciones_examen, examen_base.get("secciones", []), strict=False):
@@ -96,6 +112,8 @@ def armar_informe(definicion: DefinicionExamen, banco: Dict[str, Pregunta], exam
 
     if len(temas) > 1:
         l += ["", "## Orden de cada tema", "",
+              "Cada tema toma sus preguntas de los pools que sortean por tema; cambian su orden y el de las opciones."
+              if _temas_distintos(temas) else
               "Todos los temas tienen las mismas preguntas; cambian su orden y el de las opciones.", ""]
         for i, tema in enumerate(temas, 1):
             orden = [p.nombre for s in tema.get("secciones", []) for p in s.get("preguntas", [])]

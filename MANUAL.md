@@ -1087,6 +1087,21 @@ la semilla del examen (`semilla` / `-s`): la misma semilla da el mismo examen, y
 las consignas elegidas. `configuracion_examen.sortear_preguntas: false` toma las primeras que pasan
 los filtros. Los temas (`-n`) comparten las preguntas y cambian su orden y el de las opciones.
 
+**Otra pregunta en cada tema.** Con `sortear_por_tema: true`, cada tema toma otras preguntas: en
+`configuracion_examen` vale para todos los pools, y en un pool sólo para él, que es lo que conviene si el
+resto del examen debe ser igual para todos. Los temas recorren las candidatas en orden, así que se usan
+todas antes de repetir: con 4 candidatas y 8 temas, cada pregunta sale en 2 temas.
+
+```yaml
+pools:
+  - categoria: "analisis/parcial_3_diagramas"
+    cantidad: 1
+    sortear_por_tema: true
+    puntaje_fijo_por_pregunta: 20.0
+```
+
+Sin puntaje fijo, los temas pueden sumar distinto; `generar` lo avisa.
+
 **Comandos.** Todos usan las fuentes de la definición:
 
 ```bash
@@ -1360,6 +1375,7 @@ rutas del YAML son relativas a la carpeta desde la que se ejecuta alucard.
 | `mezclar_opciones_dentro_pregunta` | booleano | `true` | Cada tema ordena distinto las opciones. |
 | `generar_clave_profesor` | booleano | `true` | Genera la clave de cada tema. |
 | `sortear_preguntas` | booleano | `true` | Cada pool sortea qué preguntas entran; `false` toma las primeras que pasan los filtros. |
+| `sortear_por_tema` | booleano | `false` | Cada tema toma otras preguntas de cada pool. Sin esto, los temas comparten las preguntas. |
 | `lineas_justificacion` | entero, 0 a 60 | `0` | Renglones para justificar cada pregunta de selección múltiple. |
 | `titulo_justificacion` | texto | el del idioma | Título de esos renglones. |
 | `espacio_desarrollo` | `cero`, `chico`, `mediano`, `grande` o `pagina` | `mediano` | Espacio de las preguntas de desarrollo que no piden otro. Ver [Espacio de las preguntas de desarrollo](#espacio-de-las-preguntas-de-desarrollo). |
@@ -1414,6 +1430,7 @@ Los filtros se combinan: una pregunta tiene que pasarlos todos.
 | `presupuesto_minutos` | entero | — | Suma máxima de minutos de lo elegido. |
 | `presentacion` | sección | la del examen | Cambia parte de [`presentacion_consignas`](#presentacion_consignas) para este pool. |
 | `lineas_justificacion` | entero, 0 a 60 | la del examen | Renglones de justificación de este pool. |
+| `sortear_por_tema` | booleano | la del examen | Cada tema toma otras preguntas de este pool. |
 
 #### `repositorios_externos`
 

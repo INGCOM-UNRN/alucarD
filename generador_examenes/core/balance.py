@@ -46,10 +46,10 @@ def armar_temas(definicion, bancos: Optional[Sequence[Path]], numero_temas: int,
     from generador_examenes.core import logic
 
     banco = logic.cargar_banco_definicion(definicion, list(bancos) if bancos else None)
-    base = logic.construir_pool_examen(definicion, banco, semilla)
+    bases = logic.pools_de_temas(definicion, banco, semilla, numero_temas)
     uso_global: Dict[int, int] = {}
     return [logic.mezclar_examen(base, semilla + i, definicion.configuracion_examen, uso_global=uso_global)
-            for i in range(numero_temas)]
+            for i, base in enumerate(bases)]
 
 
 def auditar_balance(temas: Sequence[Dict[str, Any]], umbral: float = UMBRAL_POR_OMISION) -> Dict[str, Any]:

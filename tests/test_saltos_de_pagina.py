@@ -7,7 +7,7 @@ from typer.testing import CliRunner
 
 from generador_examenes.__main__ import app
 from generador_examenes.config import proyecto
-from generador_examenes.core.logic import construir_pool_examen
+from generador_examenes.core.logic import construir_pool_examen, pools_de_temas
 from generador_examenes.core.markdown_utils import markdown_to_html, numeros_en_html
 from generador_examenes.core.consignas import presentar_consigna
 from generador_examenes.core.models import DefinicionExamen, PresentacionConsigna, Pregunta
@@ -387,3 +387,33 @@ def test_una_marca_de_numeros_arriba_del_titulo_no_rompe_la_pregunta(tmp_path):
 def test_las_marcas_de_numeros_funcionan_sin_markdown(tmp_path):
     (p,) = pregunta(tmp_path, f"::a::Uno\n// [numerar]\n{CODIGO}{{}}\n")
     assert 'data-numerar="si"' in p.enunciado_html
+
+
+CUATRO = "".join(f"::p{i}::Pregunta {i}\n{{}}\n\n" for i in range(4))
+
+
+def nombres_por_tema(tmp_path, temas, config=None, pool=None):
+    banco = tmp_path / "banco.gift"
+    banco.write_text(CUATRO, encoding="utf-8")
+    definicion = DefinicionExamen(nombre_examen="x", institucion="x", materia="x", configuracion_examen=config or {},
+                                  secciones_examen=[{"nombre": "s", "pools": [{"cantidad": 1, **(pool or {})}]}])
+    bases = pools_de_temas(definicion, GiftParser().parse(banco), 7, temas)
+    return [base["secciones"][0]["preguntas"][0].nombre for base in bases]
+
+
+def test_sin_la_opcion_los_temas_comparten_las_preguntas(tmp_path):
+    assert len(set(nombres_por_tema(tmp_path, 4))) == 1
+
+
+@pytest.mark.parametrize("config, pool", [({"sortear_por_tema": True}, None), (None, {"sortear_por_tema": True})])
+def test_cada_tema_toma_otra_pregunta_y_se_usan_todas_antes_de_repetir(tmp_path, config, pool):
+    nombres = nombres_por_tema(tmp_path, 8, config, pool)
+    assert len(set(nombres[:4])) == 4 and nombres[4:] == nombres[:4]
+
+
+def test_el_pool_manda_sobre_la_opcion_general(tmp_path):
+    assert len(set(nombres_por_tema(tmp_path, 4, {"sortear_por_tema": True}, {"sortear_por_tema": False}))) == 1
+
+
+def test_el_primer_tema_no_cambia_con_la_opcion(tmp_path):
+    assert nombres_por_tema(tmp_path, 1)[0] == nombres_por_tema(tmp_path, 1, {"sortear_por_tema": True})[0]

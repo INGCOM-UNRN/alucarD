@@ -170,7 +170,9 @@ class PoolConfig(BaseModel):
     # Renglones de justificación de las preguntas de selección múltiple de este pool; por omisión, los
     # de `configuracion_examen.lineas_justificacion` (0: sin justificación en este pool).
     lineas_justificacion: Optional[int] = Field(default=None, ge=0, le=60)
-    
+    # Cada tema toma otras preguntas de este pool; por omisión, lo de `configuracion_examen.sortear_por_tema`.
+    sortear_por_tema: Optional[bool] = None
+
     def __str__(self) -> str:
         filtros = []
         if self.banco:
@@ -217,6 +219,8 @@ class ConfiguracionExamen(BaseModel):
     generar_clave_profesor: bool = True
     # Cada pool sortea qué preguntas entran (con la semilla del examen); false: las primeras que pasan los filtros.
     sortear_preguntas: bool = True
+    # Cada tema toma otras preguntas de cada pool. Sin esto, comparten las preguntas y cambia el orden.
+    sortear_por_tema: bool = False
     presentacion_consignas: PresentacionConsigna = Field(default_factory=PresentacionConsigna)
     # Sección «Justificación» con renglones debajo de cada pregunta de selección múltiple (0: sin ella).
     # Cada pool puede cambiar la cantidad con su propio `lineas_justificacion`.
