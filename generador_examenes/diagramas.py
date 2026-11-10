@@ -1,9 +1,11 @@
 """Diagramas SVG de estructuras de datos, con el formato de bloques de statics.
 
 Porta a Python los renderizadores de statics (`estructuras.html`: arreglo, lista enlazada simple,
-doble y circular, pila, cola lineal y circular) y suma matrices (estáticas, con su disposición en
-memoria, y dinámicas como arreglo de punteros a filas) y árboles (binario, ABB, AVL con factor de
-balance y montículo), para usarlos en preguntas y consignas sin navegador.
+doble y circular, pila, cola lineal y circular, tabla de traza) y suma matrices (estáticas, con su
+disposición en memoria, dinámicas como arreglo de punteros a filas, dentadas y planas), árboles
+(binario, ABB, AVL con factor de balance y montículo), la pila y el árbol de llamadas, structs (offsets,
+relleno y tipos opacos), TADs, curvas y clases de complejidad, diagramas de flujo y tablas de costos,
+para usarlos en preguntas y consignas sin navegador.
 
 Un bloque es un diccionario con las mismas claves que statics (`type`, `values`, `variant`,
 `capacity`…), así que un bloque exportado de statics se puede pegar tal cual. En Markdown va en un
@@ -44,7 +46,8 @@ PALETAS = {
             "textMain": "#0f172a", "textSub": "#1e3a8a", "textMuted": "#475569", "fillHighlight": "#fef3c7"},
 }
 
-TIPOS = ("array", "matrix", "linked_list", "stack", "call_stack", "queue", "tree")
+TIPOS = ("array", "matrix", "linked_list", "stack", "call_stack", "call_tree", "queue", "tree", "struct", "adt",
+         "complexity", "flowchart", "cost_table", "trace_table")
 
 
 class ErrorDiagrama(ValueError):
@@ -142,6 +145,16 @@ def _encabezado(c: _Lienzo, bloque: Dict[str, Any], extra: str = "") -> float:
 # Arreglo
 # ---------------------------------------------------------------------------
 
+def _punteros(b: Dict[str, Any], limite: int) -> Dict[int, List[str]]:
+    """`pointers: "p:0, q:3"` como {índice: [etiquetas]}."""
+    punteros: Dict[int, List[str]] = {}
+    for par in str(b.get("pointers") or "").split(","):
+        etiqueta, _, idx = par.partition(":")
+        if idx.strip().isdigit() and int(idx) < limite:
+            punteros.setdefault(int(idx), []).append(etiqueta.strip())
+    return punteros
+
+
 def _arreglo(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
     valores = _valores(b)
     cap = _entero(b.get("capacity", len(valores) or 8), 8, 1, 16)
@@ -150,11 +163,7 @@ def _arreglo(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
     indices = b.get("showIndices", True)
     top = _encabezado(c, b, f"Base: {_fmt_hex(base)} | sizeof: {paso}B" if direcciones else "")
 
-    punteros: Dict[int, List[str]] = {}
-    for par in str(b.get("pointers") or "").split(","):
-        etiqueta, _, idx = par.partition(":")
-        if idx.strip().isdigit() and int(idx) < cap:
-            punteros.setdefault(int(idx), []).append(etiqueta.strip())
+    punteros = _punteros(b, cap)
 
     x0, celda_w, celda_h = 78, 64, 54
     y = top + (64 if punteros else 30)
@@ -198,6 +207,7 @@ def _arreglo(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
 # ---------------------------------------------------------------------------
 
 MAX_FILAS, MAX_COLUMNAS = 10, 10
+MAX_CELDAS_PLANA = 24  # en una sola línea, para que se vea que es un bloque contiguo
 
 
 def _dimension(b: Dict[str, Any], clave: str, defecto: int, maximo: int) -> int:
@@ -259,8 +269,10 @@ def _matriz(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
     variante = b.get("variant", "static")
     if variante in ("dynamic", "pointers", "jagged"):
         return _matriz_dinamica(c, b, dentada=variante == "jagged")
+    if variante == "flat":
+        return _matriz_plana(c, b)
     if variante != "static":
-        raise ErrorDiagrama(f"variante de matriz no soportada: {variante!r} (static, dynamic o jagged)")
+        raise ErrorDiagrama(f"variante de matriz no soportada: {variante!r} (static, dynamic, jagged o flat)")
     filas = [f or [] for f in _filas(b)]
     nf = _dimension(b, "rows", len(filas) or 3, MAX_FILAS)
     nc = _dimension(b, "cols", max((len(f) for f in filas), default=0) or 3, MAX_COLUMNAS)
@@ -331,6 +343,64 @@ def _matriz(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
             c.linea(i * nc * lw, y - 3, i * nc * lw, y + lh + 3, color="strokeMain", ancho=2.5, flecha=None)
         ancho = max(ancho, nf * nc * lw + 4)
         alto = y + lh + (20 if direcciones else 6)
+    return ancho, alto
+
+
+def _matriz_plana(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
+    """`int *m = malloc(F * C * sizeof(int))`: un solo bloque, con `m[i * C + j]` como acceso."""
+    filas = [f or [] for f in _filas(b)]
+    nf = _dimension(b, "rows", len(filas) or 3, MAX_FILAS)
+    nc = _dimension(b, "cols", max((len(f) for f in filas), default=0) or 3, MAX_COLUMNAS)
+    if nf * nc > MAX_CELDAS_PLANA:
+        raise ErrorDiagrama(f"la matriz plana tiene {nf * nc} celdas; el máximo es {MAX_CELDAS_PLANA}")
+    base, paso = _hex(b.get("baseAddr")), _entero(b.get("typeSize"), 4, 1, 64)
+    nombre, tipo = str(b.get("name") or "m"), b.get("elementType") or "int"
+    direcciones, sin_valores = bool(b.get("showAddresses")), bool(b.get("blankValues"))
+    sin_dirs, indices = bool(b.get("blankAddrs")), b.get("showIndices", True)
+    coordenadas = b.get("showCoords", True)
+    resaltadas = _pares(b.get("highlight"))
+    filas_r, cols_r = set(b.get("highlightRows") or []), set(b.get("highlightCols") or [])
+    top = _encabezado(c, b, f"{tipo} *{nombre} = malloc({nf} * {nc} * sizeof({tipo}))")
+
+    m_w = max(56, math.ceil(len(nombre) * 8.5 + 14))
+    x0, lw, lh, y = m_w + 56, 52, 40, top + 32
+    c.t(m_w / 2, y - 8, nombre, size=12, peso=700, ancla="middle")
+    c.r(0, y, m_w, lh, relleno="fillPointerBox", trazo=1.75, rx=3)
+    c.punto(m_w / 2, y + lh / 2)
+    c.linea(m_w / 2, y + lh / 2, x0 - 3, y + lh / 2, ancho=1.6)
+    for k in range(nf * nc):
+        i, j = divmod(k, nc)
+        x = x0 + k * lw
+        marcada = (i, j) in resaltadas or i in filas_r or j in cols_r
+        if indices:
+            c.t(x + lw / 2, y - 7, f"[{k}]", size=10, peso=700, color="textSub", ancla="middle")
+        c.r(x, y, lw, lh, relleno="fillHighlight" if marcada else "fillCell", trazo=1.25)
+        v = filas[i][j] if i < len(filas) and j < len(filas[i]) else ""
+        if v and not sin_valores:
+            c.t(x + lw / 2, y + lh / 2 + 5, v, size=13, peso=700, ancla="middle")
+        else:
+            c.vacio(x + 8, x + lw - 8, y + lh - 9)
+        if coordenadas:
+            c.t(x + lw / 2, y + lh + 13, f"({i},{j})", size=9, color="textMain", ancla="middle")
+        if direcciones:
+            c.t(x + lw / 2, y + lh + (26 if coordenadas else 13), "0x____" if sin_dirs else _fmt_hex(base + k * paso),
+                size=8.5, color="textSub", ancla="middle")
+    c.add(f'<rect x="{x0}" y="{y:.1f}" width="{nf * nc * lw}" height="{lh}" fill="none" '
+          f'stroke="{c.pal["strokeMain"]}" stroke-width="2.25"/>')
+    for i in range(1, nf):  # dónde empieza cada fila: en memoria no hay ninguna marca
+        c.linea(x0 + i * nc * lw, y - 3, x0 + i * nc * lw, y + lh + 3, color="strokeMain", ancho=2.5, flecha=None)
+    alto = y + lh + (13 if coordenadas else 0) + (13 if direcciones else 0) + 18
+    ancho: float = x0 + nf * nc * lw + 6
+    if b.get("showFormula", True):
+        c.t(x0, alto, f"{nombre}[i * {nc} + j] es la celda (i, j)", size=10, color="textMuted")
+        alto += 6
+    if b.get("showLogical"):  # la misma matriz como la piensa el programa
+        sub = _Lienzo(c.pal, c.sufijo)
+        ancho_m, alto_m = _matriz(sub, {k: b[k] for k in ("values", "rows", "cols", "highlight", "highlightRows",
+                                                          "highlightCols", "blankValues") if k in b}
+                                  | {"subtitle": "Vista lógica"})
+        c.add(f'<g transform="translate(0, {alto + 10:.1f})">', *sub.partes, "</g>")
+        ancho, alto = max(ancho, ancho_m), alto + 10 + alto_m
     return ancho, alto
 
 
@@ -459,7 +529,20 @@ def _matriz_dinamica(c: _Lienzo, b: Dict[str, Any], dentada: bool = False) -> Tu
 # Lista enlazada: simple, doble y circular
 # ---------------------------------------------------------------------------
 
+def _lista_vacia(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
+    top = _encabezado(c, b)
+    y, cabeza_w = top + 28, 72
+    c.t(cabeza_w / 2, y, b.get("headLabel") or "HEAD", size=10, peso=700, ancla="middle")
+    c.r(0, y + 7, cabeza_w, 40, relleno="fillPointerBox", trazo=1.75, rx=3)
+    c.linea(5, y + 42, cabeza_w - 5, y + 12, color="strokeMain", ancho=1.5, flecha=None)
+    c.linea(cabeza_w, y + 27, cabeza_w + 22, y + 27, ancho=1.5, flecha=None)
+    c.null(cabeza_w + 22, y + 27)
+    return cabeza_w + 80, y + 56
+
+
 def _lista(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
+    if b.get("values") == []:
+        return _lista_vacia(c, b)
     valores = _valores(b) or [""]
     n = min(7, len(valores))
     variante = b.get("variant", "singly")
@@ -470,9 +553,17 @@ def _lista(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
 
     direcciones = [_fmt_hex(d) if isinstance(d, int) else str(d) for d in b.get("addresses") or []]
     direcciones += [_fmt_hex(0x4000 + i * 0x180) for i in range(len(direcciones), n)]
-    y, alto_nodo, cabeza_w, x0 = top + 28, 54, 72, 104
+    punteros = _punteros(b, n)  # cursores: `actual`, `ant`, y `final` en una cola enlazada
+    y, alto_nodo, cabeza_w, x0 = top + (62 if punteros else 28), 54, 72, 104
     nodo_w = 126 if doble else 102
     gap = 44
+    for i, etiquetas in punteros.items():
+        centro = x0 + i * (nodo_w + gap) + nodo_w / 2
+        texto = ", ".join(etiquetas)
+        ancho_cursor = max(40, len(texto) * 7.5 + 12)
+        c.r(centro - ancho_cursor / 2, y - 50, ancho_cursor, 18, relleno="fillBadge", trazo=1.2, rx=3)
+        c.t(centro, y - 37, texto, size=10, peso=700, ancla="middle")
+        c.linea(centro, y - 32, centro, y - 21, ancho=1.5)
 
     c.t(cabeza_w / 2, y, b.get("headLabel") or "HEAD", size=10, peso=700, ancla="middle")
     c.r(0, y + 7, cabeza_w, 40, relleno="fillPointerBox", trazo=1.75, rx=3)
@@ -1129,8 +1220,914 @@ def _arbol(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
     return ancho, alto
 
 
+# ---------------------------------------------------------------------------
+# Piezas comunes de los diagramas de texto: tablas y paneles
+# ---------------------------------------------------------------------------
+
+def _ancho_texto(texto: Any, size: float = 10) -> float:
+    """Lo que ocupa `texto` en la fuente monoespaciada (0,62 em por carácter, con un poco de aire)."""
+    return len(str(texto)) * size * 0.62
+
+
+def _codigo(c: _Lienzo, x: float, y: float, texto: Any, size: float = 10.5, color: str = "textMain") -> None:
+    """Un renglón de código: la sangría se dibuja corriendo el texto, porque el SVG colapsa los espacios."""
+    linea = str(texto)
+    sangria = len(linea) - len(linea.lstrip(" "))
+    c.t(x + sangria * size * 0.602, y, linea.lstrip(" "), size=size, color=color)
+
+
+def _lista_de(b: Dict[str, Any], clave: str, tipo: str) -> List[Any]:
+    valor = b.get(clave)
+    if not isinstance(valor, list) or not valor:
+        raise ErrorDiagrama(f"'{clave}' de {tipo} tiene que ser una lista con al menos un elemento")
+    return valor
+
+
+def _tabla(c: _Lienzo, x: float, y: float, encabezados: List[str], filas: List[List[str]],
+           izquierda: Tuple[int, ...] = (), tenues: Tuple[int, ...] = (), fila_h: float = 28,
+           min_w: float = 46, anchos: Optional[List[float]] = None) -> Tuple[float, float]:
+    """Tabla con encabezado; una celda `""` queda con la raya para completar. Devuelve (ancho, alto).
+
+    `izquierda` son las columnas alineadas a la izquierda y `tenues`, las filas punteadas (relleno).
+    """
+    cab_h, size = 26, 10.5
+    columnas = len(encabezados)
+    if anchos is None:
+        anchos = [max([min_w, _ancho_texto(encabezados[j], size) + 16]
+                      + [_ancho_texto(f[j], size) + 18 for f in filas if j < len(f)]) for j in range(columnas)]
+    cx = x
+    for j, titulo in enumerate(encabezados):
+        c.r(cx, y, anchos[j], cab_h, relleno="fillHeader", trazo=1.5)
+        c.t(cx + anchos[j] / 2, y + 17, titulo, size=size, peso=700, ancla="middle")
+        cx += anchos[j]
+    for i, fila in enumerate(filas):
+        fy, cx = y + cab_h + i * fila_h, x
+        for j in range(columnas):
+            w, texto = anchos[j], fila[j] if j < len(fila) else ""
+            if i in tenues:
+                c.add(f'<rect x="{cx:.1f}" y="{fy:.1f}" width="{w:.1f}" height="{fila_h}" fill="none" '
+                      f'stroke="{c.pal["strokeMuted"]}" stroke-width="1" stroke-dasharray="4 3"/>')
+            else:
+                c.r(cx, fy, w, fila_h, trazo=1.2)
+            color = "textMuted" if i in tenues else "textMain"
+            if not texto:
+                c.vacio(cx + 8, cx + w - 8, fy + fila_h - 8)
+            elif j in izquierda:
+                _codigo(c, cx + 9, fy + fila_h / 2 + 4, texto, size, color)
+            else:
+                c.t(cx + w / 2, fy + fila_h / 2 + 4, texto, size=size, peso=600, color=color, ancla="middle")
+            cx += w
+    return sum(anchos), cab_h + len(filas) * fila_h
+
+
+def _panel(c: _Lienzo, x: float, y: float, w: float, titulo: str, lineas: List[str],
+           alto: Optional[float] = None) -> float:
+    """Recuadro con título y renglones de código; devuelve su alto."""
+    cab_h, renglon = 24, 17
+    h = alto if alto is not None else cab_h + 8 + max(1, len(lineas)) * renglon
+    c.r(x, y, w, h, trazo=1.6, rx=4)
+    c.add(f'<rect x="{x + 1:.1f}" y="{y + 1:.1f}" width="{w - 2:.1f}" height="{cab_h - 1}" rx="3" '
+          f'fill="{c.pal["fillHeader"]}"/>')
+    c.linea(x, y + cab_h, x + w, y + cab_h, color="strokeMain", ancho=1, flecha=None)
+    c.t(x + 9, y + 16, titulo, size=11, peso=700, fuente=SANS)
+    for i, linea in enumerate(lineas):
+        if linea:
+            _codigo(c, x + 10, y + cab_h + 17 + i * renglon, linea)
+        else:
+            c.vacio(x + 10, x + w - 10, y + cab_h + 19 + i * renglon)
+    return h
+
+
+def _ancho_panel(titulo: str, lineas: List[str]) -> float:
+    return max([_ancho_texto(titulo, 11) + 20] + [_ancho_texto(linea, 10.5) + 22 for linea in lineas])
+
+
+# ---------------------------------------------------------------------------
+# Struct: disposición en memoria (offsets, relleno, sizeof) y tipo opaco
+# ---------------------------------------------------------------------------
+
+# LP64 (Linux y macOS de 64 bits): lo que da gcc en las máquinas del curso.
+_TAMANOS_C = {"char": 1, "bool": 1, "_bool": 1, "short": 2, "int": 4, "unsigned": 4, "float": 4, "long": 8,
+              "long long": 8, "double": 8, "size_t": 8, "int8_t": 1, "uint8_t": 1, "int16_t": 2, "uint16_t": 2,
+              "int32_t": 4, "uint32_t": 4, "int64_t": 8, "uint64_t": 8}
+_CAMPO = re.compile(r"^(?P<tipo>[\w ]*?[\w*])\s*(?P<estrella>\**)\s*(?P<nombre>\w+)(?P<dims>(?:\[\d+\])*)"
+                    r"\s*(?:=\s*(?P<valor>.*))?$")
+MAX_CAMPOS = 16
+
+
+@dataclass
+class _Campo:
+    nombre: str
+    tipo: str  # como se declara: `char`, `int *`
+    dims: str = ""
+    valor: str = ""
+    tamano: int = 0
+    alineacion: int = 1
+    offset: int = 0
+    en_blanco: bool = False
+
+    @property
+    def declaracion(self) -> str:
+        separador = "" if self.tipo.endswith("*") else " "
+        return f"{self.tipo}{separador}{self.nombre}{self.dims}"
+
+
+def _medir_campo(campo: _Campo, tamano: Any, alineacion: Any, donde: str) -> None:
+    """Tamaño y alineación del campo: los que declara o, si es un tipo básico, los de C."""
+    if "*" in campo.tipo:
+        base = 8
+    else:
+        tipo = re.sub(r"\b(const|volatile|signed|unsigned)\b", " ", campo.tipo.lower())
+        tipo = " ".join(tipo.split()).removesuffix(" int") or ("unsigned" if "unsigned" in campo.tipo else "int")
+        if tipo not in _TAMANOS_C and tamano is None:
+            raise ErrorDiagrama(f"{donde}: no conozco el tamaño de '{campo.tipo}': indicalo con 'size' (y 'align')")
+        base = _TAMANOS_C.get(tipo, 0)
+    elementos = math.prod(int(d) for d in re.findall(r"\[(\d+)\]", campo.dims))
+    campo.tamano = _entero(tamano, 0, 1, 1 << 20) if tamano is not None else base * elementos
+    campo.alineacion = _entero(alineacion, 1, 1, 64) if alineacion is not None else base or min(campo.tamano, 8) or 1
+
+
+def _campos(b: Dict[str, Any]) -> List[_Campo]:
+    """`fields`: `"char nombre[8]"`, `"int edad = 30"` o `{name, type, value, size, align, blank}`."""
+    datos = _lista_de(b, "fields", "un struct")
+    if len(datos) > MAX_CAMPOS:
+        raise ErrorDiagrama(f"el struct tiene {len(datos)} campos; el máximo es {MAX_CAMPOS}")
+    campos = []
+    for n, dato in enumerate(datos):
+        donde = f"campo {n}"
+        if isinstance(dato, dict):
+            nombre = str(dato.get("name") or "")
+            if not nombre or not dato.get("type"):
+                raise ErrorDiagrama(f"{donde}: le falta 'name' o 'type'")
+            dims = "".join(re.findall(r"\[\d+\]", nombre))
+            campo = _Campo(nombre.split("[")[0], str(dato["type"]).strip(), dims, _texto(dato.get("value")),
+                           en_blanco=bool(dato.get("blank")))
+            _medir_campo(campo, dato.get("size"), dato.get("align"), donde)
+        else:
+            m = _CAMPO.match(str(dato).strip().rstrip(";"))
+            if not m:
+                raise ErrorDiagrama(f"{donde}: no entiendo {dato!r} (se espera «char nombre[8]» o «int edad = 30»)")
+            tipo = m["tipo"].strip()
+            tipo = f"{tipo} {m['estrella']}" if m["estrella"] else tipo
+            campo = _Campo(m["nombre"], tipo, m["dims"], (m["valor"] or "").strip())
+            _medir_campo(campo, None, None, donde)
+        campos.append(campo)
+    return campos
+
+
+def disposicion_struct(campos: List[_Campo], empaquetado: bool = False) -> Tuple[List[Tuple[int, int]], int, int]:
+    """Ubica los campos y devuelve ([(offset, bytes) de cada relleno], sizeof, alineación del struct)."""
+    rellenos: List[Tuple[int, int]] = []
+    offset, alineacion = 0, 1
+    for campo in campos:
+        al = 1 if empaquetado else campo.alineacion
+        alineacion = max(alineacion, al)
+        if offset % al:
+            rellenos.append((offset, al - offset % al))
+            offset += al - offset % al
+        campo.offset = offset
+        offset += campo.tamano
+    if offset % alineacion:
+        rellenos.append((offset, alineacion - offset % alineacion))
+        offset += alineacion - offset % alineacion
+    return rellenos, offset, alineacion
+
+
+def _struct(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
+    variante = b.get("variant", "layout")
+    if variante == "opaque":
+        return _tipo_opaco(c, b)
+    if variante != "layout":
+        raise ErrorDiagrama(f"variante de struct no soportada: {variante!r} (layout u opaque)")
+    campos = _campos(b)
+    rellenos, sizeof, alineacion = disposicion_struct(campos, bool(b.get("packed")))
+    nombre = str(b.get("name") or "struct registro")
+    alias = b.get("typedef")
+    top = _encabezado(c, b, f"typedef {nombre} {alias};" if alias else nombre)
+
+    con_valores = any(f.valor for f in campos) or b.get("blankValues")
+    direcciones = bool(b.get("showAddresses"))
+    base = _hex(b.get("baseAddr"))
+    sin_offsets, sin_tamanos = bool(b.get("blankOffsets")), bool(b.get("blankSizes"))
+    sin_relleno, sin_valores = bool(b.get("blankPadding")), bool(b.get("blankValues"))
+
+    def ubicacion(offset: int) -> str:
+        if sin_offsets:
+            return ""
+        return _fmt_hex(base + offset) if direcciones else f"+{offset}"
+
+    entradas: List[Tuple[int, List[str], bool]] = []
+    for f in campos:
+        fila = [ubicacion(f.offset), f.declaracion]
+        if con_valores:
+            fila.append("" if sin_valores or f.en_blanco else f.valor)
+        entradas.append((f.offset, fila + ["" if sin_tamanos else f"{f.tamano} B"], False))
+    if not sin_relleno:  # sin los rellenos, el alumno los deduce de los offsets
+        for offset, bytes_relleno in rellenos:
+            fila = [ubicacion(offset), "(relleno)"] + (["—"] if con_valores else [])
+            entradas.append((offset, fila + ["" if sin_tamanos else f"{bytes_relleno} B"], True))
+    entradas.sort(key=lambda e: e[0])
+    encabezados = ["dirección" if direcciones else "offset", "campo"] + (["valor"] if con_valores else []) + ["tamaño"]
+    tenues = tuple(i for i, e in enumerate(entradas) if e[2])
+    ancho, alto = _tabla(c, 0, top + 6, encabezados, [e[1] for e in entradas], izquierda=(1,), tenues=tenues)
+    y = top + 6 + alto + 20
+    resultado = "______" if b.get("blankSizeof") else f"{sizeof} bytes"
+    pie = f"sizeof({alias or nombre}) = {resultado}"
+    if b.get("packed"):
+        pie += " (empaquetado)"
+    elif not b.get("blankSizeof"):
+        pie += f" | alineación: {alineacion}"
+    c.t(0, y, pie, size=11, peso=700)
+    return max(ancho, _ancho_texto(pie, 11)), y + 8
+
+
+def _tipo_opaco(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
+    """Lo que ve cada archivo: `.h` público, cliente con un puntero y `.c` con los campos."""
+    nombre = str(b.get("name") or "struct pila")
+    etiqueta = nombre.removeprefix("struct ").strip()
+    alias = str(b.get("typedef") or f"{etiqueta}_t")
+    variable = str(b.get("variable") or "p")
+    cabecera, fuente = str(b.get("header") or f"{etiqueta}.h"), str(b.get("source") or f"{etiqueta}.c")
+    cliente = str(b.get("client") or "main.c")
+    oculto = bool(b.get("hidden"))
+    top = _encabezado(c, b)
+
+    publico = [f"typedef {nombre} *{alias};"] + [str(o).rstrip(";") + ";" for o in b.get("operations") or []]
+    titulo_h = f"{cabecera} (interfaz pública)"
+    campos = [] if oculto and not b.get("fields") else _campos(b)
+    privado = [f"{nombre} {{"] + (["    ¿?"] if oculto else [f"    {f.declaracion};" for f in campos]) + ["};"]
+    if b.get("blankValues"):
+        privado = [f"{nombre} {{"] + ["    " + "_" * 16 for _ in campos] + ["};"]
+    titulo_c = f"{fuente} (implementación)"
+    uso = [f'#include "{cabecera}"', f"{alias} {variable};"]
+    titulo_u = f"{cliente} (cliente)"
+
+    w_u, w_c = _ancho_panel(titulo_u, uso), _ancho_panel(titulo_c, privado)
+    sep = 130
+    w_h = max(_ancho_panel(titulo_h, publico), w_u + sep + w_c)
+    w_c = w_h - w_u - sep  # los dos de abajo ocupan lo mismo que la interfaz
+    y = top + 4
+    alto_h = _panel(c, 0, y, w_h, titulo_h, publico)
+    y2 = y + alto_h + 34
+    alto = max(24 + 8 + len(uso) * 17 + 46, 24 + 8 + len(privado) * 17)
+    c.linea(w_u / 2, y + alto_h, w_u / 2, y2 - 3, color="strokeSub", ancho=1.4, flecha="sub", guiones="4 2")
+    c.t(w_u / 2 + 8, y + alto_h + 21, "incluye", size=9.5, color="textMuted")
+    xc = w_u + sep
+    c.linea(xc + w_c / 2, y + alto_h, xc + w_c / 2, y2 - 3, color="strokeSub", ancho=1.4, flecha="sub", guiones="4 2")
+    c.t(xc + w_c / 2 + 8, y + alto_h + 21, "incluye", size=9.5, color="textMuted")
+    _panel(c, 0, y2, w_u, titulo_u, uso, alto)
+    _panel(c, xc, y2, w_c, titulo_c, privado, alto)
+
+    # La variable es sólo un puntero: sizeof(alias) es lo único que conoce el cliente.
+    py = y2 + alto - 30
+    c.r(10, py, w_u - 20, 22, relleno="fillPointerBox", trazo=1.4, rx=3)
+    c.t(18, py + 15, variable, size=10.5, peso=700)
+    c.punto(w_u - 22, py + 11)
+    c.linea(w_u - 22, py + 11, xc - 3, py + 11, ancho=1.6)
+    muro = w_u + sep / 2
+    c.linea(muro, y2 - 4, muro, y2 + alto + 4, color="strokeMain", ancho=2, flecha=None, guiones="6 4")
+    c.t(muro, y2 + alto + 18, "el cliente no ve los campos", size=9.5, peso=600, color="textMuted", ancla="middle")
+    return w_h, y2 + alto + 24
+
+
+# ---------------------------------------------------------------------------
+# TAD: operaciones públicas, invariante y representaciones posibles
+# ---------------------------------------------------------------------------
+
+def _tad(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
+    nombre = str(b.get("name") or "TAD")
+    operaciones = _lista_de(b, "operations", "un TAD")
+    sin_ops, sin_clases = bool(b.get("blankOperations")), bool(b.get("blankKinds"))
+    top = _encabezado(c, b)
+
+    filas: List[List[str]] = []
+    con_clase = con_pre = con_post = False
+    for op in operaciones:
+        dato = op if isinstance(op, dict) else {"signature": op}
+        if not dato.get("signature"):
+            raise ErrorDiagrama("cada operación de un TAD tiene que tener 'signature'")
+        en_blanco = sin_ops or dato.get("blank")
+        clase, pre, post = (_texto(dato.get(k)) for k in ("kind", "pre", "post"))
+        con_clase, con_pre, con_post = con_clase or bool(clase), con_pre or bool(pre), con_post or bool(post)
+        filas.append(["" if en_blanco else str(dato["signature"]), "" if sin_clases else clase or "—",
+                      pre or "—", post or "—"])
+    columnas = [("operación", 0, True), ("clase", 1, con_clase or sin_clases), ("pre", 2, con_pre),
+                ("post", 3, con_post)]
+    usadas = [(t, j) for t, j, si in columnas if si]
+    tabla = [[f[j] for _, j in usadas] for f in filas]
+    encabezados = [t for t, _ in usadas]
+
+    representaciones = []
+    for r in b.get("representations") or []:
+        dato = r if isinstance(r, dict) else {"name": r}
+        lineas = [str(f) for f in dato.get("fields") or []]
+        representaciones.append((str(dato.get("name") or "representación"), lineas))
+    uso = [str(u) for u in b.get("client") or []]
+    invariante = b.get("invariant")
+
+    y = top + 4
+    ancho_rep = sum(max(_ancho_panel(t, ls), 130) + 24 for t, ls in representaciones) - 24
+    ancho = ancho_rep
+    if uso:
+        titulo_u = "Cliente: sólo usa las operaciones"
+        ancho_u = _ancho_panel(titulo_u, uso)
+        alto_u = _panel(c, 0, y, ancho_u, titulo_u, uso)
+        ancho = max(ancho, ancho_u)
+        c.linea(ancho_u / 2, y + alto_u, ancho_u / 2, y + alto_u + 26, ancho=1.5)
+        y += alto_u + 29
+    c.t(0, y + 13, f"TAD {nombre}: interfaz", size=11.5, peso=700, fuente=SANS)
+    w_t, h_t = _tabla(c, 0, y + 22, encabezados, tabla, izquierda=tuple(range(len(encabezados))), min_w=70)
+    ancho = max(ancho, w_t)
+    y += 22 + h_t
+    if invariante:
+        y += 18
+        texto = f"Invariante: {invariante}"
+        c.t(0, y, texto, size=10.5, peso=600, color="textSub")
+        ancho = max(ancho, _ancho_texto(texto, 10.5))
+    if representaciones:
+        y_rep = y + 44
+        c.t(0, y + 18, "Representaciones posibles (ocultas para el cliente):", size=10, peso=600, color="textMuted")
+        alto_rep = max(24 + 8 + max(1, len(ls)) * 17 for _, ls in representaciones)
+        x = 0.0
+        for titulo, lineas in representaciones:
+            w = max(_ancho_panel(titulo, lineas), 130)
+            _panel(c, x, y_rep, w, titulo, lineas, alto_rep)
+            x += w + 24
+        y = y_rep + alto_rep
+    return ancho, y + 8
+
+
+# ---------------------------------------------------------------------------
+# Complejidad: curvas de crecimiento y clases anidadas
+# ---------------------------------------------------------------------------
+
+_CRECIMIENTOS: Dict[str, Tuple[str, Callable[[float], float]]] = {
+    "1": ("O(1)", lambda n: 1.0),
+    "log n": ("O(log n)", lambda n: math.log2(n)),
+    "sqrt n": ("O(√n)", math.sqrt),
+    "n": ("O(n)", lambda n: n),
+    "n log n": ("O(n log n)", lambda n: n * math.log2(n)),
+    "n^2": ("O(n²)", lambda n: n ** 2),
+    "n^3": ("O(n³)", lambda n: n ** 3),
+    "2^n": ("O(2ⁿ)", lambda n: 2.0 ** n),
+    "n!": ("O(n!)", lambda n: math.gamma(n + 1)),
+}
+_CLASES_COMUNES = ["1", "log n", "n", "n log n", "n^2", "2^n"]
+_GUIONES = ("", "7 3", "2 3", "9 3 2 3")
+MAX_CURVAS = 9
+
+
+def _clave_crecimiento(texto: Any) -> str:
+    """`O(n²)`, `n^2`, `Θ(n log n)`… como clave de `_CRECIMIENTOS`."""
+    clave = str(texto).strip().lower().replace("²", "^2").replace("³", "^3").replace("ⁿ", "^n").replace("√n", "sqrt n")
+    m = re.fullmatch(r"[oθω]\((.*)\)", clave)
+    clave = " ".join((m[1] if m else clave).split())
+    if clave not in _CRECIMIENTOS:
+        raise ErrorDiagrama(f"crecimiento desconocido: {texto!r} (disponibles: {', '.join(_CRECIMIENTOS)})")
+    return clave
+
+
+def _evaluar(funcion: Callable[[float], float], n: float) -> float:
+    try:
+        return funcion(n)
+    except OverflowError:  # 2^n y n! con un `maxN` grande: se sale del gráfico igual
+        return math.inf
+
+
+def _complejidad(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
+    variante = b.get("variant", "growth")
+    if variante == "classes":
+        return _clases(c, b)
+    if variante != "growth":
+        raise ErrorDiagrama(f"variante de complexity no soportada: {variante!r} (growth o classes)")
+    datos = b.get("curves") or _CLASES_COMUNES
+    if not isinstance(datos, list) or len(datos) > MAX_CURVAS:
+        raise ErrorDiagrama(f"'curves' tiene que ser una lista de hasta {MAX_CURVAS} curvas")
+    max_n, max_y = _entero(b.get("maxN"), 20, 2, 10000), _entero(b.get("maxY"), 100, 2, 10 ** 9)
+    top = _encabezado(c, b)
+    x0, w, h = 52, 420, 260
+    y0 = top + 38
+    sx, sy = w / max_n, h / max_y
+
+    def px(n: float) -> float:
+        return x0 + n * sx
+
+    def py(valor: float) -> float:
+        return y0 + h - valor * sy
+
+    for k in range(5):  # marcas de los ejes
+        n, v = max_n * k / 4, max_y * k / 4
+        c.linea(px(n), y0 + h, px(n), y0 + h + 4, color="strokeMain", ancho=1, flecha=None)
+        c.t(px(n), y0 + h + 16, f"{n:g}", size=9, color="textSub", ancla="middle")
+        c.linea(x0 - 4, py(v), x0, py(v), color="strokeMain", ancho=1, flecha=None)
+        c.t(x0 - 7, py(v) + 3, f"{v:g}", size=9, color="textSub", ancla="end")
+        if k:
+            c.linea(x0, py(v), x0 + w, py(v), color="strokeMuted", ancho=0.5, flecha=None, guiones="2 4")
+    c.linea(x0, y0 + h, x0 + w + 8, y0 + h, color="strokeMain", ancho=1.6)
+    c.linea(x0, y0 + h, x0, y0 - 8, color="strokeMain", ancho=1.6)
+    c.t(x0 + w / 2, y0 + h + 32, str(b.get("xLabel") or "n (tamaño de la entrada)"), size=10, peso=600,
+        ancla="middle")
+    c.t(0, y0 - 22, str(b.get("yLabel") or "operaciones"), size=10, peso=600)
+
+    derecha: List[Tuple[float, str]] = []
+    arriba: List[Tuple[float, str]] = []
+    sueltas: List[Tuple[float, float, str]] = []  # mediciones que terminan adentro del gráfico
+    for i, dato in enumerate(datos):
+        etiqueta = chr(ord("A") + i) if b.get("blankLabels") else None
+        if isinstance(dato, dict):  # mediciones: {label, points: [[n, t], …]}
+            try:
+                puntos = sorted((float(p[0]), float(p[1])) for p in dato.get("points") or [])
+            except (TypeError, ValueError, IndexError):
+                raise ErrorDiagrama(f"curva {i}: 'points' tiene que ser una lista de [n, valor]") from None
+            if not puntos:
+                raise ErrorDiagrama(f"curva {i}: le falta 'points' (o usar un nombre, como n^2)")
+            etiqueta = etiqueta or str(dato.get("label") or f"curva {i + 1}")
+            for n, v in puntos:
+                if n <= max_n and v <= max_y:
+                    c.punto(px(n), py(v), radio=2.6)
+        else:
+            clave = _clave_crecimiento(dato)
+            nombre, funcion = _CRECIMIENTOS[clave]
+            etiqueta = etiqueta or nombre
+            enteras = clave in ("1", "n", "n^2", "n^3", "sqrt n")  # las demás no están definidas antes de 1
+            puntos = [(n, _evaluar(funcion, n)) for n in (max_n * k / 240 for k in range(1, 241)) if n >= 1 or enteras]
+        trazo: List[Tuple[float, float]] = []
+        for n, v in puntos:
+            if n > max_n:
+                break
+            if v > max_y:  # sale por arriba: se corta justo en el borde
+                if trazo:
+                    n0, v0 = trazo[-1]
+                    corte = (max_y - v0) / (v - v0) if math.isfinite(v) else 0
+                    trazo.append((n0 + (n - n0) * corte, float(max_y)))
+                break
+            trazo.append((n, v))
+        if not trazo:
+            continue
+        camino = " ".join(f"{px(n):.1f},{py(v):.1f}" for n, v in trazo)
+        guiones = _GUIONES[i % len(_GUIONES)]
+        c.add(f'<polyline points="{camino}" fill="none" stroke="{c.pal["strokeMain"]}" stroke-width="1.8"'
+              + (f' stroke-dasharray="{guiones}"' if guiones else "") + "/>")
+        n_fin, v_fin = trazo[-1]
+        if v_fin >= max_y:
+            arriba.append((px(n_fin), etiqueta))
+        elif n_fin >= max_n * 0.98:
+            derecha.append((py(v_fin), etiqueta))
+        else:
+            sueltas.append((px(n_fin), py(v_fin), etiqueta))
+
+    # Etiquetas al final de cada curva, corridas lo justo para no pisarse.
+    borde = x0 + w + 8
+    ancho: float = borde
+    tope = y0 + h + 14.0
+    for y_fin, etiqueta in sorted(derecha, reverse=True):
+        tope = min(y_fin + 4, tope - 14)
+        c.t(borde, tope, etiqueta, size=10.5, peso=700)
+        ancho = max(ancho, borde + _ancho_texto(etiqueta, 10.5))
+    for x_fin, y_fin, etiqueta in sueltas:
+        c.t(x_fin + 8, y_fin + 4, etiqueta, size=10.5, peso=700)
+        ancho = max(ancho, x_fin + 8 + _ancho_texto(etiqueta, 10.5))
+    siguiente = 0.0
+    for x_fin, etiqueta in sorted(arriba):
+        x = max(x_fin, siguiente)
+        c.t(x, y0 - 6, etiqueta, size=10.5, peso=700, ancla="middle")
+        siguiente = x + _ancho_texto(etiqueta, 10.5) + 8
+        ancho = max(ancho, x + _ancho_texto(etiqueta, 10.5) / 2)
+    return ancho + 4, y0 + h + 40
+
+
+def _clases(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
+    """Conjuntos anidados, del más chico al más grande: O(1) ⊂ O(log n) ⊂ …, o P ⊂ NP."""
+    datos = b.get("classes") or [_CRECIMIENTOS[k][0] for k in _CLASES_COMUNES]
+    if not isinstance(datos, list) or not datos or len(datos) > 10:
+        raise ErrorDiagrama("'classes' tiene que ser una lista de hasta 10 clases, de la más chica a la más grande")
+    clases = [str(d) for d in datos]
+    items = b.get("items") or {}
+    if not isinstance(items, dict):
+        raise ErrorDiagrama("'items' tiene que decir qué va en cada clase: {'O(n)': [búsqueda lineal]}")
+    for clase in items:
+        if str(clase) not in clases:
+            raise ErrorDiagrama(f"'items' nombra una clase que no está en 'classes': {clase!r}")
+    contenido = {str(k): [str(i) for i in (v if isinstance(v, list) else [v])] for k, v in items.items()}
+    sin_clases = bool(b.get("blankClasses"))
+    top = _encabezado(c, b)
+
+    margen, renglon, cab = 14, 15, 24
+    medidas: List[Tuple[float, float]] = []  # (ancho, alto) de cada clase, de adentro hacia afuera
+    interior_w = interior_h = 0.0
+    for clase in clases:
+        lista = contenido.get(clase, [])
+        texto_w = max([_ancho_texto(clase, 11.5)] + [_ancho_texto(f"• {i}", 10) for i in lista]) + 2 * margen
+        banda = cab + len(lista) * renglon
+        interior_w = max(interior_w + 2 * margen, texto_w, 90)
+        interior_h = interior_h + banda + (margen if interior_h else 6)
+        medidas.append((interior_w, interior_h))
+    ancho_total, alto_total = medidas[-1]
+    # De afuera hacia adentro: cada clase se apoya abajo de la banda de la que la contiene.
+    y = top + 4
+    for k in range(len(clases) - 1, -1, -1):
+        w, h = medidas[k]
+        x = (ancho_total - w) / 2
+        relleno = "fillHeader" if (len(clases) - 1 - k) % 2 == 0 else "fillCell"
+        c.r(x, y, w, h, relleno=relleno, trazo=1.6, rx=8)
+        if sin_clases:
+            c.vacio(x + margen, x + margen + 70, y + 18)
+        else:
+            c.t(x + margen, y + 17, clases[k], size=11.5, peso=700)
+        lista = contenido.get(clases[k], [])
+        for n, item in enumerate(lista):
+            c.t(x + margen, y + cab + 8 + n * renglon, f"• {item}", size=10)
+        y += cab + len(lista) * renglon
+    return ancho_total, top + 4 + alto_total + 6
+
+
+# ---------------------------------------------------------------------------
+# Diagrama de flujo: secuencia, decisión y repetición
+# ---------------------------------------------------------------------------
+
+_SEP_FLUJO = 26
+
+
+@dataclass
+class _Paso:
+    tipo: str  # proceso, io, si o mientras
+    texto: str
+    a: List["_Paso"] = field(default_factory=list)  # entonces / cuerpo
+    b: List["_Paso"] = field(default_factory=list)  # si no
+    en_blanco: bool = False
+
+
+def _pasos_flujo(dato: Any, donde: str) -> List[_Paso]:
+    if dato is None:
+        return []
+    if not isinstance(dato, list):
+        raise ErrorDiagrama(f"{donde}: los pasos van en una lista")
+    pasos = []
+    for n, p in enumerate(dato):
+        lugar = f"{donde}, paso {n}"
+        if not isinstance(p, dict):
+            pasos.append(_Paso("proceso", _texto(p)))
+            continue
+        blanco = bool(p.get("blank"))
+        if "if" in p:
+            pasos.append(_Paso("si", _texto(p["if"]), _pasos_flujo(p.get("then"), lugar),
+                               _pasos_flujo(p.get("else"), lugar), blanco))
+        elif "while" in p or "for" in p:
+            cuerpo = _pasos_flujo(p.get("do"), lugar)
+            if not cuerpo:
+                raise ErrorDiagrama(f"{lugar}: la repetición no tiene cuerpo ('do')")
+            pasos.append(_Paso("mientras", _texto(p.get("while", p.get("for"))), cuerpo, en_blanco=blanco))
+        elif "io" in p:
+            pasos.append(_Paso("io", _texto(p["io"]), en_blanco=blanco))
+        elif "step" in p:
+            pasos.append(_Paso("proceso", _texto(p["step"]), en_blanco=blanco))
+        else:
+            raise ErrorDiagrama(f"{lugar}: se espera un texto o una clave if, while, for, io o step")
+    return pasos
+
+
+def _ancho_caja(p: _Paso) -> float:
+    return max(110, _ancho_texto(p.texto, 10.5) + 26)
+
+
+def _ancho_rombo(p: _Paso) -> float:
+    return max(130, _ancho_texto(p.texto, 10.5) * 1.7 + 30)
+
+
+_ALTO_ROMBO = 60
+
+
+def _medir_lista(pasos: List[_Paso]) -> Tuple[float, float, float]:
+    """(a la izquierda del eje, a la derecha, alto) de una secuencia de pasos."""
+    if not pasos:
+        return 0, 0, 0
+    medidas = [_medir_paso(p) for p in pasos]
+    return (max(m[0] for m in medidas), max(m[1] for m in medidas),
+            sum(m[2] for m in medidas) + _SEP_FLUJO * (len(pasos) - 1))
+
+
+def _desvios(p: _Paso) -> Tuple[float, float]:
+    """Cuánto se separan del eje las dos ramas de una decisión."""
+    medio = _ancho_rombo(p) / 2
+    return max(medio + 12, _medir_lista(p.a)[1] + 16), max(medio + 12, _medir_lista(p.b)[0] + 16)
+
+
+def _medir_paso(p: _Paso) -> Tuple[float, float, float]:
+    if p.tipo in ("proceso", "io"):
+        w = _ancho_caja(p) + (24 if p.tipo == "io" else 0)
+        return w / 2, w / 2, 34
+    medio = _ancho_rombo(p) / 2
+    izq, der, alto = _medir_lista(p.a)
+    if p.tipo == "mientras":
+        return max(medio, izq) + 22, max(medio, der) + 34, _ALTO_ROMBO + _SEP_FLUJO + alto + 34
+    izq_b, der_b, alto_b = _medir_lista(p.b)
+    dx_a, dx_b = _desvios(p)
+    return dx_a + izq, dx_b + der_b, _ALTO_ROMBO + _SEP_FLUJO + max(alto, alto_b) + _SEP_FLUJO
+
+
+def _texto_flujo(c: _Lienzo, p: _Paso, x: float, y: float, sin_valores: bool) -> None:
+    if p.texto and not (p.en_blanco or sin_valores):
+        c.t(x, y + 4, p.texto, size=10.5, peso=600, ancla="middle")
+    else:
+        c.vacio(x - 32, x + 32, y + 6)
+
+
+def _dibujar_lista(c: _Lienzo, pasos: List[_Paso], x: float, y: float, sin_valores: bool) -> float:
+    for i, p in enumerate(pasos):
+        if i:
+            c.linea(x, y, x, y + _SEP_FLUJO - 3, color="strokeMain", ancho=1.5)
+            y += _SEP_FLUJO
+        y = _dibujar_paso(c, p, x, y, sin_valores)
+    return y
+
+
+def _camino(c: _Lienzo, puntos: List[Tuple[float, float]], flecha: bool = True) -> None:
+    trazo = " L ".join(f"{x:.1f} {y:.1f}" for x, y in puntos)
+    marca = f' marker-end="url(#flecha-main-{c.sufijo})"' if flecha else ""
+    c.add(f'<path d="M {trazo}" fill="none" stroke="{c.pal["strokeMain"]}" stroke-width="1.5"{marca}/>')
+
+
+def _rombo(c: _Lienzo, p: _Paso, x: float, y: float, sin_valores: bool) -> None:
+    medio, alto = _ancho_rombo(p) / 2, _ALTO_ROMBO
+    c.add(f'<polygon points="{x:.1f},{y:.1f} {x + medio:.1f},{y + alto / 2:.1f} {x:.1f},{y + alto:.1f} '
+          f'{x - medio:.1f},{y + alto / 2:.1f}" fill="{c.pal["fillHeader"]}" stroke="{c.pal["strokeMain"]}" '
+          f'stroke-width="1.6"/>')
+    _texto_flujo(c, p, x, y + alto / 2, sin_valores)
+
+
+def _dibujar_paso(c: _Lienzo, p: _Paso, x: float, y: float, sin_valores: bool) -> float:
+    """Dibuja el paso con su eje en `x` y la entrada en `y`; devuelve dónde sale."""
+    if p.tipo == "proceso":
+        w = _ancho_caja(p)
+        c.r(x - w / 2, y, w, 34, trazo=1.6)
+        _texto_flujo(c, p, x, y + 17, sin_valores)
+        return y + 34
+    if p.tipo == "io":
+        w, inc = _ancho_caja(p) + 24, 12
+        c.add(f'<polygon points="{x - w / 2 + inc:.1f},{y:.1f} {x + w / 2:.1f},{y:.1f} {x + w / 2 - inc:.1f},'
+              f'{y + 34:.1f} {x - w / 2:.1f},{y + 34:.1f}" fill="{c.pal["fillCell"]}" '
+              f'stroke="{c.pal["strokeMain"]}" stroke-width="1.6"/>')
+        _texto_flujo(c, p, x, y + 17, sin_valores)
+        return y + 34
+
+    medio, medio_y = _ancho_rombo(p) / 2, y + _ALTO_ROMBO / 2
+    _rombo(c, p, x, y, sin_valores)
+    cuerpo_y = y + _ALTO_ROMBO + _SEP_FLUJO
+    if p.tipo == "mientras":
+        izq, der, _ = _medir_paso(p)
+        c.linea(x, y + _ALTO_ROMBO, x, cuerpo_y - 3, color="strokeMain", ancho=1.5)
+        c.t(x + 6, y + _ALTO_ROMBO + 15, "Sí", size=9.5, peso=700, fuente=SANS)
+        fin = _dibujar_lista(c, p.a, x, cuerpo_y, sin_valores)
+        vuelta, salida = fin + 12, fin + 34
+        # La vuelta entra por la línea que llega al rombo.
+        _camino(c, [(x, fin), (x, vuelta), (x - izq + 4, vuelta), (x - izq + 4, y - 11), (x - 3, y - 11)])
+        c.t(x + medio + 4, medio_y - 6, "No", size=9.5, peso=700, fuente=SANS)
+        _camino(c, [(x + medio, medio_y), (x + der - 6, medio_y), (x + der - 6, salida), (x, salida)], flecha=False)
+        return salida
+
+    dx_a, dx_b = _desvios(p)
+    fin_a = _dibujar_lista(c, p.a, x - dx_a, cuerpo_y, sin_valores) if p.a else medio_y
+    fin_b = _dibujar_lista(c, p.b, x + dx_b, cuerpo_y, sin_valores) if p.b else medio_y
+    union = max(fin_a, fin_b, cuerpo_y) + _SEP_FLUJO
+    c.t(x - medio - 4, medio_y - 6, "Sí", size=9.5, peso=700, ancla="end", fuente=SANS)
+    c.t(x + medio + 4, medio_y - 6, "No", size=9.5, peso=700, fuente=SANS)
+    entrada = [(x - medio, medio_y), (x - dx_a, medio_y)]
+    _camino(c, entrada + [(x - dx_a, cuerpo_y - 2)] if p.a else entrada + [(x - dx_a, union), (x - 3, union)])
+    entrada = [(x + medio, medio_y), (x + dx_b, medio_y)]
+    _camino(c, entrada + [(x + dx_b, cuerpo_y - 2)] if p.b else entrada + [(x + dx_b, union), (x + 3, union)])
+    if p.a:
+        _camino(c, [(x - dx_a, fin_a), (x - dx_a, union), (x - 3, union)])
+    if p.b:
+        _camino(c, [(x + dx_b, fin_b), (x + dx_b, union), (x + 3, union)])
+    return union
+
+
+def _flujo(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
+    pasos = _pasos_flujo(_lista_de(b, "steps", "un diagrama de flujo"), "diagrama de flujo")
+    top = _encabezado(c, b)
+    sin_valores = bool(b.get("blankValues"))
+    inicio, fin = b.get("start", "Inicio"), b.get("end", "Fin")
+    izq, der, _ = _medir_lista(pasos)
+    x, y = max(izq, 60) + 4, top + 6
+
+    def terminal(texto: Any, ty: float) -> None:
+        w = max(80, _ancho_texto(texto, 10.5) + 30)
+        c.r(x - w / 2, ty, w, 30, relleno="fillHeader", trazo=1.6, rx=15)
+        c.t(x, ty + 19, texto, size=10.5, peso=700, ancla="middle")
+
+    if inicio:
+        terminal(inicio, y)
+        c.linea(x, y + 30, x, y + 30 + _SEP_FLUJO - 3, color="strokeMain", ancho=1.5)
+        y += 30 + _SEP_FLUJO
+    y = _dibujar_lista(c, pasos, x, y, sin_valores)
+    if fin:
+        c.linea(x, y, x, y + _SEP_FLUJO - 3, color="strokeMain", ancho=1.5)
+        y += _SEP_FLUJO
+        terminal(fin, y)
+        y += 30
+    return x + max(der, 60) + 4, y + 4
+
+
+# ---------------------------------------------------------------------------
+# Análisis de algoritmos: costo por línea y tabla de traza
+# ---------------------------------------------------------------------------
+
+def _costos(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
+    """Cada línea con su costo y cuántas veces se ejecuta, y el T(n) que resulta."""
+    lineas = _lista_de(b, "lines", "una tabla de costos")
+    sin_costos, sin_veces = bool(b.get("blankCosts")), bool(b.get("blankTimes"))
+    filas = []
+    for n, linea in enumerate(lineas, 1):
+        if isinstance(linea, dict):
+            codigo, costo, veces = linea.get("code"), linea.get("cost"), linea.get("times")
+        elif isinstance(linea, list) and 1 <= len(linea) <= 3:
+            codigo, costo, veces = (linea + [None, None])[:3]
+        else:
+            codigo, costo, veces = linea, None, None
+        filas.append([str(n), _texto(codigo), "" if sin_costos else _texto(costo), "" if sin_veces else _texto(veces)])
+    top = _encabezado(c, b)
+    ancho, alto = _tabla(c, 0, top + 6, ["#", "código", "costo", "veces"], filas, izquierda=(1,), min_w=30)
+    y = top + 6 + alto
+    total = b.get("total")
+    if total is not None or b.get("blankTotal"):
+        y += 22
+        texto = "T(n) = " + ("_" * 24 if b.get("blankTotal") else str(total))
+        c.t(0, y, texto, size=12, peso=700)
+        ancho = max(ancho, _ancho_texto(texto, 12))
+    return ancho, y + 8
+
+
+def _traza(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
+    """Tabla de traza: la de statics (`operations` y `capacity`) o de variables (`columns`, `rows`)."""
+    operaciones = [str(o) for o in b.get("operations") or []]
+    top = _encabezado(c, b)
+    columnas = b.get("columns")
+    if columnas is not None:
+        if not isinstance(columnas, list) or not columnas:
+            raise ErrorDiagrama("'columns' de una traza tiene que ser una lista con al menos una columna")
+        encabezados = [str(x) for x in columnas]
+        filas_dato = b.get("rows") or []
+        if not isinstance(filas_dato, list) or not all(isinstance(f, list) for f in filas_dato):
+            raise ErrorDiagrama("'rows' de una traza tiene que ser una lista de filas")
+        sin_valores = bool(b.get("blankValues"))
+        cantidad = max(len(filas_dato), len(operaciones), _entero(b.get("rowCount"), 0, 0, 30))
+        if not cantidad:
+            raise ErrorDiagrama("la traza no tiene filas (usar rows, operations o rowCount)")
+        filas = []
+        for i in range(cantidad):
+            dato = filas_dato[i] if i < len(filas_dato) else []
+            if len(dato) > len(encabezados):
+                raise ErrorDiagrama(f"la fila {i} de la traza tiene {len(dato)} valores y hay "
+                                    f"{len(encabezados)} columnas")
+            celdas = ["" if sin_valores else _texto(v) for v in dato]
+            celdas += [""] * (len(encabezados) - len(celdas))
+            filas.append(([operaciones[i] if i < len(operaciones) else ""] + celdas) if operaciones else celdas)
+        if operaciones:
+            encabezados = [str(b.get("operationHeader") or "Instrucción")] + encabezados
+        ancho, alto = _tabla(c, 0, top + 6, encabezados, filas, izquierda=(0,) if operaciones else ())
+        return ancho, top + 6 + alto + 8
+    if not operaciones:
+        raise ErrorDiagrama("la traza no tiene filas (usar operations, o columns y rows)")
+    cap = _entero(b.get("capacity"), 6, 3, 10)
+    pila = b.get("variant") == "stack"
+    puntero = str(b.get("pointerHeader") or ("Puntero TOPE" if pila else "Punteros / Índ."))
+    marca = str(b.get("pointerLabel") or ("TOPE: ___" if pila else "F:___ R:___"))
+    indices = [f"[{i}]" for i in range(cap)] if b.get("showIndexHeader", True) else [" "] * cap
+    encabezados = ["Operación / Instrucción C", *indices, puntero]
+    filas = [[o] + [""] * cap + [marca] for o in operaciones]
+    ancho, alto = _tabla(c, 0, top + 6, encabezados, filas, izquierda=(0, cap + 1), fila_h=36, min_w=40)
+    return ancho, top + 6 + alto + 8
+
+
+# ---------------------------------------------------------------------------
+# Árbol de llamadas de una función recursiva
+# ---------------------------------------------------------------------------
+
+MAX_LLAMADAS = 40
+
+
+@dataclass
+class _Llamada:
+    texto: str
+    retorno: str = ""
+    hijos: List["_Llamada"] = field(default_factory=list)
+    x: float = 0
+    prof: int = 0
+    orden: int = 0
+    ancho_arbol: float = 0
+    en_blanco: bool = False
+
+
+def _llamadas(dato: Any, prof: int = 0) -> _Llamada:
+    if isinstance(dato, dict):
+        if not dato.get("call"):
+            raise ErrorDiagrama("cada nodo de un árbol de llamadas tiene que tener 'call'")
+        hijos = dato.get("children") or []
+        if not isinstance(hijos, list):
+            raise ErrorDiagrama("'children' de un árbol de llamadas tiene que ser una lista")
+        return _Llamada(str(dato["call"]), _texto(dato.get("returns")), [_llamadas(h, prof + 1) for h in hijos],
+                        prof=prof, en_blanco=bool(dato.get("blank")))
+    return _Llamada(_texto(dato), prof=prof)
+
+
+def _arbol_llamadas(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
+    if not b.get("root"):
+        raise ErrorDiagrama("el árbol de llamadas no tiene 'root' ({call, returns, children})")
+    raiz = _llamadas(b["root"])
+    nodos: List[_Llamada] = []
+
+    def en_orden(n: _Llamada) -> None:  # el orden en que se hacen las llamadas
+        nodos.append(n)
+        n.orden = len(nodos)
+        for h in n.hijos:
+            en_orden(h)
+
+    en_orden(raiz)
+    if len(nodos) > MAX_LLAMADAS:
+        raise ErrorDiagrama(f"el árbol tiene {len(nodos)} llamadas; el máximo es {MAX_LLAMADAS}")
+    sin_retornos, sin_llamadas = bool(b.get("blankReturns")), bool(b.get("blankCalls"))
+    con_orden = bool(b.get("showOrder"))
+    resaltados = {str(v) for v in b.get("highlight") or []}
+    con_retorno = sin_retornos or any(n.retorno for n in nodos)
+    top = _encabezado(c, b)
+    alto_nodo, nivel_h, sep = (42 if con_retorno else 28), 76, 14
+
+    def ancho_nodo(n: _Llamada) -> float:
+        return max(58, _ancho_texto(n.texto, 11) + 18, _ancho_texto(f"→ {n.retorno}", 10) + 16)
+
+    def medir(n: _Llamada) -> float:
+        hijos = sum(medir(h) for h in n.hijos) + sep * max(0, len(n.hijos) - 1)
+        n.ancho_arbol = max(ancho_nodo(n), hijos)
+        return n.ancho_arbol
+
+    def ubicar(n: _Llamada, x: float) -> None:
+        hijos = sum(h.ancho_arbol for h in n.hijos) + sep * max(0, len(n.hijos) - 1)
+        cursor = x + (n.ancho_arbol - hijos) / 2
+        for h in n.hijos:
+            ubicar(h, cursor)
+            cursor += h.ancho_arbol + sep
+        n.x = (n.hijos[0].x + n.hijos[-1].x) / 2 if n.hijos else x + n.ancho_arbol / 2
+
+    medir(raiz)
+    ubicar(raiz, 10 if con_orden else 0)
+    y0 = top + 12
+
+    def y_de(n: _Llamada) -> float:
+        return y0 + n.prof * nivel_h
+
+    for n in nodos:
+        for h in n.hijos:
+            c.linea(n.x, y_de(n) + alto_nodo, h.x, y_de(h) - 3, ancho=1.5)
+    for n in nodos:
+        w, y = ancho_nodo(n), y_de(n)
+        marcada = n.texto in resaltados
+        c.r(n.x - w / 2, y, w, alto_nodo, relleno="fillHighlight" if marcada else "fillCell",
+            trazo=2.4 if marcada else 1.6, rx=4)
+        if sin_llamadas or n.en_blanco:
+            c.vacio(n.x - w / 2 + 8, n.x + w / 2 - 8, y + 20)
+        else:
+            c.t(n.x, y + 18, n.texto, size=11, peso=700, ancla="middle")
+        if con_retorno:
+            if sin_retornos or not n.retorno:
+                c.t(n.x - w / 2 + 8, y + 35, "→", size=10, color="textSub")
+                c.vacio(n.x - w / 2 + 22, n.x + w / 2 - 8, y + 37)
+            else:
+                c.t(n.x, y + 35, f"→ {n.retorno}", size=10, color="textSub", ancla="middle")
+        if con_orden:
+            c.add(f'<circle cx="{n.x - w / 2:.1f}" cy="{y:.1f}" r="9" fill="{c.pal["fillBadge"]}" '
+                  f'stroke="{c.pal["strokeMain"]}" stroke-width="1.1"/>')
+            c.t(n.x - w / 2, y + 3.5, n.orden, size=9, peso=700, ancla="middle")
+
+    profundidad = max(n.prof for n in nodos)
+    ancho = raiz.ancho_arbol + (10 if con_orden else 0)
+    alto = y0 + profundidad * nivel_h + alto_nodo + 8
+    niveles = b.get("levelCosts")
+    if niveles is not None or b.get("blankLevelCosts"):
+        datos = list(niveles or [])
+        x = ancho + 34
+        textos = ["" if b.get("blankLevelCosts") or i >= len(datos) else _texto(datos[i]) for i in range(profundidad + 1)]
+        col_w = max([_ancho_texto(t, 10.5) for t in textos] + [_ancho_texto("costo del nivel", 9.5), 90])
+        c.t(x, y0 - 8, "costo del nivel", size=9.5, peso=700, color="textSub")
+        for i, texto in enumerate(textos):
+            y = y0 + i * nivel_h + alto_nodo / 2
+            c.linea(x - 28, y, x - 6, y, color="strokeMuted", ancho=1, flecha=None, guiones="3 2")
+            if texto:
+                c.t(x, y + 4, texto, size=10.5, peso=700)
+            else:
+                c.vacio(x, x + col_w, y + 6)
+        ancho = x + col_w
+    total = b.get("total")
+    if total is not None or b.get("blankTotal"):
+        texto = "T(n) = " + ("_" * 24 if b.get("blankTotal") else str(total))
+        c.t(0, alto + 12, texto, size=12, peso=700)
+        ancho, alto = max(ancho, _ancho_texto(texto, 12)), alto + 20
+    return ancho, alto
+
+
 _RENDERIZADORES: Dict[str, Callable[[_Lienzo, Dict[str, Any]], Tuple[float, float]]] = {
-    "array": _arreglo, "matrix": _matriz, "linked_list": _lista, "stack": _pila, "call_stack": _pila_llamadas, "queue": _cola, "tree": _arbol,
+    "array": _arreglo, "matrix": _matriz, "linked_list": _lista, "stack": _pila, "call_stack": _pila_llamadas,
+    "call_tree": _arbol_llamadas, "queue": _cola, "tree": _arbol, "struct": _struct, "adt": _tad,
+    "complexity": _complejidad, "flowchart": _flujo, "cost_table": _costos, "trace_table": _traza,
 }
 
 
@@ -1147,7 +2144,13 @@ def renderizar(bloque: Dict[str, Any], tinta: bool = True) -> str:
     pal = PALETAS[bool(bloque.get("inkSaver", tinta))]
     sufijo = hashlib.sha1(json.dumps(bloque, sort_keys=True, default=str).encode()).hexdigest()[:8]
     lienzo = _Lienzo(pal, sufijo)
-    ancho, alto = _RENDERIZADORES[tipo](lienzo, bloque)
+    try:
+        ancho, alto = _RENDERIZADORES[tipo](lienzo, bloque)
+    except ErrorDiagrama:
+        raise
+    except (TypeError, ValueError, AttributeError, KeyError, IndexError) as e:
+        # Un dato de otro tipo (`curves: 5`) es un bloque inválido, no un motivo para frenar el examen.
+        raise ErrorDiagrama(f"bloque {tipo} mal formado: {e}") from e
     ancho = max(ancho, lienzo.ancho_min)
     m = 8
     defs = (

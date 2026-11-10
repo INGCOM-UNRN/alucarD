@@ -11,7 +11,9 @@ from generador_examenes.core.markdown_utils import markdown_to_html
 from generador_examenes.diagramas import (
     PALETAS,
     ErrorDiagrama,
+    _campos,
     construir_arbol,
+    disposicion_struct,
     leer_bloques,
     renderizar,
 )
@@ -239,7 +241,7 @@ def test_typst_compila_los_diagramas(tmp_path):
     pytest.importorskip("typst")
     from generador_examenes.generators.pdf_renderer import compilar_typst_a_pdf
 
-    cuerpo = "\n\n".join(html_a_typst(f'<div class="estructura">{renderizar(b)}</div>') for b in BLOQUES + MATRICES + [PILA_LLAMADAS])
+    cuerpo = "\n\n".join(html_a_typst(f'<div class="estructura">{renderizar(b)}</div>') for b in BLOQUES + MATRICES + [PILA_LLAMADAS] + TEMAS)
     assert compilar_typst_a_pdf(f"#set page(width: 12cm, height: auto)\n{cuerpo}\n", tmp_path / "d.pdf").is_file()
 
 
@@ -411,3 +413,355 @@ def test_pila_de_llamadas_en_blanco():
 def test_pila_de_llamadas_errores(bloque, mensaje):
     with pytest.raises(ErrorDiagrama, match=re.escape(mensaje)):
         renderizar({"type": "call_stack", **bloque})
+
+
+# --- Diagramas para evaluar TADs, structs, complejidad, análisis y recursividad ----------------
+
+FIB3 = {"call": "fib(3)", "returns": 2, "children": [
+    {"call": "fib(2)", "returns": 1, "children": [{"call": "fib(1)", "returns": 1}, {"call": "fib(0)", "returns": 0}]},
+    {"call": "fib(1)", "returns": 1}]}
+FLUJO = [{"io": "leer n"}, "i = 0",
+         {"while": "i < n", "do": [{"if": "par(i)", "then": ["s = s + i"], "else": ["s = s - i"]}, "i = i + 1"]},
+         {"if": "s > 0", "else": ["s = 0"]}, {"if": "s == 0", "then": ["t = 1"]}]
+TEMAS = [
+    {"type": "struct", "name": "struct persona", "typedef": "persona_t", "fields": ["char c = 'A'", "int edad = 30"]},
+    {"type": "struct", "variant": "opaque", "name": "struct pila", "operations": ["void f(pila_t p)"],
+     "fields": ["int *datos", "size_t tope"]},
+    {"type": "adt", "name": "Pila", "operations": ["pila_t crear(void)"], "client": ["crear();"], "invariant": "tope >= 0",
+     "representations": ["Arreglo", {"name": "Lista", "fields": ["nodo_t *cabeza"]}]},
+    {"type": "complexity"},
+    {"type": "complexity", "variant": "classes", "items": {"O(n)": ["búsqueda lineal"]}},
+    {"type": "flowchart", "steps": FLUJO},
+    {"type": "cost_table", "lines": [["int s = 0;", "c1", 1]], "total": "c1"},
+    {"type": "trace_table", "columns": ["i", "s"], "rows": [[0, 1]]},
+    {"type": "trace_table", "capacity": 4, "operations": ["push(1)"]},
+    {"type": "call_tree", "root": FIB3, "showOrder": True, "levelCosts": ["1", "2", "2"], "total": "2^n"},
+    {"type": "matrix", "variant": "flat", "values": [[1, 2], [3, 4]], "showLogical": True, "showAddresses": True},
+    {"type": "linked_list", "values": [1, 2], "pointers": "actual:1"},
+    {"type": "linked_list", "values": []},
+]
+
+
+@pytest.mark.parametrize("bloque", TEMAS, ids=lambda b: f"{b['type']}-{b.get('variant', '')}")
+def test_cada_tema_es_un_svg_valido(bloque):
+    raiz = ET.fromstring(renderizar(bloque))
+    assert int(raiz.get("width")) > 50 and int(raiz.get("height")) > 50
+
+
+def _textos(svg: str) -> list:
+    return [t.text for t in ET.fromstring(svg).iter(f"{SVG}text")]
+
+
+def _disposicion(*campos: str, **opciones):
+    lista = _campos({"fields": list(campos)})
+    rellenos, sizeof, alineacion = disposicion_struct(lista, **opciones)
+    return [c.offset for c in lista], rellenos, sizeof, alineacion
+
+
+def test_struct_relleno_interno_y_final():
+    assert _disposicion("char a", "int b", "char c") == ([0, 4, 8], [(1, 3), (9, 3)], 12, 4)
+
+
+def test_struct_ordenar_los_campos_ahorra_relleno():
+    assert _disposicion("double d", "int i", "char a", "char b")[2] == 16
+    assert _disposicion("char a", "double d", "char b", "int i")[2] == 24
+
+
+def test_struct_empaquetado_no_tiene_relleno():
+    assert _disposicion("char a", "int b", "char c", empaquetado=True)[1:3] == ([], 6)
+
+
+def test_struct_arreglos_punteros_y_modificadores():
+    assert _disposicion("char nombre[10]", "int *p", "const unsigned long x", "short m[2][3]")[0] == [0, 16, 24, 32]
+    assert _disposicion("unsigned char a", "unsigned b", "long long int c")[0] == [0, 4, 8]
+
+
+def test_struct_anidado_se_declara_con_size_y_align():
+    campos = _campos({"fields": [{"name": "c", "type": "char"},
+                                 {"name": "pos", "type": "struct punto", "size": 8, "align": 4}]})
+    assert disposicion_struct(campos)[1] == 12
+
+
+def test_struct_coincide_con_gcc(tmp_path):
+    """Las claves de los exámenes dependen de esto: la cuenta tiene que dar lo mismo que el compilador."""
+    import shutil
+    import subprocess
+
+    if not shutil.which("gcc"):
+        pytest.skip("sin gcc")
+    casos = [["char a", "int b", "char c"], ["char a", "double d", "short s"], ["char n[10]", "int *p", "short m[3]"],
+             ["short a", "char b", "long c", "char d"], ["float f", "char c[5]", "size_t t"], ["char a", "char b"]]
+    fuente = "#include <stdio.h>\n#include <stddef.h>\n"
+    cuerpo, esperado = "", []
+    for i, caso in enumerate(casos):
+        campos = _campos({"fields": caso})
+        sizeof = disposicion_struct(campos)[1]
+        fuente += f"struct s{i} {{ {' '.join(c + ';' for c in caso)} }};\n"
+        cuerpo += f'printf("%zu", sizeof(struct s{i}));'
+        cuerpo += "".join(f'printf(" %zu", offsetof(struct s{i}, {c.nombre}));' for c in campos) + 'puts("");'
+        esperado.append(" ".join(str(n) for n in [sizeof, *(c.offset for c in campos)]))
+    (tmp_path / "s.c").write_text(f"{fuente}int main(void) {{ {cuerpo} return 0; }}\n", encoding="utf-8")
+    subprocess.run(["gcc", "s.c", "-o", "s"], cwd=tmp_path, check=True)
+    salida = subprocess.run(["./s"], cwd=tmp_path, check=True, capture_output=True, text=True).stdout
+    assert salida.split("\n")[:-1] == esperado
+
+
+def test_struct_dibuja_offsets_relleno_y_sizeof():
+    textos = _textos(renderizar({"type": "struct", "name": "struct s", "fields": ["char a", "int b"]}))
+    assert "+4" in textos and "(relleno)" in textos and "3 B" in textos
+    assert any("sizeof(struct s) = 8 bytes" in t for t in textos)
+
+
+def test_struct_en_blanco_para_completar():
+    bloque = {"type": "struct", "name": "struct s", "fields": ["char a", "int b"], "blankOffsets": True,
+              "blankSizes": True, "blankPadding": True, "blankSizeof": True}
+    textos = _textos(renderizar(bloque))
+    assert "+4" not in textos and "(relleno)" not in textos and "4 B" not in textos
+    assert not any("8 bytes" in t for t in textos)
+
+
+def test_tipo_opaco_el_cliente_no_ve_los_campos():
+    bloque = {"type": "struct", "variant": "opaque", "name": "struct pila", "typedef": "pila_t", "fields": ["int *datos"]}
+    assert "int *datos;" in _textos(renderizar(bloque))
+    oculto = _textos(renderizar({k: v for k, v in bloque.items() if k != "fields"} | {"hidden": True}))
+    assert "int *datos;" not in oculto and "typedef struct pila *pila_t;" in oculto
+
+
+@pytest.mark.parametrize("bloque, mensaje", [
+    ({"type": "struct"}, "fields"),
+    ({"type": "struct", "fields": ["punto_t p"]}, "tamaño"),
+    ({"type": "struct", "fields": ["?"]}, "no entiendo"),
+    ({"type": "struct", "fields": [{"name": "x"}]}, "'type'"),
+    ({"type": "struct", "variant": "otra", "fields": ["int a"]}, "variante"),
+    ({"type": "struct", "fields": ["int a"] * 17}, "máximo"),
+    ({"type": "adt"}, "operations"),
+    ({"type": "adt", "operations": [{"kind": "x"}]}, "signature"),
+    ({"type": "complexity", "curves": ["n^4"]}, "desconocido"),
+    ({"type": "complexity", "curves": [{"label": "x"}]}, "points"),
+    ({"type": "complexity", "curves": [{"points": [[1]]}]}, "points"),
+    ({"type": "complexity", "curves": 5}, "curves"),
+    ({"type": "complexity", "variant": "otra"}, "variante"),
+    ({"type": "complexity", "variant": "classes", "classes": ["P"], "items": {"NP": ["SAT"]}}, "NP"),
+    ({"type": "flowchart"}, "steps"),
+    ({"type": "flowchart", "steps": [{"x": 1}]}, "paso 0"),
+    ({"type": "flowchart", "steps": [{"while": "a"}]}, "cuerpo"),
+    ({"type": "cost_table"}, "lines"),
+    ({"type": "trace_table"}, "filas"),
+    ({"type": "trace_table", "columns": ["a"]}, "filas"),
+    ({"type": "trace_table", "columns": ["a"], "rows": [[1, 2]]}, "columnas"),
+    ({"type": "call_tree"}, "root"),
+    ({"type": "call_tree", "root": {"returns": 1}}, "call"),
+    ({"type": "call_tree", "root": {"call": "f", "children": ["g"] * 40}}, "máximo"),
+    ({"type": "matrix", "variant": "flat", "rows": 5, "cols": 5}, "máximo"),
+])
+def test_temas_errores_claros(bloque, mensaje):
+    with pytest.raises(ErrorDiagrama, match=mensaje):
+        renderizar(bloque)
+
+
+@pytest.mark.parametrize("bloque", [
+    {"type": "adt", "operations": [1, 2], "representations": 5},
+    {"type": "call_tree", "root": {"call": "f"}, "levelCosts": 5},
+    {"type": "complexity", "variant": "classes", "classes": ["P"], "items": {"P": 3}, "maxN": []},
+    {"type": "stack", "values": 5},
+])
+def test_un_dato_de_otro_tipo_no_corta_la_generacion(bloque):
+    try:
+        ET.fromstring(renderizar(bloque))
+    except ErrorDiagrama:
+        pass  # dibujarlo o rechazarlo: lo que no puede pasar es otra excepción
+
+
+def test_tad_operaciones_y_lo_que_no_aplica_no_es_para_completar():
+    bloque = {"type": "adt", "name": "Pila", "operations": [{"signature": "f()", "kind": "observador", "pre": "p"},
+                                                            {"signature": "g()", "post": "q", "blank": True}]}
+    textos = _textos(renderizar(bloque))
+    assert "f()" in textos and "g()" not in textos and "—" in textos
+    assert "observador" not in _textos(renderizar(bloque | {"blankKinds": True}))
+
+
+def test_curvas_con_alias_y_rotuladas_con_letras():
+    assert "O(n²)" in _textos(renderizar({"type": "complexity", "curves": ["Θ(n²)"]}))
+    textos = _textos(renderizar({"type": "complexity", "curves": ["n", "n^2"], "blankLabels": True}))
+    assert {"A", "B"} <= set(textos) and "O(n)" not in textos
+
+
+def test_curvas_sin_desbordes_con_n_grande():
+    ET.fromstring(renderizar({"type": "complexity", "curves": ["2^n", "n!", "n^3"], "maxN": 10000, "maxY": 1000}))
+
+
+def test_curva_no_se_sale_del_grafico():
+    svg = renderizar({"type": "complexity", "curves": ["2^n"], "maxN": 20, "maxY": 100})
+    ys = [float(p.split(",")[1]) for p in re.search(r'polyline points="([^"]+)"', svg)[1].split()]
+    assert min(ys) >= 37  # el tope del gráfico: y0 = 38, menos el redondeo
+
+
+def test_curvas_con_mediciones():
+    svg = renderizar({"type": "complexity", "curves": [{"label": "medido", "points": [[2, 5], [10, 90]]}]})
+    assert "medido" in _textos(svg) and svg.count("<circle") == 2
+
+
+def test_clases_anidadas_de_la_mas_chica_a_la_mas_grande():
+    svg = renderizar({"type": "complexity", "variant": "classes", "classes": ["P", "NP"], "items": {"P": ["ordenar"]}})
+    textos = _textos(svg)
+    assert textos.index("NP") < textos.index("P") and "• ordenar" in textos
+    sin = _textos(renderizar({"type": "complexity", "variant": "classes", "blankClasses": True}))
+    assert "O(n)" not in sin
+
+
+def test_flujo_decision_y_repeticion():
+    svg = renderizar({"type": "flowchart", "steps": FLUJO})
+    textos = _textos(svg)
+    assert {"Inicio", "Fin", "leer n", "i < n", "par(i)", "s = 0"} <= set(textos)
+    assert textos.count("Sí") == 4 and textos.count("No") == 4
+    assert svg.count("<polygon") == 5  # la entrada y las cuatro condiciones
+
+
+def test_flujo_en_blanco_y_sin_terminales():
+    bloque = {"type": "flowchart", "steps": ["a = 1", {"step": "b = 2", "blank": True}], "start": False, "end": False}
+    textos = _textos(renderizar(bloque))
+    assert "a = 1" in textos and "b = 2" not in textos and "Inicio" not in textos
+
+
+def test_flujo_las_ramas_no_se_pisan():
+    largo = "una instruccion bastante larga"
+    svg = renderizar({"type": "flowchart", "steps": [{"if": "c", "then": [largo], "else": [largo]}]})
+    cajas = [(float(x), float(w)) for x, w in re.findall(r'<rect x="([\d.-]+)" y="[\d.]+" width="([\d.]+)" height="34', svg)]
+    (x1, w1), (x2, _) = sorted(cajas)
+    assert x1 + w1 < x2 and x1 >= 0
+
+
+def test_costos_y_sangria_del_codigo():
+    bloque = {"type": "cost_table", "lines": [["for (;;)", "c1", "n"], ["    x++;", "c2", "n - 1"]], "total": "2n"}
+    svg = renderizar(bloque)
+    assert "T(n) = 2n" in _textos(svg)
+    x_for = float(re.search(r'<text x="([\d.]+)"[^>]*>for \(;;\)', svg)[1])
+    x_cuerpo = float(re.search(r'<text x="([\d.]+)"[^>]*>x\+\+;', svg)[1])
+    assert x_cuerpo > x_for + 20
+    blanco = _textos(renderizar(bloque | {"blankCosts": True, "blankTimes": True, "blankTotal": True}))
+    assert "c1" not in blanco and "n - 1" not in blanco and "T(n) = 2n" not in blanco
+
+
+def test_traza_de_statics():
+    bloque = {"type": "trace_table", "variant": "stack", "capacity": 5, "pointerLabel": "TOPE: ___",
+              "operations": ["1. push(10)", "2. pop()"]}
+    textos = _textos(renderizar(bloque))
+    assert {"[0]", "[4]", "Puntero TOPE", "1. push(10)"} <= set(textos) and textos.count("TOPE: ___") == 2
+
+
+def test_traza_de_variables_lo_que_falta_queda_para_completar():
+    bloque = {"type": "trace_table", "columns": ["i", "suma"], "rows": [[0, 7], [1, None]], "rowCount": 4}
+    svg = renderizar(bloque)
+    assert "7" in _textos(svg) and svg.count('stroke-dasharray="3 2"') == 5
+    assert "7" not in _textos(renderizar(bloque | {"blankValues": True}))
+
+
+def test_traza_con_instrucciones():
+    bloque = {"type": "trace_table", "columns": ["a"], "operations": ["a = 1", "a++"], "operationHeader": "Línea"}
+    assert {"Línea", "a = 1", "a++"} <= set(_textos(renderizar(bloque)))
+
+
+def test_arbol_de_llamadas_orden_y_retornos():
+    textos = _textos(renderizar({"type": "call_tree", "root": FIB3, "showOrder": True}))
+    assert textos.count("fib(1)") == 2 and "→ 2" in textos
+    assert [t for t in textos if t.isdigit()] == ["1", "2", "3", "4", "5"]
+
+
+def test_arbol_de_llamadas_el_padre_queda_sobre_sus_hijos():
+    svg = renderizar({"type": "call_tree", "root": {"call": "a", "children": ["b", "c"]}})
+    x = {m[1]: float(m[0]) for m in re.findall(r'<text x="([\d.]+)"[^>]*>([abc])</text>', svg)}
+    assert x["b"] < x["a"] < x["c"] and x["a"] == pytest.approx((x["b"] + x["c"]) / 2)
+
+
+def test_arbol_de_llamadas_en_blanco_y_costos():
+    bloque = {"type": "call_tree", "root": FIB3, "blankReturns": True, "levelCosts": ["n", "2n"], "total": "n^2"}
+    textos = _textos(renderizar(bloque))
+    assert "→ 2" not in textos and "costo del nivel" in textos and "2n" in textos and "T(n) = n^2" in textos
+    assert "fib(3)" not in _textos(renderizar({"type": "call_tree", "root": FIB3, "blankCalls": True}))
+    assert "n" not in _textos(renderizar(bloque | {"blankLevelCosts": True}))
+
+
+def test_matriz_plana_contigua_con_su_formula():
+    svg = renderizar({"type": "matrix", "variant": "flat", "values": [[1, 2, 3], [4, 5, 6]], "baseAddr": "0x1000",
+                      "showAddresses": True})
+    textos = _textos(svg)
+    assert "[5]" in textos and "(1,2)" in textos and "0x1014" in textos
+    assert any("malloc(2 * 3 * sizeof(int))" in t for t in textos) and any("m[i * 3 + j]" in t for t in textos)
+
+
+def test_matriz_plana_para_preguntar_la_conversion():
+    bloque = {"type": "matrix", "variant": "flat", "values": [[1, 2], [3, 4]], "showIndices": False, "showFormula": False}
+    textos = _textos(renderizar(bloque))
+    assert "[3]" not in textos and "(1,1)" in textos and not any("i * 2" in t for t in textos)
+    assert "(1,1)" not in _textos(renderizar(bloque | {"showCoords": False}))
+
+
+def test_matriz_plana_vista_logica():
+    textos = _textos(renderizar({"type": "matrix", "variant": "flat", "values": [[1, 2]], "showLogical": True}))
+    assert textos.count("1") == 2 and any("int m[1][2]" in t for t in textos)
+
+
+def test_lista_con_cursores():
+    textos = _textos(renderizar({"type": "linked_list", "values": [1, 2, 3], "pointers": "ant:0, actual:1, final:2"}))
+    assert {"ant", "actual", "final"} <= set(textos)
+
+
+def test_lista_vacia_llega_a_null():
+    textos = _textos(renderizar({"type": "linked_list", "headLabel": "cabeza", "values": []}))
+    assert "cabeza" in textos and "NULL" in textos and "dato" not in textos
+
+
+def test_diagramas_nuevos_en_una_pregunta_gift(tmp_path):
+    from generador_examenes.core import logic
+
+    banco = tmp_path / "b.gift"
+    banco.write_text("""::flujo:: [markdown]¿Qué imprime?
+```estructura
+type: flowchart
+steps:
+  - "max = v[0]"
+  - while: i < n
+    do:
+      - i = i + 1
+```
+{
+=3
+~4
+}
+
+::padding:: [markdown]¿Cuánto da `sizeof`?
+```estructura
+type: struct
+name: struct s
+fields: ["char a", "int b"]
+blankSizeof: true
+```
+{
+=8
+~5
+}
+""", encoding="utf-8")
+    preguntas = list(logic.cargar_bancos([banco]).values())
+    assert len(preguntas) == 2
+    assert all("<svg" in p.enunciado_html and "estructura-error" not in p.enunciado_html for p in preguntas)
+
+
+@pytest.mark.parametrize("plantilla", ["base_examen.html.j2", "clave_profesor.html.j2"])
+def test_los_diagramas_anchos_no_se_salen_de_la_pregunta(plantilla):
+    from pathlib import Path
+
+    import generador_examenes
+
+    raiz = Path(generador_examenes.__file__).parent.parent
+    assert "svg.estructura { max-width: 100%" in (raiz / "templates" / plantilla).read_text(encoding="utf-8")
+
+
+LISTA_CON_CABECERA = {"type": "linked_list", "values": [12, 25, 8], "addresses": ["@N1", "@N2", "@N3"],
+                      "nodeType": "nodo_t", "zones": {"stack": "Stack: main", "heap": "Heap"},
+                      "header": {"name": "mi_lista", "type": "lista_t",
+                                 "fields": ["primero -> 0", "ultimo -> 2", "cant = 3"]}}
+DENTADA_EN_ESTRUCTURA = {"type": "matrix", "variant": "jagged", "name": "filas", "values": [[4, 8], [9]],
+                         "showAddresses": True, "baseAddr": "@F", "rowAddresses": ["@R0", "@R1"], "lengthsType": "int",
+                         "lengthsAddr": "@L", "zones": True,
+                         "owner": {"name": "d", "type": "dentada_t",
+                                   "fields": ["n = 2", "largos -> lengths", "filas -> rows"]}}

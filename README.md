@@ -1460,7 +1460,7 @@ Al reportar un issue, incluye:
 | `alucard sintetizar` | Genera un banco de preguntas de C con daedalus: cada respuesta se verifica con gcc. |
 | `alucard repartir` | Reparte los temas en PDF entre los estudiantes, para entregarlos cifrados con uatu. |
 | `alucard diagramas-md` | Dibuja los bloques ```estructura de los Markdown como SVG versionados, para publicarlos sin alucarD. |
-| `alucard diagrama` | Dibuja estructuras de datos (arreglo, matriz, lista, pila, pila de llamadas, cola, árbol) como SVG, con el formato de bloques de statics. |
+| `alucard diagrama` | Dibuja estructuras de datos y diagramas de algoritmos como SVG, con el formato de bloques de statics. |
 | `alucard doctor` | Diagnostica gcc, Typst, pypdf y conectividad LanguageTool. |
 
 Ayuda de cada comando: `alucard <comando> -h`.

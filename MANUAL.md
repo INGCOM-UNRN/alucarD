@@ -322,7 +322,6 @@ Las plantillas están en `generador_examenes/synthesizer/plantillas.py`. Una pla
 
 Probala con `alucard sintetizar <nombre> --muestra` antes de generar el banco.
 
-### Diagramas de estructuras de datos (statics)
 ### Fórmulas matemáticas
 
 Las preguntas (en GIFT, Markdown y Moodle XML) y los enunciados de las consignas admiten fórmulas en
@@ -354,9 +353,11 @@ Cuidados:
   generar` avisa en qué pregunta y `alucard lint-gift` lo marca como error.
 - En Moodle XML con formato HTML también valen `\(...\)` y `\[...\]`.
 
+### Diagramas de estructuras de datos y algoritmos (statics)
 
 Las preguntas (GIFT `[markdown]`, Markdown) y los enunciados de las consignas de deckard pueden
-incluir diagramas de arreglos, matrices, listas enlazadas, pilas, la pila de llamadas, colas y árboles. Se escriben en un bloque de
+incluir diagramas de arreglos, matrices, listas enlazadas, pilas, la pila y el árbol de llamadas,
+colas, árboles, structs, TADs, complejidad, flujo, costos y trazas. Se escriben en un bloque de
 código `estructura`, en YAML o JSON, con el formato de bloques de
 statics (`estructuras.html`): un bloque exportado de statics se pega tal cual. alucarD lo
 dibuja como SVG, en línea en el HTML y como imagen en el PDF de Typst, sin navegador ni dependencias
@@ -380,12 +381,19 @@ addresses: [0x3B20, 0x7E10, 0x2140, 0x9A80]
 | `type` | Variantes (`variant`) | Claves principales |
 | :--- | :--- | :--- |
 | `array` | | `values`, `capacity`, `pointers` (`"p:0, q:3"`), `showIndices`, `showAddresses`, `showOffsets`, `baseAddr`, `typeSize`, `blankValues`, `blankAddrs` |
-| `matrix` | `static` (por omisión), `dynamic`, `jagged` | `values` (lista de filas, o plana con `cols`), `rows`, `cols`, `name`, `elementType`, `showIndices`, `showAddresses`, `baseAddr`, `typeSize`, `highlight` (`"1,2; 0,0"` o `[[1, 2]]`), `highlightRows`, `highlightCols`, `blankValues`, `blankAddrs`. Estática: `showLinear` (la matriz en memoria, fila por fila). Dinámica (`int **m`): filas de largo propio y `null` para un puntero a NULL; `rowAddresses`. Dentada (`jagged`): además `showLengths` (por omisión, el arreglo de largos), `lengths`, `lengthsName`, `blankLengths` o `sentinel` (un centinela al final de cada fila) |
-| `linked_list` | `singly`, `doubly`, `circular`, `circular_doubly` | `values` (hasta 7), `addresses`, `headLabel`, `drawArrows`, `blankValues`, `blankNextAddrs` |
+| `matrix` | `static` (por omisión), `dynamic`, `jagged`, `flat` | `values` (lista de filas, o plana con `cols`), `rows`, `cols`, `name`, `elementType`, `showIndices`, `showAddresses`, `baseAddr`, `typeSize`, `highlight` (`"1,2; 0,0"` o `[[1, 2]]`), `highlightRows`, `highlightCols`, `blankValues`, `blankAddrs`. Estática: `showLinear` (la matriz en memoria, fila por fila). Dinámica (`int **m`): filas de largo propio y `null` para un puntero a NULL; `rowAddresses`. Dentada (`jagged`): además `showLengths` (por omisión, el arreglo de largos), `lengths`, `lengthsName`, `blankLengths` o `sentinel` (un centinela al final de cada fila). Plana (`flat`, `int *m`): `showCoords`, `showFormula`, `showLogical`; hasta 24 celdas |
+| `linked_list` | `singly`, `doubly`, `circular`, `circular_doubly` | `values` (hasta 7; `[]` es la lista vacía), `addresses`, `headLabel`, `pointers` (cursores: `"ant:0, actual:1"`), `drawArrows`, `blankValues`, `blankNextAddrs` |
 | `stack` | `layout: vertical_multi` para varios pasos | `values` (desde la base), `capacity`, `topIndex`, `topLabel`, `traceLabels`, `showAddresses`, `blankValues`, `blankPointers` |
 | `call_stack` | | `frames` (de `main` hacia el tope; cada uno con `function`, `params`, `vars`, `returnTo`, `returns`, `popped`), `pointers` (`"1.p -> 0.x"`), `steps` (`label` + `frames`, la pila en varios momentos), `showAddresses`, `baseAddr`, `typeSize`, `showTypes`, `blankValues`, `blankAddrs` |
+| `call_tree` | | `root` (`call`, `returns`, `children`, `blank`; hasta 40 llamadas), `showOrder`, `highlight`, `levelCosts`, `total`, `blankReturns`, `blankCalls`, `blankLevelCosts`, `blankTotal` |
 | `queue` | `linear`, `circular` | `values`, `capacity`, `frontIndex`, `rearIndex`, `showPanel` (circular), `blankValues`, `blankPointers` |
 | `tree` | `binary`, `bst`, `avl`, `heap` | Nodos con `values` (por niveles, `""` = sin nodo), `insert` (inserciones de ABB; con `avl`, rebalancea) o `root` (anidado: `value`, `left`, `right`). Además `nodeStyle: struct` (nodos con `*izq`/`*der`), `nullLeaves`, `highlight`, `blankValues`, `showBalance`/`blankBalance` (AVL), `showArray` (montículo) |
+| `struct` | `layout` (por omisión), `opaque` | `fields` (`"char nombre[8]"`, `"int edad = 30"` o `{name, type, value, size, align, blank}`; hasta 16), `name`, `typedef`. Disposición: `packed`, `showAddresses`, `baseAddr`, `blankOffsets`, `blankSizes`, `blankPadding`, `blankSizeof`, `blankValues`. Opaco: `operations`, `variable`, `header`, `source`, `client`, `hidden` |
+| `adt` | | `name`, `operations` (texto o `{signature, kind, pre, post, blank}`), `invariant`, `representations` (`{name, fields}`), `client`, `blankOperations`, `blankKinds` |
+| `complexity` | `growth` (por omisión), `classes` | Curvas: `curves` (`1`, `log n`, `sqrt n`, `n`, `n log n`, `n^2`, `n^3`, `2^n`, `n!`, también como `O(n²)`, o `{label, points}` para mediciones), `maxN`, `maxY`, `xLabel`, `yLabel`, `blankLabels` (rotula A, B, C…). Clases: `classes` (de la más chica a la más grande), `items`, `blankClasses` |
+| `flowchart` | | `steps` (texto, `{io}`, `{step}`, `{if, then, else}`, `{while, do}`, `{for, do}`; cada uno con `blank`), `start`, `end` (`false` los quita), `blankValues` |
+| `cost_table` | | `lines` (`[código, costo, veces]` o `{code, cost, times}`), `total`, `blankCosts`, `blankTimes`, `blankTotal` |
+| `trace_table` | `stack` (sólo cambia los rótulos por omisión) | De statics: `operations`, `capacity`, `pointerHeader`, `pointerLabel`, `showIndexHeader`. De variables: `columns`, `rows` (`null` o una fila corta quedan para completar), `rowCount`, `operations` y `operationHeader` (primera columna), `blankValues` |
 
 Las matrices y los árboles son de alucarD, porque statics no los tiene. La matriz estática muestra
 la declaración (`int m[3][4]`) y, con `showAddresses`, la dirección de cada celda en orden de filas;
@@ -397,6 +405,166 @@ La dentada (`jagged`) es la dinámica con filas de distinto largo y cómo se sab
 una: por omisión dibuja a la izquierda el arreglo de largos (`size_t largos[n]`, calculado de las
 filas o fijado con `lengths`); con `sentinel` agrega al final de cada fila una celda centinela (por
 ejemplo `'\0'` en un arreglo de cadenas, o `-1`).
+
+La plana (`flat`) es un solo `malloc` de `F * C` elementos: dibuja el puntero y el bloque contiguo con
+su índice `[k]` y, debajo, la celda `(i,j)` que le corresponde; una raya marca dónde empieza cada fila.
+Para preguntar la conversión, `showIndices: false` o `showCoords: false` quita uno de los dos, y
+`showFormula: false` quita `m[i * C + j]`. `showLogical` agrega la matriz como la piensa el programa.
+
+````text
+::plana-01:: [markdown]¿Qué índice de `m` corresponde a la fila 1, columna 2?
+```estructura
+type: matrix
+variant: flat
+values: [[1, 2, 3], [4, 5, 6]]
+showIndices: false
+showFormula: false
+highlight: "1,2"
+```
+{
+=`5`
+~`4`
+~`6`
+}
+````
+
+#### Structs y tipos opacos
+
+`struct` calcula los offsets, el relleno y el `sizeof` como gcc en 64 bits (`char` 1, `short` 2, `int` y
+`float` 4, `long`, `double`, `size_t` y punteros 8, y los `intN_t`). Para otro tipo, como un struct
+anidado, se escribe con `size` y `align`. Con `packed`, sin relleno. `blankPadding` saca las filas de
+relleno, así el alumno las deduce de los offsets.
+
+````text
+```estructura
+type: struct
+name: struct persona
+typedef: persona_t
+fields: ["char inicial", "int edad", "char *nombre", "short codigo"]
+blankOffsets: true
+blankSizeof: true
+```
+````
+
+`variant: opaque` muestra qué ve cada archivo: el `.h` con el `typedef` y las operaciones, el cliente
+con un puntero y el `.c` con los campos. Con `hidden: true` los campos no aparecen (no hace falta
+`fields`), que es lo que ve el cliente.
+
+````text
+```estructura
+type: struct
+variant: opaque
+name: struct pila
+typedef: pila_t
+operations: ["pila_t pila_crear(size_t capacidad)", "void pila_destruir(pila_t p)"]
+fields: ["int *datos", "size_t tope"]
+```
+````
+
+`adt` dibuja un TAD: el cliente, la tabla de operaciones con su clase, precondición y poscondición, el
+invariante y las representaciones posibles.
+
+````text
+```estructura
+type: adt
+name: Pila
+operations:
+  - {signature: "pila_t pila_crear(size_t n)", kind: constructor, post: "pila vacía"}
+  - {signature: "bool pila_apilar(pila_t p, int x)", kind: modificador, pre: "p != NULL"}
+invariant: "0 <= tope <= capacidad"
+representations:
+  - {name: Arreglo, fields: ["int *datos", "size_t tope"]}
+  - {name: Lista enlazada, fields: ["nodo_t *cabeza"]}
+```
+````
+
+#### Algoritmos y su análisis
+
+`complexity` dibuja curvas de crecimiento. Con `blankLabels` salen rotuladas A, B, C… en el orden de
+`curves`, para asociarlas con su clase; una curva con `points` son mediciones, para clasificarlas. Las
+que se salen del gráfico se cortan en `maxY`. `variant: classes` dibuja conjuntos anidados: por
+omisión los órdenes comunes, y con `classes` cualquier jerarquía, como `[P, NP, EXPTIME]`.
+
+````text
+```estructura
+type: complexity
+curves: [n^2, n, 2^n, log n]
+blankLabels: true
+```
+````
+
+````text
+```estructura
+type: complexity
+variant: classes
+items:
+  "O(log n)": [búsqueda binaria]
+  "O(n)": [búsqueda lineal]
+```
+````
+
+`flowchart` arma el diagrama de flujo a partir de la estructura del algoritmo; cada paso con
+`blank: true` sale vacío para completar.
+
+````text
+```estructura
+type: flowchart
+steps:
+  - {io: "leer v, n"}
+  - "max = v[0]"
+  - i = 1
+  - while: i < n
+    do:
+      - if: "v[i] > max"
+        then: ["max = v[i]"]
+      - i = i + 1
+  - {io: "escribir max"}
+```
+````
+
+`cost_table` es el análisis línea por línea (la sangría del código se respeta) y `trace_table`, la
+prueba de escritorio: las filas que faltan y los `null` quedan para completar. También dibuja las
+tablas de traza de statics, con `operations` y `capacity`.
+
+````text
+```estructura
+type: cost_table
+lines:
+  - ["for (i = 0; i < n; i++)", c1, n + 1]
+  - ["    s += v[i];", c2, n]
+total: "(c1 + c2) n + c1"
+blankTimes: true
+```
+````
+
+````text
+```estructura
+type: trace_table
+columns: [i, "v[i]", suma]
+rows:
+  - [0, 3, 3]
+  - [1, 5, null]
+rowCount: 4
+```
+````
+
+`call_tree` dibuja las llamadas de una función recursiva: `showOrder` numera en qué orden se hacen,
+`highlight` marca los subproblemas repetidos y `levelCosts` suma el costo de cada nivel, para resolver
+una recurrencia con `total`. La pila de esas llamadas en un momento dado es `call_stack`.
+
+````text
+```estructura
+type: call_tree
+showOrder: true
+highlight: ["fib(1)"]
+root:
+  call: fib(3)
+  returns: 2
+  children:
+    - {call: fib(2), returns: 1, children: [{call: fib(1), returns: 1}, {call: fib(0), returns: 0}]}
+    - {call: fib(1), returns: 1}
+```
+````
 
 La pila de llamadas (`call_stack`) dibuja los marcos de activación desde `main` (abajo) hasta el
 tope, que se resalta. Las variables van como `{x: 5, p: "&x"}`, como `"x = 5"` o como
@@ -492,12 +660,13 @@ Cuidados:
 
 - En GIFT, el bloque no puede tener renglones en blanco (separan preguntas). Conviene usar YAML en
   bloque y no `{...}`, para no confundir las llaves con las de las respuestas.
+- En YAML, un texto con corchetes, llaves, `:` o `#` va entre comillas: `"max = v[0]"`, `"v[i]"`.
 - Por omisión, los diagramas usan la paleta de ahorro de tinta de statics (negro); `inkSaver: false`
   en el bloque usa la de color.
 - Un bloque inválido no corta la generación: el examen muestra «Diagrama inválido» con el motivo.
 
 `alucard diagrama` dibuja un archivo suelto: un bloque, una lista de bloques o un documento de
-statics. Escribe un SVG por bloque y saltea los que no son estructuras (texto, tablas de traza):
+statics. Escribe un SVG por bloque y saltea los que no son diagramas (texto, recortables):
 
 ```bash
 alucard diagrama ~/dev/tools/statics/ejercicio_pila.json -o diagramas/
