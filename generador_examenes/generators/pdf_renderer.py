@@ -2,6 +2,7 @@
 Renderizador PDF usando Typst con soporte de plantillas personalizables.
 """
 import functools
+import json
 import logging
 import subprocess
 import tempfile
@@ -33,10 +34,12 @@ def _fuentes_typst(libreria):
     return fuentes() if fuentes is not None else None
 
 
-def compilar_typst_a_pdf(typst_source: str, output_pdf: Path, root_dir: Optional[Path] = None) -> Path:
+def compilar_typst_a_pdf(typst_source: str, output_pdf: Path, root_dir: Optional[Path] = None,
+                         desbordes: Optional[list] = None) -> Path:
     """Compila código Typst a un archivo usando la librería python o el binario CLI.
 
-    El formato sale de la extensión de `output_pdf`: PDF o, para una fórmula suelta, SVG.
+    El formato sale de la extensión de `output_pdf`: PDF o, para una fórmula suelta, SVG. En `desbordes`
+    deja las marcas <desborde> de la plantilla; sólo la librería puede leerlas sin otro proceso.
     """
     output_pdf.parent.mkdir(parents=True, exist_ok=True)
 
@@ -59,6 +62,9 @@ def compilar_typst_a_pdf(typst_source: str, output_pdf: Path, root_dir: Optional
                 if output_pdf.suffix == ".svg":
                     extra["format"] = "svg"
                 libreria_typst.compile(str(tmp_path), output=str(output_pdf), root=root, **extra)
+                if desbordes is not None:
+                    desbordes.extend(json.loads(libreria_typst.query(str(tmp_path), "<desborde>", field="value",
+                                                                     root=root, **extra)))
             except Exception as e_py:
                 raise RuntimeError(f"Fallo en compilación Typst: {e_py}") from e_py
             return output_pdf
@@ -163,7 +169,8 @@ class PdfRenderer(BaseRenderer):
         output_file = output_dir / f"examen_tema_{tema + 1:02d}.pdf"
 
         try:
-            compilar_typst_a_pdf(typst_content, output_file, root_dir=self.templates_dir)
+            self.desbordes: list[dict] = []
+            compilar_typst_a_pdf(typst_content, output_file, root_dir=self.templates_dir, desbordes=self.desbordes)
             logger.info(f"Examen PDF generado con Typst: {output_file}")
             return output_file
         except Exception as e:

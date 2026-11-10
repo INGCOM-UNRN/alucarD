@@ -23,6 +23,17 @@
 {% endif %}
 #set par(justify: true, leading: 0.65em)
 
+// Lo que el layout no puede acomodar queda en una marca <desborde>, y alucard lo avisa al terminar.
+#let pregunta-actual = state("pregunta-actual", "")
+#let avisar(motivo, nombre: none) = context [
+  #metadata((pregunta: if nombre == none { pregunta-actual.get() } else { nombre }, motivo: motivo)) <desborde>
+]
+#let vigilar(it, motivo, cabe) = place(layout(lugar => if not cabe(lugar.width) { avisar(motivo) })) + it
+#show raw.where(block: true): it => vigilar(it, "un renglón de código no entra en el ancho y se parte",
+  ancho => measure(it).width <= ancho)
+#show math.equation.where(block: true): it => vigilar(it, "una fórmula se sale del ancho de la página",
+  ancho => measure(it).width <= ancho)
+
 // El espacio para responder: renglones de 16pt, los mismos de las consignas prácticas. `alto` es una
 // longitud absoluta, porque hay que saber cuántos entran.
 #let espacio(alto) = {
@@ -42,7 +53,7 @@
 // por donde toque: encimar el texto sería peor. `hoja`: el resto de la hoja queda para responder.
 // La hoja se mide desde una marca anterior a la pregunta: medir desde la pregunta la llevaría a la
 // página siguiente, donde esa medida también cierra, y dejaría vacía la anterior.
-#let pregunta(partes, libre: false, hoja: false) = {
+#let pregunta(partes, libre: false, hoja: false, nombre: "") = {
   if hoja { block(height: 0pt, above: 0pt, below: 0pt)[#metadata(none) <antes-de-la-hoja>] }
   context {
   let alto = page.height - {{ estilo.margen_sup_mm }}mm - 2cm
@@ -78,6 +89,7 @@
     }
     let entera(cuerpo) = {
       let no-entra = alto-de(cuerpo) > alto
+      if no-entra { avisar("una parte no entra en una página y se parte por donde toque", nombre: nombre) }
       block(width: 100%, breakable: no-entra, cuerpo)
     }
     caja(grupos.len() > 1 or grande, grupos.map(entera).join() + cuadro)
@@ -140,7 +152,8 @@
   {% if hoja and not loop.first %}
   #pagebreak(weak: true)
   {% endif %}
-  #pregunta(libre: {{ 'true' if preg.tipo == 'consigna_practica' else 'false' }}, hoja: {{ 'true' if hoja else 'false' }}, (
+  #pregunta-actual.update({{ preg.nombre | typst_cadena }})
+  #pregunta(nombre: {{ preg.nombre | typst_cadena }}, libre: {{ 'true' if preg.tipo == 'consigna_practica' else 'false' }}, hoja: {{ 'true' if hoja else 'false' }}, (
     (false, grid(
       columns: (1fr, auto),
       column-gutter: 8pt,

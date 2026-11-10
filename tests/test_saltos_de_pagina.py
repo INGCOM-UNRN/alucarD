@@ -1,11 +1,12 @@
 """Por dónde se parte una pregunta en el PDF, y las preguntas de desarrollo en su propia hoja."""
+import sys
 
 import pytest
 from pydantic import ValidationError
 from pypdf import PdfReader
 from typer.testing import CliRunner
 
-from generador_examenes.__main__ import app
+from generador_examenes.__main__ import app, main
 from generador_examenes.config import proyecto
 from generador_examenes.core.logic import construir_pool_examen, pools_de_temas
 from generador_examenes.core.markdown_utils import markdown_to_html, numeros_en_html
@@ -417,3 +418,33 @@ def test_el_pool_manda_sobre_la_opcion_general(tmp_path):
 
 def test_el_primer_tema_no_cambia_con_la_opcion(tmp_path):
     assert nombres_por_tema(tmp_path, 1)[0] == nombres_por_tema(tmp_path, 1, {"sortear_por_tema": True})[0]
+
+
+DESBORDES = {
+    "codigo": "```c\nint " + "x " * 70 + ";\n```\n",
+    "tabla": "```tabla\n| `" + "x" * 120 + "` | b |\n|---|---|\n| a | b |\n```\n",
+    "formula": "$$ " + "+".join("abcdefgh" * 14) + " $$\n",
+    "alto": "```c\n" + "int a;\n" * 90 + "```\n",
+}
+MOTIVOS = {"codigo": "renglón de código", "tabla": "una tabla no entra", "formula": "fórmula", "alto": "no entra en una página"}
+
+
+def avisos_de(tmp_path, cuerpo, capsys, monkeypatch):
+    (tmp_path / "e.yaml").write_text(
+        "nombre_examen: x\ninstitucion: x\nmateria: x\nconfiguracion_examen:\n  generar_clave_profesor: false\n"
+        "secciones_examen:\n  - nombre: s\n    pools:\n      - tipos: [desarrollo]\n", encoding="utf-8")
+    (tmp_path / "b.gift").write_text(f"::otra::Nada raro\n{{}}\n\n::mala::[markdown]Mirá\n{cuerpo}{{}}\n", encoding="utf-8")
+    monkeypatch.setattr(sys, "argv", ["alucard", "generar", "-d", str(tmp_path / "e.yaml"), "-i", str(tmp_path / "b.gift"),
+                                      "-o", str(tmp_path / "out"), "-f", "pdf"])
+    assert main() == 0
+    return capsys.readouterr().err
+
+
+@pytest.mark.parametrize("caso", DESBORDES)
+def test_lo_que_no_se_puede_acomodar_se_avisa_con_su_pregunta(tmp_path, caso, capsys, monkeypatch):
+    avisos = avisos_de(tmp_path, DESBORDES[caso], capsys, monkeypatch)
+    assert "Revisá antes de imprimir" in avisos and MOTIVOS[caso] in avisos and "«mala»" in avisos and "(tema 1)" in avisos
+
+
+def test_lo_que_entra_no_avisa(tmp_path, capsys, monkeypatch):
+    assert "Revisá antes de imprimir" not in avisos_de(tmp_path, "```c\nint a;\n```\n", capsys, monkeypatch)

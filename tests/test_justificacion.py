@@ -78,7 +78,7 @@ def test_pdf_con_renglones_y_titulo(banco, tmp_path, monkeypatch):
     fuentes = []
     compilar = pdf_renderer.compilar_typst_a_pdf
 
-    def capturar(fuente, salida, root_dir=None):
+    def capturar(fuente, salida, root_dir=None, desbordes=None):
         fuentes.append(fuente)
         return compilar(fuente, salida, root_dir=root_dir)
 

@@ -772,6 +772,7 @@ def generar_examen(args, logger) -> int:
         archivos_generados = []
         uso_global: dict = {}  # posición de la correcta en los temas ya generados (balance entre temas)
         temas_generados = []
+        desbordes: dict = {}  # (pregunta, motivo): los temas en los que el layout no pudo acomodarlo
 
         for i in range(numero_temas):
             semilla_tema = semilla + i
@@ -801,6 +802,8 @@ def generar_examen(args, logger) -> int:
                 archivos_generados.append(str(archivo_examen))
                 if not getattr(args, 'json_output', False):
                     print(f"✓ Examen generado: {archivo_examen}")
+                for desborde in getattr(renderer, 'desbordes', []):
+                    desbordes.setdefault((desborde.get("pregunta"), desborde.get("motivo")), []).append(i + 1)
 
                 # Generar clave si está configurado
                 if definicion.configuracion_examen.generar_clave_profesor:
@@ -836,6 +839,10 @@ def generar_examen(args, logger) -> int:
                     print(f"✓ OMR y Descriptor JSON generados para tema {i + 1}: {spec_file.name}")
 
         # Informe de la generación: qué se eligió, de dónde y por qué quedó afuera cada consigna.
+        for (pregunta, motivo), temas in desbordes.items():
+            lista = ", ".join(str(n) for n in dict.fromkeys(temas))
+            _avisar(args, f"«{pregunta}»: {motivo} (tema {lista})")
+
         try:
             from generador_examenes.core.informe import armar_informe
             informe = output_dir / "informe.md"

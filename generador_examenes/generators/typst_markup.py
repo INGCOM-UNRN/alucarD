@@ -108,6 +108,25 @@ def partes_typst(fragmento: object) -> list:
     return partes or [{"marca": False, "typst": ""}]
 
 
+def _vigia_de_tabla(cuerpo: str) -> str:
+    """Typst achica las columnas de una tabla ancha y lo que no se puede partir se sale de la celda, sin que
+    `measure` lo vea. Si no entran ni las palabras más largas de cada columna, deja una marca <desborde>."""
+    columnas: dict = {}
+    for fila in _FILA.finditer(cuerpo):
+        for j, celda in enumerate(_CELDA.finditer(fila.group("celdas"))):
+            contenido = celda.group("contenido")
+            palabras = html.unescape(re.sub(r"<[^>]+>", " ", contenido)).split() or [""]
+            palabra = max(palabras, key=len)
+            if len(palabra) > len(columnas.get(j, ("",))[0]):
+                columnas[j] = (palabra, "<code" in contenido)
+    if not columnas:
+        return ""
+    muestras = ", ".join(f"raw({_cadena(p)})" if codigo else _cadena(p) for p, codigo in columnas.values())
+    return (f"#place(layout(lugar => if ({muestras},).map(m => measure(m).width + 10pt).sum() > lugar.width "
+            '{ context [#metadata((pregunta: state("pregunta-actual").get(), motivo: "una tabla no entra en el '
+            'ancho de la página")) <desborde>] }))\n')
+
+
 def html_a_typst(fragmento: object) -> str:
     """El HTML (o texto) de una pregunta como marcado Typst."""
     texto = ("" if fragmento is None else str(fragmento)).replace("\r\n", "\n").replace("\r", "\n")
@@ -136,7 +155,8 @@ def html_a_typst(fragmento: object) -> str:
                  for f in _FILA.finditer(m.group("cuerpo"))]
         filas = [f for f in filas if f]
         opciones = _OPCIONES_TABLA.search(m.group("attrs"))
-        return apartar(_tabla_typst(filas, json.loads(html.unescape(opciones.group("opciones"))) if opciones else {}))
+        return apartar(_vigia_de_tabla(m.group("cuerpo"))
+                       + _tabla_typst(filas, json.loads(html.unescape(opciones.group("opciones"))) if opciones else {}))
 
     def svg(m: re.Match) -> str:
         # Los diagramas de estructuras (statics): 0.06 em por px (0.6 pt con letra de 10), así crecen

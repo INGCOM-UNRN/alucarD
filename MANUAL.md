@@ -168,8 +168,11 @@ Revisá antes de imprimir (1):
 ======================================================================
 ```
 
-Los avisos no cambian el código de salida. Son un diagrama o una fórmula inválidos y `debug_consignas`
-activo, y cada uno dice en qué pregunta.
+Los avisos no cambian el código de salida. Son un diagrama o una fórmula inválidos, `debug_consignas` activo
+y, en el PDF, lo que el armado no pudo acomodar: un renglón de código que no entra en el ancho y se parte,
+una fórmula o una tabla que se salen, o una parte de una pregunta más alta que una página. Cada uno
+dice en qué pregunta y en qué temas. Los mide Typst con la plantilla de alucard; una plantilla propia (`-t`) no
+los informa, y tampoco el binario `typst` sin la librería de Python.
 Sin nada que informar, con varios exámenes dice `✓ 10 de 10 exámenes generados.`
 
 Las `palabras` y las del `diccionario` son el
