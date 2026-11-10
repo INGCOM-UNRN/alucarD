@@ -59,6 +59,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - **`lint-gift --fix`**: agregaba renglones en blanco en cada pasada; ahora solo escribe lo que corrige.
 - **texto**: los caracteres en ancho completo se normalizan también en las preguntas sin `[markdown]`.
 - **texto**: los superíndices, subíndices y fracciones ya no se pierden al leer un banco: `O(n²)` salía `O(n2)` y `O(2ⁿ)`, `O(2n)`, también en los diagramas.
+- **`--accessible`**: se aceptaba y no hacía nada. Ahora genera letra de 14 puntos y alto contraste; los tamaños fijos del PDF y sus diagramas crecen con la letra.
 - **pools**: el filtro `banco` se ignoraba y el pool tomaba preguntas de todos los bancos; ahora filtra por el nombre del archivo.
 - **Moodle XML**: la categoría de un `<question type="category">` no se aplicaba y todo caía en `General`. Vale para las preguntas que le siguen, como ruta (`$course$/top/estructuras/listas` es `estructuras/listas`).
 - **`balance-check` y `build`**: con `-d`, toman los bancos de `alucard.toml` si la definición no los trae.

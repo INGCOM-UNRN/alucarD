@@ -113,10 +113,10 @@ def html_a_typst(fragmento: object) -> str:
         return apartar(_tabla_typst(filas, json.loads(html.unescape(opciones.group("opciones"))) if opciones else {}))
 
     def svg(m: re.Match) -> str:
-        # Los diagramas de estructuras (statics): a 0.6 pt por px, sin pasar del ancho disponible.
+        # Los diagramas de estructuras (statics): 0.06 em por px (0.6 pt con letra de 10), así crecen
+        # con la letra del examen, sin pasar del ancho disponible.
         ancho = _ANCHO_SVG.search(m.group("attrs"))
-        puntos = f"{float(ancho.group('px')) * 0.6:.0f}pt" if ancho else "100%"
-        medida = f"calc.min({puntos}, disponible.width)" if ancho else "100%"
+        medida = f"calc.min(({float(ancho.group('px')) * 0.06:.1f}em).to-absolute(), disponible.width)" if ancho else "100%"
         return apartar(f"\n#layout(disponible => align(center, image(bytes({_cadena(m.group(0))}), "
                        f"format: \"svg\", width: {medida})))\n")
     def formula(m: re.Match) -> str:

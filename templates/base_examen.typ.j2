@@ -24,13 +24,13 @@
 
 // Encabezado del Examen
 #align(center)[
-  #text(size: 16pt, weight: "bold", fill: rgb("{{ c.titulo }}"))[{{ definicion.nombre_examen | typst_texto }}]\
+  #text(size: 1.6em, weight: "bold", fill: rgb("{{ c.titulo }}"))[{{ definicion.nombre_examen | typst_texto }}]\
   {% if definicion.materia or definicion.institucion %}
   #v(2pt)
-  #text(size: 11pt, weight: "medium")[{{ [definicion.materia, definicion.institucion] | select | map("typst_texto") | join(" — ") }}]\
+  #text(size: 1.1em, weight: "medium")[{{ [definicion.materia, definicion.institucion] | select | map("typst_texto") | join(" — ") }}]\
   {% endif %}
   #v(2pt)
-  #text(size: 9pt, fill: rgb("{{ c.sub }}"))[
+  #text(size: 0.9em, fill: rgb("{{ c.sub }}"))[
     {% if definicion.fecha %}*Fecha:* {{ definicion.fecha | typst_texto }} | {% endif %}{% if definicion.duracion_minutos %}*Duración:* {{ definicion.duracion_minutos }} min | {% endif %}*TEMA {{ tema + 1 }}*
   ]
 ]
@@ -50,8 +50,8 @@
 {% if definicion.instrucciones_generales %}
 #v(6pt)
 #rect(width: 100%, fill: rgb("{{ c.fondo_inst }}"), inset: 8pt, radius: 4pt, stroke: 0.5pt + rgb("{{ c.borde_inst }}"))[
-  #text(weight: "bold", size: 9pt)[Instrucciones Generales:]\
-  #text(size: 8.5pt)[{{ definicion.instrucciones_generales | typst_texto }}]
+  #text(weight: "bold", size: 0.9em)[Instrucciones Generales:]\
+  #text(size: 0.85em)[{{ definicion.instrucciones_generales | typst_texto }}]
 ]
 {% endif %}
 
@@ -60,9 +60,9 @@
 // Secciones del Examen
 {% for seccion in secciones %}
 #block(breakable: true)[
-  #text(size: 12pt, weight: "bold", fill: rgb("{{ c.seccion }}"))[{{ seccion.nombre | typst_texto }}]
+  #text(size: 1.2em, weight: "bold", fill: rgb("{{ c.seccion }}"))[{{ seccion.nombre | typst_texto }}]
   {% if seccion.instrucciones %}
-  \ #text(size: 8.5pt, style: "italic", fill: rgb("{{ c.sub }}"))[{{ seccion.instrucciones | typst_texto }}]
+  \ #text(size: 0.85em, style: "italic", fill: rgb("{{ c.sub }}"))[{{ seccion.instrucciones | typst_texto }}]
   {% endif %}
   #v(4pt)
 
@@ -79,7 +79,7 @@
       columns: (1fr, auto),
       column-gutter: 8pt,
       [ *Pregunta {{ loop.index }}.* {{ preg.enunciado_html | typst }} ],
-      [ #text(size: 8pt, fill: rgb("{{ c.tenue }}"))[\[{{ '%g' % preg.puntaje }} pt\]] ]
+      [ #text(size: 0.8em, fill: rgb("{{ c.tenue }}"))[\[{{ '%g' % preg.puntaje }} pt\]] ]
     )
 
     {% if preg.tipo in ['seleccion_multiple', 'opcion_multiple', 'multichoice'] %}
@@ -98,7 +98,7 @@
     )
     {% if preg.lineas_justificacion %}
     #v(6pt)
-    #text(size: 8.5pt, weight: "bold", fill: rgb("{{ c.sub }}"))[{{ (definicion.configuracion_examen.titulo_justificacion or i18n.justification or 'Justificación') | typst_texto }}]
+    #text(size: 0.85em, weight: "bold", fill: rgb("{{ c.sub }}"))[{{ (definicion.configuracion_examen.titulo_justificacion or i18n.justification or 'Justificación') | typst_texto }}]
     #block(width: 100%, stroke: 0.5pt + rgb("{{ c.guia }}"), radius: 3pt, inset: (x: 6pt), above: 3pt)[
       {% for _ in range(preg.lineas_justificacion) %}#block(width: 100%, height: 16pt, below: 0pt, stroke: (bottom: (dash: "dotted", paint: rgb("{{ c.guia }}"), thickness: 0.5pt)))[]
       {% endfor %}

@@ -122,3 +122,20 @@ def test_build_toma_los_bancos_del_toml(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     assert _correr(monkeypatch, "build", "-d", str(definicion), "-n", "1", "-f", "html", "--umbral", "1",
                    "-o", str(tmp_path / "o")) == 0
+
+
+def test_accessible_agranda_la_letra_y_sube_el_contraste(tmp_path, monkeypatch):
+    definicion = _proyecto(tmp_path, 'input_banco = ["bancos/b.txt"]\n[estilo]\ntamano = 10\n')
+    monkeypatch.chdir(tmp_path)
+    assert _correr(monkeypatch, "generar", "-d", str(definicion), "--accessible", "-o", str(tmp_path / "a")) == 0
+    assert _correr(monkeypatch, "generar", "-d", str(definicion), "-o", str(tmp_path / "n")) == 0
+    accesible = (tmp_path / "a" / "examen_tema_01.html").read_text(encoding="utf-8")
+    comun = (tmp_path / "n" / "examen_tema_01.html").read_text(encoding="utf-8")
+    assert "font-size: 14pt" in accesible and "font-size: 10pt" in comun and accesible != comun
+
+
+def test_accessible_no_achica_una_letra_mas_grande(tmp_path, monkeypatch):
+    definicion = _proyecto(tmp_path, 'input_banco = ["bancos/b.txt"]\n[estilo]\ntamano = 16\n')
+    monkeypatch.chdir(tmp_path)
+    assert _correr(monkeypatch, "generar", "-d", str(definicion), "--accessible", "-o", str(tmp_path / "a")) == 0
+    assert "font-size: 16pt" in (tmp_path / "a" / "examen_tema_01.html").read_text(encoding="utf-8")

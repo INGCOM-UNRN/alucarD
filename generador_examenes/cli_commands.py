@@ -15,6 +15,8 @@ from typing import Optional
 
 from generador_examenes.cli_errors import usage_error as _usage_error
 
+TAMANO_ACCESIBLE = 14.0  # puntos de la letra con --accessible
+
 
 def ejecutar_doctor() -> int:
     """Subcomando `doctor` (ALUCARD-D0401): diagnostica gcc/typst/pypdf/LT."""
@@ -477,6 +479,12 @@ def generar_examen(args, logger) -> int:
             logger.error(f"Estilo: {e}")
             print(f"Error: estilo: {e}", file=sys.stderr)
             return 1
+
+        # Edición accesible: letra grande y alto contraste, por encima de lo que diga el estilo.
+        if getattr(args, 'accessible', False):
+            estilo = definicion.estilo
+            definicion = definicion.model_copy(update={"estilo": estilo.model_copy(update={
+                "tamano": max(estilo.tamano or 0, TAMANO_ACCESIBLE), "alto_contraste": True})})
 
         def del_yaml(campo):
             return getattr(definicion, campo) if campo in definicion.model_fields_set else None

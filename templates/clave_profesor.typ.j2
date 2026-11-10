@@ -24,16 +24,16 @@
 
 #align(center)[
   #block(fill: rgb("fff5f5"), inset: 10pt, radius: 4pt, stroke: 1pt + rgb("feb2b2"))[
-    #text(size: 15pt, weight: "bold", fill: rgb("9b2c2c"))[CLAVE DE CORRECCIÓN — TEMA {{ tema + 1 }}]\
+    #text(size: 1.5em, weight: "bold", fill: rgb("9b2c2c"))[CLAVE DE CORRECCIÓN — TEMA {{ tema + 1 }}]\
     #v(2pt)
-    #text(size: 10pt, fill: rgb("742a2a"))[{{ [definicion.nombre_examen, definicion.materia] | select | map("typst_texto") | join(" — ") }}]
+    #text(size: 1em, fill: rgb("742a2a"))[{{ [definicion.nombre_examen, definicion.materia] | select | map("typst_texto") | join(" — ") }}]
   ]
 ]
 
 #v(10pt)
 
 {% for seccion in secciones %}
-#text(size: 11pt, weight: "bold", fill: rgb("{{ c.seccion }}"))[{{ seccion.nombre | typst_texto }}]
+#text(size: 1.1em, weight: "bold", fill: rgb("{{ c.seccion }}"))[{{ seccion.nombre | typst_texto }}]
 #v(4pt)
 
 {% for preg in seccion.preguntas %}
@@ -63,7 +63,7 @@
   #text(fill: rgb("22543d"), weight: "bold")[✓ Respuesta:] Ver criterio de corrección
   {% endif %}
   {% if preg.retroalimentacion_general %}
-  \ #text(fill: rgb("{{ c.sub }}"), size: 8.5pt)[*Explicación:* {{ preg.retroalimentacion_general | typst }}]
+  \ #text(fill: rgb("{{ c.sub }}"), size: 0.85em)[*Explicación:* {{ preg.retroalimentacion_general | typst }}]
   {% endif %}
 ]
 #v(4pt)

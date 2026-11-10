@@ -189,7 +189,7 @@ escribir nada. La vista previa (`alucard ver`) usa el estilo del curso.
 | `-f`, `--formato` | `<str>` | `html` | Formato(s) de salida: `pdf`, `html` o ambos (`html,pdf`). |
 | `-t`, `--template` | `<path>` | `None` | Ruta a plantilla Typst personalizada (`.typ` o `.typ.j2`). |
 | `--omr` | `flag` | `False` | Genera hoja de respuestas OMR de lectura óptica y descriptor JSON de corrección. |
-| `--accessible` | `flag` | `False` | Genera versión adaptada para accesibilidad (fuente ampliada y alto contraste). |
+| `--accessible` | `flag` | `False` | Edición accesible: letra de 14 puntos (o la del `[estilo]`, si es más grande) y alto contraste, con los títulos y, en el PDF, los diagramas en proporción. |
 | `--bundle-print` | `flag` | `False` | Concatena todos los temas generados en un único archivo PDF listo para imprenta. |
 | `--json` | `flag` | `False` | Emite el resultado y metadata de los exámenes en formato JSON. |
 | `--md`, `--output-md` | `<path>` | `None` | Genera un reporte detallado en Markdown. |
