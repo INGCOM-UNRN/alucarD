@@ -9,7 +9,8 @@ from generador_examenes.__main__ import app
 from generador_examenes.config import proyecto
 from generador_examenes.core.logic import construir_pool_examen
 from generador_examenes.core.markdown_utils import markdown_to_html
-from generador_examenes.core.models import DefinicionExamen
+from generador_examenes.core.consignas import presentar_consigna
+from generador_examenes.core.models import DefinicionExamen, PresentacionConsigna, Pregunta
 from generador_examenes.generators.typst_markup import html_a_typst, partes_typst
 from generador_examenes.parsers.gift_parser import GiftParser
 
@@ -318,6 +319,16 @@ def test_el_pdf_tiene_mas_renglones_cuanto_mas_espacio(tmp_path):
 @pytest.mark.parametrize("tamano, renglones", [("cero", 0), ("chico", 6), ("mediano", 14), ("grande", 30), ("pagina", 60)])
 def test_el_html_tiene_renglones(tmp_path, tamano, renglones):
     assert alturas(tmp_path, tamano, "html").read_text(encoding="utf-8").count('<div class="renglon"></div>') == renglones
+
+
+@pytest.mark.parametrize("presentacion, renglones", [
+    ({"lineas": 0}, 0), ({"lineas": 0, "espacio_respuesta": True}, 0), ({"lineas": 5, "espacio_respuesta": False}, 0),
+    ({"lineas": 5}, 5),
+])
+def test_los_renglones_de_una_consigna(presentacion, renglones):
+    consigna = Pregunta(id="deckard:x", tipo="consigna_practica", nombre="x", categoria="c", enunciado_html="",
+                        metadata={"enunciado_md": "Hacé algo."})
+    assert presentar_consigna(consigna, PresentacionConsigna(**presentacion)).lineas_respuesta == renglones
 
 
 def test_un_comentario_que_nombra_la_marca_no_cambia_los_ids(tmp_path):

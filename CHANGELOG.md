@@ -62,6 +62,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 ### Corregido
 
 - **GIFT**: un comentario que nombraba `[corte]` contaba como un bloque, corría los ids de las preguntas y cambiaba el sorteo.
+- **consignas**: `presentacion_consignas.lineas: 0` era un error de validación, y el examen no se volvía a generar. Ahora es sin renglones.
 - **PDF**: el tamaño de las preguntas de desarrollo se ignoraba: todas salían con el mismo recuadro. Ahora se respetan las etiquetas.
 - **PDF**: una pregunta en hoja propia que era la primera del examen saltaba a la página siguiente y dejaba la primera casi vacía.
 - **Moodle XML**: `responseformat` ya no decide el tamaño de un desarrollo.

@@ -1015,7 +1015,7 @@ cada consigna; cada pool puede cambiar sólo algunas claves en `presentacion`:
 | `cabecera` | `false` | El archivo `.h` del ejercicio. |
 | `pistas` | `0` | Cuántas pistas mostrar. |
 | `espacio_respuesta` | `true` | Renglones para resolver debajo de la consigna. |
-| `lineas` | `20` | Cuántos renglones. |
+| `lineas` | `20` | Cuántos renglones; `0`, ninguno. |
 | `solucion_en_clave` | `true` | La solución de la cátedra en la clave del profesor. |
 
 ### Ejemplo completo: parcial práctico
@@ -1282,7 +1282,7 @@ Va en `configuracion_examen` y, con sólo las claves que cambian, en `presentaci
 | `cabecera` | booleano | `false` | El archivo `.h` del ejercicio. |
 | `pistas` | entero | `0` | Cuántas pistas mostrar. |
 | `espacio_respuesta` | booleano | `true` | Renglones para resolver. |
-| `lineas` | entero, 1 a 200 | `20` | Cuántos renglones. |
+| `lineas` | entero, 0 a 200 | `20` | Cuántos renglones. Con `0`, ninguno, igual que `espacio_respuesta: false`. |
 | `solucion_en_clave` | booleano | `true` | La solución de la cátedra en la clave. |
 
 #### `secciones_examen`

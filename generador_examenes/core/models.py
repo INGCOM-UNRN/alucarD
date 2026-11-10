@@ -81,7 +81,7 @@ class PresentacionConsigna(BaseModel):
     cabecera: bool = False                  # el archivo .h del ejercicio
     pistas: int = Field(default=0, ge=0)    # cuántas pistas mostrar (0: ninguna)
     espacio_respuesta: bool = True
-    lineas: int = Field(default=20, ge=1, le=200)  # renglones del espacio de respuesta
+    lineas: int = Field(default=20, ge=0, le=200)  # renglones del espacio de respuesta (0: sin espacio)
     solucion_en_clave: bool = True          # la solución de la cátedra en la clave del profesor
 
 
