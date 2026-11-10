@@ -154,7 +154,23 @@ subdirectorio: "parcial1/teoria"
 
 Dos definiciones que caen en la misma carpeta son un error, y `subdirectorio` no puede ser absoluto
 ni salir de la salida con `..`. Si una falla, las demás se generan igual y el comando
-sale con 1; con `--json`, el resultado de cada una va en `examenes`.
+sale con 1; con `--json`, el resultado de cada una va en `examenes`, con su `motivo` y sus `avisos`.
+
+Lo último que muestra `generar` es un resumen de lo que no salió bien, para que no se pierda entre los
+renglones del log. Un examen que falló deja en su carpeta lo de la corrida anterior:
+
+```text
+======================================================================
+Error: fallaron 1 de 10: su carpeta sigue con lo de la corrida anterior.
+  ✗ parcial_3.yaml: configuracion_examen.espacio_desarrollo: Input should be 'cero', 'chico', ...
+Revisá antes de imprimir (1):
+  ! parcial_1.yaml: debug_consignas está activo: el examen muestra de qué pregunta salió cada una; ...
+======================================================================
+```
+
+Los avisos no cambian el código de salida. Son un diagrama o una fórmula inválidos y `debug_consignas`
+activo, y cada uno dice en qué pregunta.
+Sin nada que informar, con varios exámenes dice `✓ 10 de 10 exámenes generados.`
 
 Las `palabras` y las del `diccionario` son el
 diccionario de la cátedra: `alucard ortografia` no las marca, y se suman a las de

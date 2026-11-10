@@ -85,39 +85,6 @@ def _correr(monkeypatch, *argumentos: str) -> int:
     return main()
 
 
-def _typst_roto(monkeypatch):
-    from generador_examenes.generators import pdf_renderer
-
-    def compilar(*_a, **_k):
-        raise RuntimeError("Typst no está instalado (ni la librería de Python ni el binario)")
-
-    monkeypatch.setattr(pdf_renderer, "compilar_typst_a_pdf", compilar)
-
-
-def test_si_typst_falla_generar_sale_con_error_y_sin_pdf(tmp_path, monkeypatch, capsys):
-    definicion = _proyecto(tmp_path, 'input_banco = ["bancos/b.txt"]\nformato = ["pdf"]\n')
-    monkeypatch.chdir(tmp_path)
-    _typst_roto(monkeypatch)
-    assert _correr(monkeypatch, "generar", "-d", str(definicion), "-o", str(tmp_path / "o")) == 1
-    assert not list((tmp_path / "o").glob("*.pdf"))
-    assert "Generación completada" not in capsys.readouterr().out
-
-
-def test_si_typst_falla_la_vista_previa_lo_dice(tmp_path, monkeypatch, capsys):
-    (tmp_path / "b.gift").write_text(BANCO, encoding="utf-8")
-    monkeypatch.chdir(tmp_path)
-    _typst_roto(monkeypatch)
-    assert _correr(monkeypatch, "ver", "b.gift", "-f", "pdf", "--no-abrir", "-o", str(tmp_path / "v")) == 1
-    assert "Error: Typst no pudo compilar" in capsys.readouterr().err
-
-
-def test_html_no_depende_de_typst(tmp_path, monkeypatch):
-    definicion = _proyecto(tmp_path, 'input_banco = ["bancos/b.txt"]\nformato = ["html"]\n')
-    monkeypatch.chdir(tmp_path)
-    _typst_roto(monkeypatch)
-    assert _correr(monkeypatch, "generar", "-d", str(definicion), "-o", str(tmp_path / "o")) == 0
-
-
 def test_generar_sin_d_toma_la_definicion_y_la_salida_del_toml(tmp_path, monkeypatch):
     _proyecto(tmp_path, 'definicion = "examenes/def.yaml"\ninput_banco = ["bancos/b.txt"]\noutput_dir = "salida"\n')
     monkeypatch.chdir(tmp_path / "examenes")  # el toml se busca hacia arriba y sus rutas son relativas a él
@@ -319,6 +286,24 @@ def test_accessible_no_achica_una_letra_mas_grande(tmp_path, monkeypatch):
     assert "font-size: 16pt" in (tmp_path / "a" / "examen_tema_01.html").read_text(encoding="utf-8")
 
 
+def _typst_roto(monkeypatch):
+    from generador_examenes.generators import pdf_renderer
+
+    def compilar(*_a, **_k):
+        raise RuntimeError("Typst no está instalado (ni la librería de Python ni el binario)")
+
+    monkeypatch.setattr(pdf_renderer, "compilar_typst_a_pdf", compilar)
+
+
+def test_si_typst_falla_generar_sale_con_error_y_sin_pdf(tmp_path, monkeypatch, capsys):
+    definicion = _proyecto(tmp_path, 'input_banco = ["bancos/b.txt"]\nformato = ["pdf"]\n')
+    monkeypatch.chdir(tmp_path)
+    _typst_roto(monkeypatch)
+    assert _correr(monkeypatch, "generar", "-d", str(definicion), "-o", str(tmp_path / "o")) == 1
+    assert not list((tmp_path / "o").glob("*.pdf"))
+    assert "Generación completada" not in capsys.readouterr().out
+
+
 def test_si_typst_falla_en_una_de_varias_definiciones_el_codigo_es_1(tmp_path, monkeypatch, capsys):
     definicion = _proyecto(tmp_path, 'input_banco = ["bancos/b.txt"]\nformato = ["pdf"]\n')
     otra = _segunda_definicion(definicion)
@@ -326,3 +311,72 @@ def test_si_typst_falla_en_una_de_varias_definiciones_el_codigo_es_1(tmp_path, m
     _typst_roto(monkeypatch)
     assert _correr(monkeypatch, "generar", "-d", str(definicion), "-d", str(otra)) == 1
     assert "fallaron 2 de 2" in capsys.readouterr().err
+
+
+def test_si_typst_falla_la_vista_previa_lo_dice(tmp_path, monkeypatch, capsys):
+    (tmp_path / "b.gift").write_text(BANCO, encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    _typst_roto(monkeypatch)
+    assert _correr(monkeypatch, "ver", "b.gift", "-f", "pdf", "--no-abrir", "-o", str(tmp_path / "v")) == 1
+    assert "Error: Typst no pudo compilar" in capsys.readouterr().err
+
+
+def test_html_no_depende_de_typst(tmp_path, monkeypatch):
+    definicion = _proyecto(tmp_path, 'input_banco = ["bancos/b.txt"]\nformato = ["html"]\n')
+    monkeypatch.chdir(tmp_path)
+    _typst_roto(monkeypatch)
+    assert _correr(monkeypatch, "generar", "-d", str(definicion), "-o", str(tmp_path / "o")) == 0
+
+
+def proyecto_con_definiciones(tmp_path, monkeypatch):
+    """Dos definiciones, una inválida y la otra bien, con el aviso de `debug_consignas` en la buena."""
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / ".git").mkdir()
+    (tmp_path / "b.gift").write_text("::a::Explicá\n{}\n", encoding="utf-8")
+    base = ("nombre_examen: x\ninstitucion: x\nmateria: x\nconfiguracion_examen:\n  %s\n"
+            "secciones_examen:\n  - nombre: s\n    pools:\n      - tipos: [desarrollo]\n")
+    (tmp_path / "bien.yaml").write_text(base % "debug_consignas: id", encoding="utf-8")
+    (tmp_path / "mal.yaml").write_text(base % "espacio_desarrollo: enorme", encoding="utf-8")
+    (tmp_path / "alucard.toml").write_text('definicion = ["mal.yaml", "bien.yaml"]\ninput_banco = ["b.gift"]\n'
+                                           'formato = ["html"]\n', encoding="utf-8")
+
+
+def test_el_resumen_de_fallos_es_lo_ultimo_y_dice_el_motivo(tmp_path, monkeypatch, capsys):
+    proyecto_con_definiciones(tmp_path, monkeypatch)
+    assert _correr(monkeypatch, "generar") == 1
+    final = capsys.readouterr().err.rstrip().split("\n")
+    assert final[-1] == "=" * 70
+    resumen = "\n".join(final[-7:])
+    assert "fallaron 1 de 2: su carpeta sigue con lo de la corrida anterior" in resumen
+    assert "✗ mal.yaml: configuracion_examen.espacio_desarrollo: Input should be" in resumen
+    assert "! bien.yaml: debug_consignas está activo" in resumen
+
+
+def test_el_resumen_tambien_con_una_sola_definicion(tmp_path, monkeypatch, capsys):
+    proyecto_con_definiciones(tmp_path, monkeypatch)
+    assert _correr(monkeypatch, "generar", "-d", "mal.yaml") == 1
+    assert "✗ mal.yaml: configuracion_examen.espacio_desarrollo" in capsys.readouterr().err
+
+
+def test_un_aviso_no_cambia_el_codigo_de_salida(tmp_path, monkeypatch, capsys):
+    proyecto_con_definiciones(tmp_path, monkeypatch)
+    assert _correr(monkeypatch, "generar", "-d", "bien.yaml") == 0
+    assert "Revisá antes de imprimir (1)" in capsys.readouterr().err
+
+
+def test_sin_problemas_no_hay_resumen_de_errores(tmp_path, monkeypatch, capsys):
+    proyecto_con_definiciones(tmp_path, monkeypatch)
+    (tmp_path / "bien.yaml").write_text((tmp_path / "bien.yaml").read_text(encoding="utf-8").replace(
+        "debug_consignas: id", "generar_clave_profesor: false"), encoding="utf-8")
+    (tmp_path / "otro.yaml").write_text((tmp_path / "bien.yaml").read_text(encoding="utf-8"), encoding="utf-8")
+    assert _correr(monkeypatch, "generar", "-d", "bien.yaml", "-d", "otro.yaml") == 0
+    salida = capsys.readouterr()
+    assert "2 de 2 exámenes generados" in salida.out and "=" * 70 not in salida.err
+
+
+def test_json_lleva_el_motivo_y_los_avisos(tmp_path, monkeypatch, capsys):
+    proyecto_con_definiciones(tmp_path, monkeypatch)
+    assert _correr(monkeypatch, "generar", "--json") == 1
+    salida = capsys.readouterr().out
+    mal, bien = json.loads(salida[salida.index("{"):])["examenes"]
+    assert "espacio_desarrollo" in mal["motivo"] and "debug_consignas" in bien["avisos"][0]

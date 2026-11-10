@@ -11,6 +11,7 @@ sin cambios de comportamiento; el objetivo es reducir el tamaño de
 import contextlib
 import io
 import json
+import logging
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -474,32 +475,97 @@ def definiciones_a_generar(args) -> list[Path]:
     return rutas
 
 
+class _Errores(logging.Handler):
+    """Lo que se registró como error durante una corrida, para repetirlo en el resumen."""
+
+    def __init__(self) -> None:
+        super().__init__(logging.ERROR)
+        self.mensajes: list[str] = []
+
+    def emit(self, record: logging.LogRecord) -> None:
+        self.mensajes.append(record.getMessage())
+
+
+def _motivo(mensajes: list[str]) -> str:
+    """El primer error en un renglón: de uno de pydantic, sólo qué clave y qué le pasa."""
+    if not mensajes:
+        return "el motivo está más arriba"
+    renglones = [r.strip() for r in mensajes[0].splitlines() if r.strip()]
+    if len(renglones) > 3 and "validation error" in renglones[1]:
+        return f"{renglones[2]}: {renglones[3].split(' [type=')[0]}"
+    return renglones[0]
+
+
+def _correr(corrida, logger, entre_varias: bool = False) -> tuple[int, str]:
+    """(código, motivo del fallo) de una definición. Los avisos quedan en `corrida.avisos`."""
+    errores = _Errores()
+    corrida.avisos = []
+    logging.getLogger().addHandler(errores)
+    try:
+        codigo = generar_examen(corrida, logger)
+    except SystemExit as e:  # error de uso en esta definición: no frena las demás
+        if not entre_varias:
+            raise
+        codigo = e.code if isinstance(e.code, int) else 1
+    finally:
+        logging.getLogger().removeHandler(errores)
+    return codigo, _motivo(errores.mensajes) if codigo else ""
+
+
+def _resumen(corridas: list, resultados: list[tuple[int, str]], validando: bool) -> None:
+    """Lo último que se ve: entre tantos renglones de log, un fallo o un aviso pasaban de largo y
+    quedaba en la salida el examen de la corrida anterior."""
+    nombre = [Path(c.definicion).name if c.definicion else "?" for c in corridas]
+    fallos = [f"  ✗ {n}: {motivo}" for n, (codigo, motivo) in zip(nombre, resultados) if codigo]
+    avisos = [f"  ! {n}: {aviso}" for n, c in zip(nombre, corridas) for aviso in c.avisos]
+    total = len(corridas)
+    if not fallos and not avisos:
+        if total > 1:
+            print(f"\n✓ {total} de {total} exámenes {'válidos' if validando else 'generados'}.")
+        return
+    renglones = ["", "=" * 70]
+    if fallos:
+        titulo = f"Error: fallaron {len(fallos)} de {total}" if total > 1 else "Error: el examen falló"
+        renglones.append(titulo + ("." if validando else ": su carpeta sigue con lo de la corrida anterior."))
+        renglones += fallos
+    if avisos:
+        renglones.append(f"Revisá antes de imprimir ({len(avisos)}):")
+        renglones += avisos
+    renglones.append("=" * 70)
+    sys.stdout.flush()
+    print("\n".join(renglones), file=sys.stderr)
+
+
 def _generar_varias(corridas: list, args, logger) -> int:
     """Genera cada definición aunque otra falle; sale con 1 si falló alguna. Con --json, un solo
     documento con el resultado de cada una en `examenes`."""
     como_json = getattr(args, "json_output", False)
-    examenes, codigos = [], []
+    examenes, resultados = [], []
     for corrida in corridas:
         if not como_json:
             print(f"\n=== {corrida.definicion} ===")
         salida = io.StringIO()
         with contextlib.redirect_stdout(salida) if como_json else contextlib.nullcontext():
-            try:
-                codigo = generar_examen(corrida, logger)
-            except SystemExit as e:  # error de uso en esta definición: no frena las demás
-                codigo = e.code if isinstance(e.code, int) else 1
-        codigos.append(codigo)
+            codigo, motivo = _correr(corrida, logger, entre_varias=True)
+        resultados.append((codigo, motivo))
         texto = salida.getvalue()
         examenes.append({"definicion": str(corrida.definicion), "codigo": codigo,
+                         **({"motivo": motivo} if motivo else {}),
+                         **({"avisos": corrida.avisos} if corrida.avisos else {}),
                          **(json.loads(texto) if texto.strip() else {})})
     if como_json:
         print(json.dumps({"version": "1.0", "command": "validate" if args.validate else "generar_examen",
                           "examenes": examenes}, indent=2, ensure_ascii=False))
     else:
-        fallidas = [str(c.definicion) for c, codigo in zip(corridas, codigos) if codigo]
-        if fallidas:
-            print(f"\nError: fallaron {len(fallidas)} de {len(corridas)}: {', '.join(fallidas)}", file=sys.stderr)
-    return 1 if any(codigos) else 0
+        _resumen(corridas, resultados, args.validate)
+    return 1 if any(codigo for codigo, _ in resultados) else 0
+
+
+def _generar_una(corrida, logger) -> int:
+    codigo, motivo = _correr(corrida, logger)
+    if not getattr(corrida, "json_output", False):
+        _resumen([corrida], [(codigo, motivo)], corrida.validate)
+    return codigo
 
 
 def ejecutar_generacion(args, logger) -> int:
@@ -518,13 +584,20 @@ def ejecutar_generacion(args, logger) -> int:
                                    "subcarpeta": r.stem if len(rutas) > 1 else None}) for r in rutas]
 
     def generar() -> int:
-        return generar_examen(corridas[0], logger) if len(corridas) == 1 else _generar_varias(corridas, args, logger)
+        return _generar_una(corridas[0], logger) if len(corridas) == 1 else _generar_varias(corridas, args, logger)
 
     if not getattr(args, "vigilar", False):
         return generar()
     from generador_examenes.core.vigilancia import vigilar
     salidas = [s for c in corridas for s in fuentes_de_generacion(c)[1]]
     return vigilar(lambda: [f for c in corridas for f in fuentes_de_generacion(c)[0]], generar, excluir=salidas)
+
+
+def _avisar(args, aviso: str) -> None:
+    """En el momento y, para que no se pierda en el log, también en el resumen del final."""
+    print(f"Aviso: {aviso}", file=sys.stderr)
+    if hasattr(args, "avisos"):
+        args.avisos.append(aviso)
 
 
 def generar_examen(args, logger) -> int:
@@ -578,8 +651,8 @@ def generar_examen(args, logger) -> int:
             definicion = definicion.model_copy(update={"configuracion_examen": configuracion.model_copy(
                 update={"debug_consignas": curso.debug_consignas})})
         if definicion.configuracion_examen.debug_consignas:
-            print("Aviso: debug_consignas está activo: el examen muestra de qué pregunta salió cada una; "
-                  "sacalo antes de imprimir.", file=sys.stderr)
+            _avisar(args, "debug_consignas está activo: el examen muestra de qué pregunta salió cada una; "
+                          "sacalo antes de imprimir.")
 
         # Edición accesible: letra grande y alto contraste, por encima de lo que diga el estilo.
         if getattr(args, 'accessible', False):
@@ -644,7 +717,7 @@ def generar_examen(args, logger) -> int:
 
         # Un diagrama mal escrito sale en el examen como un aviso: se dice en qué pregunta antes.
         for problema in diagramas_invalidos(examen_base) + formulas_invalidas(examen_base):
-            print(f"Aviso: {problema}", file=sys.stderr)
+            _avisar(args, problema)
 
         # Calcular puntaje total
         puntaje_total = logic.calcular_puntaje_total(examen_base)

@@ -11,6 +11,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Agregado
 
+- **generar, validar**: terminan con un resumen de los exámenes que fallaron, con el motivo, y de los avisos a revisar antes de imprimir. Con `--json`, van en `motivo` y `avisos`.
 - **diagramas**: `linked_list` y `matrix` dibujan el stack y el heap (`zones`), una estructura cabecera (`header`) o dueña de la matriz (`owner`), con punteros a los nodos, a las filas y a los largos, y `nodeType`, `lengthsType` y `lengthsAddr`. Las matrices aceptan direcciones simbólicas (`@M`, `@F0`).
 - **espacio de los desarrollos**: `configuracion_examen.espacio_desarrollo` y las etiquetas `desarrollo-cero`, `-chico`, `-mediano`, `-grande` y `-pagina` eligen el recuadro de cada pregunta, que lleva renglones en el PDF y en el HTML. La etiqueta manda sobre la opción general, salvo con `forzar_espacio_desarrollo: true`. `pequeno` se sigue leyendo como `chico`.
 - **debug_consignas**: en `alucard.toml` o en `configuracion_examen`, muestra junto a cada pregunta el título o el id de la pregunta del banco y pone la marca de agua «Debug» en cada página; `generar` avisa mientras esté activo.
