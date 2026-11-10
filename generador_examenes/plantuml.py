@@ -9,7 +9,7 @@ Lista --> Nodo : cabeza
 ```
 
 Las opciones van en comentarios al principio del bloque, igual que en un ```tabla; `@startuml` y
-`@enduml` son optativos. Como un ```estructura, un bloque así necesita preprocesamiento para Moodle
+`@enduml` son optativos. `ancho` y `alto` son límites: para cambiar el tamaño está `escala`. Como un ```estructura, un bloque así necesita preprocesamiento para Moodle
 (`voight unify`): adentro valen `:`, llaves y renglones en blanco.
 
 Lo dibuja el programa `plantuml`, o el que digan `ALUCARD_PLANTUML` o `PLANTUML_JAR`. Levantar Java
@@ -39,6 +39,7 @@ _COMENTARIO = re.compile(rf"^[ \t]*(?://|{_MARCA})(?P<texto>.*)$")
 _INICIO = re.compile(r"^[ \t]*@start\w+.*$", re.M)
 _ATRIBUTOS_DE_MAS = re.compile(r'\s(?:preserveAspectRatio|style|contentStyleType|zoomAndPan)="[^"]*"')
 _ESPERA = 120
+_SVG_PLANTUML = re.compile(r'(?<=<div class="estructura plantuml" )[^>]*><svg\b[^>]*>')
 
 
 class ErrorPlantuml(ValueError):
@@ -174,22 +175,32 @@ def a_imagen(cuerpo: str, formato: str = "svg") -> bytes:
 
 
 def estilo(opciones: Dict[str, Any]) -> str:
-    """Las medidas de un bloque como CSS, para una imagen o un `<svg>`."""
-    medidas = [f"{css}:{opciones[nombre]}" for nombre, css in (("ancho", "width"), ("alto", "height"))
-               if nombre in opciones]
-    return ";".join(medidas or ["max-width:100%", "height:auto"])
+    """Las medidas de un bloque como CSS, para una imagen o un `<svg>`: son límites, así que un diagrama
+    chico no crece. Para agrandarlo está `[escala]`."""
+    medidas = [f"max-width:{opciones.get('ancho', '100%')}", "height:auto"]
+    return ";".join(medidas + ([f"max-height:{opciones['alto']}"] if "alto" in opciones else []))
 
 
 def a_html(cuerpo: str) -> str:
     """El `<svg>` de un bloque; lleva sus opciones en `data-opciones` para el PDF."""
     opciones, _ = leer(cuerpo)
     svg = a_imagen(cuerpo).decode("utf-8")
-    datos = html.escape(json.dumps({k: opciones[k] for k in ("posicion", *MEDIDAS) if k in opciones}), quote=True)
+    datos = html.escape(json.dumps({k: opciones[k] for k in ("posicion", "escala", *MEDIDAS) if k in opciones}), quote=True)
     alt = html.escape(opciones.get("alt", "diagrama"), quote=True)
     svg = svg.replace("<svg", f'<svg role="img" aria-label="{alt}" style="{estilo(opciones)}" '
                               f'data-opciones="{datos}"', 1)
     alineacion = {"izquierda": "left", "derecha": "right"}.get(opciones.get("posicion", ""), "center")
     return f'<div class="estructura plantuml" style="text-align:{alineacion}">{svg}</div>'
+
+
+def aplicar_escala(html_texto: str, factor: float) -> str:
+    """`escala_plantuml`: cambia el tamaño de los diagramas que no traen su `[escala]`."""
+    def escalar(m: re.Match) -> str:
+        if '&quot;escala&quot;' in m.group(0):
+            return m.group(0)
+        return re.sub(r'\b(width|height)="([\d.]+)"', lambda d: f'{d.group(1)}="{float(d.group(2)) * factor:g}"', m.group(0))
+
+    return _SVG_PLANTUML.sub(escalar, html_texto)
 
 
 def expandir_plantuml(texto: str) -> Tuple[str, Dict[str, str]]:

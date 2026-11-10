@@ -11,6 +11,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Agregado
 
+- **PlantUML**: `configuracion_examen.escala_plantuml` cambia el tamaño de todos los diagramas sin `[escala]`. `[ancho]` y `[alto]` son límites: un diagrama chico ya no se agranda.
 - **sortear_por_tema**: en `configuracion_examen` o en un pool, cada tema toma otras preguntas y se usan todas las candidatas antes de repetir. El informe muestra las de todos los temas.
 - **avisos de desborde**: `generar` avisa, con la pregunta y los temas, de los renglones de código, fórmulas, tablas y partes de una pregunta que el armado del PDF no puede acomodar.
 - **números de línea**: `configuracion_examen.numerar_codigo` para todo el examen, y `// [numerar]` y `// [sin-numerar]` antes de un bloque de código. Moodle descarta las marcas.

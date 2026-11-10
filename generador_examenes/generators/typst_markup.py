@@ -25,6 +25,7 @@ _FILA = re.compile(r"<tr\b[^>]*>(?P<celdas>.*?)</tr>", re.S | re.I)
 _CELDA = re.compile(r"<t(?P<tipo>[hd])\b[^>]*>(?P<contenido>.*?)</t[hd]>", re.S | re.I)
 _SVG = re.compile(r"<svg\b(?P<attrs>[^>]*)>.*?</svg>", re.S | re.I)
 _ANCHO_SVG = re.compile(r'\bwidth="(?P<px>[\d.]+)"')
+_ALTO_SVG = re.compile(r'\bheight="(?P<px>[\d.]+)"')
 _COMENTARIO = re.compile(r"<!--.*?-->", re.S)
 # En una grilla, para que un renglón demasiado largo siga alineado con el código y no debajo del número.
 _LINEA_NUMERADA = ("it => box(width: 100%, grid(columns: (2.2em, 1fr), column-gutter: 0.8em, "
@@ -108,6 +109,13 @@ def partes_typst(fragmento: object) -> list:
     return partes or [{"marca": False, "typst": ""}]
 
 
+def _limite(medida: str, base: str) -> str:
+    """Una medida como longitud de Typst; un porcentaje es de `base`."""
+    if medida.endswith("%"):
+        return f"{base} * {float(medida[:-1]) / 100:g}"
+    return f"({medida}).to-absolute()"
+
+
 def _vigia_de_tabla(cuerpo: str) -> str:
     """Typst achica las columnas de una tabla ancha y lo que no se puede partir se sale de la celda, sin que
     `measure` lo vea. Si no entran ni las palabras más largas de cada columna, deja una marca <desborde>."""
@@ -162,16 +170,23 @@ def html_a_typst(fragmento: object) -> str:
         # Los diagramas de estructuras (statics): 0.06 em por px (0.6 pt con letra de 10), así crecen
         # con la letra del examen, sin pasar del ancho disponible.
         ancho = _ANCHO_SVG.search(m.group("attrs"))
-        medida = (f"width: calc.min(({float(ancho.group('px')) * 0.06:.1f}em).to-absolute(), disponible.width)"
-                  if ancho else "width: 100%")
-        # Un diagrama PlantUML puede traer su posición y sus medidas.
+        alto = _ALTO_SVG.search(m.group("attrs"))
+        # Un diagrama PlantUML puede traer su posición y sus límites, que achican pero no agrandan.
         datos = _OPCIONES_TABLA.search(m.group("attrs"))
         opciones = json.loads(html.unescape(datos.group("opciones"))) if datos else {}
-        medidas = [f"{nombre}: {opciones[clave]}" for clave, nombre in (("ancho", "width"), ("alto", "height"))
-                   if clave in opciones]
+        if ancho:
+            px = float(ancho.group("px"))
+            limites = [f"({px * 0.06:.1f}em).to-absolute()", "disponible.width"]
+            if "ancho" in opciones:
+                limites.append(_limite(opciones["ancho"], "disponible.width"))
+            if "alto" in opciones and alto:
+                limites.append(f"{_limite(opciones['alto'], 'page.height')} * {px / float(alto.group('px')):.4f}")
+            medida = f"width: calc.min({', '.join(limites)})"
+        else:
+            medida = "width: 100%"
         posicion = {"izquierda": "left", "derecha": "right"}.get(opciones.get("posicion", ""), "center")
         return apartar(f"\n#layout(disponible => align({posicion}, image(bytes({_cadena(m.group(0))}), "
-                       f"format: \"svg\", {', '.join(medidas) or medida})))\n")
+                       f"format: \"svg\", {medida})))\n")
 
     def formula(m: re.Match) -> str:
         typst = _TYPST_MATH.search(m.group("attrs"))

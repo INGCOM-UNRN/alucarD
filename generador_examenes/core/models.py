@@ -233,6 +233,8 @@ class ConfiguracionExamen(BaseModel):
     # Cada pregunta de desarrollo en su propia hoja, con el resto de la hoja para responder: es
     # `pagina` para todas, también para las que piden otro espacio.
     desarrollo_en_hoja_separada: bool = False
+    # Tamaño de los diagramas PlantUML que no traen su `[escala]`.
+    escala_plantuml: float = Field(default=1, gt=0, le=4)
     # Números de línea en todos los bloques de código, salvo los que dicen `// [sin-numerar]`.
     numerar_codigo: bool = False
     # Para revisar un examen: muestra junto a cada pregunta cuál salió del banco. Por omisión, el de

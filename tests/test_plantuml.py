@@ -1,4 +1,5 @@
 """Bloques ```plantuml: opciones, dibujo y su lugar en GIFT, Markdown y el PDF."""
+import re
 import stat
 
 import pytest
@@ -8,7 +9,7 @@ from generador_examenes.core.markdown_utils import detect_and_convert_format, ma
 from generador_examenes.generators.typst_markup import html_a_typst
 from generador_examenes.gift_linter import corregir_para_moodle, lint_gift_file, revisar_moodle, revisar_plantuml
 from generador_examenes.parsers.gift_parser import GiftParser
-from generador_examenes.plantuml import ErrorPlantuml, a_imagen, leer
+from generador_examenes.plantuml import ErrorPlantuml, a_imagen, aplicar_escala, leer
 
 SVG = ('<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" height="100px" preserveAspectRatio="none" '
        'style="width:200px;height:100px;" viewBox="0 0 200 100" width="200px"><g/></svg>')
@@ -104,7 +105,8 @@ def test_markdown_y_html(falso):
 
 def test_el_pdf_usa_la_posicion_y_las_medidas(falso):
     typst = html_a_typst(markdown_to_html(bloque("// [derecha] [ancho, 60%] [alto, 4cm]", "A -> B")))
-    assert "align(right, image(" in typst and "width: 60%, height: 4cm" in typst
+    assert "align(right, image(" in typst
+    assert "width: calc.min((12.0em).to-absolute(), disponible.width, disponible.width * 0.6, (4cm).to-absolute() * 2.0000)" in typst
 
 
 def test_sin_opciones_crece_con_la_letra_como_una_estructura(falso):
@@ -144,3 +146,34 @@ def test_lint_acepta_renglones_en_blanco_en_el_bloque(falso, tmp_path):
     banco = tmp_path / "b.gift"
     banco.write_text("::a::[markdown]Mirá\n" + bloque("class A {", "}", "", "class B") + "\n{=sí ~no}\n", encoding="utf-8")
     assert lint_gift_file(banco)
+
+
+def test_ancho_es_un_limite_en_html(falso):
+    html = markdown_to_html(bloque("// [ancho, 60%]", "A -> B"))
+    assert 'style="max-width:60%;height:auto"' in html and 'width="200"' in html
+
+
+def test_escala_general_cambia_los_que_no_traen_la_suya(falso):
+    html = markdown_to_html(bloque("A -> B"))
+    assert 'width="100"' in aplicar_escala(html, 0.5) and 'height="50"' in aplicar_escala(html, 0.5)
+
+
+def test_la_escala_propia_manda_sobre_la_general(falso):
+    html = markdown_to_html(bloque("// [escala, 2]", "A -> B"))
+    assert aplicar_escala(html, 0.5) == html
+
+
+def test_escala_general_no_toca_otros_diagramas():
+    html = markdown_to_html("```estructura\ntype: array\nvalues: [1]\n```\n")
+    assert aplicar_escala(html, 0.5) == html
+
+
+@pytest.mark.skipif(plantuml.comando() is None, reason="sin PlantUML")
+def test_una_escala_menor_da_un_dibujo_menor(tmp_path, monkeypatch):
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
+
+    def ancho(cuerpo):
+        return float(re.search(r'width="([\d.]+)"', a_imagen(cuerpo).decode()).group(1))
+
+    assert ancho("// [escala, 0.5]\nclass A\n") < ancho("class A\n") * 0.7
+

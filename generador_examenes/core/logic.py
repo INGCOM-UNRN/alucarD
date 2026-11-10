@@ -10,6 +10,7 @@ from copy import deepcopy
 import re
 
 from generador_examenes.core.markdown_utils import numerar_todo
+from generador_examenes.plantuml import aplicar_escala
 from generador_examenes.core.models import (
     Pregunta, DefinicionExamen, SeccionExamen, PoolConfig, ConfiguracionExamen, PresentacionConsigna
 )
@@ -301,9 +302,9 @@ def construir_pool_examen(
                 donde=f"la sección «{seccion_def.nombre}», pool {pool_idx}",
                 tema=tema if _sortea_por_tema(pool, definicion.configuracion_examen) else 0,
             )
-            preguntas_seccion.extend(_con_numeros_de_linea(_con_espacio_de_desarrollo(
+            preguntas_seccion.extend(_con_escala_plantuml(_con_numeros_de_linea(_con_espacio_de_desarrollo(
                 _con_justificacion(preguntas_pool, pool, definicion.configuracion_examen),
-                definicion.configuracion_examen), definicion.configuracion_examen))
+                definicion.configuracion_examen), definicion.configuracion_examen), definicion.configuracion_examen))
         
         secciones_examen.append({
             'nombre': seccion_def.nombre,
@@ -365,10 +366,21 @@ def _con_numeros_de_linea(preguntas: List[Pregunta], configuracion: Configuracio
     """Con `numerar_codigo`, numera los bloques de los enunciados y de las opciones."""
     if not configuracion.numerar_codigo:
         return preguntas
+    return _con_html(preguntas, numerar_todo)
+
+
+def _con_html(preguntas: List[Pregunta], cambiar: Any) -> List[Pregunta]:
+    """Las preguntas con `cambiar` aplicado a sus enunciados y a sus opciones."""
     return [p.model_copy(update={
-        "enunciado_html": numerar_todo(p.enunciado_html),
-        "opciones": [o.model_copy(update={"texto_html": numerar_todo(o.texto_html)}) for o in p.opciones],
+        "enunciado_html": cambiar(p.enunciado_html),
+        "opciones": [o.model_copy(update={"texto_html": cambiar(o.texto_html)}) for o in p.opciones],
     }) for p in preguntas]
+
+
+def _con_escala_plantuml(preguntas: List[Pregunta], configuracion: ConfiguracionExamen) -> List[Pregunta]:
+    if configuracion.escala_plantuml == 1:
+        return preguntas
+    return _con_html(preguntas, lambda html: aplicar_escala(html, configuracion.escala_plantuml))
 
 
 def _minutos(pregunta: Pregunta) -> Optional[int]:

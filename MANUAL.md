@@ -945,12 +945,15 @@ Lista --> Nodo : cabeza
 | Opción | Efecto |
 | :--- | :--- |
 | `[centrado]`, `[izquierda]`, `[derecha]` | Dónde va el diagrama. Por omisión, centrado. |
-| `[ancho, 60%]`, `[alto, 5cm]` | Medida del dibujo, en `%`, `cm`, `mm`, `pt` o `em`. Sin ellas, crece con la letra del examen y no pasa del ancho de la página. |
-| `[escala, 1.5]` | `scale` de PlantUML. |
+| `[escala, 0.7]` | Tamaño del dibujo: `1` es el natural, que crece con la letra del examen. Es lo que hay que tocar para achicar o agrandar un diagrama. |
+| `[ancho, 60%]`, `[alto, 5cm]` | Límites, en `%`, `cm`, `mm`, `pt` o `em`: achican un diagrama grande, pero uno chico queda como está. Nunca pasa del ancho de la página. |
 | `[letra, 12]` | Tamaño de la letra del diagrama, en puntos. |
 | `[color]` | Conserva los colores. Por omisión sale en blanco y negro, porque un examen se imprime. |
 | `[tema, plain]` | Tema de PlantUML. También conserva los colores. |
 | `[alt, texto]` | Texto alternativo. Por omisión, «diagrama». |
+
+`configuracion_examen.escala_plantuml` cambia el tamaño de todos los diagramas del examen, salvo los que
+traen su `[escala]`.
 
 Una opción desconocida o inválida y un diagrama que no compila salen como un aviso en la pregunta;
 `alucard generar` dice en cuál y `lint-gift` los informa con su línea.
@@ -1384,6 +1387,7 @@ rutas del YAML son relativas a la carpeta desde la que se ejecuta alucard.
 | `espacio_desarrollo` | `cero`, `chico`, `mediano`, `grande` o `pagina` | `mediano` | Espacio de las preguntas de desarrollo que no piden otro. Ver [Espacio de las preguntas de desarrollo](#espacio-de-las-preguntas-de-desarrollo). |
 | `forzar_espacio_desarrollo` | booleano | `false` | `espacio_desarrollo` vale también para las preguntas que piden otro con su etiqueta. |
 | `desarrollo_en_hoja_separada` | booleano | `false` | Todas las preguntas de desarrollo en su propia hoja. Manda sobre `espacio_desarrollo` y `forzar_espacio_desarrollo`. |
+| `escala_plantuml` | número, hasta 4 | `1` | Tamaño de los diagramas PlantUML que no traen su `[escala]`. |
 | `numerar_codigo` | booleano | `false` | Números de línea en todos los bloques de código, salvo los que dicen `// [sin-numerar]`. Ver [Números de línea en el código](#números-de-línea-en-el-código). |
 | `debug_consignas` | `titulo` o `id` | el del toml | Muestra junto a cada pregunta cuál salió del banco. Ver [`debug_consignas`](#debug_consignas). |
 | `presentacion_consignas` | sección | ver abajo | Ver [`presentacion_consignas`](#presentacion_consignas). |
