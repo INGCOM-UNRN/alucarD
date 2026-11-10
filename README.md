@@ -512,9 +512,9 @@ Ahora puedes incluir opciones de generación directamente en el YAML:
 
 ```yaml
 # Configuración de generación (todas opcionales)
-input_banco:                    # Lista de bancos de preguntas
+input_banco:                    # Bancos de preguntas: archivos o carpetas (.gift y .xml, con sus subcarpetas)
   - "bancos/teoria.gift"
-  - "bancos/practica.xml"
+  - "bancos/practica"
   
 output_dir: "./examenes"        # Directorio de salida (default: "./output")
 

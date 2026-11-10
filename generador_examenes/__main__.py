@@ -343,7 +343,8 @@ def _cli(
     ),
     input_banco: Optional[List[Path]] = typer.Option(
         None, "-i", "--input-banco",
-        help="Ruta(s) a los archivos de banco de preguntas (tiene prioridad sobre el YAML)",
+        help="Ruta(s) a los bancos de preguntas: archivos o carpetas, con sus subcarpetas "
+             "(tiene prioridad sobre el YAML)",
     ),
     output_dir: Optional[Path] = typer.Option(
         None, "-o", "--output-dir",
@@ -632,8 +633,9 @@ def _ver(
 
 @app.command("build")
 def _build(
-    input_banco: Optional[List[Path]] = typer.Option(None, "-i", "--input-banco", exists=True, dir_okay=False,
-                                                     help="Banco(s) de preguntas: Moodle XML (el de idkfa), GIFT… "
+    input_banco: Optional[List[Path]] = typer.Option(None, "-i", "--input-banco", exists=True,
+                                                     help="Banco(s) de preguntas: Moodle XML (el de idkfa), GIFT… o "
+                                                          "carpetas, con sus subcarpetas. "
                                                           "Reemplaza al input_banco de la definición."),
     consignas: Optional[List[Path]] = typer.Option(None, "--consignas", exists=True, file_okay=False, help=_AYUDA_CONSIGNAS),
     repositorio: Optional[List[Path]] = typer.Option(None, "--repositorio", exists=True, help=_AYUDA_REPOSITORIO),
@@ -688,8 +690,8 @@ def _build(
 
 @app.command("balance-check")
 def _balance_check(
-    input_banco: Optional[List[Path]] = typer.Option(None, "-i", "--input-banco", exists=True, dir_okay=False,
-                                                     help="Banco(s) de preguntas; reemplaza al input_banco de la definición."),
+    input_banco: Optional[List[Path]] = typer.Option(None, "-i", "--input-banco", exists=True,
+                                                     help="Banco(s) o carpetas de bancos; reemplaza al input_banco de la definición."),
     consignas: Optional[List[Path]] = typer.Option(None, "--consignas", exists=True, file_okay=False, help=_AYUDA_CONSIGNAS),
     repositorio: Optional[List[Path]] = typer.Option(None, "--repositorio", exists=True, help=_AYUDA_REPOSITORIO),
     definicion: Optional[Path] = typer.Option(None, "-d", "--definicion", exists=True, dir_okay=False,
@@ -719,7 +721,8 @@ def _balance_check(
 
 @app.command("lint-gift")
 def _lint_gift(
-    archivos: List[Path] = typer.Argument(..., exists=True, dir_okay=False, help="Bancos de preguntas GIFT a revisar."),
+    archivos: List[Path] = typer.Argument(..., exists=True,
+                                          help="Bancos de preguntas GIFT a revisar, o carpetas que los contengan."),
     fix: bool = typer.Option(False, "--fix", help="Corrige problemas comunes en el lugar."),
     compilar: bool = typer.Option(False, "--compilar",
                                   help="Compila con gcc -fsyntax-only los bloques de C que son programas completos."),

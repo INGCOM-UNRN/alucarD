@@ -1,12 +1,16 @@
-"""Bancos GIFT que Moodle importa tal cual."""
+"""Bancos GIFT que Moodle importa tal cual, y bancos repartidos en carpetas."""
 import logging
 
 import pytest
 
+from generador_examenes.__main__ import app
+from generador_examenes.core.logic import candidatas_pool, cargar_bancos
+from generador_examenes.core.models import PoolConfig
 from generador_examenes.gift_linter import (
     corregir_para_moodle,
     dos_puntos_sueltos,
     lint_gift_file,
+    revisar_archivos,
     revisar_moodle,
 )
 from generador_examenes.parsers.gift_parser import GiftParser
@@ -145,3 +149,62 @@ def test_lint_falla_sin_fix_y_con_fix_reescribe(tmp_path):
     assert corregido == "// [tag, x]\n::a::Texto： {T}\n\n"
     assert lint_gift_file(banco, fix=True) is True
     assert banco.read_text(encoding="utf-8") == corregido
+
+
+@pytest.fixture
+def arbol(tmp_path):
+    raiz = tmp_path / "bancos"
+    for ruta, nombre in [("u1/teoria.gift", "uno"), ("u2/teoria.gift", "dos"), ("u2/sub/extra.gift", "tres"), ("u1/leeme.txt", "texto"),
+                         (".oculta/x.gift", "oculta")]:
+        archivo = raiz / ruta
+        archivo.parent.mkdir(parents=True, exist_ok=True)
+        archivo.write_text(f"::{nombre}::Texto {{T}}\n", encoding="utf-8")
+    (raiz / "u1" / "notas.md").write_text("no es un banco", encoding="utf-8")
+    return raiz
+
+
+def test_una_carpeta_aporta_los_bancos_de_sus_subcarpetas(arbol):
+    banco = cargar_bancos([arbol])
+    assert {p.nombre: p.fuente_banco for p in banco.values()} == {
+        "uno": "u1/teoria.gift", "dos": "u2/teoria.gift", "tres": "u2/sub/extra.gift"}
+
+
+def test_un_archivo_nombrado_y_su_carpeta_no_cargan_dos_veces(arbol, caplog):
+    with caplog.at_level(logging.WARNING):
+        banco = cargar_bancos([arbol / "u1" / "teoria.gift", arbol])
+    assert len(banco) == 3 and "duplicada" not in caplog.text
+
+
+def test_un_txt_se_lee_solo_si_se_lo_nombra(arbol):
+    banco = cargar_bancos([arbol / "u1" / "leeme.txt"])
+    assert [p.nombre for p in banco.values()] == ["texto"]
+
+
+def test_avisa_si_la_carpeta_no_tiene_bancos(tmp_path, caplog):
+    with caplog.at_level(logging.WARNING):
+        assert cargar_bancos([tmp_path]) == {}
+    assert "no tiene bancos" in caplog.text
+
+
+@pytest.mark.parametrize("filtro, nombres", [
+    ("teoria.gift", {"uno", "dos"}),
+    ("u2/teoria.gift", {"dos"}),
+    ("bancos/u1/teoria.gift", {"uno"}),
+    ("extra.gift", {"tres"}),
+])
+def test_el_filtro_banco_distingue_por_subcarpeta(arbol, filtro, nombres):
+    pool = PoolConfig(nombre="p", cantidad=1, puntos_por_pregunta=1, banco=filtro)
+    assert {p.nombre for p in candidatas_pool(pool, cargar_bancos([arbol]))} == nombres
+
+
+def test_lint_gift_recorre_una_carpeta_sin_los_xml(arbol, capsys):
+    (arbol / "u1" / "moodle.xml").write_text("<quiz/>", encoding="utf-8")
+    assert revisar_archivos([arbol]) == 0
+    salida = capsys.readouterr().out
+    assert "Total archivos: 3" in salida and "moodle.xml" not in salida and "leeme.txt" not in salida
+
+
+def test_el_cli_acepta_carpetas_de_bancos(arbol):
+    from typer.testing import CliRunner
+
+    assert CliRunner().invoke(app, ["lint-gift", str(arbol)]).exit_code == 0

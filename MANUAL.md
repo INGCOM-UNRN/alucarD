@@ -122,7 +122,7 @@ relativas al archivo. La línea de comandos manda sobre la definición YAML, y l
 `alucard.toml`.
 
 ```toml
-input_banco = ["bancos/teoria.gift", "bancos/sintetizados"]
+input_banco = ["bancos/teoria.gift", "bancos/sintetizados"]   # archivos o carpetas (.gift y .xml, con sus subcarpetas)
 output_dir = "output"
 path_images = "imagenes"
 numero_temas = 2
@@ -581,14 +581,14 @@ su pregunta.
 
 | Opción | Descripción |
 | :--- | :--- |
-| `ARCHIVOS...` | Uno o más bancos `.gift`. |
+| `ARCHIVOS...` | Uno o más bancos `.gift`, o carpetas: se revisan los `.gift` de sus subcarpetas. |
 | `--fix` | Deja el banco compatible con Moodle, en el lugar. |
 | `--compilar` | Compila el código C de las preguntas. |
 
 ```bash
 alucard lint-gift bancos/*.gift                       # formato y diagramas
 alucard lint-gift sintetizados/*.gift --compilar      # además, que el código compile
-alucard lint-gift bancos/*.gift --fix                 # lo deja compatible con Moodle
+alucard lint-gift bancos --fix                        # toda la carpeta, con sus subcarpetas
 ```
 
 #### Compatibilidad con Moodle
@@ -666,7 +666,7 @@ repositorios_externos:
     tipo: deckard                    # auto (por omisión) | preguntas | deckard
     nombre: enunciados               # etiqueta repo:enunciados
     incluir_no_publicados: false     # consignas con publicar: false
-  - ruta: "~/catedra/preguntas"      # todos los .gift/.txt/.xml de la carpeta
+  - ruta: "~/catedra/preguntas"      # todos los .gift y .xml de la carpeta
     tipo: preguntas
 ```
 

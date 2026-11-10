@@ -4,7 +4,7 @@ Linter y formateador para archivos GIFT.
 
 Uso:
     gift-linter archivo.gift [--fix]
-    gift-linter bancos/*.gift [--fix]
+    gift-linter bancos/ [--fix]
 """
 import re
 import sys
@@ -213,7 +213,7 @@ def revisar_codigo(content, gcc="gcc"):
 def lint_gift_file(filepath, fix=False, compilar=False):
     """Analiza y opcionalmente formatea un archivo GIFT."""
     print(f"\n{'='*60}")
-    print(f"Analizando: {filepath.name}")
+    print(f"Analizando: {filepath}")
     print(f"{'='*60}")
     
     if not filepath.exists():
@@ -374,7 +374,7 @@ def main():
         sys.exit(main_alucard())
     if '--help' in sys.argv or '-h' in sys.argv:
         # Ayuda en español, con la misma redacción que la de Typer traducida por yutani (N-ECO-14).
-        print("""Uso: gift-linter [OPCIONES] ARCHIVOS...
+        print("""Uso: gift-linter [OPCIONES] ARCHIVOS_O_CARPETAS...
 
 Linter y formateador para archivos GIFT (alias de `alucard lint-gift`).
 
@@ -451,10 +451,16 @@ def revisar_archivos(files, fix=False, compilar=False) -> int:
 
     La usan `alucard lint-gift` y el alias `gift-linter` (N-ALUCARD-02).
     """
+    from generador_examenes.core.consignas import bancos_de_carpeta
+
     print("="*60)
     print("LINTER GIFT - Analizador de Bancos de Preguntas")
     print("="*60)
 
+    # De una carpeta se revisa lo que es GIFT: los bancos Moodle XML no pasan por el linter.
+    files = [archivo for ruta in map(Path, files)
+             for archivo in ([b for b in bancos_de_carpeta(ruta) if b.suffix.lower() != ".xml"]
+                             if ruta.is_dir() else [ruta])]
     all_clean = True
     for filepath in files:
         clean = lint_gift_file(filepath, fix=fix, compilar=compilar)

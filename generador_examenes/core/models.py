@@ -124,7 +124,7 @@ class EstiloExamen(BaseModel):
 class RepositorioExterno(BaseModel):
     """Repositorio de la misma computadora que complementa los bancos del proyecto.
 
-    - `preguntas`: carpeta con bancos GIFT (.gift/.txt) o Moodle XML (.xml), en cualquier subcarpeta.
+    - `preguntas`: carpeta con bancos GIFT (.gift) o Moodle XML (.xml), en cualquier subcarpeta.
     - `deckard`: banco de consignas prácticas de deckard (`<ruta>/banco/<tema>/<id>/ejercicio.yaml`,
       o directamente `<ruta>/<tema>/<id>/`).
     - `auto` (por omisión): `deckard` si encuentra algún `ejercicio.yaml`, si no `preguntas`.

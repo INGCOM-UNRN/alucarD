@@ -103,25 +103,48 @@ def categoria_coincide(pregunta_cat: str, filtro_cat: str) -> bool:
     return False
 
 
+def _archivos_de_bancos(rutas_bancos: List[Path]) -> Dict[Path, Optional[Path]]:
+    """Los archivos a cargar, sin repetir, con la carpeta de la que salió cada uno (None si se nombró
+    directamente). Una carpeta aporta sus bancos y los de sus subcarpetas."""
+    from generador_examenes.core.consignas import bancos_de_carpeta
+
+    archivos: Dict[Path, Optional[Path]] = {}
+    vistos = set()
+    for ruta in map(Path, rutas_bancos):
+        raiz = ruta if ruta.is_dir() else None
+        encontrados = bancos_de_carpeta(ruta) if raiz else [ruta]
+        if raiz and not encontrados:
+            logger.warning(f"La carpeta {ruta} no tiene bancos de preguntas")
+        for archivo in encontrados:
+            if archivo.resolve() not in vistos:
+                vistos.add(archivo.resolve())
+                archivos[archivo] = raiz
+    return archivos
+
+
 def cargar_bancos(rutas_bancos: List[Path]) -> Dict[str, Pregunta]:
     """
     Carga múltiples bancos de preguntas y los combina en uno solo
     
     Args:
-        rutas_bancos: Lista de rutas a archivos de bancos
+        rutas_bancos: Lista de rutas a archivos de bancos o a carpetas (recorridas con sus subcarpetas)
         
     Returns:
         Diccionario combinado de todas las preguntas {id: Pregunta}
     """
     banco_completo = {}
     
-    for ruta in rutas_bancos:
+    for ruta, raiz in _archivos_de_bancos(rutas_bancos).items():
         logger.info(f"Cargando banco: {ruta}")
         
         try:
             parser = obtener_parser(ruta)
             preguntas = parser.parse(ruta)
-            
+            if raiz:
+                # Con la ruta dentro de la carpeta: dos subcarpetas pueden tener un `teoria.gift`.
+                for pregunta in preguntas.values():
+                    pregunta.fuente_banco = ruta.relative_to(raiz).as_posix()
+
             # Combinar preguntas, verificando duplicados
             for id_pregunta, pregunta in preguntas.items():
                 if id_pregunta in banco_completo:

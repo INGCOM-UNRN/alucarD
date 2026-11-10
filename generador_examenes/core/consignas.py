@@ -22,7 +22,8 @@ from generador_examenes.core.models import PresentacionConsigna, Pregunta, Repos
 logger = logging.getLogger(__name__)
 
 ARCHIVO_EJERCICIO = "ejercicio.yaml"
-EXTENSIONES_PREGUNTAS = (".gift", ".txt", ".xml")
+# Sólo estas: un `.txt` en una carpeta de bancos suele ser otra cosa. Se lee si se lo nombra directamente.
+EXTENSIONES_PREGUNTAS = (".gift", ".xml")
 BLOOM = {1: "Recordar", 2: "Comprender", 3: "Aplicar", 4: "Analizar", 5: "Evaluar / Crear"}
 
 
