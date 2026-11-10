@@ -568,9 +568,11 @@ Una tabla sin el bloque también se lee, pegada al texto o no, pero no admite op
 
 ### `alucard lint-gift` (antes `gift-linter`)
 
-Valida bancos GIFT: el formato de cada pregunta, los bloques ```` ```estructura ```` y, con
-`--compilar`, el código C. Cada problema lleva su línea y el título de su pregunta.
+Valida bancos GIFT: el formato de cada pregunta, que se puedan importar en Moodle, los bloques
+```` ```estructura ```` y, con `--compilar`, el código C. Cada problema lleva su línea y el título de
+su pregunta.
 
+- **Moodle:** ver [Compatibilidad con Moodle](#compatibilidad-con-moodle).
 - **Diagramas:** un bloque que no se puede dibujar (tipo desconocido, datos inválidos), uno con un
   renglón en blanco (GIFT corta la pregunta ahí) o con llaves (abren las respuestas).
 - **Código (`--compilar`):** los bloques ```` ```c ```` que son programas completos (tienen `main`)
@@ -580,14 +582,48 @@ Valida bancos GIFT: el formato de cada pregunta, los bloques ```` ```estructura 
 | Opción | Descripción |
 | :--- | :--- |
 | `ARCHIVOS...` | Uno o más bancos `.gift`. |
-| `--fix` | Corrige problemas comunes de sintaxis y espaciado en el lugar. |
+| `--fix` | Deja el banco compatible con Moodle, en el lugar. |
 | `--compilar` | Compila el código C de las preguntas. |
 
 ```bash
 alucard lint-gift bancos/*.gift                       # formato y diagramas
 alucard lint-gift sintetizados/*.gift --compilar      # además, que el código compile
-alucard lint-gift bancos/*.gift --fix
+alucard lint-gift bancos/*.gift --fix                 # lo deja compatible con Moodle
 ```
+
+#### Compatibilidad con Moodle
+
+Un banco GIFT se importa en Moodle tal cual, salvo las preguntas con bloques ```` ```estructura ````
+o fórmulas `$...$`, que hay que preprocesar: `voight unify … -o banco.xml` las pasa a imágenes. Moodle toma como texto de la pregunta lo que siga a las respuestas, así que
+todo lo propio de alucard va en comentarios, en el mismo párrafo que la pregunta (sin renglones en
+blanco en el medio; uno separado no se aplica, igual que en Moodle):
+
+```gift
+$CATEGORY: tipos/structs
+
+// [tag, structs, padding] [category, tipos/relleno]
+::offset-campo::[markdown]¿En qué offset queda el campo `b`? {
+=`4`
+~`1`
+}
+
+// [tag, desarrollo-grande, punteros]
+::fuga-vs-colgante::Explicá la diferencia entre una fuga y un puntero colgante. {}
+```
+
+- **Etiquetas:** `[tag, punteros, facil]`, con una o varias, sin `:`. Moodle ignora el comentario, así
+  que un GIFT importado directo llega sin etiquetas; `voight convert gift-to-xml` las pasa al XML.
+  `[tag:nombre]`, el formato que exporta Moodle, se lee, pero es error en `lint-gift` y `--fix` lo cambia.
+- **Categoría de una sola pregunta:** `[category, ruta]`. Moodle la ignora; para que la tome, usá `$CATEGORY:`.
+- **Desarrollo:** `{}`, la pregunta de ensayo de Moodle. El tamaño va en la etiqueta
+  `desarrollo-pequeno`, `-mediano` o `-grande`, que alucard no cuenta como etiqueta para filtrar.
+- **Dos puntos:** las preguntas no usan `:` en el título, el enunciado, las opciones ni el código,
+  porque GIFT les da significado. Se escriben en ancho completo (`：`), que alucard muestra como `:`, o
+  escapados (`\:`). Quedan exentos los bloques ```` ```estructura ````, las
+  fórmulas, los comentarios, `$CATEGORY:` y las respuestas numéricas (`{#3:2}`).
+
+`[tags: a, b]`, `[category: x]` y `{desarrollo:grande}` se siguen leyendo con un aviso, pero son error
+en `lint-gift`. `--fix` los migra y pasa los `:` a ancho completo; sin cambiar lo que se imprime.
 
 ### Justificación en las preguntas de selección múltiple
 

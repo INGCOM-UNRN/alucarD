@@ -21,20 +21,23 @@ def sample_gift_content():
     return """
 // Banco de preguntas de prueba
 
+// [tag, matematicas] [tag, facil]
 ::Pregunta 1::¿Cuánto es 2+2? {
 =4
 ~3
 ~5
 ~Error
-} [tags: matematicas, facil]
+}
 
-::Pregunta 2::Python es interpretado. {T} [tags: programacion]
+// [tag, programacion]
+::Pregunta 2::Python es interpretado. {T}
 
+// [category, Programación]
 ::Pregunta 3::¿Qué es un compilador? {
 =Un programa que traduce código
 ~Un editor de texto
 ~Un debugger
-} [category: Programación]
+}
 """
 
 

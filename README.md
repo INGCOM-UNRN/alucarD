@@ -859,21 +859,26 @@ Formato de texto plano de Moodle:
 ```gift
 // Comentario
 
+// [tag, geografia, facil]
 ::Pregunta 1::¿Cuál es la capital de Francia? {
 =París
 ~Londres
 ~Berlín
 ~Madrid
-} [tags: geografia, facil]
+}
 
-::Pregunta 2::Python es un lenguaje de programación. {T} [tags: programacion]
+// [tag, programacion]
+::Pregunta 2::Python es un lenguaje de programación. {T}
 
+// [tag, web, html]
 ::Pregunta 3::¿Qué significa HTML? {
 =HyperText Markup Language
 ~High Tech Modern Language
 ~Home Tool Markup Language
-} [tags: web, html]
+}
 ```
+
+Las etiquetas van en un comentario pegado a la pregunta, sin renglones en blanco en el medio. No se usan `:` en las preguntas; ver [Compatibilidad con Moodle](MANUAL.md#compatibilidad-con-moodle).
 
 ### Formato Moodle XML
 
@@ -904,6 +909,7 @@ Formato de texto plano de Moodle:
 Formato `[markdown]` para preguntas con código:
 
 ```gift
+// [tag, python, codigo]
 ::Análisis de Código::[markdown]¿Qué imprime este código?
 
 \`\`\`python
@@ -918,7 +924,7 @@ print(suma(2, 3))
 ~6
 ~23
 ~Error
-} [tags: python, codigo]
+}
 ```
 
 ### Preguntas de Desarrollo
@@ -928,17 +934,22 @@ Las preguntas de desarrollo permiten al alumno escribir respuestas extensas. Se 
 #### Formato GIFT
 
 ```gift
-::Concepto de Recursión::Define qué es la recursión y da un ejemplo. {desarrollo:mediano} [tags: conceptos]
+// [tag, conceptos]
+::Concepto de Recursión::Define qué es la recursión y da un ejemplo. {}
 
-::Análisis de Algoritmo::Analiza el siguiente algoritmo... {desarrollo:grande} [tags: algoritmos]
+// [tag, desarrollo-grande, algoritmos]
+::Análisis de Algoritmo::Analiza el siguiente algoritmo... {}
 
-::Diferencia Simple::¿Cuál es la diferencia entre X e Y? {desarrollo:pequeno} [tags: basico]
+// [tag, desarrollo-pequeno, basico]
+::Diferencia Simple::¿Cuál es la diferencia entre X e Y? {}
 ```
 
+`{}` es la pregunta de ensayo de Moodle; el tamaño del espacio va en una etiqueta.
+
 **Tamaños disponibles:**
-- `{desarrollo:pequeno}` - Espacio pequeño (~4-6 líneas)
-- `{desarrollo:mediano}` - Espacio mediano (~8-10 líneas) [default]
-- `{desarrollo:grande}` - Espacio grande (~14-16 líneas)
+- `[tag, desarrollo-pequeno]` - Espacio pequeño (~4-6 líneas)
+- `[tag, desarrollo-mediano]` - Espacio mediano (~8-10 líneas) [default]
+- `[tag, desarrollo-grande]` - Espacio grande (~14-16 líneas)
 
 #### Formato Moodle XML
 

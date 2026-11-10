@@ -65,10 +65,48 @@ def _extraer_bloque_respuestas(texto: str):
 _MARCA = re.compile(r'(?<!\\)([=~])')
 _RETRO = re.compile(r'(?<!\\)#')
 _ESCAPE = re.compile(r'\\([=~#{}:])')
+# En el enunciado, lo mismo, salvo adentro de un bloque de código (una tabla no lo es) o de una
+# fórmula: en LaTeX `\{` y `\:` tienen su propio sentido.
+_ESCAPE_ENUNCIADO = re.compile(r'(?P<intacto>```(?!tabla).*?```|\$\$.*?\$\$|(?<![\\$\w])\$[^$\n]+\$)|\\(?P<marca>[=~#{}:])',
+                               re.S)
+_VERDADERO_FALSO = re.compile(r'(?:T|F|TRUE|FALSE)\s*(?:#.*)?', re.I | re.S)
+
+# Los metadatos van en un comentario, en el mismo párrafo que la pregunta, sin `:`:
+# `// [tag, punteros, facil] [category, Tipos]`. `[tag:x]`, el formato de Moodle, se sigue leyendo.
+_ES_COMENTARIO = re.compile(r'\s*//')
+_METADATOS = re.compile(r'\[(?:tag|category)[:,]', re.I)
+_TAG = re.compile(r'\[tag(?P<separador>[:,])(?P<tags>(?:\\\]|[^\]<>`\x00-\x1f])+)\]', re.I)
+_CATEGORIA = re.compile(r'\[category[:,]\s*(.+?)\s*\]', re.I)
+# El tamaño del espacio de un desarrollo: `{}` es el ensayo de Moodle y no admite parámetros, así que
+# viaja como etiqueta.
+_TAMANO = re.compile(r'desarrollo-(pequeno|mediano|grande)', re.I)
+# La sintaxis anterior, que Moodle no entiende: lo que sigue a las respuestas lo toma como texto de la
+# pregunta y `{desarrollo}` como respuesta corta. Se sigue leyendo; `lint-gift --fix` la migra.
+_SINTAXIS_VIEJA = re.compile(
+    r'^[ \t]*//.*$'
+    r'|[ \t]*\[(?P<clave>tags?|category):\s*(?P<valor>[^\]\n]+?)\s*\][ \t]*'
+    r'|(?P<desarrollo>\{\s*desarrollo(?::(?P<tamano>\w+))?\s*\})',
+    re.I | re.M)
+
+
+def sintaxis_vieja(contenido: str) -> list[re.Match]:
+    """Los `[tags: …]`, `[category: …]` y `{desarrollo…}` de un banco, sin mirar los comentarios."""
+    return [m for m in _SINTAXIS_VIEJA.finditer(contenido) if m.group('clave') or m.group('desarrollo')]
 
 
 def _desescapar(texto: str) -> str:
     return _ESCAPE.sub(r'\1', texto)
+
+
+def _desescapar_enunciado(texto: str) -> str:
+    def desescapar(m: re.Match) -> str:
+        intacto = m.group('intacto')
+        if intacto is None:
+            return m.group('marca')
+        # En el código también vale `\:`, como en Moodle; en una fórmula es un espacio de LaTeX.
+        return intacto.replace('\\:', ':') if intacto.startswith('```') else intacto
+
+    return _ESCAPE_ENUNCIADO.sub(desescapar, texto)
 
 class GiftParser(BaseParser):
     """Parser para archivos en formato GIFT de Moodle"""
@@ -82,7 +120,8 @@ class GiftParser(BaseParser):
         Parsea un archivo GIFT y retorna un diccionario de preguntas
         
         Formato GIFT básico:
-        ::nombre_pregunta::enunciado {opciones} [tags: tag1, tag2]
+        // [tag, tag1, tag2]
+        ::nombre_pregunta::enunciado {opciones}
         """
         if not filepath.exists():
             raise FileNotFoundError(f"Archivo no encontrado: {filepath}")
@@ -96,6 +135,10 @@ class GiftParser(BaseParser):
             with open(filepath, 'r', encoding='utf-8') as f:
                 content = f.read()
             
+            if sintaxis_vieja(content):
+                logger.warning(f"[{banco_nombre}] Usa [tags: …], [category: …] o {{desarrollo}}, que Moodle no "
+                               "entiende: migralo con `alucard lint-gift --fix`.")
+
             # Dividir en bloques de preguntas (separadas por líneas en blanco)
             bloques = self._dividir_bloques(proteger_comentarios(content))
             
@@ -122,8 +165,9 @@ class GiftParser(BaseParser):
         Returns:
             Lista de tuplas (bloque_texto, categoria_actual)
         """
-        # Eliminar comentarios (líneas que empiezan con //)
-        lines = [line for line in content.split('\n') if not line.strip().startswith('//')]
+        # Eliminar comentarios (líneas que empiezan con //), salvo los que llevan metadatos
+        lines = [line for line in content.split('\n')
+                 if not _ES_COMENTARIO.match(line) or _METADATOS.search(line)]
 
         bloques = []
         bloque_actual: List[str] = []
@@ -138,6 +182,7 @@ class GiftParser(BaseParser):
             """
             s = linea.lstrip()
             return s.startswith('::') or s.startswith('$CATEGORY:') or \
+                s.startswith('//') or \
                 s.startswith('[markdown]') or s.startswith('[html]')
 
         for line in lines:
@@ -181,9 +226,12 @@ class GiftParser(BaseParser):
             banco_nombre: Nombre del archivo de banco
             categoria_actual: Categoría aplicada a esta pregunta desde $CATEGORY
         """
-        if not bloque.strip():
+        lineas = bloque.split('\n')
+        comentarios = '\n'.join(linea for linea in lineas if _ES_COMENTARIO.match(linea))
+        bloque = '\n'.join(linea for linea in lineas if not _ES_COMENTARIO.match(linea)).strip()
+        if not bloque:
             return None
-        
+
         # Extraer nombre de pregunta ::nombre::
         nombre_match = re.match(r'^::(.+?)::', bloque)
         nombre = nombre_match.group(1) if nombre_match else f"pregunta_{indice + 1}"
@@ -192,11 +240,15 @@ class GiftParser(BaseParser):
         if nombre_match:
             bloque = bloque[nombre_match.end():].strip()
         
-        # Extraer tags [tags: tag1, tag2]
-        etiquetas = []
+        etiquetas = [tag.strip().replace('\\]', ']') for m in _TAG.finditer(comentarios)
+                     for tag in (m['tags'].split(',') if m['separador'] == ',' else [m['tags']])]
+        tamano = next((m.group(1).lower() for m in map(_TAMANO.fullmatch, etiquetas) if m), None)
+        etiquetas = [tag for tag in etiquetas if not _TAMANO.fullmatch(tag)]
+
+        # Sintaxis anterior: [tags: tag1, tag2]
         tags_match = re.search(r'\[tags?:\s*(.+?)\]', bloque, re.IGNORECASE)
         if tags_match:
-            etiquetas = [tag.strip() for tag in tags_match.group(1).split(',')]
+            etiquetas += [tag.strip() for tag in tags_match.group(1).split(',')]
             bloque = bloque[:tags_match.start()] + bloque[tags_match.end():]
         
         # Extraer formato [markdown] o [html]
@@ -206,9 +258,10 @@ class GiftParser(BaseParser):
             formato = format_match.group(1).lower()
             bloque = bloque[:format_match.start()] + bloque[format_match.end():]
         
-        # Usar categoría actual por defecto, pero permitir override con [category: nombre]
-        categoria = categoria_actual
-        cat_match = re.search(r'\[category:\s*(.+?)\]', bloque, re.IGNORECASE)
+        # Usar categoría actual por defecto, pero permitir override con `// [category, nombre]`
+        categoria_comentario = _CATEGORIA.search(comentarios)
+        categoria = categoria_comentario.group(1) if categoria_comentario else categoria_actual
+        cat_match = _CATEGORIA.search(bloque)
         if cat_match:
             categoria = cat_match.group(1).strip()
             bloque = bloque[:cat_match.start()] + bloque[cat_match.end():]
@@ -224,24 +277,22 @@ class GiftParser(BaseParser):
         enunciado = enunciado.strip()
         opciones_str = opciones_str.strip()
         # Convertir el enunciado según el formato
-        enunciado = detect_and_convert_format(enunciado, formato)
+        enunciado = detect_and_convert_format(_desescapar_enunciado(enunciado), formato)
         
         # Determinar tipo de pregunta y parsear opciones
         tamano_desarrollo = None
-        if opciones_str.lower() in ['desarrollo', 'desarrollo:pequeno', 'desarrollo:mediano', 'desarrollo:grande']:
-            # Pregunta de desarrollo
+        if opciones_str.lower() in ['', 'desarrollo', 'desarrollo:pequeno', 'desarrollo:mediano', 'desarrollo:grande']:
+            # Pregunta de desarrollo: `{}`, el ensayo de Moodle
             tipo = "desarrollo"
             opciones = []
-            if ':' in opciones_str:
-                tamano_desarrollo = opciones_str.split(':')[1].lower()
-            else:
-                tamano_desarrollo = 'mediano'
-        elif opciones_str.startswith('T') or opciones_str.startswith('F'):
-            # Verdadero/Falso
+            tamano_desarrollo = opciones_str.split(':')[1].lower() if ':' in opciones_str else (tamano or 'mediano')
+        elif _VERDADERO_FALSO.fullmatch(opciones_str):
+            # Verdadero/Falso: {T}, {F}, {TRUE} o {FALSE}; {TAD} o {FIFO} son respuestas cortas
             tipo = "verdadero_falso"
             opciones = self._parsear_verdadero_falso(opciones_str)
-        elif '=' in opciones_str or '~' in opciones_str:
-            # Selección múltiple
+        elif '~' in _MARCA.findall(opciones_str):
+            # Selección múltiple: tiene opciones incorrectas. Sólo con `=` son las respuestas
+            # aceptadas de una respuesta corta: {=opaco =tipo opaco}
             tipo = "seleccion_multiple"
             opciones = self._parsear_seleccion_multiple(opciones_str, formato)
         elif opciones_str.startswith('#'):
@@ -262,7 +313,7 @@ class GiftParser(BaseParser):
             puntaje=1.0,
             opciones=opciones,
             etiquetas=etiquetas,
-            tamano_desarrollo=tamano_desarrollo,
+            tamano_desarrollo=tamano_desarrollo,  # type: ignore[arg-type]  # pydantic valida el literal
             fuente_banco=banco_nombre
         )
         

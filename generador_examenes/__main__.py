@@ -143,10 +143,12 @@ secciones_examen:
         logger.info(f"  Archivo ya existe: definicion_ejemplo.yaml")
     
     # Crear banco de ejemplo
-    banco_ejemplo = Path('bancos') / 'banco_ejemplo.txt'
+    banco_ejemplo = Path('bancos') / 'banco_ejemplo.gift'
     if not banco_ejemplo.exists():
         contenido_banco = """// Banco de preguntas de ejemplo en formato GIFT
+// Las etiquetas van en un comentario pegado a la pregunta, que Moodle ignora.
 
+// [tag, geografia, facil]
 ::Pregunta 1:: ¿Cuál es la capital de Francia? {
 =París
 ~Londres
@@ -163,9 +165,9 @@ secciones_examen:
 }
 """
         banco_ejemplo.write_text(contenido_banco, encoding='utf-8')
-        logger.info(f"✓ Banco de ejemplo creado: bancos/banco_ejemplo.txt")
+        logger.info(f"✓ Banco de ejemplo creado: bancos/banco_ejemplo.gift")
     else:
-        logger.info(f"  Banco ya existe: bancos/banco_ejemplo.txt")
+        logger.info(f"  Banco ya existe: bancos/banco_ejemplo.gift")
     
     # Crear consigna práctica de ejemplo (formato deckard)
     consigna_ejemplo = Path('consignas') / 'sumar-pares'
@@ -221,7 +223,7 @@ int sumar_pares(const int arreglo[], size_t cantidad)
     configuracion = Path('alucard.toml')
     if not configuracion.exists():
         configuracion.write_text('''# Configuración del curso para alucard (la línea de comandos y la definición YAML mandan).
-input_banco = ["bancos/banco_ejemplo.txt"]
+input_banco = ["bancos/banco_ejemplo.gift"]
 output_dir = "output"
 numero_temas = 2
 semilla = 2026
@@ -271,7 +273,7 @@ Este proyecto usa **alucarD** (generador-examenes) para crear exámenes personal
 
 ```bash
 generador-examenes -d definicion_ejemplo.yaml \\
-  -i bancos/banco_ejemplo.txt \\
+  -i bancos/banco_ejemplo.gift \\
   --validate
 ```
 
@@ -279,7 +281,7 @@ generador-examenes -d definicion_ejemplo.yaml \\
 
 ```bash
 generador-examenes -d definicion_ejemplo.yaml \\
-  -i bancos/banco_ejemplo.txt \\
+  -i bancos/banco_ejemplo.gift \\
   -o output \\
   -n 3 \\
   -f html
@@ -313,13 +315,13 @@ Para más información, consulta la documentación oficial de alucarD.
     print("  - output/             (exámenes generados)")
     print("  - definicion_ejemplo.yaml")
     print("  - alucard.toml          (bancos, salida, temas y formato del curso)")
-    print("  - banco_ejemplo.txt")
+    print("  - banco_ejemplo.gift")
     print("  - README_PROYECTO.md")
     print("\nPróximos pasos:")
     print("  1. Edita definicion_ejemplo.yaml con tu configuración")
     print("  2. Agrega tus bancos de preguntas en bancos/")
-    print("  3. Validá: alucard validar -d definicion_ejemplo.yaml -i bancos/banco_ejemplo.txt")
-    print("  4. Generá los temas: alucard generar -d definicion_ejemplo.yaml -i bancos/banco_ejemplo.txt -n 3")
+    print("  3. Validá: alucard validar -d definicion_ejemplo.yaml -i bancos/banco_ejemplo.gift")
+    print("  4. Generá los temas: alucard generar -d definicion_ejemplo.yaml -i bancos/banco_ejemplo.gift -n 3")
     print()
 
 
@@ -722,7 +724,8 @@ def _lint_gift(
     compilar: bool = typer.Option(False, "--compilar",
                                   help="Compila con gcc -fsyntax-only los bloques de C que son programas completos."),
 ) -> None:
-    """Revisa (y con --fix corrige) bancos GIFT: formato, bloques estructura y, con --compilar, el código C."""
+    """Revisa (y con --fix corrige) bancos GIFT: formato, compatibilidad con Moodle, bloques estructura
+    y, con --compilar, el código C."""
     from generador_examenes.gift_linter import revisar_archivos
 
     _ultimo_codigo_salida["code"] = revisar_archivos(archivos, fix=fix, compilar=compilar)

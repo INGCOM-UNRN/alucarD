@@ -58,6 +58,105 @@ def revisar_formulas(content):
     return problemas
 
 
+# Lo que puede llevar `:` en un banco: comentarios, `$CATEGORY:`, los delimitadores del título, las
+# respuestas numéricas ({#3:2}) y el escape de GIFT. El resto cuenta como dos puntos sueltos.
+_DOS_PUNTOS = re.compile(r"^[ \t]*//.*$|^[ \t]*\$CATEGORY:.*$|\{\s*#[^{}]*\}|\\:"
+                         r"|^[ \t]*::(?P<titulo>.+?)::|(?P<dos_puntos>:)", re.M)
+# Los metadatos de un comentario sin `:`: `[tag:x]` es el formato de Moodle, `[tag, x]` el nuestro.
+_METADATO_CON_DOS_PUNTOS = re.compile(r"^[ \t]*//.*$", re.M)
+_TAG_O_CATEGORIA = re.compile(r"\[(tag|category):\s*((?:\\\]|[^\]])*?)\s*\]", re.I)
+_INICIO_PREGUNTA = re.compile(r"^[ \t]*::|(?:(?<=\n\n)|\A)[ \t]*\[(?:markdown|html)\]", re.M)
+DOS_PUNTOS_ANCHOS = "\uff1a"  # alucard los muestra como `:` (NFKC); igual que los del sintetizador
+
+
+def dos_puntos_sueltos(content):
+    """Dónde hay un `:` que Moodle no admite: toda la pregunta, salvo los bloques ```estructura y las
+    fórmulas (Moodle no los importa sin preprocesar) y la sintaxis vieja, que se
+    revisa aparte."""
+    from generador_examenes.diagramas import _FENCE
+    from generador_examenes.matematica import tramos_de_formulas
+    from generador_examenes.parsers.gift_parser import sintaxis_vieja
+
+    exentos = ([m.span() for m in _FENCE.finditer(content)] + [m.span() for m in sintaxis_vieja(content)]
+               + tramos_de_formulas(content))
+    posiciones = []
+    for m in _DOS_PUNTOS.finditer(content):
+        if m.group("titulo"):
+            posiciones += [m.start("titulo") + i for i, c in enumerate(m.group("titulo")) if c == ":"]
+        elif m.group("dos_puntos"):
+            posiciones.append(m.start())
+    return [pos for pos in posiciones if not any(desde <= pos < hasta for desde, hasta in exentos)]
+
+
+def revisar_moodle(content):
+    """Lo que impide importar el banco en Moodle tal cual: metadatos fuera de un comentario o con `:`,
+    `{desarrollo}` y dos puntos sueltos. `corregir_para_moodle` arregla todo esto."""
+    from generador_examenes.parsers.gift_parser import sintaxis_vieja
+
+    lines = content.split("\n")
+
+    def donde(pos):
+        linea = content[:pos].count("\n") + 1
+        return f"Línea {linea} («{_titulo_en(lines, linea)}»)"
+
+    problemas = []
+    for m in sintaxis_vieja(content):
+        if m.group("desarrollo"):
+            problemas.append(f"{donde(m.start())}: Moodle toma {m.group().strip()} como respuesta corta: "
+                             "escribí {} y el tamaño en un comentario // [tag, desarrollo-grande]")
+        else:
+            problemas.append(f"{donde(m.start())}: Moodle toma {m.group().strip()} como texto de la pregunta: "
+                             "va en un comentario // [tag, …]")
+    for comentario in _METADATO_CON_DOS_PUNTOS.finditer(content):
+        for m in _TAG_O_CATEGORIA.finditer(comentario.group()):
+            problemas.append(f"{donde(comentario.start())}: {m.group()} lleva `:`: escribilo [{m.group(1)}, {m.group(2)}]")
+    for pos in dos_puntos_sueltos(content):
+        problemas.append(f"{donde(pos)}: `:` en la pregunta: escribilo \\: o {DOS_PUNTOS_ANCHOS}")
+    return problemas
+
+
+def _inicio_de_pregunta(content, pos):
+    inicios = [m.start() for m in _INICIO_PREGUNTA.finditer(content, 0, pos)]
+    if inicios:
+        return inicios[-1]
+    corte = content.rfind("\n\n", 0, pos)
+    return corte + 2 if corte >= 0 else 0
+
+
+def corregir_para_moodle(content):
+    """Pasa los metadatos a un comentario arriba de la pregunta, sin `:`, `{desarrollo:grande}` a `{}`
+    con su etiqueta y los `:` sueltos a ancho completo."""
+    from generador_examenes.parsers.gift_parser import _TAMANO, sintaxis_vieja
+
+    ediciones, etiquetas, categorias = [], {}, {}
+    for m in sintaxis_vieja(content):
+        inicio = _inicio_de_pregunta(content, m.start())
+        nuevas = etiquetas.setdefault(inicio, [])
+        if m.group("desarrollo"):
+            ediciones.append((m.start(), m.end(), "{}"))
+            if _TAMANO.fullmatch(f"desarrollo-{m.group('tamano')}"):
+                nuevas.append(f"desarrollo-{m.group('tamano').lower()}")
+            continue
+        if m.group("clave").lower() == "category":
+            categorias[inicio] = m.group("valor")
+        else:
+            nuevas += [tag.strip() for tag in m.group("valor").split(",") if tag.strip()]
+        sola_en_su_linea = content[m.start() - 1:m.start()] in ("", "\n") and content[m.end():m.end() + 1] == "\n"
+        ediciones.append((m.start(), m.end() + sola_en_su_linea, ""))
+    for pos in {*etiquetas, *categorias}:
+        marcas = ([f"[tag, {', '.join(etiquetas[pos])}]"] if etiquetas.get(pos) else [])
+        marcas += [f"[category, {categorias[pos]}]"] if pos in categorias else []
+        if marcas:
+            ediciones.append((pos, pos, f"// {' '.join(marcas)}\n"))
+    for desde, hasta, texto in sorted(ediciones, reverse=True):
+        content = content[:desde] + texto + content[hasta:]
+    content = _METADATO_CON_DOS_PUNTOS.sub(
+        lambda c: _TAG_O_CATEGORIA.sub(lambda m: f"[{m.group(1)}, {m.group(2)}]", c.group()), content)
+    for pos in dos_puntos_sueltos(content):
+        content = content[:pos] + DOS_PUNTOS_ANCHOS + content[pos + 1:]
+    return content
+
+
 def revisar_tablas(content):
     """Los bloques ```tabla que no se pueden armar, con su línea y su pregunta."""
     from generador_examenes.core.markdown_utils import markdown_to_html
@@ -122,21 +221,21 @@ def lint_gift_file(filepath, fix=False, compilar=False):
         return False
     
     with open(filepath, 'r', encoding='utf-8') as f:
-        content = f.read()
-    
+        original = f.read()
+
+    content = corregir_para_moodle(original) if fix else original
     lines = content.split('\n')
     issues = []
     stats = {'total': 0, 'valid': 0, 'errors': 0, 'warnings': 0}
-    formatted_lines = []
     current_question = []
     line_num = 0
-    
+
     for i, line in enumerate(lines, 1):
         stripped = line.strip()
         
         if stripped.startswith('::'):
             if current_question:
-                valid, errs = _process_question('\n'.join(current_question), line_num, formatted_lines)
+                valid, errs = _process_question('\n'.join(current_question), line_num)
                 stats['total'] += 1
                 if valid:
                     stats['valid'] += 1
@@ -149,7 +248,7 @@ def lint_gift_file(filepath, fix=False, compilar=False):
         elif current_question:
             current_question.append(line)
             if not stripped:
-                valid, errs = _process_question('\n'.join(current_question), line_num, formatted_lines)
+                valid, errs = _process_question('\n'.join(current_question), line_num)
                 stats['total'] += 1
                 if valid:
                     stats['valid'] += 1
@@ -157,16 +256,13 @@ def lint_gift_file(filepath, fix=False, compilar=False):
                     stats['errors'] += len(errs)
                 issues.extend(errs)
                 current_question = []
-                formatted_lines.append('')
         else:
             if stripped and not stripped.startswith('//') and not stripped.startswith('$CATEGORY:'):
                 issues.append(f"Línea {i}: Texto fuera de pregunta: {stripped[:50]}")
                 stats['warnings'] += 1
-            if fix:
-                formatted_lines.append(line)
     
     if current_question:
-        valid, errs = _process_question('\n'.join(current_question), line_num, formatted_lines)
+        valid, errs = _process_question('\n'.join(current_question), line_num)
         stats['total'] += 1
         if valid:
             stats['valid'] += 1
@@ -174,7 +270,8 @@ def lint_gift_file(filepath, fix=False, compilar=False):
             stats['errors'] += len(errs)
         issues.extend(errs)
     
-    for problema in revisar_diagramas(content) + revisar_tablas(content) + revisar_formulas(content):
+    for problema in (revisar_moodle(content) + revisar_diagramas(content) + revisar_tablas(content)
+                     + revisar_formulas(content)):
         issues.append(problema)
         stats['errors'] += 1
     if compilar:
@@ -196,16 +293,17 @@ def lint_gift_file(filepath, fix=False, compilar=False):
     print(f"  Errores: {stats['errors']}")
     print(f"  Advertencias: {stats['warnings']}")
     
-    if fix and formatted_lines:
-        new_content = '\n'.join(formatted_lines)
+    if content != original:
         with open(filepath, 'w', encoding='utf-8') as f:
-            f.write(new_content)
-        print(f"\n💾 Archivo formateado y guardado")
+            f.write(content)
+        print(f"\n💾 Archivo corregido y guardado")
     
     return stats['errors'] == 0
 
-def _process_question(q_text, start_line, formatted_lines):
+def _process_question(q_text, start_line):
     """Procesa una pregunta individual y valida su sintaxis."""
+    from generador_examenes.parsers.gift_parser import _MARCA, _extraer_bloque_respuestas
+
     issues = []
     
     title_match = re.match(r'::([^:]+)::(.*)', q_text, re.DOTALL)
@@ -228,18 +326,21 @@ def _process_question(q_text, start_line, formatted_lines):
         if escaped_brackets:
             issues.append(f"Línea {start_line} ({title}): Llaves escapadas dentro de código: {escaped_brackets}")
     
-    curly_match = re.search(r'\{([^}]*)\}', rest)
-    if curly_match:
-        answers = curly_match.group(1).strip()
+    # Las respuestas son el último grupo de llaves, como en el parser: el enunciado puede tener
+    # llaves propias (código C, una fórmula con \\frac{a}{b}).
+    sin_metadatos = re.sub(r'^[ \t]*//.*$|\[(?:tags?|category):.*?\]', '', rest, flags=re.I | re.M)
+    partes = _extraer_bloque_respuestas(sin_metadatos)
+    if partes:
+        answers = partes[1].strip()
+        marcas = _MARCA.findall(answers)
         
         if answers in ('T', 'F', 'TRUE', 'FALSE'):
             pass
-        elif '=' in answers or '~' in answers:
-            if '=' not in answers:
+        elif '~' in marcas:
+            if '=' not in marcas:
                 issues.append(f"Línea {start_line} ({title}): Opción múltiple sin respuesta correcta (=)")
             
-            opts = re.findall(r'([=~][^=~]*)', answers)
-            if len(opts) < 2:
+            if len(marcas) < 2:
                 issues.append(f"Línea {start_line} ({title}): Menos de 2 opciones")
         elif '->' in answers:
             pairs = answers.split('=')
@@ -249,8 +350,6 @@ def _process_question(q_text, start_line, formatted_lines):
             pass
         elif not answers:
             pass
-    
-    formatted_lines.append(q_text)
     
     return len(issues) == 0, issues
 
@@ -280,7 +379,7 @@ def main():
 Linter y formateador para archivos GIFT (alias de `alucard lint-gift`).
 
 Opciones:
-  --fix                 Corrige los problemas comunes en el mismo archivo.
+  --fix                 Corrige los problemas comunes en el mismo archivo y lo deja compatible con Moodle.
   --show-completion     Muestra el autocompletado para bash, para copiarlo o adaptarlo.
   --install-completion  Instala el autocompletado para bash.
   -v, --version         Muestra la versión de gift-linter y sale.

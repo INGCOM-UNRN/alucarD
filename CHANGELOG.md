@@ -42,6 +42,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Cambiado
 
+- **GIFT**: los bancos se importan en Moodle tal cual. Las etiquetas van en un comentario (`// [tag, punteros, facil]`) y la categoría de una pregunta en `// [category, …]`, sin `:` (`[tag:x]`, el formato que exporta Moodle, se lee y `lint-gift --fix` lo cambia); el desarrollo es `{}` y su tamaño una etiqueta (`[tag, desarrollo-grande]`). Las preguntas no usan `:` (salvo los bloques `estructura` y las fórmulas, que hay que preprocesar de todas formas): `alucard lint-gift` lo marca como error. La sintaxis anterior se sigue leyendo con un aviso y `alucard lint-gift --fix` la migra.
 - **pdf**: Typst es el único motor de PDF y `alucard doctor` lo exige (también comprueba que el módulo se pueda importar). Se quitó WeasyPrint, con sus dependencias del sistema (Pango, Cairo y GTK3 en Windows). Si Typst no compila, `alucard generar` dice en qué pregunta y sale con 1, en vez de armar otro PDF con un formato distinto; `alucard ver` hace lo mismo.
 - **diagramas**: más contraste en las listas enlazadas: las etiquetas `dato`, `*sig`, `*ant` y `sig:…`/`ant:… | sig:…` pasan de gris a negro (sin negrita) y un punto más grandes.
 - **cli**: `--init`, `--wizard`, `--category-tree`, `--spellcheck` y `--validate` siguen andando con un aviso y no aparecen en la ayuda (`c525bb6`).
@@ -49,8 +50,11 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Corregido
 
+- **GIFT**: `\:` se imprimía con la barra dentro de un bloque de código.
+- **`lint-gift --fix`**: agregaba renglones en blanco en cada pasada; ahora solo escribe lo que corrige.
 - **texto**: los caracteres en ancho completo se normalizan también en las preguntas sin `[markdown]`.
 - **texto**: los superíndices, subíndices y fracciones ya no se pierden al leer un banco: `O(n²)` salía `O(n2)` y `O(2ⁿ)`, `O(2n)`, también en los diagramas.
+- **GIFT**: `{=a =b}` es una respuesta corta con varias respuestas aceptadas, no una selección múltiple sin incorrectas; `{TAD}` o `{FIFO}` son respuestas cortas, no verdadero/falso; y los escapes (`\=`, `\{`…) se aplican también en el enunciado, donde se imprimían con la barra.
 - **diagramas**: en `call_stack` con `steps`, la columna de cada momento crece con su rótulo; un rótulo largo («segunda llamada, antes de c++») ya no se corta ni lo pisa la columna siguiente.
 - **diagramas**: un `title` o `subtitle` más ancho que el dibujo quedaba cortado; el SVG ahora se ensancha para que entren.
 - **parser GIFT**: las marcas escapadas `\=`, `\~` y `\#` de una opción se tomaban como una opción nueva o como retroalimentación (`p->sig \=\= HEAD` se partía en tres opciones, dos «correctas»). Ahora son texto y se desescapan, en selección múltiple y en respuesta corta.

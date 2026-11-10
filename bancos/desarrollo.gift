@@ -1,30 +1,40 @@
 // Banco de preguntas de desarrollo
 // Formato: {desarrollo}, {desarrollo:pequeno}, {desarrollo:mediano}, {desarrollo:grande}
 
-::Análisis de Algoritmo::Analiza el siguiente algoritmo de ordenamiento y explica su complejidad temporal en el peor caso, mejor caso y caso promedio. {desarrollo:grande} [tags: algoritmos, analisis]
+// [tag, desarrollo-grande] [tag, algoritmos] [tag, analisis]
+::Análisis de Algoritmo::Analiza el siguiente algoritmo de ordenamiento y explica su complejidad temporal en el peor caso, mejor caso y caso promedio. {}
 
-::Concepto de Recursión::Define qué es la recursión y da un ejemplo de su uso en programación. {desarrollo:mediano} [tags: conceptos, basico]
+// [tag, desarrollo-mediano] [tag, conceptos] [tag, basico]
+::Concepto de Recursión::Define qué es la recursión y da un ejemplo de su uso en programación. {}
 
-::Ventajas de POO::Enumera y explica brevemente tres ventajas de la programación orientada a objetos. {desarrollo:mediano} [tags: poo, teoria]
+// [tag, desarrollo-mediano] [tag, poo] [tag, teoria]
+::Ventajas de POO::Enumera y explica brevemente tres ventajas de la programación orientada a objetos. {}
 
-::Diferencia Lista vs Tupla::¿Cuál es la diferencia principal entre una lista y una tupla en Python? {desarrollo:pequeno} [tags: python, estructuras]
+// [tag, desarrollo-pequeno] [tag, python] [tag, estructuras]
+::Diferencia Lista vs Tupla::¿Cuál es la diferencia principal entre una lista y una tupla en Python? {}
 
-::Diseño de Función::Diseña una función recursiva que calcule el factorial de un número. Incluye el caso base y el caso recursivo. {desarrollo:grande} [tags: funciones, recursion]
+// [tag, desarrollo-grande] [tag, funciones] [tag, recursion]
+::Diseño de Función::Diseña una función recursiva que calcule el factorial de un número. Incluye el caso base y el caso recursivo. {}
 
-::Concepto de Herencia::Explica brevemente qué es la herencia en programación orientada a objetos. {desarrollo:pequeno} [tags: poo, conceptos]
+// [tag, desarrollo-pequeno] [tag, poo] [tag, conceptos]
+::Concepto de Herencia::Explica brevemente qué es la herencia en programación orientada a objetos. {}
 
-::Análisis de Complejidad::Analiza la complejidad espacial y temporal del siguiente código:
+// [tag, desarrollo-mediano] [tag, algoritmos] [tag, complejidad]
+::Análisis de Complejidad::Analiza la complejidad espacial y temporal del siguiente código：
 ```python
-def buscar(lista, elemento):
-    for i in range(len(lista)):
-        if lista[i] == elemento:
+def buscar(lista, elemento)：
+    for i in range(len(lista))：
+        if lista[i] == elemento：
             return i
     return -1
 ```
-{desarrollo:mediano} [tags: algoritmos, complejidad]
+{}
 
-::Ventajas de Encapsulamiento::Describe qué es el encapsulamiento y cuáles son sus ventajas principales. {desarrollo:mediano} [tags: poo, conceptos]
+// [tag, desarrollo-mediano] [tag, poo] [tag, conceptos]
+::Ventajas de Encapsulamiento::Describe qué es el encapsulamiento y cuáles son sus ventajas principales. {}
 
-::Comparación Algoritmos::Compara y contrasta los algoritmos de búsqueda lineal y binaria, incluyendo sus complejidades y cuándo usar cada uno. {desarrollo:grande} [tags: algoritmos, comparacion]
+// [tag, desarrollo-grande] [tag, algoritmos] [tag, comparacion]
+::Comparación Algoritmos::Compara y contrasta los algoritmos de búsqueda lineal y binaria, incluyendo sus complejidades y cuándo usar cada uno. {}
 
-::Concepto de Polimorfismo::Define polimorfismo y da un ejemplo simple. {desarrollo:pequeno} [tags: poo, conceptos]
+// [tag, desarrollo-pequeno] [tag, poo] [tag, conceptos]
+::Concepto de Polimorfismo::Define polimorfismo y da un ejemplo simple. {}

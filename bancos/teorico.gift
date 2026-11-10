@@ -306,7 +306,7 @@ $CATEGORY: $course$/top/programacion_1/arrays/arreglos
 
 
 // question: 1813064  name: arreglos, punteros, equivalencia
-// [tag:punteros]
+// [tag, punteros]
 ::arreglos, punteros, equivalencia::[markdown]¿Cuál de las siguientes expresiones es equivalente a `arr[i]` en C?{
 	=`*(arr + i)`
 	~`*arr[i]`
@@ -1146,7 +1146,7 @@ $CATEGORY: $course$/top/programacion_1/funciones
 
 
 // question: 1813151  name: funciones, argumentos, paso por valor, desventaja
-// [tag:structs]
+// [tag, structs]
 ::funciones, argumentos, paso por valor, desventaja::[markdown]¿Cuál es una desventaja del paso de argumentos por valor en C para estructuras de datos grandes?{
 	=Puede ser ineficiente debido a la copia de datos
 	~No permite modificar los datos originales

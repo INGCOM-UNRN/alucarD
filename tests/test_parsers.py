@@ -35,12 +35,13 @@ class TestGiftParser:
     def test_parse_seleccion_multiple(self, tmp_path):
         """Debe parsear pregunta de selección múltiple"""
         contenido = """
+// [tag, matematicas] [tag, facil]
 ::Pregunta Test::¿Cuánto es 2+2? {
 =4
 ~3
 ~5
 ~Error
-} [tags: matematicas, facil]
+}
 """
         archivo = tmp_path / "test.txt"
         archivo.write_text(contenido, encoding='utf-8')
@@ -76,7 +77,8 @@ class TestGiftParser:
     def test_parse_con_categoria(self, tmp_path):
         """Debe parsear categoría"""
         contenido = """
-::Test::Pregunta {=A} [category: Matemáticas]
+// [category, Matemáticas]
+::Test::Pregunta {=A}
 """
         archivo = tmp_path / "test.txt"
         archivo.write_text(contenido, encoding='utf-8')
@@ -1065,3 +1067,36 @@ print(x * 2)
         
         # Verificar que contiene syntax highlighting
         assert 'highlight' in pregunta.enunciado_html or 'print' in pregunta.enunciado_html
+
+
+def _gift(tmp_path, texto):
+    archivo = tmp_path / "b.gift"
+    archivo.write_text(texto, encoding="utf-8")
+    return list(GiftParser().parse(archivo).values())
+
+
+@pytest.mark.parametrize("respuesta", ["TAD", "FIFO", "Falso positivo", "Tope"])
+def test_gift_una_respuesta_que_empieza_con_t_o_f_no_es_verdadero_falso(tmp_path, respuesta):
+    pregunta, = _gift(tmp_path, f"::p::¿Cómo se llama? {{{respuesta}}}\n")
+    assert pregunta.tipo == "respuesta_corta" and respuesta in pregunta.opciones[0].texto_html
+
+
+@pytest.mark.parametrize("marca, verdadera", [("T", True), ("TRUE", True), ("F", False), ("FALSE", False),
+                                              ("T#Porque sí", True), ("false", False)])
+def test_gift_verdadero_falso(tmp_path, marca, verdadera):
+    pregunta, = _gift(tmp_path, f"::p::Afirmación {{{marca}}}\n")
+    assert pregunta.tipo == "verdadero_falso" and pregunta.opciones[0].es_correcta is verdadera
+
+
+def test_gift_varias_respuestas_aceptadas_son_respuesta_corta(tmp_path):
+    pregunta, = _gift(tmp_path, "::p::¿Cómo se llama? {=opaco =tipo opaco =puntero opaco}\n")
+    assert pregunta.tipo == "respuesta_corta" and len(pregunta.opciones) == 3
+
+
+def test_gift_con_incorrectas_sigue_siendo_seleccion_multiple(tmp_path):
+    assert _gift(tmp_path, "::p::Elegí {=a ~b}\n")[0].tipo == "seleccion_multiple"
+
+
+def test_gift_escapes_en_el_enunciado(tmp_path):
+    pregunta, = _gift(tmp_path, "::p::[markdown]Con `h \\= 3` y una \\{llave\\} {=a ~b}\n")
+    assert "\\" not in pregunta.enunciado_html and "h = 3" in pregunta.enunciado_html and "{llave}" in pregunta.enunciado_html

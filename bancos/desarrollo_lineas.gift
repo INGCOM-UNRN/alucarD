@@ -1,21 +1,24 @@
 // Banco de preguntas de desarrollo con especificación de líneas
-// Formatos soportados:
-//   {desarrollo}         -> tamaño mediano predefinido
-//   {desarrollo:pequeno} -> tamaño pequeño predefinido
-//   {desarrollo:mediano} -> tamaño mediano predefinido
-//   {desarrollo:grande}  -> tamaño grande predefinido
-//   {desarrollo:0}       -> sin recuadro (responder aparte)
-//   {desarrollo:10}      -> recuadro con 10 líneas
-//   {desarrollo:25}      -> recuadro con 25 líneas
+// El desarrollo es `{}`, el ensayo de Moodle. Su tamaño va en una etiqueta, en el comentario:
+//   sin etiqueta               -> mediano
+//   [tag, desarrollo-pequeno]   -> pequeño
+//   [tag, desarrollo-mediano]   -> mediano
+//   [tag, desarrollo-grande]    -> grande
 
-::Pregunta sin recuadro::Esta pregunta debe responderse en hoja aparte. No tiene espacio de respuesta en el examen. {desarrollo:0} [tags: test]
+// [tag, test]
+::Pregunta sin recuadro::Esta pregunta debe responderse en hoja aparte. No tiene espacio de respuesta en el examen. {}
 
-::Pregunta con 3 líneas::Respuesta muy breve, solo 3 líneas de espacio. {desarrollo:3} [tags: test, corta]
+// [tag, test, corta]
+::Pregunta con 3 líneas::Respuesta muy breve, solo 3 líneas de espacio. {}
 
-::Pregunta con 8 líneas::Respuesta breve-media, 8 líneas para desarrollar. {desarrollo:8} [tags: test]
+// [tag, test]
+::Pregunta con 8 líneas::Respuesta breve-media, 8 líneas para desarrollar. {}
 
-::Pregunta con 20 líneas::Respuesta mediana, 20 líneas disponibles para el desarrollo de la respuesta. {desarrollo:20} [tags: test, media]
+// [tag, test] [tag, media]
+::Pregunta con 20 líneas::Respuesta mediana, 20 líneas disponibles para el desarrollo de la respuesta. {}
 
-::Pregunta con 50 líneas::Respuesta extensa, ensayo largo con 50 líneas de espacio. {desarrollo:50} [tags: test, larga]
+// [tag, test] [tag, larga]
+::Pregunta con 50 líneas::Respuesta extensa, ensayo largo con 50 líneas de espacio. {}
 
-::Pregunta tamaño predefinido::Esta pregunta usa el tamaño predefinido "mediano" tradicional. {desarrollo:mediano} [tags: test, tradicional]
+// [tag, desarrollo-mediano] [tag, test] [tag, tradicional]
+::Pregunta tamaño predefinido::Esta pregunta usa el tamaño predefinido "mediano" tradicional. {}

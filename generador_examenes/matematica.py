@@ -599,6 +599,11 @@ def expandir_formulas(texto: str, delimitadores_latex: bool = False) -> Tuple[st
     return (_FORMULAS_LATEX if delimitadores_latex else _FORMULAS).sub(reemplazar, texto), formulas
 
 
+def tramos_de_formulas(texto: str) -> List[Tuple[int, int]]:
+    """Dónde están las fórmulas de un texto, como (inicio, fin)."""
+    return [m.span() for m in _FORMULAS.finditer(texto) if _fuente(m)[0] is not None]
+
+
 def reponer_formulas(html_texto: str, formulas: Dict[str, str]) -> str:
     for marcador, formula in formulas.items():
         html_texto = html_texto.replace(marcador, formula)

@@ -162,6 +162,32 @@ def test_errores_en_texto_para_el_linter():
     assert [e[1:] for e in errores_en_texto(r"bien $x$ y mal $\noexiste$")] == [(r"$\noexiste$", r"comando desconocido: \noexiste")]
 
 
+def _gift(tmp_path, texto):
+    from generador_examenes.parsers.gift_parser import GiftParser
+
+    banco = tmp_path / "b.gift"
+    banco.write_text(texto, encoding="utf-8")
+    return list(GiftParser().parse(banco).values())
+
+
+def test_gift_formula_con_llaves_en_enunciado_y_opciones(tmp_path):
+    p, = _gift(tmp_path, r"""::f:: [markdown]¿Cuánto da $\frac{1}{2} + \frac{1}{2}$?
+{
+    =$\frac{2}{2}$
+    ~$a \= b$
+    ~$\sqrt{4}$
+}
+""")
+    assert "<mfrac>" in p.enunciado_html and len(p.opciones) == 3
+    assert all("<math" in o.texto_html for o in p.opciones)
+    assert "<mo>=</mo>" in p.opciones[1].texto_html
+
+
+def test_gift_llaves_escapadas_de_latex_siguen_en_el_enunciado(tmp_path):
+    p, = _gift(tmp_path, r"::f:: [markdown]El conjunto $\{1, 2\}$ {=a ~b}" + "\n")
+    assert ">{</mo>" in p.enunciado_html
+
+
 def test_consigna_con_formula():
     html_consigna = markdown_to_html("En tiempo $O(1)$.", saltos_de_linea=False)
     assert "<math" in html_consigna
@@ -213,3 +239,13 @@ def test_la_ortografia_no_lee_las_formulas(monkeypatch):
     lt.analizar_texto_languagetool(fuente, pregunta_id="p", campo="enunciado")
     assert "<math" not in visto["texto"] and len(visto["texto"]) == len(fuente)
     assert re.search(r"fin$", visto["texto"])
+
+
+def test_lint_gift_no_confunde_las_llaves_de_una_formula_con_las_respuestas(tmp_path, monkeypatch, capsys):
+    from generador_examenes.__main__ import main
+
+    banco = tmp_path / "b.gift"
+    banco.write_text("// [tag, a] [tag, b]\n::p:: [markdown]¿Cuánto vale $\\sum_{i=1}^{4} i$?\n{\n    =`10`\n    ~$\\frac{1}{2}$\n}\n",
+                     encoding="utf-8")
+    monkeypatch.setattr(sys, "argv", ["alucard", "lint-gift", str(banco)])
+    assert main() == 0

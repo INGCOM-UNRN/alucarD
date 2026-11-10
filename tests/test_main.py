@@ -30,7 +30,7 @@ class TestInicializarProyecto:
         
         # Verificar que se crearon los archivos
         assert (tmp_path / "definicion_ejemplo.yaml").exists()
-        assert (tmp_path / "bancos" / "banco_ejemplo.txt").exists()
+        assert (tmp_path / "bancos" / "banco_ejemplo.gift").exists()
         assert (tmp_path / "README_PROYECTO.md").exists()
     
     def test_inicializar_proyecto_no_sobrescribe(self, tmp_path, monkeypatch):

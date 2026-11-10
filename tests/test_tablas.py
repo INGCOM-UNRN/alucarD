@@ -3,7 +3,8 @@ import pytest
 
 from generador_examenes.core.markdown_utils import detect_and_convert_format, markdown_to_html
 from generador_examenes.generators.typst_markup import html_a_typst
-from generador_examenes.gift_linter import revisar_tablas
+from generador_examenes.gift_linter import revisar_moodle, revisar_tablas
+from generador_examenes.parsers.gift_parser import GiftParser
 
 TABLA = "| Paso | Valor |\n|---|---|\n| `[M1]` |  |"
 
@@ -86,7 +87,23 @@ def test_un_bloque_sin_tabla_se_avisa():
 
 def test_una_tabla_valida_no_tiene_problemas():
     contenido = f"::a::[markdown]Mirá\n{bloque('[centrado] [ancho, 80%]')}\n{{}}\n"
-    assert revisar_tablas(contenido) == []
+    assert revisar_tablas(contenido) == [] and revisar_moodle(contenido) == []
+
+
+def test_el_parser_de_gift_conserva_las_opciones(tmp_path):
+    banco = tmp_path / "b.gift"
+    banco.write_text(f"// [tag:x]\n::a::[markdown]Completá\n{bloque('[centrado]')}\n{{}}\n\n::b::Otra {{T}}\n",
+                     encoding="utf-8")
+    primera, segunda = GiftParser().parse(banco).values()
+    assert primera.etiquetas == ["x"] and primera.tipo == "desarrollo"
+    assert "data-opciones" in primera.enunciado_html and "//" not in primera.enunciado_html
+    assert segunda.nombre == "b"
+
+
+def test_en_gift_una_tabla_admite_los_escapes(tmp_path):
+    banco = tmp_path / "b.gift"
+    banco.write_text("::a::[markdown]Mirá\n```tabla\n| a |\n|---|\n| x\\: y |\n```\n{}\n", encoding="utf-8")
+    assert "x: y" in list(GiftParser().parse(banco).values())[0].enunciado_html
 
 
 def test_las_opciones_admiten_los_dos_separadores():
