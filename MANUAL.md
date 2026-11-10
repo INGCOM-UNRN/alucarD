@@ -447,6 +447,65 @@ highlight: "1,2"
 }
 ````
 
+#### Stack, heap y estructuras cabecera
+
+Para mostrar dónde vive cada cosa, `linked_list` y `matrix` (`dynamic` y `jagged`) aceptan:
+
+| Clave | En | Qué hace |
+| :--- | :--- | :--- |
+| `zones` | ambos | Enmarca el stack y el heap. `true` usa esos títulos; con `stack` y `heap` se eligen otros (`stack: "Stack: main"`). |
+| `header` | `linked_list` | Una estructura cabecera en lugar de `HEAD`: `name`, `type` y `fields`. |
+| `nodeType` | `linked_list` | Rotula cada nodo `@N1 (nodo_t)` en lugar de `Dir: @N1`. |
+| `owner` | `matrix` | Una estructura dueña de la matriz, en lugar del puntero: `name`, `type` y `fields`. Los largos pasan al heap. |
+| `lengthsType` | `matrix` | Tipo de los largos, por omisión `size_t`. |
+| `lengthsAddr` | `matrix` | Dirección de los largos, con `owner`. |
+
+Cada campo de `fields` es un valor (`"cant = 4"`) o un puntero (`"primero -> 0"`), o `{name, value, to}`.
+En una lista, un puntero va al nodo de esa posición, desde 0. En una matriz va a `rows` (el arreglo de
+punteros a filas) o a `lengths` (los largos).
+
+Las direcciones pueden ser simbólicas: en una lista, cualquier texto en `addresses`; en una matriz,
+`baseAddr` y `rowAddresses` que empiecen con `@`. En YAML van entre comillas, porque `@` está reservado.
+
+````text
+::cabecera-01:: [markdown]¿Qué imprime `printf("%d", l.ultimo->dato)`?
+```estructura
+type: linked_list
+values: [12, 25, 8]
+addresses: ["@N1", "@N2", "@N3"]
+nodeType: nodo_t
+zones: true
+header:
+  name: l
+  type: lista_t
+  fields: ["primero -> 0", "ultimo -> 2", "cant = 3"]
+```
+{
+=`8`
+~`12`
+~`25`
+}
+````
+
+Una matriz dentada dentro de una estructura, con los largos y las filas en el heap:
+
+```yaml
+type: matrix
+variant: jagged
+name: filas
+values: [[4, 8], [10, 20, 30, 40], [9]]
+showAddresses: true
+baseAddr: "@F"
+rowAddresses: ["@R0", "@R1", "@R2"]
+lengthsType: int
+lengthsAddr: "@L"
+zones: true
+owner:
+  name: d
+  type: dentada_t
+  fields: ["cant_filas = 3", "largos -> lengths", "filas -> rows"]
+```
+
 #### Structs y tipos opacos
 
 `struct` calcula los offsets, el relleno y el `sizeof` como gcc en 64 bits (`char` 1, `short` 2, `int` y

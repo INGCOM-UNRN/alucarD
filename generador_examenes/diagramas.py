@@ -116,6 +116,12 @@ class _Lienzo:
         """La raya punteada de una celda sin valor (para completar)."""
         self.linea(x1, y, x2, y, color="strokeMuted", ancho=1, flecha=None, guiones="3 2")
 
+    def ruta(self, *puntos: Tuple[float, float]) -> None:
+        """Una flecha con codos."""
+        camino = " L ".join(f"{x:.1f} {y:.1f}" for x, y in puntos)
+        self.add(f'<path d="M {camino}" fill="none" stroke="{self.pal["accentPrimary"]}" stroke-width="1.6" '
+                 f'marker-end="url(#flecha-main-{self.sufijo})"/>')
+
     def punto(self, x: float, y: float, color: str = "accentPrimary", radio: float = 3.2) -> None:
         self.add(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{radio}" fill="{self.pal[color]}"/>')
 
@@ -124,6 +130,80 @@ class _Lienzo:
         self.linea(x, y - 10, x, y + 10, color="strokeMain", ancho=2, flecha=None)
         self.linea(x + 5, y - 6, x + 5, y + 6, color="strokeMain", ancho=1.5, flecha=None)
         self.t(x + 12, y + 4, "NULL", size=10, peso=700, color="textMuted")
+
+
+@dataclass
+class _CampoCabecera:
+    """Un renglón de una estructura cabecera: un valor o un puntero a otra parte del dibujo."""
+    nombre: str
+    valor: str = ""
+    destino: Any = None
+
+
+FILA_CABECERA = 26
+
+
+def _campos_cabecera(cabecera: Any, donde: str) -> List[_CampoCabecera]:
+    """`"cant = 4"`, `"primero -> 0"` o `{name, value, to}`."""
+    if not isinstance(cabecera, dict) or not isinstance(cabecera.get("fields"), list) or not cabecera["fields"]:
+        raise ErrorDiagrama(f"'{donde}' necesita 'fields', la lista de sus campos")
+    campos = []
+    for dato in cabecera["fields"]:
+        if isinstance(dato, dict) and dato.get("name"):
+            campos.append(_CampoCabecera(str(dato["name"]), _texto(dato.get("value")), dato.get("to")))
+        elif isinstance(dato, str) and "->" in dato:
+            nombre, _, destino = dato.partition("->")
+            campos.append(_CampoCabecera(nombre.strip(), destino=destino.strip()))
+        elif isinstance(dato, str) and "=" in dato:
+            nombre, _, valor = dato.partition("=")
+            campos.append(_CampoCabecera(nombre.strip(), valor.strip()))
+        else:
+            raise ErrorDiagrama(f"'{donde}': campo inválido {dato!r} (se espera 'x = 5', 'p -> destino' o name/value/to)")
+    return campos
+
+
+def _titulo_cabecera(cabecera: Dict[str, Any]) -> str:
+    nombre, tipo = cabecera.get("name") or "", cabecera.get("type")
+    return f"{nombre} ({tipo})" if tipo else str(nombre)
+
+
+def _ancho_cabecera(cabecera: Dict[str, Any], campos: List[_CampoCabecera], valores: List[str]) -> float:
+    nombres = max(len(campo.nombre) for campo in campos) * 7.4 + 16
+    return max(nombres + max(max(len(v) for v in valores) * 8 + 18, 44), len(_titulo_cabecera(cabecera)) * 7 + 8)
+
+
+def _cabecera(c: _Lienzo, x: float, y: float, ancho: float, cabecera: Dict[str, Any], campos: List[_CampoCabecera],
+              valores: List[str]) -> List[float]:
+    """Dibuja la estructura con su primer renglón en `y`; devuelve el centro de cada renglón."""
+    c.t(x, y - 6, _titulo_cabecera(cabecera), size=10.5, peso=700)
+    nombres = max(len(campo.nombre) for campo in campos) * 7.4 + 16
+    centros = []
+    for i, (campo, valor) in enumerate(zip(campos, valores)):
+        fila = y + i * FILA_CABECERA
+        c.r(x, fila, ancho, FILA_CABECERA, relleno="fillPointerBox" if campo.destino is not None else "fillCell")
+        c.linea(x + nombres, fila, x + nombres, fila + FILA_CABECERA, color="strokeMain", ancho=1, flecha=None)
+        c.t(x + 8, fila + 17, campo.nombre, size=11)
+        c.t(x + (nombres + ancho) / 2, fila + 17, valor, size=11.5, peso=700, ancla="middle")
+        centros.append(fila + FILA_CABECERA / 2)
+    return centros
+
+
+def _nombres_de_zonas(b: Dict[str, Any]) -> Optional[Tuple[str, str]]:
+    """`zones: true` o `zones` con `stack` y `heap`, los títulos de cada zona."""
+    zonas = b.get("zones")
+    if not zonas:
+        return None
+    propios = zonas if isinstance(zonas, dict) else {}
+    return str(propios.get("stack") or "Stack"), str(propios.get("heap") or "Heap")
+
+
+ALTO_ZONA = 20
+
+
+def _zona(c: _Lienzo, x1: float, x2: float, y1: float, y2: float, titulo: str) -> None:
+    c.add(f'<rect x="{x1:.1f}" y="{y1:.1f}" width="{x2 - x1:.1f}" height="{y2 - y1:.1f}" rx="4" fill="none" '
+          f'stroke="{c.pal["strokeMuted"]}" stroke-width="1" stroke-dasharray="5 3"/>')
+    c.t(x1 + 6, y1 + 13, titulo, size=10, peso=700, color="textSub", fuente=SANS)
 
 
 def _encabezado(c: _Lienzo, bloque: Dict[str, Any], extra: str = "") -> float:
@@ -424,17 +504,27 @@ def _matriz_dinamica(c: _Lienzo, b: Dict[str, Any], dentada: bool = False) -> Tu
     centinela = b.get("sentinel") if dentada else None
     con_largos = dentada and b.get("showLengths", centinela is None)
     nombre_largos = b.get("lengthsName") or "largos"
+    tipo_largos = b.get("lengthsType") or "size_t"
     extra = f"{tipo} **{nombre}"
     if con_largos:
-        extra += f" | size_t {nombre_largos}[{nf}]"
+        extra += f" | {tipo_largos} {nombre_largos}[{nf}]"
     if centinela is not None:
         extra += f" | centinela: {centinela}"
-    top = _encabezado(c, b, extra)
+    zonas = _nombres_de_zonas(b)
+    inicio = _encabezado(c, b, extra)
+    top = inicio + (ALTO_ZONA if zonas else 0)
 
-    def dir_fila(i: int) -> str:
+    def direccion(valor: Any, hexadecimal: int) -> str:
+        """`@M` queda como está: en un examen, las direcciones suelen ser simbólicas."""
         if sin_dirs:
             return "0x____"
-        return _fmt_hex(_hex(dirs_filas[i])) if i < len(dirs_filas) else _fmt_hex(base_filas + i * 0x40)
+        return valor if isinstance(valor, str) and valor.startswith("@") else _fmt_hex(hexadecimal)
+
+    def dir_fila(i: int) -> str:
+        return direccion(dirs_filas[i], _hex(dirs_filas[i])) if i < len(dirs_filas) else direccion(None, base_filas + i * 0x40)
+
+    dir_base = direccion(b.get("baseAddr"), base)
+    dir_largos = b.get("lengthsAddr")
 
     largos = [0 if f is None else nc_fijo if nc_fijo else len(f)
               for f in filas[:nf]]
@@ -444,13 +534,57 @@ def _matriz_dinamica(c: _Lienzo, b: Dict[str, Any], dentada: bool = False) -> Tu
     m_w = max(56, math.ceil(len(str(nombre)) * 8.5 + 14))
     largos_w = max(64, math.ceil(len(str(nombre_largos)) * 8.5 + 14)) if con_largos else 0
     x_m = largos_w + (36 if con_largos else 0)
-    x_ptr = x_m + m_w + 56
+    # Una estructura dueña en lugar del puntero: `d.filas` apunta a las filas y `d.largos`, a los largos,
+    # que ya no están en el stack: van arriba del arreglo de punteros, en el heap.
+    dueno = b.get("owner")
+    campos = _campos_cabecera(dueno, "owner") if dueno is not None else []
+    valores_dueno: List[str] = []
+    for campo in campos:
+        if campo.destino not in (None, "rows", "lengths") or (campo.destino == "lengths" and not con_largos):
+            raise ErrorDiagrama(f"'owner': {campo.nombre} apunta a {campo.destino!r} (se espera rows, o lengths con largos)")
+        if campo.destino is None:
+            valores_dueno.append(campo.valor)
+        elif campo.destino == "lengths":
+            valores_dueno.append(direccion(dir_largos, _hex(dir_largos)) if dir_largos else "")
+        else:
+            valores_dueno.append(dir_base if direcciones else "")
+    if dueno is not None:
+        m_w = math.ceil(_ancho_cabecera(dueno, campos, valores_dueno))
+        largos_w = x_m = 0
+    x_ptr = x_m + m_w + (72 if dueno is not None else 56)
     x_filas = x_ptr + ptr_w + 70
     y0 = top + (44 if indices and any(largos) else 30)
+    largo_w, largo_h = 44, 30
+    y_largos = top + 22
+    if dueno is not None and con_largos:
+        y0 = y_largos + largo_h + 56
 
-    if con_largos:
+    declarados = list(b.get("lengths") or [])
+    if dueno is not None:
+        if con_largos:
+            c.t(x_ptr, y_largos - 6, " ".join(p for p in (dir_largos, f"({nombre_largos}: {tipo_largos}[{nf}])") if p),
+                size=10.5, peso=700)
+            for i in range(nf):
+                x = x_ptr + i * largo_w
+                c.r(x, y_largos, largo_w, largo_h, trazo=1.5)
+                c.t(x + largo_w / 2, y_largos + largo_h + 13, f"[{i}]", size=10, color="textMain", ancla="middle")
+                if b.get("blankLengths"):
+                    c.vacio(x + 8, x + largo_w - 8, y_largos + largo_h - 8)
+                else:
+                    c.t(x + largo_w / 2, y_largos + 20, declarados[i] if i < len(declarados) else largos[i], size=13,
+                        peso=700, ancla="middle")
+        # El campo que apunta a las filas queda a la altura de la primera: la flecha va derecha.
+        fila_filas = next((i for i, campo in enumerate(campos) if campo.destino == "rows"), 0)
+        y_dueno = max(top + 22, y0 + celda_h / 2 - FILA_CABECERA / 2 - fila_filas * FILA_CABECERA)
+        centros = _cabecera(c, 0, y_dueno, m_w, dueno, campos, valores_dueno)
+        for campo, centro in zip(campos, centros):
+            if campo.destino == "rows":
+                c.ruta((m_w, centro), (m_w + 30, centro), (m_w + 30, y0 + celda_h / 2), (x_ptr - 3, y0 + celda_h / 2))
+            elif campo.destino == "lengths":
+                c.ruta((m_w, centro), (m_w + 16, centro), (m_w + 16, y_largos + largo_h / 2),
+                       (x_ptr - 3, y_largos + largo_h / 2))
+    elif con_largos:
         # El arreglo de largos, fila por fila, a la izquierda: `largos[i]` celdas tiene la fila i.
-        declarados = list(b.get("lengths") or [])
         c.t(largos_w / 2, y0 - 8, nombre_largos, size=12, peso=700, ancla="middle")
         for i in range(nf):
             y = y0 + i * paso_y
@@ -463,18 +597,17 @@ def _matriz_dinamica(c: _Lienzo, b: Dict[str, Any], dentada: bool = False) -> Tu
                 c.t(largos_w / 2, y + 32, largo, size=13, peso=700, ancla="middle")
 
     # El puntero `m`, que apunta al arreglo de punteros a filas.
-    c.t(x_m + m_w / 2, y0 - 8, nombre, size=12, peso=700, ancla="middle")
-    c.r(x_m, y0, m_w, celda_h, relleno="fillPointerBox", trazo=1.75, rx=3)
+    if dueno is None:
+        c.t(x_m + m_w / 2, y0 - 8, nombre, size=12, peso=700, ancla="middle")
+        c.r(x_m, y0, m_w, celda_h, relleno="fillPointerBox", trazo=1.75, rx=3)
+        if direcciones:
+            c.t(x_m + m_w / 2, y0 + celda_h / 2 + 4, dir_base, size=9, ancla="middle")
+            c.linea(x_m + m_w, y0 + celda_h / 2, x_ptr - 3, y0 + celda_h / 2, ancho=1.6)
+        else:
+            c.punto(x_m + m_w / 2, y0 + celda_h / 2)
+            c.linea(x_m + m_w / 2, y0 + celda_h / 2, x_ptr - 3, y0 + celda_h / 2, ancho=1.6)
     if direcciones:
-        c.t(x_m + m_w / 2, y0 + celda_h / 2 + 4, "0x____" if sin_dirs else _fmt_hex(base), size=9,
-            ancla="middle")
-        c.linea(x_m + m_w, y0 + celda_h / 2, x_ptr - 3, y0 + celda_h / 2, ancho=1.6)
-    else:
-        c.punto(x_m + m_w / 2, y0 + celda_h / 2)
-        c.linea(x_m + m_w / 2, y0 + celda_h / 2, x_ptr - 3, y0 + celda_h / 2, ancho=1.6)
-    if direcciones:
-        c.t(x_ptr + ptr_w / 2, y0 - 8, "0x____" if sin_dirs else _fmt_hex(base), size=9, color="textSub",
-            ancla="middle")
+        c.t(x_ptr + ptr_w / 2, y0 - 8, dir_base, size=9, color="textSub", ancla="middle")
 
     if indices and any(largos):
         for j in range(max(largos)):
@@ -522,7 +655,16 @@ def _matriz_dinamica(c: _Lienzo, b: Dict[str, Any], dentada: bool = False) -> Tu
         if direcciones and not sin_dirs:
             c.t(x_filas + total * celda_w + 8, cy + 4, f"← {dir_fila(i)}", size=9, color="textSub")
         ancho = max(ancho, x_filas + total * celda_w + (70 if direcciones else 16))
-    return ancho, y0 + (nf - 1) * paso_y + celda_h + 10
+    alto = y0 + (nf - 1) * paso_y + celda_h + 10
+    if dueno is not None:
+        alto = max(alto, y_dueno + len(campos) * FILA_CABECERA + 10)
+        if con_largos:
+            ancho = max(ancho, x_ptr + nf * largo_w + 12)
+    if zonas:
+        _zona(c, -6, x_m + m_w + 8, inicio + 2, alto + 4, zonas[0])
+        _zona(c, x_ptr - 14, ancho, inicio + 2, alto + 4, zonas[1])
+        alto += 8
+    return ancho, alto
 
 
 # ---------------------------------------------------------------------------
@@ -549,14 +691,33 @@ def _lista(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
     doble, circular = variante in ("doubly", "circular_doubly"), variante in ("circular", "circular_doubly")
     sin_dirs, sin_flechas = bool(b.get("blankNextAddrs")), b.get("drawArrows") is False
     sin_valores = bool(b.get("blankValues"))
-    top = _encabezado(c, b)
+    zonas = _nombres_de_zonas(b)
+    inicio = _encabezado(c, b)
+    top = inicio + (ALTO_ZONA if zonas else 0)
 
     direcciones = [_fmt_hex(d) if isinstance(d, int) else str(d) for d in b.get("addresses") or []]
     direcciones += [_fmt_hex(0x4000 + i * 0x180) for i in range(len(direcciones), n)]
     punteros = _punteros(b, n)  # cursores: `actual`, `ant`, y `final` en una cola enlazada
-    y, alto_nodo, cabeza_w, x0 = top + (62 if punteros else 28), 54, 72, 104
+    y, alto_nodo = top + (62 if punteros else 28), 54
+    cabeza_w: float = 72
+    x0: float = 104
     nodo_w = 126 if doble else 102
     gap = 44
+    # Una estructura cabecera en lugar de HEAD: `primero` y `ultimo` apuntan a los nodos por su posición.
+    cabecera = b.get("header")
+    campos = _campos_cabecera(cabecera, "header") if cabecera is not None else []
+    valores_cabecera: List[str] = []
+    for campo in campos:
+        if campo.destino is None:
+            valores_cabecera.append(campo.valor)
+            continue
+        if not str(campo.destino).isdigit() or int(campo.destino) >= n:
+            raise ErrorDiagrama(f"'header': {campo.nombre} apunta al nodo {campo.destino!r}, y hay {n} nodos (de 0 a {n - 1})")
+        valores_cabecera.append("" if sin_dirs else direcciones[int(campo.destino)])
+    if cabecera is not None:
+        cabeza_w = _ancho_cabecera(cabecera, campos, valores_cabecera)
+        x0 = cabeza_w + 48
+    tipo_nodo = b.get("nodeType")
     for i, etiquetas in punteros.items():
         centro = x0 + i * (nodo_w + gap) + nodo_w / 2
         texto = ", ".join(etiquetas)
@@ -565,19 +726,36 @@ def _lista(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
         c.t(centro, y - 37, texto, size=10, peso=700, ancla="middle")
         c.linea(centro, y - 32, centro, y - 21, ancho=1.5)
 
-    c.t(cabeza_w / 2, y, b.get("headLabel") or "HEAD", size=10, peso=700, ancla="middle")
-    c.r(0, y + 7, cabeza_w, 40, relleno="fillPointerBox", trazo=1.75, rx=3)
-    if not sin_dirs:
-        c.t(cabeza_w / 2, y + 31, direcciones[0], size=10, peso=600, color="textSub", ancla="middle")
-    if not sin_flechas:
-        c.linea(cabeza_w, y + 27, x0 - 3, y + 27, ancho=1.75)
+    if cabecera is None:
+        c.t(cabeza_w / 2, y, b.get("headLabel") or "HEAD", size=10, peso=700, ancla="middle")
+        c.r(0, y + 7, cabeza_w, 40, relleno="fillPointerBox", trazo=1.75, rx=3)
+        if not sin_dirs:
+            c.t(cabeza_w / 2, y + 31, direcciones[0], size=10, peso=600, color="textSub", ancla="middle")
+        if not sin_flechas:
+            c.linea(cabeza_w, y + 27, x0 - 3, y + 27, ancho=1.75)
+    else:
+        # El primer renglón queda a la altura de los nodos: si apunta al primero, la flecha va derecha.
+        centros = _cabecera(c, 0, y + 27 - FILA_CABECERA / 2, cabeza_w, cabecera, campos, valores_cabecera)
+        abajo = y + alto_nodo + (50 if circular else 28)
+        for k, (campo, centro) in enumerate(zip(campos, centros)):
+            if campo.destino is None or sin_flechas:
+                continue
+            destino = int(campo.destino)
+            if k == 0 and destino == 0:
+                c.linea(cabeza_w, centro, x0 - 3, centro, ancho=1.75)
+                continue
+            # Los demás van por debajo de los nodos y entran por abajo, sin cruzar a los otros punteros.
+            codo, x_nodo = cabeza_w + 12 + 8 * k, x0 + destino * (nodo_w + gap) + 16
+            c.ruta((cabeza_w, centro), (codo, centro), (codo, abajo), (x_nodo, abajo), (x_nodo, y + alto_nodo + 3))
+            abajo += 10
 
     for i in range(n):
         nx = x0 + i * (nodo_w + gap)
         valor = valores[i]
         siguiente = direcciones[i + 1] if i < n - 1 else (direcciones[0] if circular else "NULL")
         anterior = direcciones[i - 1] if i > 0 else (direcciones[n - 1] if circular else "NULL")
-        c.t(nx + nodo_w / 2, y - 7, f"Dir: {direcciones[i]}", size=10, peso=700, color="textSub", ancla="middle")
+        rotulo = f"{direcciones[i]} ({tipo_nodo})" if tipo_nodo else f"Dir: {direcciones[i]}"
+        c.t(nx + nodo_w / 2, y - 7, rotulo, size=10, peso=700, color="textSub", ancla="middle")
 
         if not doble:
             dato_w = 62
@@ -655,7 +833,16 @@ def _lista(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
             f"Enlace circular: el último apunta a HEAD ({direcciones[0]})", size=9, peso=600, color="textSub",
             ancla="middle")
     ancho = x0 + n * (nodo_w + gap) - gap + (80 if not circular else 30)
-    return ancho, y + alto_nodo + (50 if circular else 24)
+    alto = y + alto_nodo + (50 if circular else 24)
+    if cabecera is not None:
+        alto = max(alto, y + 27 - FILA_CABECERA / 2 + len(campos) * FILA_CABECERA + 6)
+        if any(campo.destino is not None for campo in campos[1:]):
+            alto = max(alto, abajo)
+    if zonas:
+        _zona(c, -6, cabeza_w + 8, inicio + 2, alto + 6, zonas[0])
+        _zona(c, x0 - 14, ancho, inicio + 2, alto + 6, zonas[1])
+        alto += 10
+    return ancho, alto
 
 
 # ---------------------------------------------------------------------------

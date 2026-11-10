@@ -765,3 +765,60 @@ DENTADA_EN_ESTRUCTURA = {"type": "matrix", "variant": "jagged", "name": "filas",
                          "lengthsAddr": "@L", "zones": True,
                          "owner": {"name": "d", "type": "dentada_t",
                                    "fields": ["n = 2", "largos -> lengths", "filas -> rows"]}}
+
+
+def textos(svg):
+    return re.findall(r">([^<]+)</text>", svg)
+
+
+def test_la_cabecera_de_una_lista_reemplaza_a_head():
+    svg = renderizar(LISTA_CON_CABECERA)
+    assert "mi_lista (lista_t)" in textos(svg) and "HEAD" not in textos(svg)
+    assert {"primero", "ultimo", "cant", "3", "@N1 (nodo_t)"} <= set(textos(svg))
+    assert textos(svg).count("@N3") == 1  # el valor de `ultimo`: el nodo lleva `@N3 (nodo_t)`
+
+
+def test_las_zonas_tienen_sus_titulos():
+    assert {"Stack: main", "Heap"} <= set(textos(renderizar(LISTA_CON_CABECERA)))
+    assert {"Stack", "Heap"} <= set(textos(renderizar({**LISTA_CON_CABECERA, "zones": True})))
+    assert "Heap" not in textos(renderizar({"type": "linked_list", "values": [1]}))
+
+
+def test_un_puntero_de_la_cabecera_que_no_llega_a_un_nodo_es_un_error():
+    malo = {**LISTA_CON_CABECERA, "header": {"name": "l", "fields": ["ultimo -> 3"]}}
+    with pytest.raises(ErrorDiagrama, match="ultimo apunta al nodo"):
+        renderizar(malo)
+
+
+@pytest.mark.parametrize("cabecera", [{"name": "l"}, {"fields": []}, {"fields": ["sin separador"]}, "texto"])
+def test_una_cabecera_mal_escrita_es_un_error(cabecera):
+    with pytest.raises(ErrorDiagrama):
+        renderizar({**LISTA_CON_CABECERA, "header": cabecera})
+
+
+def test_una_matriz_con_direcciones_simbolicas():
+    svg = renderizar({"type": "matrix", "variant": "jagged", "name": "mat", "values": [[1], [2, 3]], "showAddresses": True,
+                      "baseAddr": "@M", "rowAddresses": ["@F0", "@F1"], "lengthsType": "int"})
+    assert {"@M", "@F1", "← @F0"} <= set(textos(svg))
+    assert "int **mat | int largos[2]" in textos(svg) and not any(t.startswith("0x") for t in textos(svg))
+
+
+def test_la_estructura_duena_lleva_los_largos_al_heap():
+    svg = renderizar(DENTADA_EN_ESTRUCTURA)
+    assert {"d (dentada_t)", "@L (largos: int[2])", "@F", "@L", "n"} <= set(textos(svg))
+    assert svg.count("<path") >= 2  # las flechas a los largos y a las filas
+
+
+def test_un_puntero_de_la_duena_a_un_destino_desconocido_es_un_error():
+    with pytest.raises(ErrorDiagrama, match="se espera rows"):
+        renderizar({**DENTADA_EN_ESTRUCTURA, "owner": {"name": "d", "fields": ["x -> otra"]}})
+
+
+def test_las_direcciones_en_blanco_no_se_escapan_por_la_duena():
+    assert "@L" not in textos(renderizar({**DENTADA_EN_ESTRUCTURA, "blankAddrs": True}))
+
+
+def test_sin_las_claves_nuevas_el_dibujo_no_cambia():
+    assert "Dir: 0x4000" in textos(renderizar({"type": "linked_list", "values": [1]}))
+    assert any("size_t largos[1]" in t for t in textos(renderizar({"type": "matrix", "variant": "jagged", "values": [[1]]})))
+
