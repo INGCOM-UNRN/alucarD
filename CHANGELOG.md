@@ -11,6 +11,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Agregado
 
+- **diagramas PlantUML**: los bloques ```` ```plantuml ```` se dibujan en el PDF y el HTML, con sus opciones en comentarios (`[centrado]`, `[ancho, 60%]`, `[alto]`, `[escala]`, `[letra]`, `[color]`, `[tema]`, `[alt]`). Salen en blanco y negro salvo `[color]` o `[tema]`, y cada dibujo queda en una caché por contenido. `lint-gift` informa los inválidos y `doctor` dice qué PlantUML encontró.
 - **Moodle XML**: la etiqueta `desarrollo-pequeno`, `-mediano` o `-grande` da el tamaño de un desarrollo, igual que en GIFT, y no queda entre las etiquetas de la pregunta.
 - **bancos**: `input_banco`, `-i` y `alucard lint-gift` aceptan carpetas y recorren sus subcarpetas, leyendo solo `.gift` y `.xml`: un `.txt` se lee únicamente si se lo nombra. El filtro `banco` de un pool distingue por subcarpeta (`unidad1/teoria.gift`).
 - **tablas**: bloque ```` ```tabla ```` con sintaxis Markdown y opciones de presentación en comentarios (`// [centrado] [ancho, 80%]`): ubicación, ancho, columnas, alineación, alto de las celdas vacías, relleno, letra, bordes, sombreado y encabezado. En Moodle el bloque se ve como código y no choca con GIFT; `voight unify` lo convierte en una tabla HTML. `lint-gift` y `generar` avisan las opciones inválidas. Una celda vacía es para completar: en el PDF su columna toma el ancho disponible. En HTML las tablas tienen bordes.

@@ -105,6 +105,16 @@ def diagnosticar() -> List[Dict[str, Any]]:
             "proposito": proposito, "sugerencia": "" if info["disponible"] else sugerencia,
         })
 
+    from generador_examenes.plantuml import comando as comando_plantuml
+
+    plantuml = comando_plantuml()
+    chequeos.append({
+        "nombre": "plantuml", "requerido": False, "ok": plantuml is not None,
+        "detalle": " ".join(plantuml) if plantuml else "No encontrado en $PATH",
+        "proposito": "Diagramas de los bloques ```plantuml",
+        "sugerencia": "" if plantuml else "sudo dnf install plantuml  (o) ALUCARD_PLANTUML / PLANTUML_JAR",
+    })
+
     lt_info = chequear_conectividad_languagetool()
     chequeos.append({
         "nombre": "LanguageTool (API pública)", "requerido": False, "ok": lt_info["disponible"],

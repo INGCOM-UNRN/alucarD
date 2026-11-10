@@ -70,15 +70,16 @@ DOS_PUNTOS_ANCHOS = "\uff1a"  # alucard los muestra como `:` (NFKC); igual que l
 
 
 def dos_puntos_sueltos(content):
-    """Dónde hay un `:` que Moodle no admite: toda la pregunta, salvo los bloques ```estructura y las
-    fórmulas (Moodle no los importa sin preprocesar) y la sintaxis vieja, que se
+    """Dónde hay un `:` que Moodle no admite: toda la pregunta, salvo los bloques ```estructura y
+    ```plantuml y las fórmulas (Moodle no los importa sin preprocesar) y la sintaxis vieja, que se
     revisa aparte."""
     from generador_examenes.diagramas import _FENCE
     from generador_examenes.matematica import tramos_de_formulas
     from generador_examenes.parsers.gift_parser import sintaxis_vieja
+    from generador_examenes.plantuml import tramos
 
     exentos = ([m.span() for m in _FENCE.finditer(content)] + [m.span() for m in sintaxis_vieja(content)]
-               + tramos_de_formulas(content))
+               + tramos_de_formulas(content) + tramos(content))
     posiciones = []
     for m in _DOS_PUNTOS.finditer(content):
         if m.group("titulo"):
@@ -170,6 +171,18 @@ def revisar_tablas(content):
     return problemas
 
 
+def revisar_plantuml(content):
+    """Los bloques ```plantuml que no se pueden dibujar, con su línea y su pregunta."""
+    from generador_examenes.plantuml import errores_en_texto
+
+    lines = content.split("\n")
+    problemas = []
+    for pos, motivo in errores_en_texto(content):
+        linea = content[:pos].count("\n") + 1
+        problemas.append(f"Línea {linea} («{_titulo_en(lines, linea)}»): diagrama PlantUML inválido: {motivo}")
+    return problemas
+
+
 _BLOQUE_C = re.compile(r"^```[ \t]*c[ \t]*\n(?P<codigo>.*?)^```[ \t]*$", re.S | re.M)
 
 
@@ -229,6 +242,10 @@ def lint_gift_file(filepath, fix=False, compilar=False):
     stats = {'total': 0, 'valid': 0, 'errors': 0, 'warnings': 0}
     current_question = []
     line_num = 0
+    # Un bloque ```plantuml puede llevar renglones en blanco: ahí no termina la pregunta.
+    from generador_examenes.plantuml import tramos
+    en_plantuml = {n for desde, hasta in tramos(content)
+                   for n in range(content.count("\n", 0, desde) + 1, content.count("\n", 0, hasta) + 2)}
 
     for i, line in enumerate(lines, 1):
         stripped = line.strip()
@@ -247,7 +264,7 @@ def lint_gift_file(filepath, fix=False, compilar=False):
             line_num = i
         elif current_question:
             current_question.append(line)
-            if not stripped:
+            if not stripped and i not in en_plantuml:
                 valid, errs = _process_question('\n'.join(current_question), line_num)
                 stats['total'] += 1
                 if valid:
@@ -270,7 +287,7 @@ def lint_gift_file(filepath, fix=False, compilar=False):
             stats['errors'] += len(errs)
         issues.extend(errs)
     
-    for problema in (revisar_moodle(content) + revisar_diagramas(content) + revisar_tablas(content)
+    for problema in (revisar_moodle(content) + revisar_diagramas(content) + revisar_plantuml(content) + revisar_tablas(content)
                      + revisar_formulas(content)):
         issues.append(problema)
         stats['errors'] += 1

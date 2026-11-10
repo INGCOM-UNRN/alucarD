@@ -116,9 +116,16 @@ def html_a_typst(fragmento: object) -> str:
         # Los diagramas de estructuras (statics): 0.06 em por px (0.6 pt con letra de 10), así crecen
         # con la letra del examen, sin pasar del ancho disponible.
         ancho = _ANCHO_SVG.search(m.group("attrs"))
-        medida = f"calc.min(({float(ancho.group('px')) * 0.06:.1f}em).to-absolute(), disponible.width)" if ancho else "100%"
-        return apartar(f"\n#layout(disponible => align(center, image(bytes({_cadena(m.group(0))}), "
-                       f"format: \"svg\", width: {medida})))\n")
+        medida = (f"width: calc.min(({float(ancho.group('px')) * 0.06:.1f}em).to-absolute(), disponible.width)"
+                  if ancho else "width: 100%")
+        # Un diagrama PlantUML puede traer su posición y sus medidas.
+        datos = _OPCIONES_TABLA.search(m.group("attrs"))
+        opciones = json.loads(html.unescape(datos.group("opciones"))) if datos else {}
+        medidas = [f"{nombre}: {opciones[clave]}" for clave, nombre in (("ancho", "width"), ("alto", "height"))
+                   if clave in opciones]
+        posicion = {"izquierda": "left", "derecha": "right"}.get(opciones.get("posicion", ""), "center")
+        return apartar(f"\n#layout(disponible => align({posicion}, image(bytes({_cadena(m.group(0))}), "
+                       f"format: \"svg\", {', '.join(medidas) or medida})))\n")
     def formula(m: re.Match) -> str:
         typst = _TYPST_MATH.search(m.group("attrs"))
         if not typst:  # MathML que no pasó por matematica.py (Moodle): queda su texto

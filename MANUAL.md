@@ -754,6 +754,47 @@ Una opción desconocida, o una lista que no coincide con las columnas, es error 
 
 Una tabla sin el bloque también se lee, pegada al texto o no, pero no admite opciones y choca con GIFT.
 
+### Diagramas PlantUML
+
+Un bloque ```` ```plantuml ```` dibuja un diagrama con [PlantUML](https://plantuml.com). Las opciones
+van en comentarios al principio del bloque; `@startuml` y `@enduml` son optativos, y otros tipos
+(`@startmindmap`, `@startsalt`…) se escriben con su propio inicio.
+
+````gift
+::clases::[markdown]Observá el diagrama.
+```plantuml
+// [centrado] [ancho, 60%] [alt, La lista apunta a su primer nodo]
+class Lista {
+  +agregar(x: int)
+}
+
+Lista --> Nodo : cabeza
+```
+¿Qué relación hay entre las clases?
+{=Asociación ~Herencia}
+````
+
+| Opción | Efecto |
+| :--- | :--- |
+| `[centrado]`, `[izquierda]`, `[derecha]` | Dónde va el diagrama. Por omisión, centrado. |
+| `[ancho, 60%]`, `[alto, 5cm]` | Medida del dibujo, en `%`, `cm`, `mm`, `pt` o `em`. Sin ellas, crece con la letra del examen y no pasa del ancho de la página. |
+| `[escala, 1.5]` | `scale` de PlantUML. |
+| `[letra, 12]` | Tamaño de la letra del diagrama, en puntos. |
+| `[color]` | Conserva los colores. Por omisión sale en blanco y negro, porque un examen se imprime. |
+| `[tema, plain]` | Tema de PlantUML. También conserva los colores. |
+| `[alt, texto]` | Texto alternativo. Por omisión, «diagrama». |
+
+Una opción desconocida o inválida y un diagrama que no compila salen como un aviso en la pregunta;
+`alucard generar` dice en cuál y `lint-gift` los informa con su línea.
+
+Igual que un ```` ```estructura ````, el bloque no se importa en Moodle sin preprocesar, así que adentro
+valen `:`, llaves y renglones en blanco. `voight unify … -o banco.xml` lo pasa a una imagen, con las
+mismas opciones.
+
+Lo dibuja el programa `plantuml` del `PATH`; otro se indica con `ALUCARD_PLANTUML` (el comando) o
+`PLANTUML_JAR` (el `.jar`, con `java`). `alucard doctor` dice cuál encontró. Cada dibujo queda en
+`~/.cache/alucard/plantuml/`, así que Java arranca una sola vez por diagrama.
+
 ### `alucard lint-gift` (antes `gift-linter`)
 
 Valida bancos GIFT: el formato de cada pregunta, que se puedan importar en Moodle, los bloques
@@ -782,7 +823,7 @@ alucard lint-gift bancos --fix                        # toda la carpeta, con sus
 #### Compatibilidad con Moodle
 
 Un banco GIFT se importa en Moodle tal cual, salvo las preguntas con bloques ```` ```estructura ````
-o fórmulas `$...$`, que hay que preprocesar: `voight unify … -o banco.xml` las pasa a imágenes. Moodle toma como texto de la pregunta lo que siga a las respuestas, así que
+o ```` ```plantuml ```` o fórmulas `$...$`, que hay que preprocesar: `voight unify … -o banco.xml` las pasa a imágenes. Moodle toma como texto de la pregunta lo que siga a las respuestas, así que
 todo lo propio de alucard va en comentarios, en el mismo párrafo que la pregunta (sin renglones en
 blanco en el medio; uno separado no se aplica, igual que en Moodle):
 

@@ -13,6 +13,7 @@ import logging
 
 from generador_examenes.diagramas import expandir_en_markdown, reponer_svgs
 from generador_examenes.matematica import expandir_formulas, reponer_formulas
+from generador_examenes.plantuml import expandir_plantuml
 from generador_examenes.tablas import expandir_tablas
 
 logger = logging.getLogger(__name__)
@@ -100,8 +101,9 @@ def separar_tablas(text: str) -> str:
 def _expandir_bloques(text: str) -> tuple[str, dict[str, str]]:
     """Cambia los bloques que no son código por marcadores; devuelve el texto y el HTML de cada uno."""
     text, bloques = expandir_en_markdown(text)
+    text, diagramas = expandir_plantuml(text)
     text, tablas = expandir_tablas(text, markdown_to_html)
-    return text, bloques | tablas
+    return text, bloques | diagramas | tablas
 
 
 def markdown_to_html(text: str, saltos_de_linea: bool = True) -> str:
@@ -121,7 +123,7 @@ def markdown_to_html(text: str, saltos_de_linea: bool = True) -> str:
     
     # Normalizar caracteres fullwidth antes de procesar
     text = normalizar_fullwidth(text)
-    # Los bloques ```estructura pasan a diagramas SVG y los ```tabla, a tablas
+    # Los bloques ```estructura y ```plantuml pasan a diagramas SVG y los ```tabla, a tablas
     text, diagramas = _expandir_bloques(text)
     # Las fórmulas $...$ pasan a MathML después de Markdown, que si no se comería sus `_` y `*`
     text, formulas = expandir_formulas(text)

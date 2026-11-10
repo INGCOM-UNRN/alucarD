@@ -35,8 +35,7 @@ _FENCE = re.compile(r"^(?P<valla>`{3,}|~{3,})[ \t]*tabla[ \t]*\n(?P<cuerpo>.*?)^
 _MARCA = ""
 _COMENTARIO = re.compile(rf"^[ \t]*(?://|{_MARCA})(?P<texto>.*)$", re.M)
 _OPCION = re.compile(r"\[([^\]]*)\]")
-_CON_COMENTARIOS = re.compile(r"^(?P<valla>`{3,}|~{3,})[ \t]*tabla[ \t]*\n.*?^(?P=valla)[ \t]*$", re.S | re.M)
-
+_CON_COMENTARIOS = re.compile(r"^(?P<valla>`{3,}|~{3,})[ \t]*(?:tabla|plantuml)[ \t]*\n.*?^(?P=valla)[ \t]*$", re.S | re.M)
 
 
 _CELDA_MOODLE = "border:1px solid #888;padding:0.25em 0.5em;min-width:4em;text-align:left"
@@ -125,7 +124,7 @@ def expandir_tablas(texto: str, a_html: Callable[[str], str]) -> Tuple[str, Dict
 
 
 def proteger_comentarios(contenido: str) -> str:
-    """Para que los comentarios de las tablas sobrevivan al parser de GIFT."""
+    """Para que los comentarios de las tablas y de los diagramas PlantUML sobrevivan al parser de GIFT."""
     def proteger(m: re.Match) -> str:
         return re.sub(r"^([ \t]*)//", rf"\g<1>{_MARCA}", m.group(0), flags=re.M)
 
