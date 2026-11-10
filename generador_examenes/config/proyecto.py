@@ -12,6 +12,7 @@ path_images = "imagenes"
 numero_temas = 2
 semilla = 2026
 formato = ["pdf"]
+debug_consignas = "titulo"                 # muestra de qué pregunta salió cada una: "titulo" o "id"
 
 [ortografia]
 servidor = "http://localhost:8081"
@@ -58,6 +59,7 @@ class ConfiguracionProyecto:
     lt_ignorar_reglas: list[str] = field(default_factory=list)
     palabras: list[str] = field(default_factory=list)
     estilo: dict[str, Any] = field(default_factory=dict)  # [estilo], con el logotipo ya resuelto
+    debug_consignas: Optional[str] = None
 
 
 def buscar(desde: Optional[Path] = None) -> Optional[Path]:
@@ -110,8 +112,14 @@ def cargar(desde: Optional[Path] = None) -> ConfiguracionProyecto:
         EstiloExamen(**estilo)
     except ValidationError as e:
         raise ValueError(f"{ruta}: [estilo] inválido: {e}") from e
+    debug = datos.get("debug_consignas", False)
+    if debug is True:
+        debug = "titulo"
+    if debug not in (False, "titulo", "id"):
+        raise ValueError(f'{ruta}: debug_consignas es "titulo", "id" o false: {debug!r}')
     return ConfiguracionProyecto(
         ruta=ruta,
+        debug_consignas=debug or None,
         definicion=rutas(datos.get("definicion")),
         input_banco=rutas(datos.get("input_banco")),
         output_dir=ruta_sola(datos.get("output_dir")),

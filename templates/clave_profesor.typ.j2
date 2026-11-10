@@ -45,7 +45,7 @@
   fill: rgb("fafafa"),
   breakable: {{ 'true' if preg.tipo == 'consigna_practica' else 'false' }}
 )[
-  #text(weight: "bold")[{{ loop.index }}. {{ preg.nombre | typst_texto }}]
+  #text(weight: "bold")[{{ loop.index }}. {{ preg.nombre | typst_texto }}]{% if definicion.configuracion_examen.debug_consignas == 'id' %} #text(size: 0.8em)[\[{{ preg.id | typst_texto }}\]]{% endif %}
   #v(2pt)
   {% set correctas = [] %}
   {% for op in preg.opciones %}{% if op.es_correcta %}{% set _ = correctas.append(loop.index0) %}{% endif %}{% endfor %}

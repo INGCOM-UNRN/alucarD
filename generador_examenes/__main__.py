@@ -243,6 +243,7 @@ output_dir = "output"
 numero_temas = 2
 semilla = 2026
 formato = ["html"]
+# debug_consignas = "titulo"     # para revisar: muestra de qué pregunta salió cada una ("titulo" o "id")
 
 [ortografia]
 idioma = "es-AR"

@@ -205,6 +205,7 @@ body * { border-color: #000 !important; }
         <div class="question">
             <div class="question-header">
                 {{ i18n.question }} {{ loop.index }}
+                {% if definicion.configuracion_examen.debug_consignas %}<small class="debug-consigna">[{{ pregunta.nombre if definicion.configuracion_examen.debug_consignas == 'titulo' else pregunta.id }}]</small>{% endif %}
                 ({{ pregunta.puntaje }} {% if pregunta.puntaje == 1 %}{{ i18n.point }}{% else %}{{ i18n.points }}{% endif %})
             </div>
             <div class="question-text">{{ pregunta.enunciado_html | safe }}</div>

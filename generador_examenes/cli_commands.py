@@ -572,6 +572,15 @@ def generar_examen(args, logger) -> int:
             print(f"Error: estilo: {e}", file=sys.stderr)
             return 1
 
+        # De qué pregunta salió cada una: la definición manda sobre el curso.
+        configuracion = definicion.configuracion_examen
+        if curso.debug_consignas and "debug_consignas" not in configuracion.model_fields_set:
+            definicion = definicion.model_copy(update={"configuracion_examen": configuracion.model_copy(
+                update={"debug_consignas": curso.debug_consignas})})
+        if definicion.configuracion_examen.debug_consignas:
+            print("Aviso: debug_consignas está activo: el examen muestra de qué pregunta salió cada una; "
+                  "sacalo antes de imprimir.", file=sys.stderr)
+
         # Edición accesible: letra grande y alto contraste, por encima de lo que diga el estilo.
         if getattr(args, 'accessible', False):
             estilo = definicion.estilo

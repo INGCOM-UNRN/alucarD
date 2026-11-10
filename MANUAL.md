@@ -1214,3 +1214,17 @@ Los exámenes y evaluaciones que integran código C son auditados previamente co
 | `0` | Examen generado o validado con éxito. |
 | `1` | Error en la definición YAML, pregunta no encontrada en el banco o syntax error en GIFT. |
 | `2` | Faltan binarios indispensables del sistema (`typst`, `gcc`). |
+
+### `debug_consignas`
+
+Para revisar qué salió en cada tema: el examen muestra, junto a «Pregunta N.», el título o el id de la
+pregunta del banco. Vale para todas las preguntas, también las consignas prácticas con `titulo: false`.
+
+```toml
+debug_consignas = "titulo"   # o "id"
+```
+
+Un examen lo cambia con `configuracion_examen.debug_consignas`, y `debug_consignas: null` lo apaga para
+ese examen. La clave con `"id"` también lo muestra; con `"titulo"` no hace falta, porque ya lleva el
+título. `alucard generar` avisa mientras esté activo, para que no se
+imprima por error: el título de una pregunta puede dar pistas sobre la respuesta.

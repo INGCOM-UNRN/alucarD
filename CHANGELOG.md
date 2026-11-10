@@ -12,6 +12,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 ### Agregado
 
 - **espacio de los desarrollos**: `configuracion_examen.espacio_desarrollo` y las etiquetas `desarrollo-cero`, `-chico`, `-mediano`, `-grande` y `-pagina` eligen el recuadro de cada pregunta, que lleva renglones en el PDF y en el HTML. La etiqueta manda sobre la opción general, salvo con `forzar_espacio_desarrollo: true`. `pequeno` se sigue leyendo como `chico`.
+- **debug_consignas**: en `alucard.toml` o en `configuracion_examen`, muestra junto a cada pregunta el título o el id de la pregunta del banco; `generar` avisa mientras esté activo.
 - **diagramas PlantUML**: los bloques ```` ```plantuml ```` se dibujan en el PDF y el HTML, con sus opciones en comentarios (`[centrado]`, `[ancho, 60%]`, `[alto]`, `[escala]`, `[letra]`, `[color]`, `[tema]`, `[alt]`). Salen en blanco y negro salvo `[color]` o `[tema]`, y cada dibujo queda en una caché por contenido. `lint-gift` informa los inválidos y `doctor` dice qué PlantUML encontró.
 - **Moodle XML**: la etiqueta `desarrollo-pequeno`, `-mediano` o `-grande` da el tamaño de un desarrollo, igual que en GIFT, y no queda entre las etiquetas de la pregunta.
 - **saltos de página**: una pregunta que no entra en una página ya no sale con el texto encimado: se corta por sus encabezados, antes de las opciones y, si hace falta, por donde toque. La marca `// [corte]` indica dónde se puede cortar. `desarrollo_en_hoja_separada` lleva cada pregunta de desarrollo a su propia hoja, con el resto para responder.

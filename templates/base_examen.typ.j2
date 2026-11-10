@@ -121,6 +121,7 @@
 
 // Secciones del Examen
 {% set tipos_desarrollo = ['desarrollo', 'essay', 'codigo'] %}
+{% set debug_consignas = {'titulo': 'nombre', 'id': 'id'}.get(definicion.configuracion_examen.debug_consignas) %}
 {% set alto_desarrollo = {'chico': 6, 'mediano': 12, 'grande': 24} %}
 {% for seccion in secciones %}
   {% if not loop.first and seccion.preguntas and seccion.preguntas[0].tamano_desarrollo == 'pagina' %}
@@ -142,7 +143,7 @@
     (false, grid(
       columns: (1fr, auto),
       column-gutter: 8pt,
-      [ *Pregunta {{ loop.index }}.* {{ partes[0].typst }} ],
+      [ *Pregunta {{ loop.index }}.* {% if debug_consignas %}#text(size: 0.8em, fill: rgb("{{ c.sub }}"))[\[{{ preg[debug_consignas] | typst_texto }}\]] {% endif %}{{ partes[0].typst }} ],
       [ #text(size: 0.8em, fill: rgb("{{ c.tenue }}"))[\[{{ '%g' % preg.puntaje }} pt\]] ]
     )),
     {% for parte in partes[1:] %}

@@ -6,6 +6,7 @@ from pypdf import PdfReader
 from typer.testing import CliRunner
 
 from generador_examenes.__main__ import app
+from generador_examenes.config import proyecto
 from generador_examenes.core.logic import construir_pool_examen
 from generador_examenes.core.markdown_utils import markdown_to_html
 from generador_examenes.core.models import DefinicionExamen
@@ -233,6 +234,53 @@ def test_el_html_usa_el_tamano(tmp_path):
 
 def test_el_html_sin_espacio_no_dibuja_el_recuadro(tmp_path):
     assert '<div class="desarrollo-box' not in alturas(tmp_path, "cero", "html").read_text(encoding="utf-8")
+
+
+def generar_con_toml(tmp_path, toml, yaml_extra=""):
+    """Un examen en un proyecto con `alucard.toml`; devuelve el resultado y la carpeta de salida."""
+    (tmp_path / ".git").mkdir()
+    (tmp_path / "alucard.toml").write_text(toml, encoding="utf-8")
+    (tmp_path / "e.yaml").write_text(
+        f"nombre_examen: x\ninstitucion: x\nmateria: x\nconfiguracion_examen:\n  generar_clave_profesor: true\n{yaml_extra}"
+        "secciones_examen:\n  - nombre: s\n    pools:\n      - tipos: [desarrollo]\n", encoding="utf-8")
+    (tmp_path / "b.gift").write_text("::la-primera::Explicá\n{=a}\n\n::la-segunda::Otra\n{}\n", encoding="utf-8")
+    salida = tmp_path / "out"
+    return CliRunner().invoke(app, ["generar", "-d", str(tmp_path / "e.yaml"), "-i", str(tmp_path / "b.gift"),
+                                    "-o", str(salida), "-f", "pdf"]), salida
+
+
+def texto_pdf(archivo):
+    return "".join(p.extract_text() for p in PdfReader(archivo).pages)
+
+
+def test_debug_consignas_muestra_el_titulo(tmp_path):
+    resultado, salida = generar_con_toml(tmp_path, 'debug_consignas = "titulo"\n')
+    assert resultado.exit_code == 0, resultado.output
+    assert "[la-segunda]" in texto_pdf(salida / "examen_tema_01.pdf")
+
+
+def test_debug_consignas_muestra_el_id_y_tambien_en_la_clave(tmp_path):
+    resultado, salida = generar_con_toml(tmp_path, 'debug_consignas = "id"\n')
+    assert resultado.exit_code == 0, resultado.output
+    assert "gift_" in texto_pdf(salida / "examen_tema_01.pdf") and "gift_" in texto_pdf(salida / "clave_tema_01.pdf")
+
+
+def test_sin_debug_consignas_no_se_ve_de_donde_salio(tmp_path):
+    _, salida = generar_con_toml(tmp_path, "")
+    assert "la-segunda" not in texto_pdf(salida / "examen_tema_01.pdf")
+    assert "Debug" not in texto_pdf(salida / "examen_tema_01.pdf")
+
+
+def test_la_definicion_manda_sobre_el_toml(tmp_path):
+    _, salida = generar_con_toml(tmp_path, 'debug_consignas = "titulo"\n', "  debug_consignas: id\n")
+    texto = texto_pdf(salida / "examen_tema_01.pdf")
+    assert "gift_" in texto and "[la-segunda]" not in texto
+
+
+def test_debug_consignas_invalido_lo_dice_con_el_archivo(tmp_path):
+    (tmp_path / "alucard.toml").write_text('debug_consignas = "nombre"\n', encoding="utf-8")
+    with pytest.raises(ValueError, match="alucard.toml.*debug_consignas"):
+        proyecto.cargar(tmp_path)
 
 
 def renglones_del_pdf(archivo):

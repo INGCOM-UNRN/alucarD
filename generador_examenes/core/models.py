@@ -229,6 +229,9 @@ class ConfiguracionExamen(BaseModel):
     # Cada pregunta de desarrollo en su propia hoja, con el resto de la hoja para responder: es
     # `pagina` para todas, también para las que piden otro espacio.
     desarrollo_en_hoja_separada: bool = False
+    # Para revisar un examen: muestra junto a cada pregunta cuál salió del banco. Por omisión, el de
+    # `debug_consignas` de alucard.toml.
+    debug_consignas: Optional[Literal["titulo", "id"]] = None
 
     _espacio = field_validator("espacio_desarrollo", mode="before")(_nombre_de_tamano)
 
