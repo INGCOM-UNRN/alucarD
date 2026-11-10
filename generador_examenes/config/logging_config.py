@@ -29,5 +29,3 @@ def setup_logging(debug: bool = False) -> None:
     root_logger.addHandler(handler)
     
     # Silenciar logs excesivamente verbosos de librerías externas
-    logging.getLogger('weasyprint').setLevel(logging.WARNING)
-    logging.getLogger('fontTools').setLevel(logging.WARNING)

@@ -164,8 +164,6 @@ pytest tests/ -m integration
 # Tests lentos
 pytest tests/ -m slow
 
-# Tests que requieren WeasyPrint
-pytest tests/ -m requires_weasyprint
 ```
 
 ## Generar Reporte de Cobertura
@@ -208,7 +206,7 @@ Los tests se ejecutan automáticamente en CI con:
 
 ### Tests de PDF fallan
 
-Los tests de PDF requieren WeasyPrint con dependencias del sistema. Si no están instaladas, los tests se saltan automáticamente con `pytest.skip()`.
+Los tests de PDF requieren Typst (el módulo `typst`, que se instala con el proyecto).
 
 Para instalar en Ubuntu:
 ```bash

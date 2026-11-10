@@ -2,9 +2,9 @@
 
 Verifica los binarios y módulos de Python de los que depende alucarD en
 tiempo de ejecución: ``gcc`` (compilación del sintetizador de preguntas de
-C), Typst (binario o módulo `typst`, motor primario de PDF), WeasyPrint
-(fallback de PDF), pypdf (empaquetado para imprenta) y, de forma
-informativa, la conectividad con la API pública de LanguageTool.
+C), Typst (binario o módulo `typst`, el único motor de PDF: sin él no se
+genera ninguno), pypdf (empaquetado para imprenta) y, de forma informativa,
+la conectividad con la API pública de LanguageTool.
 
 Sigue el contrato de LINEAMIENTOS §3.3: la lógica vive en `core/` sin
 depender de `typer` ni escribir directamente a stdout, aceptando un
@@ -43,13 +43,12 @@ def chequear_modulo_python(nombre_modulo: str) -> Dict[str, Any]:
     """Verifica si un módulo de Python está instalado, sin importarlo."""
     spec = importlib.util.find_spec(nombre_modulo)
     if spec is None:
-        return {"disponible": False, "version": None}
+        return {"disponible": False, "version": None, "importable": False}
     try:
         modulo = importlib.import_module(nombre_modulo)
-        version = getattr(modulo, "__version__", "Detectado")
+        return {"disponible": True, "version": getattr(modulo, "__version__", "Detectado"), "importable": True}
     except Exception:
-        version = "Detectado (no se pudo importar)"
-    return {"disponible": True, "version": version}
+        return {"disponible": True, "version": "Detectado (no se pudo importar)", "importable": False}
 
 
 def chequear_conectividad_languagetool(timeout: float = 3.0) -> Dict[str, Any]:
@@ -81,22 +80,22 @@ def diagnosticar() -> List[Dict[str, Any]]:
 
     typst_bin = chequear_binario("typst")
     typst_mod = chequear_modulo_python("typst")
-    typst_ok = typst_bin["disponible"] or typst_mod["disponible"]
-    if typst_mod["disponible"]:
+    # Un módulo instalado que no se puede importar no compila nada.
+    typst_ok = typst_bin["disponible"] or typst_mod["importable"]
+    if typst_mod["importable"]:
         detalle_typst = f"módulo Python {typst_mod['version']}"
     elif typst_bin["disponible"]:
         detalle_typst = f"binario {typst_bin['version']} ({typst_bin['ruta']})"
     else:
-        detalle_typst = "Ni binario en $PATH ni módulo Python instalado"
+        detalle_typst = ("El módulo Python no se puede importar y no hay binario en $PATH" if typst_mod["disponible"]
+                         else "Ni binario en $PATH ni módulo Python instalado")
     chequeos.append({
         "nombre": "typst", "requerido": True, "ok": typst_ok, "detalle": detalle_typst,
-        "proposito": "Render de exámenes en PDF (motor primario)",
+        "proposito": "Render de exámenes en PDF (obligatorio: es el único motor)",
         "sugerencia": "" if typst_ok else "pip install typst  (o) sudo snap install typst / cargo install typst-cli",
     })
 
     for modulo, proposito, sugerencia in (
-        ("weasyprint", "Fallback de render PDF cuando no hay plantilla Typst",
-         "pip install weasyprint  (requiere libpango/libcairo del sistema)"),
         ("pypdf", "Empaquetado de PDFs para imprenta (--bundle-print)", "pip install pypdf"),
     ):
         info = chequear_modulo_python(modulo)
@@ -131,8 +130,8 @@ def informe_json(chequeos: List[Dict[str, Any]]) -> Dict[str, Any]:
 def ejecutar_diagnostico_doctor(console: Optional[Console] = None) -> bool:
     """Ejecuta el diagnóstico completo e imprime una tabla con el resultado.
 
-    Retorna ``True`` si todos los requisitos obligatorios (gcc, Typst,
-    WeasyPrint y pypdf) están disponibles; ``False`` en caso contrario,
+    Retorna ``True`` si todos los requisitos obligatorios (gcc, Typst y
+    pypdf) están disponibles; ``False`` en caso contrario,
     indicando cómo instalar lo faltante.
     """
     cons = console or Console()

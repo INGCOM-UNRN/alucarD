@@ -30,20 +30,7 @@ class TestLoggingConfig:
         root_logger = logging.getLogger()
         assert len(root_logger.handlers) > 0
     
-    def test_logging_silencia_weasyprint(self):
-        """Debe silenciar logs de WeasyPrint"""
-        setup_logging(debug=False)
-        
-        weasyprint_logger = logging.getLogger('weasyprint')
-        assert weasyprint_logger.level == logging.WARNING
-    
-    def test_logging_silencia_fonttools(self):
-        """Debe silenciar logs de fontTools"""
-        setup_logging(debug=False)
-        
-        fonttools_logger = logging.getLogger('fontTools')
-        assert fonttools_logger.level == logging.WARNING
-    
+
     def test_logging_formato(self):
         """Debe tener formato correcto"""
         setup_logging(debug=False)

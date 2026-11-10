@@ -118,7 +118,7 @@ echo ""
 
 # Mostrar información de dependencias
 echo "📋 Dependencias instaladas:"
-uv pip list | grep -E "pydantic|pyyaml|jinja2|weasyprint" || true
+uv pip list | grep -E "pydantic|pyyaml|jinja2|typst" || true
 echo ""
 
 # Mensaje final

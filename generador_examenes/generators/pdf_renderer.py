@@ -3,7 +3,6 @@ Renderizador PDF usando Typst con soporte de plantillas personalizables.
 """
 import functools
 import logging
-import sys
 import subprocess
 import tempfile
 from pathlib import Path
@@ -11,12 +10,15 @@ from typing import Any, Optional
 from generador_examenes.core.models import DefinicionExamen
 from generador_examenes.core.estilo import contexto_estilo, preparar_examen
 from generador_examenes.generators.base import BaseRenderer
-from generador_examenes.generators.html_renderer import HtmlRenderer
 
 
 logger = logging.getLogger(__name__)
 
 TIMEOUT_TYPST = 300  # segundos para el binario typst (el primer arranque indexa las fuentes del sistema)
+
+
+class ErrorTypst(RuntimeError):
+    """Typst no pudo generar un PDF. Es el único motor: el PDF no se genera y la corrida falla."""
 
 
 @functools.lru_cache(maxsize=1)
@@ -97,7 +99,6 @@ class PdfRenderer(BaseRenderer):
         """
         self.templates_dir = templates_dir or (Path(__file__).parent.parent.parent / 'templates')
         self.custom_typst_template = custom_typst_template
-        self.html_renderer = HtmlRenderer(templates_dir)
 
     @staticmethod
     def get_supported_formats() -> list[str]:
@@ -150,11 +151,7 @@ class PdfRenderer(BaseRenderer):
                 trim_blocks=True,
                 lstrip_blocks=True
             ))
-            try:
-                template = env.get_template('base_examen.typ.j2')
-            except Exception:
-                # Fallback a HTML + WeasyPrint si no existe plantilla typst
-                return self._renderizar_examen_weasyprint(examen_data, definicion, output_dir, tema)
+            template = env.get_template('base_examen.typ.j2')
 
         typst_content = template.render(**contexto)
         output_file = output_dir / f"examen_tema_{tema + 1:02d}.pdf"
@@ -164,8 +161,7 @@ class PdfRenderer(BaseRenderer):
             logger.info(f"Examen PDF generado con Typst: {output_file}")
             return output_file
         except Exception as e:
-            self._avisar_fallo_typst(e, template, contexto)
-            return self._renderizar_examen_weasyprint(examen_data, definicion, output_dir, tema)
+            raise self._error_typst(e, template, contexto) from e
 
     def renderizar_clave(
         self,
@@ -217,17 +213,13 @@ class PdfRenderer(BaseRenderer):
             logger.info(f"Clave PDF generada con Typst: {output_file}")
             return output_file
         except Exception as e:
-            self._avisar_fallo_typst(e, template, contexto, "la clave")
-            return self._renderizar_clave_weasyprint(examen_data, definicion, output_dir, tema)
+            raise self._error_typst(e, template, contexto, "la clave") from e
 
-    def _avisar_fallo_typst(self, error: Exception, template, contexto: dict, que: str = "el examen") -> None:
+    def _error_typst(self, error: Exception, template, contexto: dict, que: str = "el examen") -> ErrorTypst:
         """Typst no compiló: se dice en qué pregunta, para no tener que buscarla en el .typ generado."""
         culpable = self._pregunta_que_falla(template, contexto) if template is not None else None
         donde = f" en la pregunta {culpable}" if culpable else ""
-        mensaje = (f"Typst no pudo compilar {que}{donde}: {str(error).splitlines()[0] if str(error) else error}. "
-                   "Se genera con WeasyPrint.")
-        logger.warning(mensaje)
-        print(f"Aviso: {mensaje}", file=sys.stderr)
+        return ErrorTypst(f"Typst no pudo compilar {que}{donde}: {str(error).splitlines()[0] if str(error) else error}")
 
     def _pregunta_que_falla(self, template, contexto: dict) -> Optional[str]:
         """La primera pregunta que, sola, no compila (o «la plantilla» si falla sin preguntas).
@@ -255,28 +247,3 @@ class PdfRenderer(BaseRenderer):
                     banco = getattr(preg, "fuente_banco", None)
                     return f"«{nombre}»" + (f" de {banco}" if banco else "")
         return None
-
-    def _renderizar_examen_weasyprint(self, examen_data, definicion, output_dir, tema) -> Path:
-        from jinja2 import Environment, FileSystemLoader
-        import json
-        templates_dir = Path(__file__).parent.parent.parent / 'templates'
-        env = Environment(loader=FileSystemLoader(str(templates_dir)), autoescape=True)
-        template = env.get_template('base_examen.html.j2')
-        contexto = {**contexto_estilo(definicion, tema, clave=False), 'definicion': definicion, 'secciones': preparar_examen(examen_data, definicion).get('secciones', []), 'tema': tema, 'i18n': {}}
-        html_content = template.render(**contexto)
-        output_file = output_dir / f"examen_tema_{tema + 1:02d}.pdf"
-        import weasyprint
-        weasyprint.HTML(string=html_content, base_url=str(templates_dir)).write_pdf(str(output_file))
-        return output_file
-
-    def _renderizar_clave_weasyprint(self, examen_data, definicion, output_dir, tema) -> Path:
-        from jinja2 import Environment, FileSystemLoader
-        templates_dir = Path(__file__).parent.parent.parent / 'templates'
-        env = Environment(loader=FileSystemLoader(str(templates_dir)), autoescape=True)
-        template = env.get_template('clave_profesor.html.j2')
-        contexto = {**contexto_estilo(definicion, tema, clave=True), 'definicion': definicion, 'secciones': preparar_examen(examen_data, definicion).get('secciones', []), 'tema': tema, 'i18n': {}}
-        html_content = template.render(**contexto)
-        output_file = output_dir / f"clave_tema_{tema + 1:02d}.pdf"
-        import weasyprint
-        weasyprint.HTML(string=html_content, base_url=str(templates_dir)).write_pdf(str(output_file))
-        return output_file

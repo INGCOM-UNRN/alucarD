@@ -17,7 +17,7 @@ from generador_examenes.cli_errors import usage_error as _usage_error
 
 
 def ejecutar_doctor() -> int:
-    """Subcomando `doctor` (ALUCARD-D0401): diagnostica gcc/typst/weasyprint/pypdf/LT."""
+    """Subcomando `doctor` (ALUCARD-D0401): diagnostica gcc/typst/pypdf/LT."""
     from rich.console import Console
     from generador_examenes.core.doctor import ejecutar_diagnostico_doctor
 
@@ -596,37 +596,32 @@ def generar_examen(args, logger) -> int:
             temas_generados.append(examen_mezclado)
             
             # Generar en cada formato solicitado
+            # Un formato que no se puede generar corta la corrida: no se sale con 0 sin el archivo.
             for fmt in formato:
-                try:
-                    renderer = obtener_renderer(fmt, custom_template=getattr(args, 'typst_template', None))
-                    
-                    # Generar examen
-                    archivo_examen = renderer.renderizar_examen(
+                renderer = obtener_renderer(fmt, custom_template=getattr(args, 'typst_template', None))
+
+                # Generar examen
+                archivo_examen = renderer.renderizar_examen(
+                    examen_mezclado,
+                    definicion,
+                    output_dir,
+                    i
+                )
+                archivos_generados.append(str(archivo_examen))
+                if not getattr(args, 'json_output', False):
+                    print(f"✓ Examen generado: {archivo_examen}")
+
+                # Generar clave si está configurado
+                if definicion.configuracion_examen.generar_clave_profesor:
+                    archivo_clave = renderer.renderizar_clave(
                         examen_mezclado,
                         definicion,
                         output_dir,
                         i
                     )
-                    archivos_generados.append(str(archivo_examen))
+                    archivos_generados.append(str(archivo_clave))
                     if not getattr(args, 'json_output', False):
-                        print(f"✓ Examen generado: {archivo_examen}")
-                    
-                    # Generar clave si está configurado
-                    if definicion.configuracion_examen.generar_clave_profesor:
-                        archivo_clave = renderer.renderizar_clave(
-                            examen_mezclado,
-                            definicion,
-                            output_dir,
-                            i
-                        )
-                        archivos_generados.append(str(archivo_clave))
-                        if not getattr(args, 'json_output', False):
-                            print(f"✓ Clave generada: {archivo_clave}")
-                
-                except Exception as e:
-                    logger.error(f"Error generando formato {fmt}: {e}")
-                    if args.debug:
-                        raise
+                        print(f"✓ Clave generada: {archivo_clave}")
 
             # Si se solicitó OMR, generar hoja Typst y descriptor JSON
             if getattr(args, 'omr', False):
@@ -862,11 +857,17 @@ def ejecutar_vista_previa(banco: Path, pregunta: Optional[str], linea: Optional[
         logic.procesar_imagenes(solo, path_images)
     examen = logic.construir_pool_examen(definicion, solo, 0)
     salida.mkdir(parents=True, exist_ok=True)
+    from generador_examenes.generators.pdf_renderer import ErrorTypst
+
     renderer = obtener_renderer(formato)
-    archivo = renderer.renderizar_examen(examen, definicion, salida, 0)
-    archivos = [archivo]
-    if clave:
-        archivos.append(renderer.renderizar_clave(examen, definicion, salida, 0))
+    try:
+        archivo = renderer.renderizar_examen(examen, definicion, salida, 0)
+        archivos = [archivo]
+        if clave:
+            archivos.append(renderer.renderizar_clave(examen, definicion, salida, 0))
+    except ErrorTypst as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
     for a in archivos:
         print(f"✓ Vista previa: {a}")
     if abrir and not abrir_archivo(Path(archivo)):

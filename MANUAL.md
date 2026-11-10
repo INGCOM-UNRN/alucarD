@@ -7,7 +7,7 @@
 
 ## 1. Arquitectura y Propósito Pedagógico
 
-`alucarD` es el generador canónico de exámenes y evaluaciones impresas de la cátedra de Programación 1 (UNRN). Integra la compilación de variantes dinámicas en C, la ingesta de bancos de preguntas (GIFT y Moodle XML) y la renderización de alta fidelidad tipográfica mediante Typst y WeasyPrint.
+`alucarD` es el generador canónico de exámenes y evaluaciones impresas de la cátedra de Programación 1 (UNRN). Integra la compilación de variantes dinámicas en C, la ingesta de bancos de preguntas (GIFT y Moodle XML) y la renderización de alta fidelidad tipográfica mediante Typst.
 
 ### Alcance Funcional (Qué cubre)
 - Generación automatizada de exámenes y parciales institucionales en formatos Typst, PDF y HTML.
@@ -42,7 +42,7 @@ uv tool install "generador-examenes[ecosistema,languagetool] @ git+https://githu
 ```bash
 generador-examenes doctor
 ```
-Diagnostica la presencia y versiones de `gcc`, `typst`, `weasyprint`, `pypdf` y la conectividad con el servidor LanguageTool.
+Diagnostica la presencia y versiones de `gcc`, `typst`, `pypdf` y la conectividad con el servidor LanguageTool. Typst es obligatorio: es el único motor de PDF, y sin él `doctor` sale con 1.
 
 ---
 
@@ -237,9 +237,9 @@ generador-examenes doctor
 
 Salida esperada:
 - `GCC`: OK (necesario para compilación y trazado de código C).
-- `Typst`: OK (compilador de documentos PDF de alta velocidad).
+- `Typst`: OK (el único motor de PDF; si una pregunta no compila, `alucard generar` dice cuál y sale con 1).
 - `LanguageTool`: OK (conectividad con servidor local o público).
-- `WeasyPrint / pypdf`: OK (librerías de renderizado y manipulación PDF).
+- `pypdf`: OK (empaquetado de los PDF para imprenta).
 
 ---
 

@@ -143,12 +143,7 @@ def test_pdf_con_estilo_completo(tmp_path, monkeypatch, logo, formato):
         fuentes.append(fuente)
         return compilar(fuente, salida, root_dir=root_dir)
 
-    def sin_respaldo(*_a, **_k):
-        raise AssertionError("Typst falló y se usó WeasyPrint")
-
     monkeypatch.setattr(pdf_renderer, "compilar_typst_a_pdf", capturar)
-    monkeypatch.setattr(PdfRenderer, "_renderizar_examen_weasyprint", sin_respaldo)
-    monkeypatch.setattr(PdfRenderer, "_renderizar_clave_weasyprint", sin_respaldo)
     definicion = _definicion(fuente=["Liberation Serif"], fuente_codigo="DejaVu Sans Mono", tamano=11,
                              encabezado={"izquierda": "{institucion}"}, pie="Página {pagina}",
                              logo=str(tmp_path / logo), logo_posicion="derecha", logo_alto_mm=20,

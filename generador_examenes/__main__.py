@@ -869,7 +869,7 @@ def _diagrama(
 def _doctor(
     json_output: bool = typer.Option(False, "--json", help="Emitir el diagnóstico como JSON (schema_version 1.0.0)."),
 ) -> None:
-    """Diagnostica gcc, Typst, WeasyPrint, pypdf y conectividad LanguageTool."""
+    """Diagnostica gcc, Typst, pypdf y conectividad LanguageTool."""
     if json_output:
         import json
 

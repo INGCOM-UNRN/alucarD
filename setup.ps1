@@ -94,7 +94,7 @@ Write-Host ""
 
 # Mostrar información de dependencias
 Write-Host "📋 Dependencias instaladas:" -ForegroundColor Yellow
-uv pip list | Select-String -Pattern "pydantic|pyyaml|jinja2|weasyprint"
+uv pip list | Select-String -Pattern "pydantic|pyyaml|jinja2|typst"
 Write-Host ""
 
 # Mensaje final
@@ -131,8 +131,3 @@ Write-Host ""
 Write-Host "🐛 ¿Problemas? Ver sección Troubleshooting en GUIA_UV.md" -ForegroundColor Yellow
 Write-Host ""
 
-# Nota sobre PDF en Windows
-Write-Host "⚠️  NOTA IMPORTANTE para generar PDFs:" -ForegroundColor Yellow
-Write-Host "   WeasyPrint requiere GTK3 en Windows" -ForegroundColor Gray
-Write-Host "   Descarga desde: https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer/releases" -ForegroundColor Gray
-Write-Host ""

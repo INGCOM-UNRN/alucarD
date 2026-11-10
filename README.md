@@ -35,7 +35,7 @@
 - `typst` (>= 0.11), `gcc` (para compilación de variantes de código C).
 
 ### Integración en el Ecosistema
-- CLI `alucard`, `generador-examenes`, `gift-linter`. Subcomando `doctor` (`generador-examenes doctor`) para verificar gcc, Typst, WeasyPrint, pypdf y conectividad con LanguageTool.
+- CLI `alucard`, `generador-examenes`, `gift-linter`. Subcomando `doctor` (`generador-examenes doctor`) para verificar gcc, Typst, pypdf y conectividad con LanguageTool.
 
 ---
 
@@ -1280,7 +1280,7 @@ class BaseRenderer(ABC):
 
 **Implementaciones**:
 - `HtmlRenderer`: Genera HTML con Jinja2
-- `PdfRenderer`: Genera PDF usando WeasyPrint (reutiliza HTML)
+- `PdfRenderer`: Genera PDF con Typst (plantillas `.typ.j2`)
 
 **Agregar nuevo renderer**:
 1. Heredar de `BaseRenderer`
@@ -1340,7 +1340,7 @@ Pregunta
 | **pydantic** | ≥2.10 | Validación de YAML |
 | **pyyaml** | ≥6.0 | Parseo YAML |
 | **jinja2** | ≥3.1 | Templating HTML |
-| **weasyprint** | ≥63.0 | Generación PDF |
+| **typst** | ≥0.11 | Generación PDF (obligatorio) |
 | **pygments** | ≥2.18 | Syntax highlighting |
 | **rich** | ≥13.9 | CLI interactiva |
 
@@ -1453,7 +1453,7 @@ Al reportar un issue, incluye:
 | `alucard repartir` | Reparte los temas en PDF entre los estudiantes, para entregarlos cifrados con uatu. |
 | `alucard diagramas-md` | Dibuja los bloques ```estructura de los Markdown como SVG versionados, para publicarlos sin alucarD. |
 | `alucard diagrama` | Dibuja estructuras de datos (arreglo, matriz, lista, pila, pila de llamadas, cola, árbol) como SVG, con el formato de bloques de statics. |
-| `alucard doctor` | Diagnostica gcc, Typst, WeasyPrint, pypdf y conectividad LanguageTool. |
+| `alucard doctor` | Diagnostica gcc, Typst, pypdf y conectividad LanguageTool. |
 
 Ayuda de cada comando: `alucard <comando> -h`.
 
@@ -1483,7 +1483,7 @@ Este proyecto está licenciado bajo la Licencia MIT - ver el archivo LICENSE par
 - [Jinja2](https://jinja.palletsprojects.com/) - Motor de plantillas
 - [Pydantic](https://pydantic-docs.helpmanual.io/) - Validación de datos
 - [Rich](https://rich.readthedocs.io/) - Interfaz CLI
-- [WeasyPrint](https://weasyprint.org/) - Generación de PDF
+- [Typst](https://typst.app/) - Generación de PDF
 - [Pygments](https://pygments.org/) - Syntax highlighting
 
 ---

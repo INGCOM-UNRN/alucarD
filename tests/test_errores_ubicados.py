@@ -15,7 +15,7 @@ def _pregunta(id_, nombre, enunciado="Texto"):
                     fuente_banco="banco.gift")
 
 
-def test_typst_dice_que_pregunta_no_compila(monkeypatch, capsys):
+def test_typst_dice_que_pregunta_no_compila(monkeypatch):
     def compilar(fuente, salida, root_dir=None):
         if "MALA" in fuente:
             raise RuntimeError("Fallo en compilación Typst: unclosed delimiter")
@@ -26,8 +26,8 @@ def test_typst_dice_que_pregunta_no_compila(monkeypatch, capsys):
     contexto = {"secciones": [{"nombre": "A", "preguntas": [_pregunta("1", "buena"), _pregunta("2", "rota", "MALA")]}]}
     renderer = pdf_renderer.PdfRenderer()
     assert renderer._pregunta_que_falla(plantilla, contexto) == "«rota» de banco.gift"
-    renderer._avisar_fallo_typst(RuntimeError("Fallo en compilación Typst: unclosed delimiter"), plantilla, contexto)
-    assert "en la pregunta «rota» de banco.gift" in capsys.readouterr().err
+    error = renderer._error_typst(RuntimeError("Fallo en compilación Typst: unclosed delimiter"), plantilla, contexto)
+    assert isinstance(error, pdf_renderer.ErrorTypst) and "en la pregunta «rota» de banco.gift" in str(error)
 
 
 def test_si_falla_sin_preguntas_no_culpa_a_ninguna(monkeypatch):

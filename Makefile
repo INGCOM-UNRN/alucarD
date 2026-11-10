@@ -95,7 +95,7 @@ info: ## Mostrar información del proyecto
 	@echo ""
 	@if [ -d .venv ]; then \
 		echo "Paquetes instalados:"; \
-		. .venv/bin/activate && uv pip list | grep -E "pydantic|pyyaml|jinja2|weasyprint" || true; \
+		. .venv/bin/activate && uv pip list | grep -E "pydantic|pyyaml|jinja2|typst" || true; \
 	fi
 
 docs: ## Abrir documentación

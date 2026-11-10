@@ -71,3 +71,41 @@ def test_la_definicion_y_la_linea_de_comandos_mandan(tmp_path, monkeypatch):
     assert main() == 0
     assert not (tmp_path / "salida").exists()
     assert len(list((tmp_path / "cli").glob("*.html"))) == 1
+
+
+def _correr(monkeypatch, *argumentos: str) -> int:
+    monkeypatch.setattr(sys, "argv", ["alucard", *argumentos])
+    return main()
+
+
+def _typst_roto(monkeypatch):
+    from generador_examenes.generators import pdf_renderer
+
+    def compilar(*_a, **_k):
+        raise RuntimeError("Typst no está instalado (ni la librería de Python ni el binario)")
+
+    monkeypatch.setattr(pdf_renderer, "compilar_typst_a_pdf", compilar)
+
+
+def test_si_typst_falla_generar_sale_con_error_y_sin_pdf(tmp_path, monkeypatch, capsys):
+    definicion = _proyecto(tmp_path, 'input_banco = ["bancos/b.txt"]\nformato = ["pdf"]\n')
+    monkeypatch.chdir(tmp_path)
+    _typst_roto(monkeypatch)
+    assert _correr(monkeypatch, "generar", "-d", str(definicion), "-o", str(tmp_path / "o")) == 1
+    assert not list((tmp_path / "o").glob("*.pdf"))
+    assert "Generación completada" not in capsys.readouterr().out
+
+
+def test_si_typst_falla_la_vista_previa_lo_dice(tmp_path, monkeypatch, capsys):
+    (tmp_path / "b.gift").write_text(BANCO, encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    _typst_roto(monkeypatch)
+    assert _correr(monkeypatch, "ver", "b.gift", "-f", "pdf", "--no-abrir", "-o", str(tmp_path / "v")) == 1
+    assert "Error: Typst no pudo compilar" in capsys.readouterr().err
+
+
+def test_html_no_depende_de_typst(tmp_path, monkeypatch):
+    definicion = _proyecto(tmp_path, 'input_banco = ["bancos/b.txt"]\nformato = ["html"]\n')
+    monkeypatch.chdir(tmp_path)
+    _typst_roto(monkeypatch)
+    assert _correr(monkeypatch, "generar", "-d", str(definicion), "-o", str(tmp_path / "o")) == 0

@@ -212,7 +212,6 @@ class TestPdfRenderer:
     def test_inicializacion(self):
         """Debe inicializar correctamente con soporte Typst"""
         renderer = PdfRenderer()
-        assert renderer.html_renderer is not None
         assert 'pdf' in renderer.get_supported_formats()
 
     def test_renderizar_examen_pdf_typst(self, tmp_path, definicion_ejemplo, examen_data):

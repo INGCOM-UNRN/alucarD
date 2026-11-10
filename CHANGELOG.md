@@ -40,6 +40,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Cambiado
 
+- **pdf**: Typst es el único motor de PDF y `alucard doctor` lo exige (también comprueba que el módulo se pueda importar). Se quitó WeasyPrint, con sus dependencias del sistema (Pango, Cairo y GTK3 en Windows). Si Typst no compila, `alucard generar` dice en qué pregunta y sale con 1, en vez de armar otro PDF con un formato distinto; `alucard ver` hace lo mismo.
 - **diagramas**: más contraste en las listas enlazadas: las etiquetas `dato`, `*sig`, `*ant` y `sig:…`/`ant:… | sig:…` pasan de gris a negro (sin negrita) y un punto más grandes.
 - **cli**: `--init`, `--wizard`, `--category-tree`, `--spellcheck` y `--validate` siguen andando con un aviso y no aparecen en la ayuda (`c525bb6`).
 - **sintetizador**: `alucard sintetizar <plantilla>` es un comando (sin plantilla, lista las disponibles); reemplaza a `--sintetizar`, `--listar-sintetizadores`, `--cantidad` y `--formato-banco` (ahora `-c` y `-f`). Las plantillas pasan a `synthesizer/plantillas.py` y la compilación a `synthesizer/sandbox.py`.
