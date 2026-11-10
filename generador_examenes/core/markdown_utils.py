@@ -16,6 +16,10 @@ from generador_examenes.diagramas import expandir_en_markdown, reponer_svgs
 logger = logging.getLogger(__name__)
 
 
+# NFKC los reduce a un carácter común y cambia el sentido: `O(n²)` sería `O(n2)` y `O(2ⁿ)`, `O(2n)`.
+_SIN_NORMALIZAR = ("<super>", "<sub>", "<fraction>")
+
+
 def normalizar_fullwidth(text: str) -> str:
     """
     Normaliza caracteres fullwidth a su equivalente ASCII tradicional.
@@ -32,8 +36,14 @@ def normalizar_fullwidth(text: str) -> str:
         return ""
     
     # Normalizar usando NFKC (Normalization Form KC - Compatibility Decomposition)
-    # Esto convierte caracteres fullwidth a su equivalente halfwidth/ASCII
-    normalized = unicodedata.normalize('NFKC', text)
+    # Esto convierte caracteres fullwidth a su equivalente halfwidth/ASCII. Los superíndices,
+    # subíndices y fracciones quedan como están.
+    intactos = {c for c in set(text) if unicodedata.decomposition(c).startswith(_SIN_NORMALIZAR)}
+    if intactos:
+        trozos = re.split("([" + re.escape("".join(sorted(intactos))) + "])", text)
+        normalized = "".join(t if i % 2 else unicodedata.normalize('NFKC', t) for i, t in enumerate(trozos))
+    else:
+        normalized = unicodedata.normalize('NFKC', text)
     
     # El ↵ de voight marca el final de una línea que igual termina en un salto real: se quita. Sólo
     # se vuelve un salto cuando no lo hay (el código pegado en una sola línea). Antes cada ↵ sumaba un
@@ -176,6 +186,7 @@ def detect_and_convert_format(text: str, format_hint: Optional[str] = None) -> s
     
     # Si ya es HTML o no se especifica, devolver tal cual
     # pero procesar bloques de código si los hay
+    text = normalizar_fullwidth(text)
     if '```' in text:
         return process_code_blocks_manual(text)
     

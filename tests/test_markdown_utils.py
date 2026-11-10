@@ -341,3 +341,12 @@ int main（） ｛↵
     assert '（' not in html
     assert '）' not in html
     assert '↵' not in html
+
+
+@pytest.mark.parametrize("texto", ["O(n²)", "O(2ⁿ)", "x₁", "½", "n³"])
+def test_los_superindices_no_se_normalizan(texto):
+    assert normalizar_fullwidth(texto) == texto
+
+
+def test_el_ancho_completo_se_normaliza_igual_al_lado_de_un_superindice():
+    assert normalizar_fullwidth("Costo： O(n²)　y ﬁn") == "Costo: O(n²) y fin"

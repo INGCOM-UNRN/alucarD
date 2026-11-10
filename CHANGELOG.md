@@ -47,6 +47,8 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Corregido
 
+- **texto**: los caracteres en ancho completo se normalizan también en las preguntas sin `[markdown]`.
+- **texto**: los superíndices, subíndices y fracciones ya no se pierden al leer un banco: `O(n²)` salía `O(n2)` y `O(2ⁿ)`, `O(2n)`, también en los diagramas.
 - **diagramas**: en `call_stack` con `steps`, la columna de cada momento crece con su rótulo; un rótulo largo («segunda llamada, antes de c++») ya no se corta ni lo pisa la columna siguiente.
 - **diagramas**: un `title` o `subtitle` más ancho que el dibujo quedaba cortado; el SVG ahora se ensancha para que entren.
 - **parser GIFT**: las marcas escapadas `\=`, `\~` y `\#` de una opción se tomaban como una opción nueva o como retroalimentación (`p->sig \=\= HEAD` se partía en tres opciones, dos «correctas»). Ahora son texto y se desescapan, en selección múltiple y en respuesta corta.
