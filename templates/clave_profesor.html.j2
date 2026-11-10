@@ -249,6 +249,13 @@ body * { background-color: transparent !important; }
             </div>
             {% endif %}
 
+            {% if pregunta.metadata.criterio_html %}
+            <div class="correct-answer">
+                <strong>{{ i18n.criterio }}:</strong>
+                {{ pregunta.metadata.criterio_html | safe }}
+            </div>
+            {% endif %}
+
             {% if pregunta.retroalimentacion_general %}
             <div style="margin-top: 0.5em; font-style: italic; color: #666;">
                 {{ pregunta.retroalimentacion_general }}

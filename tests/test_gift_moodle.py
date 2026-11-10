@@ -208,3 +208,17 @@ def test_el_cli_acepta_carpetas_de_bancos(arbol):
     from typer.testing import CliRunner
 
     assert CliRunner().invoke(app, ["lint-gift", str(arbol)]).exit_code == 0
+
+
+def test_el_comentario_de_arriba_es_el_criterio_de_la_clave(tmp_path):
+    uno, dos = preguntas(tmp_path, (
+        "// =====\n// Encabezado del banco\n\n"
+        "// =====\n// Criterio (5 puntos):\n// - [2 pts] **cpp**\n// =====\n"
+        "// [tag, desarrollo-mediano, gcc]\n::a::Explicá {}\n\n"
+        "// suelto, separado\n\n// [tag, x]\n::b::Mirá\n```c\nint x;\n\n// no es criterio\n```\n{}\n"))
+    criterio = uno.metadata["criterio_html"]
+    assert "Criterio (5 puntos)" in criterio and "<strong>cpp</strong>" in criterio
+    assert "=" not in criterio and "Encabezado" not in criterio and "tag" not in criterio
+    assert uno.etiquetas == ["gcc"] and uno.tamano_desarrollo == "mediano"
+    assert dos.nombre == "b" and "criterio_html" not in dos.metadata
+

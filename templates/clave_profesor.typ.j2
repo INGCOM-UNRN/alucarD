@@ -60,8 +60,12 @@
   {% for i in correctas %}
   #text(fill: rgb("22543d"), weight: "bold")[✓ {{ letra(i) }})] {{ preg.opciones[i].texto_html | typst }}
   {% endfor %}
-  {% else %}
+  {% elif not preg.metadata.criterio_html %}
   #text(fill: rgb("22543d"), weight: "bold")[✓ Respuesta:] Ver criterio de corrección
+  {% endif %}
+  {% if preg.metadata.criterio_html %}
+  #text(fill: rgb("22543d"), weight: "bold")[✓ Criterio:]
+  {{ preg.metadata.criterio_html | typst }}
   {% endif %}
   {% if preg.retroalimentacion_general %}
   \ #text(fill: rgb("{{ c.sub }}"), size: 0.85em)[*Explicación:* {{ preg.retroalimentacion_general | typst }}]

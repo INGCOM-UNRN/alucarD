@@ -88,3 +88,19 @@ def test_build_genera_examen_y_clave_en_pdf_sin_yaml(monkeypatch, capsys, tmp_pa
     assert "✓" not in examen and "</" not in examen and "None" not in examen  # el examen no muestra la clave
     assert "A)" in examen and "D)" in examen
     assert "✓" in clave and "Ver criterio" not in clave
+
+
+@pytest.mark.skipif(pytest.importorskip("typst", reason="hace falta el módulo typst") is None, reason="typst")
+def test_el_criterio_del_banco_sale_en_la_clave_y_no_en_el_examen(monkeypatch, capsys, tmp_path):
+    from pypdf import PdfReader
+
+    banco = tmp_path / "teoria.gift"
+    banco.write_text("// =====\n// Criterio: nombrar cpp, cc1, as y ld\n// [tag, desarrollo-chico]\n"
+                     "::etapas::Describí las etapas {}\n", encoding="utf-8")
+    salida_dir = tmp_path / "salida"
+    codigo, salida = _alucard(monkeypatch, capsys, ["build", "-i", str(banco), "-o", str(salida_dir)])
+    assert codigo == 0, salida
+    examen = "".join(p.extract_text() for p in PdfReader(salida_dir / "examen_tema_01.pdf").pages)
+    clave = "".join(p.extract_text() for p in PdfReader(salida_dir / "clave_tema_01.pdf").pages)
+    assert "nombrar cpp" in clave and "Ver criterio" not in clave and "=====" not in clave
+    assert "nombrar cpp" not in examen

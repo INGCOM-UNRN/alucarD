@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 from generador_examenes.core.models import Pregunta, Opcion
 from generador_examenes.parsers.base import BaseParser
-from generador_examenes.core.markdown_utils import detect_and_convert_format
+from generador_examenes.core.markdown_utils import detect_and_convert_format, markdown_to_html
 from generador_examenes.tablas import proteger_comentarios
 
 
@@ -93,6 +93,17 @@ _SINTAXIS_VIEJA = re.compile(
     re.I | re.M)
 
 
+# Un renglón de comentario que sólo separa (`// =====`, `// -----`) no es parte del criterio.
+_SEPARADOR = re.compile(r'[=\-_*~#+ ]*')
+
+
+def _criterio(lineas) -> str:
+    """El comentario de arriba de la pregunta, sin las `//` ni los separadores, como HTML para la clave."""
+    texto = [re.sub(r'^\s*//\s?', '', linea).rstrip() for linea in lineas]
+    texto = [linea for linea in texto if not _SEPARADOR.fullmatch(linea)]
+    return markdown_to_html('\n'.join(texto)).strip() if texto else ''
+
+
 def sintaxis_vieja(contenido: str) -> list[re.Match]:
     """Los `[tags: …]`, `[category: …]` y `{desarrollo…}` de un banco, sin mirar los comentarios."""
     return [m for m in _SINTAXIS_VIEJA.finditer(contenido) if m.group('clave') or m.group('desarrollo')]
@@ -169,14 +180,15 @@ class GiftParser(BaseParser):
         Returns:
             Lista de tuplas (bloque_texto, categoria_actual)
         """
-        # Eliminar comentarios (líneas que empiezan con //), salvo los que llevan metadatos
-        lines = [line for line in content.split('\n')
-                 if not _ES_COMENTARIO.match(line) or _METADATOS.search(line) or _CORTE.match(line)]
+        lines = content.split('\n')
 
         bloques = []
         bloque_actual: List[str] = []
         categoria_actual = "General"
         linea_previa_vacia = False
+        # Los comentarios sin metadatos no cortan bloques. Los que van pegados arriba de la pregunta
+        # (sin línea en blanco en el medio) son su criterio de corrección; los demás se descartan.
+        sueltos: List[str] = []
 
         def inicia_pregunta(linea: str) -> bool:
             """Una línea en blanco sólo corta bloque si la siguiente inicia pregunta.
@@ -192,8 +204,13 @@ class GiftParser(BaseParser):
         for line in lines:
             stripped = line.strip()
 
+            if _ES_COMENTARIO.match(line) and not _METADATOS.search(line) and not _CORTE.match(line):
+                sueltos.append(line)
+                continue
+
             # Detectar cambio de categoría
             if stripped.startswith('$CATEGORY:'):
+                sueltos = []
                 # Guardar bloque actual si existe antes de cambiar categoría
                 if bloque_actual:
                     bloques.append(('\n'.join(bloque_actual), categoria_actual))
@@ -207,10 +224,14 @@ class GiftParser(BaseParser):
             # Procesar líneas de contenido
             if stripped == '':
                 linea_previa_vacia = True
+                sueltos = []
             else:
                 if linea_previa_vacia and bloque_actual and inicia_pregunta(line):
                     bloques.append(('\n'.join(bloque_actual), categoria_actual))
                     bloque_actual = []
+                if all(_ES_COMENTARIO.match(previa) for previa in bloque_actual):
+                    bloque_actual += sueltos
+                sueltos = []
                 bloque_actual.append(line)
                 linea_previa_vacia = False
         
@@ -231,7 +252,9 @@ class GiftParser(BaseParser):
             categoria_actual: Categoría aplicada a esta pregunta desde $CATEGORY
         """
         lineas = bloque.split('\n')
-        comentarios = '\n'.join(linea for linea in lineas if _ES_COMENTARIO.match(linea))
+        comentarios = '\n'.join(linea for linea in lineas if _ES_COMENTARIO.match(linea) and _METADATOS.search(linea))
+        criterio = _criterio(linea for linea in lineas
+                             if _ES_COMENTARIO.match(linea) and not _METADATOS.search(linea) and not _CORTE.match(linea))
         bloque = '\n'.join(f'\n<!--{marca.group(1).lower()}-->\n' if (marca := _CORTE.match(linea)) else linea
                            for linea in lineas if _CORTE.match(linea) or not _ES_COMENTARIO.match(linea))
         # Una marca arriba del título o después de las respuestas no corta nada.
@@ -321,7 +344,8 @@ class GiftParser(BaseParser):
             opciones=opciones,
             etiquetas=etiquetas,
             tamano_desarrollo=tamano_desarrollo,  # type: ignore[arg-type]  # pydantic valida el literal
-            fuente_banco=banco_nombre
+            fuente_banco=banco_nombre,
+            metadata={"criterio_html": criterio} if criterio else {},
         )
         
         return pregunta

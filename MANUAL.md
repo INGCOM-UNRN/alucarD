@@ -1010,6 +1010,7 @@ $CATEGORY: tipos/structs
 ~`1`
 }
 
+// Criterio (2 puntos): la fuga pierde memoria accesible; el colgante apunta a memoria liberada.
 // [tag, desarrollo-grande, punteros]
 ::fuga-vs-colgante::Explicá la diferencia entre una fuga y un puntero colgante. {}
 ```
@@ -1018,6 +1019,9 @@ $CATEGORY: tipos/structs
   que un GIFT importado directo llega sin etiquetas; `voight convert gift-to-xml` las pasa al XML.
   `[tag:nombre]`, el formato que exporta Moodle, se lee, pero es error en `lint-gift` y `--fix` lo cambia.
 - **Categoría de una sola pregunta:** `[category, ruta]`. Moodle la ignora; para que la tome, usá `$CATEGORY:`.
+- **Criterio de corrección:** el resto del comentario pegado arriba de la pregunta va a la clave del
+  profesor, debajo de la respuesta, sin las `//` ni los renglones que sólo separan (`// =====`). Un
+  comentario separado por un renglón en blanco no se toma.
 - **Desarrollo:** `{}`, la pregunta de ensayo de Moodle. El tamaño va en la etiqueta
   `desarrollo-cero`, `-chico`, `-mediano`, `-grande` o `-pagina`, que alucard no cuenta como etiqueta
   para filtrar. Ver [Espacio de las preguntas de desarrollo](#espacio-de-las-preguntas-de-desarrollo).
