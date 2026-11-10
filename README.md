@@ -942,16 +942,20 @@ Las preguntas de desarrollo permiten al alumno escribir respuestas extensas. Se 
 // [tag, desarrollo-grande, algoritmos]
 ::Análisis de Algoritmo::Analiza el siguiente algoritmo... {}
 
-// [tag, desarrollo-pequeno, basico]
+// [tag, desarrollo-chico, basico]
 ::Diferencia Simple::¿Cuál es la diferencia entre X e Y? {}
 ```
 
 `{}` es la pregunta de ensayo de Moodle; el tamaño del espacio va en una etiqueta.
 
 **Tamaños disponibles:**
-- `[tag, desarrollo-pequeno]` - Espacio pequeño (~4-6 líneas)
-- `[tag, desarrollo-mediano]` - Espacio mediano (~8-10 líneas) [default]
-- `[tag, desarrollo-grande]` - Espacio grande (~14-16 líneas)
+- `[tag, desarrollo-cero]` - Sin recuadro
+- `[tag, desarrollo-chico]` - Espacio chico (`desarrollo-pequeno` se sigue leyendo)
+- `[tag, desarrollo-mediano]` - Espacio mediano [default]
+- `[tag, desarrollo-grande]` - Espacio grande
+- `[tag, desarrollo-pagina]` - La pregunta en su propia hoja
+
+Sin etiqueta, vale `configuracion_examen.espacio_desarrollo`.
 
 #### Formato Moodle XML
 
@@ -967,7 +971,7 @@ En Moodle XML, las preguntas tipo `essay` se mapean automáticamente a `desarrol
 </question>
 ```
 
-El tamaño va en las mismas etiquetas que en GIFT; sin etiqueta, es `mediano`.
+El tamaño va en las mismas etiquetas que en GIFT; sin etiqueta, vale `espacio_desarrollo`.
 
 #### Uso en Configuración YAML
 

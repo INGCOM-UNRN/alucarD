@@ -127,9 +127,10 @@ class MoodleXMLParser(BaseParser):
                 if tag_text is not None and tag_text.text:
                     etiquetas.append(tag_text.text)
         # El tamaño de un desarrollo viaja como etiqueta, igual que en GIFT: `responseformat` es el
-        # editor de Moodle, que casi siempre es `editor`, y no dice nada del tamaño.
+        # editor de Moodle, que casi siempre es `editor`, y taparía a `espacio_desarrollo`.
         if tipo == 'desarrollo':
-            tamano_desarrollo = next((m.group(1).lower() for m in map(_TAMANO.fullmatch, etiquetas) if m), "mediano")
+            tamano_desarrollo = next((m.group(1).lower() for m in map(_TAMANO.fullmatch, etiquetas) if m),
+                                     tamano_desarrollo)
         etiquetas = [tag for tag in etiquetas if not _TAMANO.fullmatch(tag)]
 
         # Extraer puntaje por defecto

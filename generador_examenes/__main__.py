@@ -93,6 +93,11 @@ configuracion_examen:
   # Renglones para justificar cada pregunta de selección múltiple (0: sin justificación);
   # cada pool puede cambiarlos con su propio `lineas_justificacion`.
   lineas_justificacion: 0
+  # Espacio de las preguntas de desarrollo: cero, chico, mediano, grande o pagina. Una pregunta
+  # pide otro con la etiqueta `desarrollo-grande`, `desarrollo-cero`, etc.
+  espacio_desarrollo: mediano
+  # true: ese espacio vale también para las preguntas que piden otro con su etiqueta.
+  forzar_espacio_desarrollo: false
   # Cada pregunta de desarrollo en su propia hoja, con el resto de la hoja para responder.
   desarrollo_en_hoja_separada: false
   # titulo_justificacion: "Justificá tu respuesta"

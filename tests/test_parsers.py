@@ -1125,4 +1125,4 @@ def test_moodle_xml_lee_el_tamano_del_desarrollo_de_su_etiqueta(tmp_path):
                      '</questiontext><responseformat>editor</responseformat><tags><tag><text>desarrollo-pequeno</text></tag>'
                      '<tag><text>uml</text></tag></tags></question></quiz>', encoding="utf-8")
     (pregunta,) = MoodleXMLParser().parse(banco).values()
-    assert pregunta.tamano_desarrollo == "pequeno" and pregunta.etiquetas == ["uml"]
+    assert pregunta.tamano_desarrollo == "chico" and pregunta.etiquetas == ["uml"]

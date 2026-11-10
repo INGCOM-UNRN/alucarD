@@ -256,7 +256,7 @@ body {
   flex-direction: column;
 }
 
-.desarrollo-box.pequeno {
+.desarrollo-box.chico {
   min-height: 4em;
 }
 
@@ -266,6 +266,10 @@ body {
 
 .desarrollo-box.grande {
   min-height: 14em;
+}
+
+.desarrollo-box.pagina {
+  min-height: 40em;
 }
 
 /* Consignas prácticas: renglones para resolver (la cantidad la fija la presentación) */
@@ -412,7 +416,7 @@ code {
     border: 1px solid #666 !important;
   }
   
-  .desarrollo-box.pequeno {
+  .desarrollo-box.chico {
     min-height: 3em !important;
   }
   
@@ -556,7 +560,7 @@ body * { border-color: #000 !important; }
         {% endif %}
 
         {% for pregunta in seccion.preguntas %}
-        <div class="question{% if definicion.configuracion_examen.desarrollo_en_hoja_separada and pregunta.tipo == 'desarrollo' %} hoja-separada{% endif %}">
+        <div class="question{% if pregunta.tamano_desarrollo == 'pagina' %} hoja-separada{% endif %}">
             <div class="question-header">
                 {{ i18n.question }} {{ loop.index }} 
                 ({{ pregunta.puntaje }} {% if pregunta.puntaje == 1 %}{{ i18n.point }}{% else %}{{ i18n.points }}{% endif %})
@@ -596,8 +600,10 @@ body * { border-color: #000 !important; }
                 </div>
             </div>
             {% elif pregunta.tipo == 'desarrollo' %}
+            {% if pregunta.tamano_desarrollo != 'cero' %}
             <div class="desarrollo-box {{ pregunta.tamano_desarrollo or 'mediano' }}">
             </div>
+            {% endif %}
             {% elif pregunta.tipo == 'consigna_practica' %}
             {% if pregunta.lineas_respuesta %}
             <div class="renglones">

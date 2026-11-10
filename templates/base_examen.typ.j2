@@ -113,8 +113,9 @@
 
 // Secciones del Examen
 {% set tipos_desarrollo = ['desarrollo', 'essay', 'codigo'] %}
+{% set alto_desarrollo = {'chico': 6, 'mediano': 12, 'grande': 24} %}
 {% for seccion in secciones %}
-  {% if not loop.first and definicion.configuracion_examen.desarrollo_en_hoja_separada and seccion.preguntas and seccion.preguntas[0].tipo in tipos_desarrollo %}
+  {% if not loop.first and seccion.preguntas and seccion.preguntas[0].tamano_desarrollo == 'pagina' %}
   #pagebreak(weak: true)
   {% endif %}
   #text(size: 1.2em, weight: "bold", fill: rgb("{{ c.seccion }}"))[{{ seccion.nombre | typst_texto }}]
@@ -125,7 +126,7 @@
 
   {% for preg in seccion.preguntas %}
   {% set partes = preg.enunciado_html | typst_partes %}
-  {% set hoja = definicion.configuracion_examen.desarrollo_en_hoja_separada and preg.tipo in tipos_desarrollo %}
+  {% set hoja = preg.tamano_desarrollo == 'pagina' %}
   {% if hoja and not loop.first %}
   #pagebreak(weak: true)
   {% endif %}
@@ -178,9 +179,9 @@
       {% endfor %}
     ]
     {% endif %}
-    {% elif preg.tipo in tipos_desarrollo and not hoja %}
+    {% elif preg.tipo in tipos_desarrollo and not hoja and preg.tamano_desarrollo != 'cero' %}
     #v(6pt)
-    #espacio(60pt)
+    #context espacio({{ alto_desarrollo[preg.tamano_desarrollo or 'mediano'] }}em.to-absolute())
     {% endif %}
     ]),
   ))

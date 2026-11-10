@@ -1,11 +1,14 @@
 """Por dónde se parte una pregunta en el PDF, y las preguntas de desarrollo en su propia hoja."""
 
 import pytest
+from pydantic import ValidationError
 from pypdf import PdfReader
 from typer.testing import CliRunner
 
 from generador_examenes.__main__ import app
+from generador_examenes.core.logic import construir_pool_examen
 from generador_examenes.core.markdown_utils import markdown_to_html
+from generador_examenes.core.models import DefinicionExamen
 from generador_examenes.generators.typst_markup import html_a_typst, partes_typst
 from generador_examenes.parsers.gift_parser import GiftParser
 
@@ -132,6 +135,104 @@ def test_cada_desarrollo_va_en_su_hoja_si_se_pide(tmp_path, monkeypatch, hoja, e
     if hoja == "true":
         assert "Parte A" in paginas[0] and "Parte B" not in paginas[0]
         assert not any("uno" in p and "dos" in p for p in paginas)
+
+
+def desarrollo(etiqueta=""):
+    comentario = f"// [tag, {etiqueta}]\n" if etiqueta else ""
+    return f"{comentario}::a::Explicá.\n{{}}\n"
+
+
+@pytest.mark.parametrize("etiqueta, tamano", [
+    ("", None), ("desarrollo-cero", "cero"), ("desarrollo-chico", "chico"), ("desarrollo-pequeno", "chico"),
+    ("desarrollo-mediano", "mediano"), ("desarrollo-grande", "grande"), ("desarrollo-pagina", "pagina"),
+    ("desarrollo-página", "pagina"),
+])
+def test_la_pregunta_pide_su_espacio_con_una_etiqueta(tmp_path, etiqueta, tamano):
+    (p,) = pregunta(tmp_path, desarrollo(etiqueta))
+    assert p.tamano_desarrollo == tamano and p.etiquetas == []
+
+
+def definicion_con(**configuracion):
+    return DefinicionExamen(nombre_examen="x", institucion="x", materia="x", configuracion_examen=configuracion,
+                            secciones_examen=[{"nombre": "s", "pools": [{"tipos": ["desarrollo"]}]}])
+
+
+def espacios(tmp_path, gift, **configuracion):
+    banco = tmp_path / "banco.gift"
+    banco.write_text(gift, encoding="utf-8")
+    examen = construir_pool_examen(definicion_con(**configuracion), GiftParser().parse(banco))
+    return sorted(p.tamano_desarrollo for p in examen["secciones"][0]["preguntas"])
+
+
+DOS_PREGUNTAS = "::a::Sin etiqueta\n{}\n\n// [tag, desarrollo-cero]\n::b::Con etiqueta\n{}\n"
+
+
+def test_sin_nada_el_espacio_es_mediano(tmp_path):
+    assert espacios(tmp_path, DOS_PREGUNTAS) == ["cero", "mediano"]
+
+
+def test_la_opcion_general_vale_para_las_que_no_piden_otro(tmp_path):
+    assert espacios(tmp_path, DOS_PREGUNTAS, espacio_desarrollo="grande") == ["cero", "grande"]
+
+
+def test_forzar_el_espacio_pisa_las_etiquetas(tmp_path):
+    gift = "// [tag, desarrollo-grande]\n::a::Uno\n{}\n\n::b::Dos\n{}\n"
+    assert espacios(tmp_path, gift, espacio_desarrollo="cero", forzar_espacio_desarrollo=True) == ["cero", "cero"]
+
+
+def test_sin_forzar_la_etiqueta_sigue_mandando(tmp_path):
+    gift = "// [tag, desarrollo-grande]\n::a::Uno\n{}\n\n::b::Dos\n{}\n"
+    assert espacios(tmp_path, gift, espacio_desarrollo="cero", forzar_espacio_desarrollo=False) == ["cero", "grande"]
+
+
+def test_la_hoja_separada_manda_sobre_el_espacio_forzado(tmp_path):
+    assert espacios(tmp_path, DOS_PREGUNTAS, espacio_desarrollo="cero", forzar_espacio_desarrollo=True,
+                    desarrollo_en_hoja_separada=True) == ["pagina", "pagina"]
+
+
+def test_la_hoja_separada_manda_sobre_las_preguntas(tmp_path):
+    assert espacios(tmp_path, DOS_PREGUNTAS, desarrollo_en_hoja_separada=True) == ["pagina", "pagina"]
+
+
+def test_el_nombre_anterior_vale_en_la_opcion_general():
+    assert definicion_con(espacio_desarrollo="pequeno").configuracion_examen.espacio_desarrollo == "chico"
+
+
+def test_un_espacio_desconocido_es_un_error():
+    with pytest.raises(ValidationError):
+        definicion_con(espacio_desarrollo="enorme")
+
+
+def alturas(tmp_path, tamano, formato="pdf"):
+    """Lo que ocupa una pregunta de ese tamaño, en el documento generado."""
+    (tmp_path / "e.yaml").write_text(
+        "nombre_examen: x\ninstitucion: x\nmateria: x\nconfiguracion_examen:\n  generar_clave_profesor: false\n"
+        f"  espacio_desarrollo: {tamano}\nsecciones_examen:\n  - nombre: s\n    pools:\n      - tipos: [desarrollo]\n",
+        encoding="utf-8")
+    (tmp_path / "b.gift").write_text("::uno::Primera\n{}\n\n::dos::Segunda\n{}\n", encoding="utf-8")
+    resultado = CliRunner().invoke(app, ["generar", "-d", str(tmp_path / "e.yaml"), "-i", str(tmp_path / "b.gift"),
+                                         "-o", str(tmp_path / "out"), "-f", formato])
+    assert resultado.exit_code == 0, resultado.output
+    return tmp_path / "out" / f"examen_tema_01.{formato}"
+
+
+@pytest.mark.parametrize("tamano, recuadros", [("cero", 0), ("chico", 2), ("grande", 2)])
+def test_el_pdf_dibuja_el_recuadro_del_tamano(tmp_path, tamano, recuadros):
+    texto = "".join(p.extract_text() for p in PdfReader(alturas(tmp_path, tamano)).pages)
+    assert texto.count("Espacio para desarrollo") == recuadros
+
+
+def test_pagina_pone_cada_pregunta_en_su_hoja(tmp_path):
+    paginas = [p.extract_text() for p in PdfReader(alturas(tmp_path, "pagina")).pages]
+    assert len(paginas) == 2 and "Espacio para desarrollo" in paginas[0] and "Espacio para desarrollo" in paginas[1]
+
+
+def test_el_html_usa_el_tamano(tmp_path):
+    assert 'desarrollo-box grande' in alturas(tmp_path, "grande", "html").read_text(encoding="utf-8")
+
+
+def test_el_html_sin_espacio_no_dibuja_el_recuadro(tmp_path):
+    assert '<div class="desarrollo-box' not in alturas(tmp_path, "cero", "html").read_text(encoding="utf-8")
 
 
 def test_un_comentario_que_nombra_la_marca_no_cambia_los_ids(tmp_path):

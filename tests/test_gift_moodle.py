@@ -55,8 +55,8 @@ def test_la_categoria_de_una_pregunta_va_en_el_comentario(tmp_path):
 
 
 @pytest.mark.parametrize("comentario, tamano", [
-    ("", "mediano"),
-    ("// [tag, desarrollo-pequeno]\n", "pequeno"),
+    ("", None),
+    ("// [tag, desarrollo-pequeno]\n", "chico"),
     ("// [tag, tema, desarrollo-grande]\n", "grande"),
 ])
 def test_el_desarrollo_es_el_ensayo_de_moodle_y_su_tamano_una_etiqueta(tmp_path, comentario, tamano):

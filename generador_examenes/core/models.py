@@ -2,10 +2,21 @@
 Modelos de datos usando Pydantic para validación de estructuras
 """
 import re
+from pathlib import Path
 
 from pydantic import BaseModel, Field, field_validator, model_validator
-from pathlib import Path
 from typing import List, Dict, Any, Literal, Optional
+
+
+# El espacio para responder una pregunta de desarrollo. `pequeno` es el nombre anterior de `chico`.
+TamanoDesarrollo = Literal["cero", "chico", "mediano", "grande", "pagina"]
+_OTROS_NOMBRES_TAMANO = {"pequeno": "chico", "página": "pagina"}
+
+
+def _nombre_de_tamano(valor: Any) -> Any:
+    if not isinstance(valor, str):
+        return valor
+    return _OTROS_NOMBRES_TAMANO.get(valor.lower(), valor.lower())
 
 
 class Opcion(BaseModel):
@@ -35,13 +46,16 @@ class Pregunta(BaseModel):
     etiquetas: List[str] = Field(default_factory=list)
     retroalimentacion_general: Optional[str] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
-    tamano_desarrollo: Optional[Literal["pequeno", "mediano", "grande"]] = "mediano"
+    # None: el de `configuracion_examen.espacio_desarrollo`.
+    tamano_desarrollo: Optional[TamanoDesarrollo] = None
     fuente_banco: Optional[str] = None
     # Renglones del espacio de respuesta (consignas prácticas); None o 0: sin espacio.
     lineas_respuesta: Optional[int] = None
     # Renglones para justificar la opción elegida (selección múltiple); None o 0: sin justificación.
     lineas_justificacion: Optional[int] = None
-    
+
+    _tamano = field_validator("tamano_desarrollo", mode="before")(_nombre_de_tamano)
+
     def __str__(self) -> str:
         nombre_preview = self.nombre[:60] + "..." if len(self.nombre) > 60 else self.nombre
         etiquetas_str = f" tags:[{', '.join(self.etiquetas)}]" if self.etiquetas else ""
@@ -208,9 +222,15 @@ class ConfiguracionExamen(BaseModel):
     # Cada pool puede cambiar la cantidad con su propio `lineas_justificacion`.
     lineas_justificacion: int = Field(default=0, ge=0, le=60)
     titulo_justificacion: Optional[str] = None  # por omisión, el del idioma («Justificación»)
+    # El espacio de las preguntas de desarrollo que no piden otro con su etiqueta `desarrollo-*`.
+    espacio_desarrollo: TamanoDesarrollo = "mediano"
+    # El espacio general también para las que piden otro con su etiqueta.
+    forzar_espacio_desarrollo: bool = False
     # Cada pregunta de desarrollo en su propia hoja, con el resto de la hoja para responder: es
     # `pagina` para todas, también para las que piden otro espacio.
     desarrollo_en_hoja_separada: bool = False
+
+    _espacio = field_validator("espacio_desarrollo", mode="before")(_nombre_de_tamano)
 
     def __str__(self) -> str:
         flags = []

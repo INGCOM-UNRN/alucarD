@@ -739,6 +739,40 @@ configuracion_examen:
   desarrollo_en_hoja_separada: true
 ```
 
+### Espacio de las preguntas de desarrollo
+
+Cada pregunta de desarrollo deja un recuadro para responder. La opción general vale para todo el
+examen, y una pregunta pide otro espacio con una etiqueta, que manda sobre la general:
+
+```yaml
+configuracion_examen:
+  espacio_desarrollo: grande
+  forzar_espacio_desarrollo: false   # true: `grande` para todas, aunque pidan otro
+```
+
+```gift
+// [tag, desarrollo-pagina]
+::demostracion::Demostrá que el algoritmo termina.
+{}
+```
+
+| Espacio | Etiqueta | En el PDF, con letra de 10 |
+| :--- | :--- | :--- |
+| `cero` | `desarrollo-cero` | Sin recuadro: sólo el enunciado. |
+| `chico` | `desarrollo-chico` | Unos 2 cm. |
+| `mediano` | `desarrollo-mediano` | Unos 4 cm. Es el valor por omisión. |
+| `grande` | `desarrollo-grande` | Unos 8,5 cm. |
+| `pagina` | `desarrollo-pagina` | La pregunta en su propia hoja, y el resto de la hoja para responder. |
+
+El alto crece con la letra del examen. En HTML, `pagina` salta de hoja al imprimir. `pequeno` es el nombre anterior de `chico` y se sigue leyendo; `página`, con tilde, también.
+
+Con `forzar_espacio_desarrollo: true`, la opción general vale para todas y las etiquetas no cuentan: así
+un mismo banco puede salir sin recuadros en un examen y con ellos en otro.
+
+`desarrollo_en_hoja_separada: true` es `pagina` para todas y manda sobre las dos opciones.
+En Moodle XML el tamaño viaja en las mismas etiquetas; `responseformat` no cuenta, porque es el editor
+de Moodle. Una pregunta sin etiqueta toma `espacio_desarrollo`.
+
 ### Tablas en las preguntas
 
 Las tablas van en un bloque ```` ```tabla ````, con sintaxis Markdown y sin HTML. Las opciones de
@@ -875,7 +909,8 @@ $CATEGORY: tipos/structs
   `[tag:nombre]`, el formato que exporta Moodle, se lee, pero es error en `lint-gift` y `--fix` lo cambia.
 - **Categoría de una sola pregunta:** `[category, ruta]`. Moodle la ignora; para que la tome, usá `$CATEGORY:`.
 - **Desarrollo:** `{}`, la pregunta de ensayo de Moodle. El tamaño va en la etiqueta
-  `desarrollo-pequeno`, `-mediano` o `-grande`, que alucard no cuenta como etiqueta para filtrar.
+  `desarrollo-cero`, `-chico`, `-mediano`, `-grande` o `-pagina`, que alucard no cuenta como etiqueta
+  para filtrar. Ver [Espacio de las preguntas de desarrollo](#espacio-de-las-preguntas-de-desarrollo).
 - **Dos puntos:** las preguntas no usan `:` en el título, el enunciado, las opciones ni el código,
   porque GIFT les da significado. Se escriben en ancho completo (`：`), que alucard muestra como `:`, o
   escapados (`\:`). Quedan exentos los bloques ```` ```estructura ````, las

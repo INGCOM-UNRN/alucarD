@@ -82,7 +82,7 @@ _TAG = re.compile(r'\[tag(?P<separador>[:,])(?P<tags>(?:\\\]|[^\]<>`\x00-\x1f])+
 _CATEGORIA = re.compile(r'\[category[:,]\s*(.+?)\s*\]', re.I)
 # El tamaño del espacio de un desarrollo: `{}` es el ensayo de Moodle y no admite parámetros, así que
 # viaja como etiqueta.
-_TAMANO = re.compile(r'desarrollo-(pequeno|mediano|grande)', re.I)
+_TAMANO = re.compile(r'desarrollo-(cero|chico|pequeno|mediano|grande|pagina|página)', re.I)
 # La sintaxis anterior, que Moodle no entiende: lo que sigue a las respuestas lo toma como texto de la
 # pregunta y `{desarrollo}` como respuesta corta. Se sigue leyendo; `lint-gift --fix` la migra.
 _SINTAXIS_VIEJA = re.compile(
@@ -291,7 +291,7 @@ class GiftParser(BaseParser):
             # Pregunta de desarrollo: `{}`, el ensayo de Moodle
             tipo = "desarrollo"
             opciones = []
-            tamano_desarrollo = opciones_str.split(':')[1].lower() if ':' in opciones_str else (tamano or 'mediano')
+            tamano_desarrollo = opciones_str.split(':')[1].lower() if ':' in opciones_str else tamano
         elif _VERDADERO_FALSO.fullmatch(opciones_str):
             # Verdadero/Falso: {T}, {F}, {TRUE} o {FALSE}; {TAD} o {FIFO} son respuestas cortas
             tipo = "verdadero_falso"

@@ -297,7 +297,9 @@ def construir_pool_examen(
                 pool, banco, definicion.configuracion_examen.presentacion_consignas, rng=rng,
                 donde=f"la sección «{seccion_def.nombre}», pool {pool_idx}",
             )
-            preguntas_seccion.extend(_con_justificacion(preguntas_pool, pool, definicion.configuracion_examen))
+            preguntas_seccion.extend(_con_espacio_de_desarrollo(
+                _con_justificacion(preguntas_pool, pool, definicion.configuracion_examen),
+                definicion.configuracion_examen))
         
         secciones_examen.append({
             'nombre': seccion_def.nombre,
@@ -324,6 +326,20 @@ def _con_justificacion(preguntas: List[Pregunta], pool: PoolConfig,
     """Las de selección múltiple, con sus renglones para justificar la respuesta (el resto, tal cual)."""
     lineas = lineas_justificacion(pool, configuracion)
     return [p.model_copy(update={"lineas_justificacion": lineas}) if p.tipo == "seleccion_multiple" else p
+            for p in preguntas]
+
+
+def _con_espacio_de_desarrollo(preguntas: List[Pregunta], configuracion: ConfiguracionExamen) -> List[Pregunta]:
+    """Las de desarrollo, con su espacio: el que pide la pregunta o el general, que también manda si se
+    fuerza (el resto, tal cual)."""
+    def tamano(pregunta: Pregunta) -> str:
+        if configuracion.desarrollo_en_hoja_separada:
+            return "pagina"
+        if configuracion.forzar_espacio_desarrollo:
+            return configuracion.espacio_desarrollo
+        return pregunta.tamano_desarrollo or configuracion.espacio_desarrollo
+
+    return [p.model_copy(update={"tamano_desarrollo": tamano(p)}) if p.tipo == "desarrollo" else p
             for p in preguntas]
 
 
