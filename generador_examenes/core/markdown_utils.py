@@ -12,6 +12,7 @@ from pygments.formatters import HtmlFormatter
 import logging
 
 from generador_examenes.diagramas import expandir_en_markdown, reponer_svgs
+from generador_examenes.matematica import expandir_formulas, reponer_formulas
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +73,9 @@ def markdown_to_html(text: str, saltos_de_linea: bool = True) -> str:
     text = normalizar_fullwidth(text)
     # Los bloques ```estructura pasan a diagramas SVG (statics)
     text, diagramas = expandir_en_markdown(text)
-    
+    # Las fórmulas $...$ pasan a MathML después de Markdown, que si no se comería sus `_` y `*`
+    text, formulas = expandir_formulas(text)
+
     # Configurar extensiones de markdown con syntax highlighting
     md = markdown.Markdown(
         extensions=[
@@ -93,7 +96,7 @@ def markdown_to_html(text: str, saltos_de_linea: bool = True) -> str:
     # Convertir markdown a HTML
     html = md.convert(text)
     
-    return reponer_svgs(html, diagramas)
+    return reponer_formulas(reponer_svgs(html, diagramas), formulas)
 
 
 def process_code_blocks_manual(text: str) -> str:
@@ -185,9 +188,10 @@ def detect_and_convert_format(text: str, format_hint: Optional[str] = None) -> s
         return markdown_to_html(text)
     
     # Si ya es HTML o no se especifica, devolver tal cual
-    # pero procesar bloques de código si los hay
+    # pero procesar las fórmulas y los bloques de código si los hay
     text = normalizar_fullwidth(text)
+    text, formulas = expandir_formulas(text, delimitadores_latex=True)
     if '```' in text:
-        return process_code_blocks_manual(text)
-    
-    return text
+        text = process_code_blocks_manual(text)
+
+    return reponer_formulas(text, formulas)

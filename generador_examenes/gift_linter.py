@@ -45,6 +45,19 @@ def revisar_diagramas(content):
     return problemas
 
 
+def revisar_formulas(content):
+    """Las fórmulas `$...$` que no se pueden dibujar, con su línea y su pregunta."""
+    from generador_examenes.matematica import errores_en_texto
+
+    lines = content.split("\n")
+    problemas = []
+    # `\=` y `\~` son los escapes de GIFT en una opción, no comandos de LaTeX.
+    for pos, formula, motivo in errores_en_texto(re.sub(r"\\([=~])", r" \1", content)):
+        linea = content[:pos].count("\n") + 1
+        problemas.append(f"Línea {linea} («{_titulo_en(lines, linea)}»): fórmula inválida {formula}: {motivo}")
+    return problemas
+
+
 _BLOQUE_C = re.compile(r"^```[ \t]*c[ \t]*\n(?P<codigo>.*?)^```[ \t]*$", re.S | re.M)
 
 
@@ -148,7 +161,7 @@ def lint_gift_file(filepath, fix=False, compilar=False):
             stats['errors'] += len(errs)
         issues.extend(errs)
     
-    for problema in revisar_diagramas(content):
+    for problema in revisar_diagramas(content) + revisar_formulas(content):
         issues.append(problema)
         stats['errors'] += 1
     if compilar:

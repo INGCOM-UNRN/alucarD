@@ -87,6 +87,8 @@ def analizar_texto_languagetool(
     ignore_rules: Optional[Set[str]] = None,
 ) -> List[LanguageToolIssue]:
     """Analiza un fragmento de texto de una pregunta enmascarando sintaxis específica."""
+    # Una fórmula no es prosa. Se tapa con espacios para no mover las posiciones de las correcciones.
+    texto = re.sub(r"<math\b.*?</math>", lambda m: " " * len(m.group(0)), texto, flags=re.S)
     issues = _analizar_texto_base(
         texto,
         pregunta_id=pregunta_id,

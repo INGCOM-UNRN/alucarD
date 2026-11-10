@@ -4,8 +4,8 @@ Los enunciados y opciones llegan como HTML (el Moodle XML de idkfa, o el GIFT ya
 cual, Typst mostraba las etiquetas (`</code></p>`) e interpretaba como marcado los `*`, `_`, `#`, `$`
 o el `//` de una URL (que abre un comentario). Acá cada bloque `<pre>` pasa a `#raw(block: true)` con
 su lenguaje, `<code>` a `#raw(...)`, `<strong>`/`<b>` y `<em>`/`<i>` a `#strong[...]`/`#emph[...]`,
-los párrafos y `<br>` a saltos, los `<svg>` (diagramas de estructuras) a `#image`, y el resto del texto
-se escapa. Las demás etiquetas se quitan.
+los párrafos y `<br>` a saltos, los `<svg>` (diagramas de estructuras) a `#image`, los `<math>` a su
+matemática de Typst (`data-typst`), y el resto del texto se escapa. Las demás etiquetas se quitan.
 """
 from __future__ import annotations
 
@@ -23,6 +23,8 @@ _FILA = re.compile(r"<tr\b[^>]*>(?P<celdas>.*?)</tr>", re.S | re.I)
 _CELDA = re.compile(r"<t(?P<tipo>[hd])\b[^>]*>(?P<contenido>.*?)</t[hd]>", re.S | re.I)
 _SVG = re.compile(r"<svg\b(?P<attrs>[^>]*)>.*?</svg>", re.S | re.I)
 _ANCHO_SVG = re.compile(r'\bwidth="(?P<px>[\d.]+)"')
+_MATH = re.compile(r'<math\b(?P<attrs>[^>]*)>.*?</math>', re.S | re.I)
+_TYPST_MATH = re.compile(r'\bdata-typst="(?P<typst>[^"]*)"')
 
 
 def _cadena(texto: str) -> str:
@@ -75,9 +77,16 @@ def html_a_typst(fragmento: object) -> str:
         medida = f"calc.min({puntos}, disponible.width)" if ancho else "100%"
         return apartar(f"\n#layout(disponible => align(center, image(bytes({_cadena(m.group(0))}), "
                        f"format: \"svg\", width: {medida})))\n")
+    def formula(m: re.Match) -> str:
+        typst = _TYPST_MATH.search(m.group("attrs"))
+        if not typst:  # MathML que no pasó por matematica.py (Moodle): queda su texto
+            return html.escape(_texto_plano(m.group(0)))
+        contenido = html.unescape(typst.group("typst"))
+        return apartar(f"$ {contenido} $" if 'display="block"' in m.group("attrs") else f"${contenido}$")
 
     texto = _SVG.sub(svg, texto)
     texto = _TABLA.sub(tabla, texto)
+    texto = _MATH.sub(formula, texto)
     texto = _PRE.sub(bloque_pre, texto)
     texto = _FENCE.sub(bloque_fence, texto)
     texto = _CODE.sub(lambda m: apartar(f"#raw({_cadena(_texto_plano(m.group('codigo')))})"), texto)

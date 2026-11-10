@@ -323,6 +323,37 @@ Las plantillas están en `generador_examenes/synthesizer/plantillas.py`. Una pla
 Probala con `alucard sintetizar <nombre> --muestra` antes de generar el banco.
 
 ### Diagramas de estructuras de datos (statics)
+### Fórmulas matemáticas
+
+Las preguntas (en GIFT, Markdown y Moodle XML) y los enunciados de las consignas admiten fórmulas en
+LaTeX: `$O(n \log n)$` o `$ O(n \log n) $` en línea y `$$ ... $$` aparte. En el HTML salen como MathML,
+que los navegadores dibujan sin JavaScript ni conexión, con el LaTeX como texto alternativo para los
+lectores de pantalla; en el PDF, como matemática de Typst. No hace falta tener LaTeX instalado.
+
+````text
+::suma-01:: [markdown]¿Cuánto vale $\sum_{i=1}^{4} i$?
+{
+=`10`
+~$\frac{4}{2}$
+}
+````
+
+Se entiende lo habitual: `^`, `_`, `\frac`, `\binom`, `\sqrt`, `\sum`, `\prod`, `\int`, `\log` y las
+demás funciones, letras griegas, operadores, relaciones, flechas, conjuntos, `\lceil`, `\lfloor`,
+`\left…\right`, `\text`, `\mathbf`, `\mathbb`, `\mathcal`, acentos (`\bar`, `\hat`, `\vec`…), espacios y los
+entornos `cases`, `aligned`, `array` y las matrices (`matrix`, `pmatrix`, `bmatrix`, `vmatrix`).
+
+Cuidados:
+
+- No son fórmula `$100 y $200`, `$ 5 y $ 6` ni `$(CC) -o $(TARGET)`: los espacios de adentro tienen que
+  ser parejos y el `$` que cierra no va seguido de un número. Un signo pesos se escribe `\$`. Lo que está
+  entre comillas invertidas o en un bloque de código no se toca.
+- En una opción de GIFT, el `=` de una fórmula se escribe `\=`, como en cualquier opción. En el
+  enunciado no hace falta. Las llaves de `\frac{a}{b}` van tal cual.
+- Un comando que alucard no conoce no corta la generación: la fórmula sale como código, `alucard
+  generar` avisa en qué pregunta y `alucard lint-gift` lo marca como error.
+- En Moodle XML con formato HTML también valen `\(...\)` y `\[...\]`.
+
 
 Las preguntas (GIFT `[markdown]`, Markdown) y los enunciados de las consignas de deckard pueden
 incluir diagramas de arreglos, matrices, listas enlazadas, pilas, la pila de llamadas, colas y árboles. Se escriben en un bloque de

@@ -529,7 +529,7 @@ def generar_examen(args, logger) -> int:
             return 1
 
         # Un diagrama mal escrito sale en el examen como un aviso: se dice en qué pregunta antes.
-        for problema in diagramas_invalidos(examen_base):
+        for problema in diagramas_invalidos(examen_base) + formulas_invalidas(examen_base):
             print(f"Aviso: {problema}", file=sys.stderr)
 
         # Calcular puntaje total
@@ -759,6 +759,22 @@ def diagramas_invalidos(examen: dict) -> list[str]:
                                  getattr(p, "enunciado_html", "") or ""):
                 banco = f" de {p.fuente_banco}" if getattr(p, "fuente_banco", None) else ""
                 problemas.append(f"la pregunta «{p.nombre}»{banco} tiene un diagrama inválido: "
+                                 f"{html_mod.unescape(m.group(1))}")
+    return problemas
+
+
+def formulas_invalidas(examen: dict) -> list[str]:
+    """«La pregunta X tiene una fórmula inválida: …» por cada `$...$` que quedó como código."""
+    import html as html_mod
+    import re
+
+    problemas = []
+    for seccion in examen.get("secciones", []):
+        for p in seccion.get("preguntas", []):
+            textos = [getattr(p, "enunciado_html", "") or ""] + [o.texto_html for o in getattr(p, "opciones", [])]
+            for m in re.finditer(r'class="formula-error" title="([^"]*)">(.*?)</code>', "".join(textos), re.S):
+                banco = f" de {p.fuente_banco}" if getattr(p, "fuente_banco", None) else ""
+                problemas.append(f"la pregunta «{p.nombre}»{banco} tiene una fórmula inválida, {html_mod.unescape(m.group(2))}: "
                                  f"{html_mod.unescape(m.group(1))}")
     return problemas
 
