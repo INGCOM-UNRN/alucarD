@@ -11,6 +11,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Agregado
 
+- **Moodle XML**: la etiqueta `desarrollo-pequeno`, `-mediano` o `-grande` da el tamaño de un desarrollo, igual que en GIFT, y no queda entre las etiquetas de la pregunta.
 - **tablas**: bloque ```` ```tabla ```` con sintaxis Markdown y opciones de presentación en comentarios (`// [centrado] [ancho, 80%]`): ubicación, ancho, columnas, alineación, alto de las celdas vacías, relleno, letra, bordes, sombreado y encabezado. En Moodle el bloque se ve como código y no choca con GIFT; `voight unify` lo convierte en una tabla HTML. `lint-gift` y `generar` avisan las opciones inválidas. Una celda vacía es para completar: en el PDF su columna toma el ancho disponible. En HTML las tablas tienen bordes.
 - **fórmulas**: `$...$`, `$ ... $` y `$$...$$` con LaTeX en preguntas y consignas, como MathML en el HTML y matemática de Typst en el PDF, sin dependencias nuevas. Una fórmula inválida sale como código, con aviso en `generar` y error en `lint-gift`.
 - **estilo**: `[estilo]` en `alucard.toml` (y `estilo` en la definición, que manda clave por clave) personaliza la tipografía del texto y del código y su tamaño, el encabezado y el pie de página (izquierda, centro y derecha, con `{institucion}`, `{materia}`, `{examen}`, `{fecha}`, `{tema}`, `{pagina}` y `{paginas}`) y un logotipo a la izquierda o a la derecha del encabezado, en el examen y en la clave, en HTML y PDF. `alto_contraste = true` deja todo el texto en negro, sin grises (también en los diagramas y en el código) y los bordes negros.
@@ -50,10 +51,12 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Corregido
 
+- **Moodle XML**: `responseformat` ya no decide el tamaño de un desarrollo.
 - **GIFT**: `\:` se imprimía con la barra dentro de un bloque de código.
 - **`lint-gift --fix`**: agregaba renglones en blanco en cada pasada; ahora solo escribe lo que corrige.
 - **texto**: los caracteres en ancho completo se normalizan también en las preguntas sin `[markdown]`.
 - **texto**: los superíndices, subíndices y fracciones ya no se pierden al leer un banco: `O(n²)` salía `O(n2)` y `O(2ⁿ)`, `O(2n)`, también en los diagramas.
+- **Moodle XML**: la categoría de un `<question type="category">` no se aplicaba y todo caía en `General`. Vale para las preguntas que le siguen, como ruta (`$course$/top/estructuras/listas` es `estructuras/listas`).
 - **GIFT**: `{=a =b}` es una respuesta corta con varias respuestas aceptadas, no una selección múltiple sin incorrectas; `{TAD}` o `{FIFO}` son respuestas cortas, no verdadero/falso; y los escapes (`\=`, `\{`…) se aplican también en el enunciado, donde se imprimían con la barra.
 - **diagramas**: en `call_stack` con `steps`, la columna de cada momento crece con su rótulo; un rótulo largo («segunda llamada, antes de c++») ya no se corta ni lo pisa la columna siguiente.
 - **diagramas**: un `title` o `subtitle` más ancho que el dibujo quedaba cortado; el SVG ahora se ensancha para que entren.

@@ -2,15 +2,24 @@
 Parser para formato Moodle XML
 """
 import logging
+import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Dict, List, Optional
 from generador_examenes.core.models import Pregunta, Opcion
 from generador_examenes.parsers.base import BaseParser
+from generador_examenes.parsers.gift_parser import _TAMANO
 from generador_examenes.core.markdown_utils import detect_and_convert_format
 
 
 logger = logging.getLogger(__name__)
+
+
+def _categoria_moodle(texto: Optional[str], anterior: str) -> str:
+    """`$course$/top/estructuras/listas` como `estructuras/listas`, igual que en un `$CATEGORY:`."""
+    if not texto or not texto.strip():
+        return anterior
+    return re.sub(r'^(?:\$\w+\$/)?(?:top/)?', '', texto.strip(), flags=re.I) or anterior
 
 
 class MoodleXMLParser(BaseParser):
@@ -36,10 +45,15 @@ class MoodleXMLParser(BaseParser):
             tree = ET.parse(filepath)
             root = tree.getroot()
             
-            # Buscar todas las preguntas en el XML
+            # Buscar todas las preguntas en el XML. La categoría es un <question type="category">
+            # que vale para las que le siguen.
+            categoria_actual = "General"
             for i, question_elem in enumerate(root.findall('.//question')):
+                if question_elem.get('type') == 'category':
+                    categoria_actual = _categoria_moodle(question_elem.findtext('category/text'), categoria_actual)
+                    continue
                 try:
-                    pregunta = self._parsear_pregunta(question_elem, i, banco_nombre)
+                    pregunta = self._parsear_pregunta(question_elem, i, banco_nombre, categoria_actual)
                     if pregunta:
                         preguntas[pregunta.id] = pregunta
                 except Exception as e:
@@ -55,7 +69,8 @@ class MoodleXMLParser(BaseParser):
         
         return preguntas
     
-    def _parsear_pregunta(self, question_elem: ET.Element, indice: int, banco_nombre: Optional[str] = None) -> Pregunta | None:
+    def _parsear_pregunta(self, question_elem: ET.Element, indice: int, banco_nombre: Optional[str] = None,
+                          categoria_actual: str = "General") -> Pregunta | None:
         """Parsea un elemento question del XML"""
         
         # Obtener tipo de pregunta
@@ -79,22 +94,7 @@ class MoodleXMLParser(BaseParser):
         
         # Para preguntas tipo desarrollo, detectar tamaño desde responseformat
         tamano_desarrollo = None
-        if tipo == 'desarrollo':
-            responseformat = question_elem.find('responseformat')
-            if responseformat is not None and responseformat.text:
-                # Moodle usa: editor, editorfilepicker, plain, monospaced, noinline
-                # Mapear a nuestros tamaños: pequeno, mediano, grande
-                format_map = {
-                    'noinline': 'pequeno',
-                    'plain': 'mediano', 
-                    'editor': 'grande',
-                    'editorfilepicker': 'grande',
-                    'monospaced': 'mediano'
-                }
-                tamano_desarrollo = format_map.get(responseformat.text, 'mediano')
-            else:
-                tamano_desarrollo = 'mediano'
-        
+
         # Extraer nombre
         name_elem = question_elem.find('name/text')
         nombre = name_elem.text if name_elem is not None and name_elem.text else f"pregunta_{indice + 1}"
@@ -109,7 +109,7 @@ class MoodleXMLParser(BaseParser):
             enunciado = detect_and_convert_format(questiontext_elem.text, format_attr)
         
         # Extraer categoría
-        categoria = "General"
+        categoria = categoria_actual
         # Buscar en el contexto del archivo si hay categoría definida
         category_elem = question_elem.find('.//category')
         if category_elem is not None:
@@ -126,7 +126,12 @@ class MoodleXMLParser(BaseParser):
                 tag_text = tag.find('text')
                 if tag_text is not None and tag_text.text:
                     etiquetas.append(tag_text.text)
-        
+        # El tamaño de un desarrollo viaja como etiqueta, igual que en GIFT: `responseformat` es el
+        # editor de Moodle, que casi siempre es `editor`, y no dice nada del tamaño.
+        if tipo == 'desarrollo':
+            tamano_desarrollo = next((m.group(1).lower() for m in map(_TAMANO.fullmatch, etiquetas) if m), "mediano")
+        etiquetas = [tag for tag in etiquetas if not _TAMANO.fullmatch(tag)]
+
         # Extraer puntaje por defecto
         defaultgrade_elem = question_elem.find('defaultgrade')
         puntaje = float(defaultgrade_elem.text) if defaultgrade_elem is not None and defaultgrade_elem.text else 1.0

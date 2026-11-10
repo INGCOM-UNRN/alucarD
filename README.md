@@ -961,14 +961,11 @@ En Moodle XML, las preguntas tipo `essay` se mapean automáticamente a `desarrol
   <questiontext format="html">
     <text><![CDATA[<p>Explica cómo funciona...</p>]]></text>
   </questiontext>
-  <responseformat>editor</responseformat> <!-- grande -->
+  <tags><tag><text>desarrollo-grande</text></tag></tags>
 </question>
 ```
 
-**Mapeo de tamaños:**
-- `noinline` → pequeno
-- `plain`, `monospaced` → mediano
-- `editor`, `editorfilepicker` → grande
+El tamaño va en las mismas etiquetas que en GIFT; sin etiqueta, es `mediano`.
 
 #### Uso en Configuración YAML
 

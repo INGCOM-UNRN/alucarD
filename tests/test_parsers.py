@@ -849,11 +849,11 @@ class TestMoodleXMLParserExceptions:
         original_parsear = parser._parsear_pregunta
         call_count = [0]
         
-        def mock_parsear(elem, indice, banco_nombre=None):
+        def mock_parsear(elem, indice, banco_nombre=None, categoria_actual="General"):
             call_count[0] += 1
             if call_count[0] == 1:
                 raise ValueError("Error simulado")
-            return original_parsear(elem, indice, banco_nombre)
+            return original_parsear(elem, indice, banco_nombre, categoria_actual)
         
         monkeypatch.setattr(parser, '_parsear_pregunta', mock_parsear)
         
@@ -1100,3 +1100,29 @@ def test_gift_con_incorrectas_sigue_siendo_seleccion_multiple(tmp_path):
 def test_gift_escapes_en_el_enunciado(tmp_path):
     pregunta, = _gift(tmp_path, "::p::[markdown]Con `h \\= 3` y una \\{llave\\} {=a ~b}\n")
     assert "\\" not in pregunta.enunciado_html and "h = 3" in pregunta.enunciado_html and "{llave}" in pregunta.enunciado_html
+
+
+def test_moodle_categoria_de_las_preguntas_siguientes(tmp_path):
+    archivo = tmp_path / "b.xml"
+    archivo.write_text("""<?xml version="1.0" encoding="UTF-8"?>
+<quiz>
+  <question type="truefalse"><name><text>Antes</text></name><questiontext><text>a</text></questiontext></question>
+  <question type="category"><category><text>$course$/top/estructuras/listas</text></category></question>
+  <question type="truefalse"><name><text>Uno</text></name><questiontext><text>b</text></questiontext></question>
+  <question type="truefalse"><name><text>Dos</text></name><questiontext><text>c</text></questiontext></question>
+  <question type="category"><category><text>$course$/Top/otra</text></category></question>
+  <question type="truefalse"><name><text>Tres</text></name><questiontext><text>d</text></questiontext></question>
+</quiz>""", encoding="utf-8")
+    categorias = {p.nombre: p.categoria for p in MoodleXMLParser().parse(archivo).values()}
+    assert categorias == {"Antes": "General", "Uno": "estructuras/listas", "Dos": "estructuras/listas", "Tres": "otra"}
+
+
+def test_moodle_xml_lee_el_tamano_del_desarrollo_de_su_etiqueta(tmp_path):
+    from generador_examenes.parsers.moodle_parser import MoodleXMLParser
+
+    banco = tmp_path / "b.xml"
+    banco.write_text('<quiz><question type="essay"><name><text>a</text></name><questiontext format="html"><text>x</text>'
+                     '</questiontext><responseformat>editor</responseformat><tags><tag><text>desarrollo-pequeno</text></tag>'
+                     '<tag><text>uml</text></tag></tags></question></quiz>', encoding="utf-8")
+    (pregunta,) = MoodleXMLParser().parse(banco).values()
+    assert pregunta.tamano_desarrollo == "pequeno" and pregunta.etiquetas == ["uml"]
