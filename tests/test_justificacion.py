@@ -89,4 +89,4 @@ def test_pdf_con_renglones_y_titulo(banco, tmp_path, monkeypatch):
     salida = PdfRenderer().renderizar_examen(examen, definicion, tmp_path, 0)
     assert salida.stat().st_size > 0
     assert "[Justification]" in fuentes[0]
-    assert fuentes[0].count("height: 16pt") == 5
+    assert fuentes[0].count("#block(width: 100%, height: 16pt") == 5

@@ -602,6 +602,7 @@ body * { border-color: #000 !important; }
             {% elif pregunta.tipo == 'desarrollo' %}
             {% if pregunta.tamano_desarrollo != 'cero' %}
             <div class="desarrollo-box {{ pregunta.tamano_desarrollo or 'mediano' }}">
+                {% for _ in range({'chico': 3, 'mediano': 7, 'grande': 15, 'pagina': 30}[pregunta.tamano_desarrollo or 'mediano']) %}<div class="renglon"></div>{% endfor %}
             </div>
             {% endif %}
             {% elif pregunta.tipo == 'consigna_practica' %}

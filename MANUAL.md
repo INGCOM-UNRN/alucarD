@@ -741,7 +741,7 @@ configuracion_examen:
 
 ### Espacio de las preguntas de desarrollo
 
-Cada pregunta de desarrollo deja un recuadro para responder. La opción general vale para todo el
+Cada pregunta de desarrollo deja un recuadro con renglones para responder. La opción general vale para todo el
 examen, y una pregunta pide otro espacio con una etiqueta, que manda sobre la general:
 
 ```yaml
@@ -759,12 +759,13 @@ configuracion_examen:
 | Espacio | Etiqueta | En el PDF, con letra de 10 |
 | :--- | :--- | :--- |
 | `cero` | `desarrollo-cero` | Sin recuadro: sólo el enunciado. |
-| `chico` | `desarrollo-chico` | Unos 2 cm. |
-| `mediano` | `desarrollo-mediano` | Unos 4 cm. Es el valor por omisión. |
-| `grande` | `desarrollo-grande` | Unos 8,5 cm. |
+| `chico` | `desarrollo-chico` | 3 renglones, unos 1,7 cm. |
+| `mediano` | `desarrollo-mediano` | 7 renglones, unos 4 cm. Es el valor por omisión. |
+| `grande` | `desarrollo-grande` | 15 renglones, unos 8,5 cm. |
 | `pagina` | `desarrollo-pagina` | La pregunta en su propia hoja, y el resto de la hoja para responder. |
 
-El alto crece con la letra del examen. En HTML, `pagina` salta de hoja al imprimir. `pequeno` es el nombre anterior de `chico` y se sigue leyendo; `página`, con tilde, también.
+Los renglones miden 16 pt, como los de las consignas prácticas, y la letra del examen cambia cuántos
+entran. En HTML son los mismos, salvo `pagina`, que trae 30 y salta de hoja al imprimir. `pequeno` es el nombre anterior de `chico` y se sigue leyendo; `página`, con tilde, también.
 
 Con `forzar_espacio_desarrollo: true`, la opción general vale para todas y las etiquetas no cuentan: así
 un mismo banco puede salir sin recuadros en un examen y con ellos en otro.

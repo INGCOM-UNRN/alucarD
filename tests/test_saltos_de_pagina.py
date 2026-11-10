@@ -235,6 +235,25 @@ def test_el_html_sin_espacio_no_dibuja_el_recuadro(tmp_path):
     assert '<div class="desarrollo-box' not in alturas(tmp_path, "cero", "html").read_text(encoding="utf-8")
 
 
+def renglones_del_pdf(archivo):
+    """Cuántos trazos punteados tiene el PDF: un renglón es uno, y cada recuadro suma los suyos."""
+    return sum(p.get_contents().get_data().count(b" d\n") for p in PdfReader(archivo).pages)
+
+
+def test_el_pdf_tiene_mas_renglones_cuanto_mas_espacio(tmp_path):
+    cantidades = []
+    for tamano in ("cero", "chico", "grande", "pagina"):
+        carpeta = tmp_path / tamano
+        carpeta.mkdir()
+        cantidades.append(renglones_del_pdf(alturas(carpeta, tamano)))
+    assert cantidades == sorted(set(cantidades)) and cantidades[1] > cantidades[0]
+
+
+@pytest.mark.parametrize("tamano, renglones", [("cero", 0), ("chico", 6), ("mediano", 14), ("grande", 30), ("pagina", 60)])
+def test_el_html_tiene_renglones(tmp_path, tamano, renglones):
+    assert alturas(tmp_path, tamano, "html").read_text(encoding="utf-8").count('<div class="renglon"></div>') == renglones
+
+
 def test_un_comentario_que_nombra_la_marca_no_cambia_los_ids(tmp_path):
     """Los ids entran en el sorteo: si un comentario los corriera, saldrían otras preguntas."""
     gift = "::a::Uno\n// [corte]\nDos\n{}\n"
