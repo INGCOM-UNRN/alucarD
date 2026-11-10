@@ -13,6 +13,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 - **diagramas PlantUML**: los bloques ```` ```plantuml ```` se dibujan en el PDF y el HTML, con sus opciones en comentarios (`[centrado]`, `[ancho, 60%]`, `[alto]`, `[escala]`, `[letra]`, `[color]`, `[tema]`, `[alt]`). Salen en blanco y negro salvo `[color]` o `[tema]`, y cada dibujo queda en una caché por contenido. `lint-gift` informa los inválidos y `doctor` dice qué PlantUML encontró.
 - **Moodle XML**: la etiqueta `desarrollo-pequeno`, `-mediano` o `-grande` da el tamaño de un desarrollo, igual que en GIFT, y no queda entre las etiquetas de la pregunta.
+- **saltos de página**: una pregunta que no entra en una página ya no sale con el texto encimado: se corta por sus encabezados, antes de las opciones y, si hace falta, por donde toque. La marca `// [corte]` indica dónde se puede cortar. `desarrollo_en_hoja_separada` lleva cada pregunta de desarrollo a su propia hoja, con el resto para responder.
 - **bancos**: `input_banco`, `-i` y `alucard lint-gift` aceptan carpetas y recorren sus subcarpetas, leyendo solo `.gift` y `.xml`: un `.txt` se lee únicamente si se lo nombra. El filtro `banco` de un pool distingue por subcarpeta (`unidad1/teoria.gift`).
 - **tablas**: bloque ```` ```tabla ```` con sintaxis Markdown y opciones de presentación en comentarios (`// [centrado] [ancho, 80%]`): ubicación, ancho, columnas, alineación, alto de las celdas vacías, relleno, letra, bordes, sombreado y encabezado. En Moodle el bloque se ve como código y no choca con GIFT; `voight unify` lo convierte en una tabla HTML. `lint-gift` y `generar` avisan las opciones inválidas. Una celda vacía es para completar: en el PDF su columna toma el ancho disponible. En HTML las tablas tienen bordes.
 - **fórmulas y tablas para Moodle**: `matematica.a_svg` dibuja una fórmula como SVG con Typst y `tablas.tabla_a_moodle` arma una tabla HTML con sus estilos en línea; son lo que usa `voight unify` en Moodle XML.
@@ -57,6 +58,8 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Corregido
 
+- **GIFT**: un comentario que nombraba `[corte]` contaba como un bloque, corría los ids de las preguntas y cambiaba el sorteo.
+- **PDF**: una pregunta en hoja propia que era la primera del examen saltaba a la página siguiente y dejaba la primera casi vacía.
 - **Moodle XML**: `responseformat` ya no decide el tamaño de un desarrollo.
 - **GIFT**: `\:` se imprimía con la barra dentro de un bloque de código.
 - **`lint-gift --fix`**: agregaba renglones en blanco en cada pasada; ahora solo escribe lo que corrige.

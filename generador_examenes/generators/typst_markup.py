@@ -25,6 +25,9 @@ _FILA = re.compile(r"<tr\b[^>]*>(?P<celdas>.*?)</tr>", re.S | re.I)
 _CELDA = re.compile(r"<t(?P<tipo>[hd])\b[^>]*>(?P<contenido>.*?)</t[hd]>", re.S | re.I)
 _SVG = re.compile(r"<svg\b(?P<attrs>[^>]*)>.*?</svg>", re.S | re.I)
 _ANCHO_SVG = re.compile(r'\bwidth="(?P<px>[\d.]+)"')
+_COMENTARIO = re.compile(r"<!--.*?-->", re.S)
+# Dónde se puede partir una pregunta: `<!--corte-->` (la marca `// [corte]`) y los encabezados.
+_CORTE = re.compile(r"<!--\s*corte\s*-->|(?=<h[1-6]\b)", re.I)
 _MATH = re.compile(r'<math\b(?P<attrs>[^>]*)>.*?</math>', re.S | re.I)
 _TYPST_MATH = re.compile(r'\bdata-typst="(?P<typst>[^"]*)"')
 
@@ -86,9 +89,26 @@ def _tabla_typst(filas: list, opciones: dict) -> str:
     return f"\n{tabla}\n"
 
 
+def partes_typst(fragmento: object) -> list:
+    """El enunciado en las partes por las que se puede cortar, como `{"marca", "typst"}`: `marca` dice
+    si la parte viene de un `// [corte]` y no de un encabezado. Siempre hay al menos una parte."""
+    texto = "" if fragmento is None else str(fragmento)
+    partes: list = []
+    inicio, marca = 0, False
+    for m in [*_CORTE.finditer(texto), None]:
+        tramo = html_a_typst(texto[inicio:m.start() if m else len(texto)])
+        if tramo.strip():
+            partes.append({"marca": marca and bool(partes), "typst": tramo})
+            marca = False
+        if m:
+            inicio, marca = m.end(), marca or bool(m.group())
+    return partes or [{"marca": False, "typst": ""}]
+
+
 def html_a_typst(fragmento: object) -> str:
     """El HTML (o texto) de una pregunta como marcado Typst."""
     texto = ("" if fragmento is None else str(fragmento)).replace("\r\n", "\n").replace("\r", "\n")
+    texto = _COMENTARIO.sub("", texto)
     bloques: list = []
 
     def apartar(contenido: str) -> str:
@@ -126,6 +146,7 @@ def html_a_typst(fragmento: object) -> str:
         posicion = {"izquierda": "left", "derecha": "right"}.get(opciones.get("posicion", ""), "center")
         return apartar(f"\n#layout(disponible => align({posicion}, image(bytes({_cadena(m.group(0))}), "
                        f"format: \"svg\", {', '.join(medidas) or medida})))\n")
+
     def formula(m: re.Match) -> str:
         typst = _TYPST_MATH.search(m.group("attrs"))
         if not typst:  # MathML que no pasó por matematica.py (Moodle): queda su texto

@@ -7,6 +7,7 @@
     <style>
 /* Un diagrama ancho se achica para no salirse de la pregunta (tienen viewBox). */
 svg.estructura { max-width: 100%; height: auto; }
+@media print { .hoja-separada { break-before: page; break-after: page; } }
 .question-text table { border-collapse: collapse; margin: 0.5em 0; }
 .question-text th, .question-text td { border: 1px solid currentColor; padding: 0.25em 0.5em; text-align: left; }
 .question-text td:empty { min-width: 6em; height: 1.6em; }
@@ -555,7 +556,7 @@ body * { border-color: #000 !important; }
         {% endif %}
 
         {% for pregunta in seccion.preguntas %}
-        <div class="question">
+        <div class="question{% if definicion.configuracion_examen.desarrollo_en_hoja_separada and pregunta.tipo == 'desarrollo' %} hoja-separada{% endif %}">
             <div class="question-header">
                 {{ i18n.question }} {{ loop.index }} 
                 ({{ pregunta.puntaje }} {% if pregunta.puntaje == 1 %}{{ i18n.point }}{% else %}{{ i18n.points }}{% endif %})

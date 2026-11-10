@@ -208,7 +208,10 @@ class ConfiguracionExamen(BaseModel):
     # Cada pool puede cambiar la cantidad con su propio `lineas_justificacion`.
     lineas_justificacion: int = Field(default=0, ge=0, le=60)
     titulo_justificacion: Optional[str] = None  # por omisión, el del idioma («Justificación»)
-    
+    # Cada pregunta de desarrollo en su propia hoja, con el resto de la hoja para responder: es
+    # `pagina` para todas, también para las que piden otro espacio.
+    desarrollo_en_hoja_separada: bool = False
+
     def __str__(self) -> str:
         flags = []
         if self.mezclar_preguntas_dentro_seccion:
@@ -248,7 +251,7 @@ class DefinicionExamen(BaseModel):
     numero_temas: Optional[int] = Field(default=1, description="Número de temas a generar")
     semilla: Optional[int] = Field(default=42, description="Semilla aleatoria")
     formato: Optional[List[str]] = Field(default=["html"], description="Formatos de salida")
-    
+
     @field_validator("subdirectorio")
     @classmethod
     def _subdirectorio_dentro_de_la_salida(cls, valor: Optional[str]) -> Optional[str]:

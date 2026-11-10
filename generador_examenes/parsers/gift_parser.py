@@ -75,6 +75,9 @@ _VERDADERO_FALSO = re.compile(r'(?:T|F|TRUE|FALSE)\s*(?:#.*)?', re.I | re.S)
 # `// [tag, punteros, facil] [category, Tipos]`. `[tag:x]`, el formato de Moodle, se sigue leyendo.
 _ES_COMENTARIO = re.compile(r'\s*//')
 _METADATOS = re.compile(r'\[(?:tag|category)[:,]', re.I)
+# Por dónde se puede partir la pregunta en el PDF. En el texto queda como un comentario de HTML.
+_CORTE = re.compile(r'\s*//\s*\[(corte)\]\s*$', re.I)
+_MARCA_DEL_PDF = r'<!--corte-->'
 _TAG = re.compile(r'\[tag(?P<separador>[:,])(?P<tags>(?:\\\]|[^\]<>`\x00-\x1f])+)\]', re.I)
 _CATEGORIA = re.compile(r'\[category[:,]\s*(.+?)\s*\]', re.I)
 # El tamaño del espacio de un desarrollo: `{}` es el ensayo de Moodle y no admite parámetros, así que
@@ -167,7 +170,7 @@ class GiftParser(BaseParser):
         """
         # Eliminar comentarios (líneas que empiezan con //), salvo los que llevan metadatos
         lines = [line for line in content.split('\n')
-                 if not _ES_COMENTARIO.match(line) or _METADATOS.search(line)]
+                 if not _ES_COMENTARIO.match(line) or _METADATOS.search(line) or _CORTE.match(line)]
 
         bloques = []
         bloque_actual: List[str] = []
@@ -182,7 +185,7 @@ class GiftParser(BaseParser):
             """
             s = linea.lstrip()
             return s.startswith('::') or s.startswith('$CATEGORY:') or \
-                s.startswith('//') or \
+                (s.startswith('//') and not _CORTE.match(linea)) or \
                 s.startswith('[markdown]') or s.startswith('[html]')
 
         for line in lines:
@@ -228,7 +231,10 @@ class GiftParser(BaseParser):
         """
         lineas = bloque.split('\n')
         comentarios = '\n'.join(linea for linea in lineas if _ES_COMENTARIO.match(linea))
-        bloque = '\n'.join(linea for linea in lineas if not _ES_COMENTARIO.match(linea)).strip()
+        bloque = '\n'.join(f'\n<!--{marca.group(1).lower()}-->\n' if (marca := _CORTE.match(linea)) else linea
+                           for linea in lineas if _CORTE.match(linea) or not _ES_COMENTARIO.match(linea))
+        # Una marca arriba del título o después de las respuestas no corta nada.
+        bloque = re.sub(rf'^(?:\s*{_MARCA_DEL_PDF})+|(?:{_MARCA_DEL_PDF}\s*)+$', '', bloque.strip()).strip()
         if not bloque:
             return None
 
@@ -275,7 +281,7 @@ class GiftParser(BaseParser):
         
         enunciado, opciones_str, _sobrante = partes
         enunciado = enunciado.strip()
-        opciones_str = opciones_str.strip()
+        opciones_str = re.sub(_MARCA_DEL_PDF, '', opciones_str).strip()
         # Convertir el enunciado según el formato
         enunciado = detect_and_convert_format(_desescapar_enunciado(enunciado), formato)
         

@@ -22,6 +22,60 @@
 {% endif %}
 #set par(justify: true, leading: 0.65em)
 
+// El espacio para responder. `alto` es una longitud absoluta.
+#let espacio(alto) = rect(width: 100%, height: alto,
+                          stroke: (dash: "densely-dotted", paint: rgb("{{ c.guia }}"), thickness: 0.5pt))[
+  #align(bottom + right)[#text(size: 0.75em, fill: rgb("{{ c.guia }}"))[Espacio para desarrollo / código]]
+]
+
+// Una pregunta entra entera en una página. Sólo se corta por sus marcas `// [corte]` y, si no entra
+// en una página, por sus encabezados y antes de las opciones. Una parte que tampoco entra se parte
+// por donde toque: encimar el texto sería peor. `hoja`: el resto de la hoja queda para responder.
+// La hoja se mide desde una marca anterior a la pregunta: medir desde la pregunta la llevaría a la
+// página siguiente, donde esa medida también cierra, y dejaría vacía la anterior.
+#let pregunta(partes, libre: false, hoja: false) = {
+  if hoja { block(height: 0pt, above: 0pt, below: 0pt)[#metadata(none) <antes-de-la-hoja>] }
+  context {
+  let alto = page.height - {{ estilo.margen_sup_mm }}mm - 2cm
+  let ancho = page.width - 4cm
+  let caja(rompible, cuerpo) = block(
+    width: 100%,
+    stroke: 0.5pt + rgb("{{ c.borde }}"),
+    radius: 4pt,
+    inset: 8pt,
+    fill: rgb("ffffff"),
+    breakable: rompible,
+    cuerpo
+  )
+  let alto-de(cuerpo) = measure(block(width: ancho, caja(false, cuerpo))).height
+  let todo = partes.map(p => p.at(1)).join(parbreak())
+  let total = alto-de(todo)
+  let cuadro = if hoja {
+    let inicio = query(selector(<antes-de-la-hoja>).before(here())).last().location().position().y
+    let libre-en-hoja = page.height - 2cm - inicio - calc.rem-euclid(total / 1pt, alto / 1pt) * 1pt
+    espacio(calc.max(60pt / 1pt, libre-en-hoja / 1pt - 40) * 1pt)
+  }
+  if libre {
+    caja(true, todo)
+  } else {
+    let grande = total > alto
+    let grupos = ()
+    for (marca, cuerpo) in partes {
+      if grupos.len() == 0 or marca or grande {
+        grupos.push(cuerpo)
+      } else {
+        grupos.push(grupos.pop() + parbreak() + cuerpo)
+      }
+    }
+    let entera(cuerpo) = {
+      let no-entra = alto-de(cuerpo) > alto
+      block(width: 100%, breakable: no-entra, cuerpo)
+    }
+    caja(grupos.len() > 1 or grande, grupos.map(entera).join() + cuadro)
+  }
+  }
+}
+
 // Encabezado del Examen
 #align(center)[
   #text(size: 1.6em, weight: "bold", fill: rgb("{{ c.titulo }}"))[{{ definicion.nombre_examen | typst_texto }}]\
@@ -58,8 +112,11 @@
 #v(8pt)
 
 // Secciones del Examen
+{% set tipos_desarrollo = ['desarrollo', 'essay', 'codigo'] %}
 {% for seccion in secciones %}
-#block(breakable: true)[
+  {% if not loop.first and definicion.configuracion_examen.desarrollo_en_hoja_separada and seccion.preguntas and seccion.preguntas[0].tipo in tipos_desarrollo %}
+  #pagebreak(weak: true)
+  {% endif %}
   #text(size: 1.2em, weight: "bold", fill: rgb("{{ c.seccion }}"))[{{ seccion.nombre | typst_texto }}]
   {% if seccion.instrucciones %}
   \ #text(size: 0.85em, style: "italic", fill: rgb("{{ c.sub }}"))[{{ seccion.instrucciones | typst_texto }}]
@@ -67,21 +124,22 @@
   #v(4pt)
 
   {% for preg in seccion.preguntas %}
-  #block(
-    width: 100%,
-    stroke: 0.5pt + rgb("{{ c.borde }}"),
-    radius: 4pt,
-    inset: 8pt,
-    fill: rgb("ffffff"),
-    breakable: {{ 'true' if preg.tipo == 'consigna_practica' else 'false' }}
-  )[
-    #grid(
+  {% set partes = preg.enunciado_html | typst_partes %}
+  {% set hoja = definicion.configuracion_examen.desarrollo_en_hoja_separada and preg.tipo in tipos_desarrollo %}
+  {% if hoja and not loop.first %}
+  #pagebreak(weak: true)
+  {% endif %}
+  #pregunta(libre: {{ 'true' if preg.tipo == 'consigna_practica' else 'false' }}, hoja: {{ 'true' if hoja else 'false' }}, (
+    (false, grid(
       columns: (1fr, auto),
       column-gutter: 8pt,
-      [ *Pregunta {{ loop.index }}.* {{ preg.enunciado_html | typst }} ],
+      [ *Pregunta {{ loop.index }}.* {{ partes[0].typst }} ],
       [ #text(size: 0.8em, fill: rgb("{{ c.tenue }}"))[\[{{ '%g' % preg.puntaje }} pt\]] ]
-    )
-
+    )),
+    {% for parte in partes[1:] %}
+    ({{ 'true' if parte.marca else 'false' }}, [{{ parte.typst }}]),
+    {% endfor %}
+    (false, [
     {% if preg.tipo in ['seleccion_multiple', 'opcion_multiple', 'multichoice'] %}
     #v(4pt)
     {# Opciones cortas en varias columnas: 10 respuestas numéricas una por renglón ocupaban media página. #}
@@ -120,15 +178,16 @@
       {% endfor %}
     ]
     {% endif %}
-    {% elif preg.tipo in ['desarrollo', 'essay', 'codigo'] %}
+    {% elif preg.tipo in tipos_desarrollo and not hoja %}
     #v(6pt)
-    #rect(width: 100%, height: 60pt, stroke: (dash: "densely-dotted", paint: rgb("{{ c.guia }}"), thickness: 0.5pt))[
-      #align(bottom + right)[#text(size: 7.5pt, fill: rgb("{{ c.guia }}"))[Espacio para desarrollo / código]]
-    ]
+    #espacio(60pt)
     {% endif %}
-  ]
+    ]),
+  ))
   #v(6pt)
+  {% if hoja and not loop.last %}
+  #pagebreak(weak: true)
+  {% endif %}
   {% endfor %}
-]
 #v(8pt)
 {% endfor %}

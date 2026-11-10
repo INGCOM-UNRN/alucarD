@@ -709,6 +709,36 @@ repos:
         files: ^banco/.*\.md$
 ```
 
+### Saltos de página
+
+En el PDF, una pregunta que entra en una página no se parte. Para las más largas:
+
+- **`// [corte]`:** un renglón con esta marca, entre dos partes del enunciado, dice por dónde se puede
+  cortar. Es un punto posible, no un salto: si la pregunta entra, sigue entera en la página. Moodle lo
+  descarta, como cualquier comentario. En Moodle XML y en un enunciado Markdown se escribe `<!--corte-->`. `voight unify` y
+  `voight tree collect` sacan las marcas del banco fusionado: para el PDF, generá desde los archivos originales.
+- **Encabezados:** una pregunta que no entra en una página se corta además por sus encabezados
+  (`####`) y antes de las opciones, sin marcas.
+- **Si una parte tampoco entra**, se parte por donde toque, para que el texto no se encime.
+
+```gift
+::analisis::[markdown]Dado el siguiente código
+```c
+int main(void) ｛ return 0; ｝
+```
+// [corte]
+#### 1. Análisis conceptual
+Explicá qué hace el programa.
+{}
+```
+
+Para que cada pregunta de desarrollo vaya en su propia hoja, con el resto de la hoja para responder:
+
+```yaml
+configuracion_examen:
+  desarrollo_en_hoja_separada: true
+```
+
 ### Tablas en las preguntas
 
 Las tablas van en un bloque ```` ```tabla ````, con sintaxis Markdown y sin HTML. Las opciones de
