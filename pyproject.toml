@@ -84,10 +84,12 @@ dev = [
     "flake8>=6.0,<7.0",
     "isort>=5.12,<6.0",
     "mypy>=1.0,<2.0",
+    "types-PyYAML>=6.0",
+    "types-Markdown>=3.5",
 ]
 
 [tool.mypy]
-# Tipos del paquete (N-ECO-08): `uv run --with mypy mypy`, igual que el CI.
+# Tipos del paquete (N-ECO-08): `uv run mypy`, con los stubs del grupo dev, igual que el CI.
 python_version = "3.11"
 files = ["generador_examenes"]
 ignore_missing_imports = true

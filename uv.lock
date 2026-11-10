@@ -530,6 +530,8 @@ dev = [
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-xdist" },
+    { name = "types-markdown" },
+    { name = "types-pyyaml" },
 ]
 
 [package.metadata]
@@ -559,6 +561,8 @@ dev = [
     { name = "pytest", specifier = ">=9.0.3" },
     { name = "pytest-cov", specifier = ">=4.0" },
     { name = "pytest-xdist", specifier = ">=3.0" },
+    { name = "types-markdown", specifier = ">=3.5" },
+    { name = "types-pyyaml", specifier = ">=6.0" },
 ]
 
 [[package]]
@@ -1306,6 +1310,24 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/16/f7/57713ba479fd405eb76de31404b2c744c289e336b2d999511ebf51e496f7/typer-0.27.2.tar.gz", hash = "sha256:269b7eb9d3c202ca84b4bc9618cb04ebb43d3d4d1e567e4c768607232c05f945", size = 204045, upload-time = "2026-08-28T10:26:55.046Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/dc/bf/205d0004930ede8f542fb58f601526fccf4ae7626075ca1e6c4de5d3d652/typer-0.27.2-py3-none-any.whl", hash = "sha256:b3a5fc4342d5fc8fda8fc3010b1cf117e9249aab7fae800c2eff62fd3842d97d", size = 123130, upload-time = "2026-08-28T10:26:53.752Z" },
+]
+
+[[package]]
+name = "types-markdown"
+version = "3.11.3.20261108"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/56/49/b7e71464ac2a88112202cc19885169703897be958801ddc13d6f6b911e52/types_markdown-3.11.3.20261108.tar.gz", hash = "sha256:eac0188fc8dacbf9bbbea68a0aee98c7d3b0008f8b1def1a141cd669dd7c708a", size = 21043, upload-time = "2026-11-08T08:12:43.96Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/01/c8/d6538cf551ca721782891de6455a129679eab0d2fedd39570e66e5057c77/types_markdown-3.11.3.20261108-py3-none-any.whl", hash = "sha256:f906be98f35c745906ce2b88bd803f5e2af78d2f2f146d700110152ac20ffc38", size = 26452, upload-time = "2026-11-08T08:12:43.074Z" },
+]
+
+[[package]]
+name = "types-pyyaml"
+version = "6.0.12.20261103"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d9/82/2ed4d215a2840b467a9a864f03b0d21904250e28f5e1f006ad36fba0311a/types_pyyaml-6.0.12.20261103.tar.gz", hash = "sha256:7a1b5f837881dd35d5448b5f18275164f89f206185e31e8eae6e0b42607bc001", size = 18911, upload-time = "2026-11-03T08:45:23.714Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e8/10/4353eb86278f6a59aeb9fe2be4d979c20b110b4009fa455a3ea6467cf5cb/types_pyyaml-6.0.12.20261103-py3-none-any.whl", hash = "sha256:444654c61f635dab82c092a511aa96a0ce31164810784b9a37314e3e56532ac8", size = 21299, upload-time = "2026-11-03T08:45:22.749Z" },
 ]
 
 [[package]]

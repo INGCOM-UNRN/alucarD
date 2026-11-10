@@ -128,7 +128,7 @@ def _html(texto: str, valores: Dict[str, str]) -> str:
     """Una parte de la franja en HTML; el número de página no existe en HTML: la parte se omite."""
     if re.search(r"\{paginas?\}", texto):
         return ""
-    return html.escape(re.sub(r"\{(\w+)\}", lambda m: valores[m.group(1)], texto))
+    return html.escape(re.sub(r"\{(\w+)\}", lambda m: valores[str(m.group(1))], texto))
 
 
 def _franja_typst(franja: Franja, valores: Dict[str, str], color: str, logo: Optional[str], posicion: str) -> str:

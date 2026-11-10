@@ -417,7 +417,8 @@ def _matriz_dinamica(c: _Lienzo, b: Dict[str, Any], dentada: bool = False) -> Tu
         cy = y + celda_h / 2
         c.r(x_ptr, y, ptr_w, celda_h, relleno="fillPointerBox", trazo=1.5)
         c.t(x_ptr + ptr_w / 2, y + 12, f"{nombre}[{i}]", size=9.5, color="textMain", ancla="middle")
-        if filas[i] is None:  # fila NULL: la barra cruzada de statics
+        fila = filas[i]
+        if fila is None:  # fila NULL: la barra cruzada de statics
             c.linea(x_ptr + 5, y + celda_h - 5, x_ptr + ptr_w - 5, y + 16, color="strokeMain", ancho=1.5,
                     flecha=None)
             c.t(x_ptr + ptr_w + 10, cy + 4, "NULL", size=10, peso=700, color="textMuted")
@@ -433,7 +434,7 @@ def _matriz_dinamica(c: _Lienzo, b: Dict[str, Any], dentada: bool = False) -> Tu
             x = x_filas + j * celda_w
             c.r(x, y, celda_w, celda_h, relleno="fillHighlight" if (i, j) in resaltadas else "fillCell",
                 trazo=1.5)
-            v = filas[i][j] if j < len(filas[i]) else ""
+            v = fila[j] if j < len(fila) else ""
             if v and not sin_valores:
                 c.t(x + celda_w / 2, cy + 5, v, size=14, peso=700, ancla="middle")
             else:
@@ -1231,6 +1232,14 @@ def cuerpos_en_markdown(texto: str) -> List[str]:
     return [m.group("cuerpo") for m in _FENCE.finditer(texto)]
 
 
+def _atributo_numerico(svg: str, nombre: str) -> str:
+    """El `width` o el `height` del `<svg>`, que `renderizar` siempre escribe."""
+    m = re.search(rf'{nombre}="(\d+)"', svg)
+    if m is None:
+        raise ErrorDiagrama(f"el SVG no tiene {nombre}")
+    return m.group(1)
+
+
 def renderizar_bloque_markdown(cuerpo: str, tinta: bool = True) -> str:
     """Todas las estructuras de un bloque ```estructura en un único `<svg>`, apiladas."""
     svgs = [renderizar(b, tinta) for b in leer_bloques(cuerpo)]
@@ -1238,8 +1247,7 @@ def renderizar_bloque_markdown(cuerpo: str, tinta: bool = True) -> str:
         return svgs[0]
     ancho, y, partes = 0, 0, []
     for svg in svgs:
-        w = int(re.search(r'width="(\d+)"', svg).group(1))
-        h = int(re.search(r'height="(\d+)"', svg).group(1))
+        w, h = (int(_atributo_numerico(svg, nombre)) for nombre in ("width", "height"))
         partes.append(svg.replace("<svg ", f'<svg x="0" y="{y}" ', 1))
         ancho, y = max(ancho, w), y + h + 8
     return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{ancho}" height="{y - 8}" '
