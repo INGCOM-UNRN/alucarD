@@ -1219,6 +1219,8 @@ Los exámenes y evaluaciones que integran código C son auditados previamente co
 
 Para revisar qué salió en cada tema: el examen muestra, junto a «Pregunta N.», el título o el id de la
 pregunta del banco. Vale para todas las preguntas, también las consignas prácticas con `titulo: false`.
+Además, cada página del examen y de la clave lleva una marca de agua «Debug», gris y en diagonal, debajo
+del texto; para que se vea, las preguntas y las instrucciones salen sin su fondo.
 
 ```toml
 debug_consignas = "titulo"   # o "id"

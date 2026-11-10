@@ -2,6 +2,7 @@
 #set document(title: "{{ definicion.nombre_examen }} - Tema {{ tema + 1 }}", author: "{{ definicion.institucion }}")
 #set page(
   paper: "a4",
+  background: {% if definicion.configuracion_examen.debug_consignas %}rotate(-45deg, text(size: 120pt, weight: "bold", fill: luma(225))[Debug]){% else %}none{% endif %},
   margin: (top: {{ estilo.margen_sup_mm }}mm, bottom: 2cm, left: 2cm, right: 2cm),
   header: context [
     {% if estilo.logo_typst %}#let logo = {{ estilo.logo_typst }}
@@ -51,7 +52,7 @@
     stroke: 0.5pt + rgb("{{ c.borde }}"),
     radius: 4pt,
     inset: 8pt,
-    fill: rgb("ffffff"),
+    fill: {% if definicion.configuracion_examen.debug_consignas %}none{% else %}rgb("ffffff"){% endif %},  // la marca de agua va debajo
     breakable: rompible,
     cuerpo
   )
@@ -111,7 +112,7 @@
 
 {% if definicion.instrucciones_generales %}
 #v(6pt)
-#rect(width: 100%, fill: rgb("{{ c.fondo_inst }}"), inset: 8pt, radius: 4pt, stroke: 0.5pt + rgb("{{ c.borde_inst }}"))[
+#rect(width: 100%, fill: {% if definicion.configuracion_examen.debug_consignas %}none{% else %}rgb("{{ c.fondo_inst }}"){% endif %}, inset: 8pt, radius: 4pt, stroke: 0.5pt + rgb("{{ c.borde_inst }}"))[
   #text(weight: "bold", size: 0.9em)[Instrucciones Generales:]\
   #text(size: 0.85em)[{{ definicion.instrucciones_generales | typst_texto }}]
 ]

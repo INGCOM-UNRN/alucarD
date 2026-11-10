@@ -271,6 +271,24 @@ def test_sin_debug_consignas_no_se_ve_de_donde_salio(tmp_path):
     assert "Debug" not in texto_pdf(salida / "examen_tema_01.pdf")
 
 
+@pytest.mark.parametrize("archivo", ["examen_tema_01.pdf", "clave_tema_01.pdf"])
+def test_debug_consignas_pone_la_marca_de_agua_en_cada_pagina(tmp_path, archivo):
+    _, salida = generar_con_toml(tmp_path, 'debug_consignas = "id"\n', "  espacio_desarrollo: pagina\n")
+    paginas = PdfReader(salida / archivo).pages
+    assert all("Debug" in p.extract_text() for p in paginas)
+
+
+def test_debug_consignas_en_html_no_deja_fondos_que_tapen_la_marca(tmp_path):
+    (tmp_path / "e.yaml").write_text(
+        "nombre_examen: x\ninstitucion: x\nmateria: x\nconfiguracion_examen:\n  debug_consignas: titulo\n"
+        "secciones_examen:\n  - nombre: s\n    pools:\n      - tipos: [desarrollo]\n", encoding="utf-8")
+    (tmp_path / "b.gift").write_text("::uno::Primera\n{}\n", encoding="utf-8")
+    CliRunner().invoke(app, ["generar", "-d", str(tmp_path / "e.yaml"), "-i", str(tmp_path / "b.gift"),
+                             "-o", str(tmp_path / "out"), "-f", "html"])
+    texto = (tmp_path / "out" / "examen_tema_01.html").read_text(encoding="utf-8")
+    assert 'class="marca-debug"' in texto and "background-color: transparent !important" in texto
+
+
 def test_la_definicion_manda_sobre_el_toml(tmp_path):
     _, salida = generar_con_toml(tmp_path, 'debug_consignas = "titulo"\n', "  debug_consignas: id\n")
     texto = texto_pdf(salida / "examen_tema_01.pdf")

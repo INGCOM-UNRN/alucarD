@@ -512,9 +512,16 @@ body * { border-color: #000 !important; }
 /* Sobre fondo oscuro, el texto queda blanco (negro sobre #333 no se lee) */
 .section-title { background-color: #000 !important; color: #fff !important; }
 {% endif %}
+{% if definicion.configuracion_examen.debug_consignas %}
+/* debug_consignas: la marca de agua va debajo del texto, así que nada puede tener fondo */
+body * { background-color: transparent !important; }
+.marca-debug { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); z-index: -1;
+  font-size: 120pt; font-weight: bold; color: #e1e1e1 !important; pointer-events: none; user-select: none; }
+{% endif %}
     </style>
 </head>
 <body>
+{% if definicion.configuracion_examen.debug_consignas %}<div class="marca-debug" aria-hidden="true">Debug</div>{% endif %}
     {{ estilo.encabezado_html | safe }}
     <div class="header">
         <h1>{{ definicion.nombre_examen }}</h1>

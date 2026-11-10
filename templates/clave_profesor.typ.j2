@@ -2,6 +2,7 @@
 #set document(title: "{{ definicion.nombre_examen }} - Clave Tema {{ tema + 1 }}", author: "Cátedra")
 #set page(
   paper: "a4",
+  background: {% if definicion.configuracion_examen.debug_consignas %}rotate(-45deg, text(size: 120pt, weight: "bold", fill: luma(225))[Debug]){% else %}none{% endif %},
   margin: (top: {{ estilo.margen_sup_mm }}mm, bottom: 2cm, left: 2cm, right: 2cm),
   header: context [
     {% if estilo.logo_typst %}#let logo = {{ estilo.logo_typst }}
@@ -23,7 +24,7 @@
 #set par(justify: true, leading: 0.65em)
 
 #align(center)[
-  #block(fill: rgb("fff5f5"), inset: 10pt, radius: 4pt, stroke: 1pt + rgb("feb2b2"))[
+  #block(fill: {% if definicion.configuracion_examen.debug_consignas %}none{% else %}rgb("fff5f5"){% endif %}, inset: 10pt, radius: 4pt, stroke: 1pt + rgb("feb2b2"))[
     #text(size: 1.5em, weight: "bold", fill: rgb("9b2c2c"))[CLAVE DE CORRECCIÓN — TEMA {{ tema + 1 }}]\
     #v(2pt)
     #text(size: 1em, fill: rgb("742a2a"))[{{ [definicion.nombre_examen, definicion.materia] | select | map("typst_texto") | join(" — ") }}]
@@ -42,7 +43,7 @@
   stroke: 0.5pt + rgb("{{ c.borde }}"),
   radius: 4pt,
   inset: 6pt,
-  fill: rgb("fafafa"),
+  fill: {% if definicion.configuracion_examen.debug_consignas %}none{% else %}rgb("fafafa"){% endif %},
   breakable: {{ 'true' if preg.tipo == 'consigna_practica' else 'false' }}
 )[
   #text(weight: "bold")[{{ loop.index }}. {{ preg.nombre | typst_texto }}]{% if definicion.configuracion_examen.debug_consignas == 'id' %} #text(size: 0.8em)[\[{{ preg.id | typst_texto }}\]]{% endif %}
