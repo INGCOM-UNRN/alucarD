@@ -15,7 +15,7 @@ import re
 
 _ESPECIALES = re.compile(r"([\\#$*_`<>@\[\]~/=+\-])")
 _ETIQUETA = re.compile(r"<(/?)([a-zA-Z0-9]+)\b[^>]*?>", re.S)
-_PRE = re.compile(r"<pre\b[^>]*>(?:\s*<code\b(?P<attrs>[^>]*)>)?(?P<codigo>.*?)(?:</code>\s*)?</pre>", re.S | re.I)
+_PRE = re.compile(r"<pre\b(?P<pre>[^>]*)>(?:\s*<code\b(?P<attrs>[^>]*)>)?(?P<codigo>.*?)(?:</code>\s*)?</pre>", re.S | re.I)
 _FENCE = re.compile(r"```(?P<lang>[\w+#-]*)\n(?P<codigo>.*?)```", re.S)
 _CODE = re.compile(r"<code\b[^>]*>(?P<codigo>.*?)</code>", re.S | re.I)
 _LENGUAJE = re.compile(r"language-([\w+#-]+)")
@@ -26,6 +26,9 @@ _CELDA = re.compile(r"<t(?P<tipo>[hd])\b[^>]*>(?P<contenido>.*?)</t[hd]>", re.S 
 _SVG = re.compile(r"<svg\b(?P<attrs>[^>]*)>.*?</svg>", re.S | re.I)
 _ANCHO_SVG = re.compile(r'\bwidth="(?P<px>[\d.]+)"')
 _COMENTARIO = re.compile(r"<!--.*?-->", re.S)
+# En una grilla, para que un renglón demasiado largo siga alineado con el código y no debajo del número.
+_LINEA_NUMERADA = ("it => box(width: 100%, grid(columns: (2.2em, 1fr), column-gutter: 0.8em, "
+                   "align(right, text(fill: luma(110), size: 0.85em, str(it.number))), it.body))")
 # Dónde se puede partir una pregunta: `<!--corte-->` (la marca `// [corte]`) y los encabezados.
 _CORTE = re.compile(r"<!--\s*corte\s*-->|(?=<h[1-6]\b)", re.I)
 _MATH = re.compile(r'<math\b(?P<attrs>[^>]*)>.*?</math>', re.S | re.I)
@@ -119,7 +122,10 @@ def html_a_typst(fragmento: object) -> str:
         lenguaje = _LENGUAJE.search(m.group("attrs") or "")
         codigo = _texto_plano(m.group("codigo")).strip("\n")
         lang = f', lang: "{lenguaje.group(1)}"' if lenguaje else ""
-        return apartar(f"\n#raw(block: true{lang}, {_cadena(codigo)})\n")
+        bloque = f"#raw(block: true{lang}, {_cadena(codigo)})"
+        if 'data-numerar="si"' in m.group("pre"):
+            bloque = f"#[#show raw.line: {_LINEA_NUMERADA}\n{bloque}]"
+        return apartar(f"\n{bloque}\n")
 
     def bloque_fence(m: re.Match) -> str:
         lang = f', lang: "{m.group("lang")}"' if m.group("lang") else ""

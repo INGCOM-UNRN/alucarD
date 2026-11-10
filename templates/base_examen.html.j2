@@ -518,6 +518,7 @@ body * { background-color: transparent !important; }
 .marca-debug { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); z-index: -1;
   font-size: 120pt; font-weight: bold; color: #e1e1e1 !important; pointer-events: none; user-select: none; }
 {% endif %}
+.num-linea { display: inline-block; width: 2.2em; margin-right: 0.8em; text-align: right; color: #6e6e6e; user-select: none; }
     </style>
 </head>
 <body>
@@ -573,7 +574,7 @@ body * { background-color: transparent !important; }
                 ({{ pregunta.puntaje }} {% if pregunta.puntaje == 1 %}{{ i18n.point }}{% else %}{{ i18n.points }}{% endif %})
                 {% if definicion.configuracion_examen.debug_consignas %}<small class="debug-consigna">[{{ pregunta.nombre if definicion.configuracion_examen.debug_consignas == 'titulo' else pregunta.id }}]</small>{% endif %}
             </div>
-            <div class="question-text">{{ pregunta.enunciado_html | safe }}</div>
+            <div class="question-text">{{ pregunta.enunciado_html | numeros_en_html | safe }}</div>
             
             {% if pregunta.tipo == 'seleccion_multiple' %}
             <div class="options">
@@ -582,7 +583,7 @@ body * { background-color: transparent !important; }
                 <div class="option">
                     <div class="option-checkbox"></div>
                     <span class="option-label">{{ letras[loop.index0] }})</span>
-                    <div class="option-text">{{ opcion.texto_html | safe }}</div>
+                    <div class="option-text">{{ opcion.texto_html | numeros_en_html | safe }}</div>
                 </div>
                 {% endfor %}
             </div>

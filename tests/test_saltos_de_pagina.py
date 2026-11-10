@@ -8,7 +8,7 @@ from typer.testing import CliRunner
 from generador_examenes.__main__ import app
 from generador_examenes.config import proyecto
 from generador_examenes.core.logic import construir_pool_examen
-from generador_examenes.core.markdown_utils import markdown_to_html
+from generador_examenes.core.markdown_utils import markdown_to_html, numeros_en_html
 from generador_examenes.core.consignas import presentar_consigna
 from generador_examenes.core.models import DefinicionExamen, PresentacionConsigna, Pregunta
 from generador_examenes.generators.typst_markup import html_a_typst, partes_typst
@@ -337,3 +337,53 @@ def test_un_comentario_que_nombra_la_marca_no_cambia_los_ids(tmp_path):
     (sin,) = pregunta(tmp_path, gift)
     (con,) = pregunta(tmp_path, "// Las secciones llevan // [corte] antes.\n\n" + gift)
     assert con.id == sin.id and "<!--corte-->" in con.enunciado_html
+
+
+CODIGO = "```c\nint a;\nint b;\n```\n"
+
+
+def test_numerar_marca_solo_el_bloque_que_sigue(tmp_path):
+    (p,) = pregunta(tmp_path, f"::a::[markdown]Uno\n// [numerar]\n{CODIGO}Dos\n{CODIGO}{{}}\n")
+    assert p.enunciado_html.count('data-numerar="si"') == 1 and p.enunciado_html.count("<pre") == 2
+    assert "numerar" not in html_a_typst(p.enunciado_html).split("#raw")[0].replace("#show raw.line", "")
+
+
+def test_el_pdf_numera_lo_marcado(tmp_path):
+    (p,) = pregunta(tmp_path, f"::a::[markdown]Uno\n// [numerar]\n{CODIGO}{{}}\n")
+    assert "#show raw.line" in html_a_typst(p.enunciado_html)
+    (p,) = pregunta(tmp_path, f"::a::[markdown]Uno\n{CODIGO}{{}}\n")
+    assert "#show raw.line" not in html_a_typst(p.enunciado_html)
+
+
+def numerados(tmp_path, gift, **configuracion):
+    banco = tmp_path / "banco.gift"
+    banco.write_text(gift, encoding="utf-8")
+    definicion = DefinicionExamen(nombre_examen="x", institucion="x", materia="x", configuracion_examen=configuracion,
+                                  secciones_examen=[{"nombre": "s", "pools": [{}]}])
+    (preg,) = construir_pool_examen(definicion, GiftParser().parse(banco))["secciones"][0]["preguntas"]
+    return preg
+
+
+def test_numerar_codigo_vale_para_todos_salvo_los_excluidos(tmp_path):
+    preg = numerados(tmp_path, f"::a::[markdown]Uno\n{CODIGO}// [sin-numerar]\n{CODIGO}{{}}\n", numerar_codigo=True)
+    assert preg.enunciado_html.count('data-numerar="si"') == 1 and preg.enunciado_html.count('data-numerar="no"') == 1
+
+
+def test_sin_la_opcion_general_no_se_numera(tmp_path):
+    assert "data-numerar" not in numerados(tmp_path, f"::a::[markdown]Uno\n{CODIGO}{{}}\n").enunciado_html
+
+
+def test_el_html_escribe_los_numeros(tmp_path):
+    (p,) = pregunta(tmp_path, f"::a::[markdown]Uno\n// [numerar]\n{CODIGO}{{}}\n")
+    html = numeros_en_html(p.enunciado_html)
+    assert html.count('class="num-linea"') == 2 and '<span class="num-linea">2</span>' in html
+
+
+def test_una_marca_de_numeros_arriba_del_titulo_no_rompe_la_pregunta(tmp_path):
+    (p,) = pregunta(tmp_path, f"// [numerar]\n::a::[markdown]Uno\n{CODIGO}{{}}\n")
+    assert p.nombre == "a" and "data-numerar" not in p.enunciado_html
+
+
+def test_las_marcas_de_numeros_funcionan_sin_markdown(tmp_path):
+    (p,) = pregunta(tmp_path, f"::a::Uno\n// [numerar]\n{CODIGO}{{}}\n")
+    assert 'data-numerar="si"' in p.enunciado_html

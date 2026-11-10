@@ -229,6 +229,8 @@ class ConfiguracionExamen(BaseModel):
     # Cada pregunta de desarrollo en su propia hoja, con el resto de la hoja para responder: es
     # `pagina` para todas, también para las que piden otro espacio.
     desarrollo_en_hoja_separada: bool = False
+    # Números de línea en todos los bloques de código, salvo los que dicen `// [sin-numerar]`.
+    numerar_codigo: bool = False
     # Para revisar un examen: muestra junto a cada pregunta cuál salió del banco. Por omisión, el de
     # `debug_consignas` de alucard.toml.
     debug_consignas: Optional[Literal["titulo", "id"]] = None

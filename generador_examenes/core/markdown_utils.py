@@ -98,6 +98,34 @@ def separar_tablas(text: str) -> str:
     return "\n".join(salida)
 
 
+_MARCA_NUMERAR = re.compile(r'<!--\s*(numerar|sin-numerar)\s*-->\s*((?:<div class="highlight"[^>]*>\s*)?<pre\b)', re.I)
+_PRE_NUMERADO = re.compile(r'(<pre\b[^>]*\bdata-numerar="si"[^>]*>)(?P<inicio>(?:<span></span>)?(?:<code\b[^>]*>)?)'
+                           r'(?P<codigo>.*?)(?P<fin>(?:</code>)?</pre>)', re.S | re.I)
+
+
+def _aplicar_marcas_de_numeros(html: str) -> str:
+    """Pasa `// [numerar]` y `// [sin-numerar]` al `<pre>` que les sigue."""
+    def marcar(m: re.Match) -> str:
+        return f'{m.group(2)} data-numerar="{"no" if m.group(1).lower().startswith("sin") else "si"}"'
+
+    return _MARCA_NUMERAR.sub(marcar, html)
+
+
+def numerar_todo(html: str) -> str:
+    """`numerar_codigo`: numera los bloques que no dicen otra cosa."""
+    return re.sub(r'<pre\b(?![^>]*\bdata-numerar=)', '<pre data-numerar="si"', html)
+
+
+def numeros_en_html(html: object) -> str:
+    """Escribe los números de los bloques marcados, para la salida HTML (Typst los pone solo)."""
+    def numerar(m: re.Match) -> str:
+        renglones = m.group("codigo").rstrip("\n").split("\n")
+        numerados = (f'<span class="num-linea">{i}</span>{r}' for i, r in enumerate(renglones, 1))
+        return m.group(1) + m.group("inicio") + "\n".join(numerados) + m.group("fin")
+
+    return _PRE_NUMERADO.sub(numerar, "" if html is None else str(html))
+
+
 def _expandir_bloques(text: str) -> tuple[str, dict[str, str]]:
     """Cambia los bloques que no son código por marcadores; devuelve el texto y el HTML de cada uno."""
     text, bloques = expandir_en_markdown(text)
@@ -149,7 +177,7 @@ def markdown_to_html(text: str, saltos_de_linea: bool = True) -> str:
     # Convertir markdown a HTML
     html = md.convert(text)
     
-    return reponer_formulas(reponer_svgs(html, diagramas), formulas)
+    return _aplicar_marcas_de_numeros(reponer_formulas(reponer_svgs(html, diagramas), formulas))
 
 
 def process_code_blocks_manual(text: str) -> str:
@@ -246,5 +274,5 @@ def detect_and_convert_format(text: str, format_hint: Optional[str] = None) -> s
     text, formulas = expandir_formulas(text, delimitadores_latex=True)
     if '```' in text:
         text = process_code_blocks_manual(text)
-
-    return reponer_formulas(text, formulas)
+    
+    return _aplicar_marcas_de_numeros(reponer_formulas(text, formulas))

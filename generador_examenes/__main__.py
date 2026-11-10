@@ -100,6 +100,8 @@ configuracion_examen:
   forzar_espacio_desarrollo: false
   # Cada pregunta de desarrollo en su propia hoja, con el resto de la hoja para responder.
   desarrollo_en_hoja_separada: false
+  # Números de línea en todos los bloques de código; `// [numerar]` antes de un bloque lo hace para ese solo.
+  numerar_codigo: false
   # titulo_justificacion: "Justificá tu respuesta"
   # Qué se muestra de cada consigna práctica (deckard); cada pool puede cambiar parte en `presentacion`.
   presentacion_consignas:

@@ -76,8 +76,9 @@ _VERDADERO_FALSO = re.compile(r'(?:T|F|TRUE|FALSE)\s*(?:#.*)?', re.I | re.S)
 _ES_COMENTARIO = re.compile(r'\s*//')
 _METADATOS = re.compile(r'\[(?:tag|category)[:,]', re.I)
 # Por dónde se puede partir la pregunta en el PDF. En el texto queda como un comentario de HTML.
-_CORTE = re.compile(r'\s*//\s*\[(corte)\]\s*$', re.I)
-_MARCA_DEL_PDF = r'<!--corte-->'
+# Lo mismo para `// [numerar]` y `// [sin-numerar]`: dicen si el bloque de código que sigue lleva números.
+_CORTE = re.compile(r'\s*//\s*\[(corte|numerar|sin-numerar)\]\s*$', re.I)
+_MARCA_DEL_PDF = r'<!--(?:corte|numerar|sin-numerar)-->'
 _TAG = re.compile(r'\[tag(?P<separador>[:,])(?P<tags>(?:\\\]|[^\]<>`\x00-\x1f])+)\]', re.I)
 _CATEGORIA = re.compile(r'\[category[:,]\s*(.+?)\s*\]', re.I)
 # El tamaño del espacio de un desarrollo: `{}` es el ensayo de Moodle y no admite parámetros, así que

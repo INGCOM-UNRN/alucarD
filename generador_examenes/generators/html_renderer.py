@@ -6,6 +6,7 @@ import logging
 from pathlib import Path
 from typing import Any
 from jinja2 import Environment, FileSystemLoader, Template
+from generador_examenes.core.markdown_utils import numeros_en_html
 from generador_examenes.core.models import DefinicionExamen
 from generador_examenes.core.estilo import contexto_estilo, preparar_examen
 from generador_examenes.generators.base import BaseRenderer
@@ -39,6 +40,7 @@ class HtmlRenderer(BaseRenderer):
             lstrip_blocks=True
         )
         
+        self.env.filters['numeros_en_html'] = numeros_en_html
         logger.debug(f"HtmlRenderer inicializado con templates: {templates_dir}")
     
     @staticmethod

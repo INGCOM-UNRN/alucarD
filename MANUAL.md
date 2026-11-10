@@ -849,6 +849,31 @@ un mismo banco puede salir sin recuadros en un examen y con ellos en otro.
 En Moodle XML el tamaño viaja en las mismas etiquetas; `responseformat` no cuenta, porque es el editor
 de Moodle. Una pregunta sin etiqueta toma `espacio_desarrollo`.
 
+### Números de línea en el código
+
+Los bloques de código pueden llevar números de línea, en el PDF y en el HTML, para todo el examen o de a
+uno. La marca va en un renglón justo antes del bloque y, como es un comentario, Moodle la descarta:
+
+````gift
+::traza::[markdown]¿Qué línea provoca el error?
+// [numerar]
+```c
+int *p = NULL;
+*p = 3;
+```
+{=La 2 ~La 1}
+````
+
+```yaml
+configuracion_examen:
+  numerar_codigo: true     # todos los bloques de los enunciados y de las opciones
+```
+
+Con `numerar_codigo: true`, `// [sin-numerar]` deja afuera un bloque, y la marca del bloque siempre manda
+sobre la opción general. En Moodle XML y en un enunciado Markdown se escribe `<!--numerar-->` o
+`<!--sin-numerar-->`. La marca vale para el bloque que le sigue, no para toda la pregunta, y arriba del título
+no hace nada. La clave numera igual que el examen, salvo la solución de una consigna práctica.
+
 ### Tablas en las preguntas
 
 Las tablas van en un bloque ```` ```tabla ````, con sintaxis Markdown y sin HTML. Las opciones de
@@ -1340,6 +1365,7 @@ rutas del YAML son relativas a la carpeta desde la que se ejecuta alucard.
 | `espacio_desarrollo` | `cero`, `chico`, `mediano`, `grande` o `pagina` | `mediano` | Espacio de las preguntas de desarrollo que no piden otro. Ver [Espacio de las preguntas de desarrollo](#espacio-de-las-preguntas-de-desarrollo). |
 | `forzar_espacio_desarrollo` | booleano | `false` | `espacio_desarrollo` vale también para las preguntas que piden otro con su etiqueta. |
 | `desarrollo_en_hoja_separada` | booleano | `false` | Todas las preguntas de desarrollo en su propia hoja. Manda sobre `espacio_desarrollo` y `forzar_espacio_desarrollo`. |
+| `numerar_codigo` | booleano | `false` | Números de línea en todos los bloques de código, salvo los que dicen `// [sin-numerar]`. Ver [Números de línea en el código](#números-de-línea-en-el-código). |
 | `debug_consignas` | `titulo` o `id` | el del toml | Muestra junto a cada pregunta cuál salió del banco. Ver [`debug_consignas`](#debug_consignas). |
 | `presentacion_consignas` | sección | ver abajo | Ver [`presentacion_consignas`](#presentacion_consignas). |
 
