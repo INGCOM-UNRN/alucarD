@@ -683,7 +683,8 @@ def _build(
     if codigo != 0:
         _ultimo_codigo_salida["code"] = codigo
         return
-    reporte = auditar_balance(armar_temas(definicion_modelo, input_banco, numero_temas, semilla), umbral)
+    bancos = input_banco or (cli_commands.bancos_de_definicion(definicion) if definicion else None)
+    reporte = auditar_balance(armar_temas(definicion_modelo, bancos, numero_temas, semilla), umbral)
     print("\n" + texto_del_informe(reporte))
     _ultimo_codigo_salida["code"] = 0 if reporte["ok"] else 1
 
@@ -714,7 +715,8 @@ def _balance_check(
 
     setup_logging(debug=False)
     definicion_modelo, _ = _cargar_definicion(definicion, input_banco or [], None, "", "", consignas, repositorio)
-    reporte = auditar_balance(armar_temas(definicion_modelo, input_banco, numero_temas, semilla), umbral)
+    bancos = input_banco or (cli_commands.bancos_de_definicion(definicion) if definicion else None)
+    reporte = auditar_balance(armar_temas(definicion_modelo, bancos, numero_temas, semilla), umbral)
     print(json.dumps(reporte, ensure_ascii=False, indent=2) if json_output else texto_del_informe(reporte))
     _ultimo_codigo_salida["code"] = 0 if reporte["ok"] else 1
 

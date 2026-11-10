@@ -61,6 +61,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - **texto**: los superíndices, subíndices y fracciones ya no se pierden al leer un banco: `O(n²)` salía `O(n2)` y `O(2ⁿ)`, `O(2n)`, también en los diagramas.
 - **pools**: el filtro `banco` se ignoraba y el pool tomaba preguntas de todos los bancos; ahora filtra por el nombre del archivo.
 - **Moodle XML**: la categoría de un `<question type="category">` no se aplicaba y todo caía en `General`. Vale para las preguntas que le siguen, como ruta (`$course$/top/estructuras/listas` es `estructuras/listas`).
+- **`balance-check` y `build`**: con `-d`, toman los bancos de `alucard.toml` si la definición no los trae.
 - **GIFT**: `{=a =b}` es una respuesta corta con varias respuestas aceptadas, no una selección múltiple sin incorrectas; `{TAD}` o `{FIFO}` son respuestas cortas, no verdadero/falso; y los escapes (`\=`, `\{`…) se aplican también en el enunciado, donde se imprimían con la barra.
 - **html**: los diagramas anchos (una lista de 4 nodos, una matriz plana) se salían del recuadro de la pregunta; ahora se achican.
 - **diagramas**: un bloque con un dato de otro tipo (por ejemplo, una lista donde va un número) cortaba la generación del examen; ahora sale como «Diagrama inválido», como cualquier otro bloque mal escrito.

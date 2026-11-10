@@ -109,3 +109,16 @@ def test_html_no_depende_de_typst(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     _typst_roto(monkeypatch)
     assert _correr(monkeypatch, "generar", "-d", str(definicion), "-o", str(tmp_path / "o")) == 0
+
+
+def test_balance_check_toma_los_bancos_del_toml(tmp_path, monkeypatch, capsys):
+    definicion = _proyecto(tmp_path, 'input_banco = ["bancos/b.txt"]\n')
+    monkeypatch.chdir(tmp_path)
+    assert _correr(monkeypatch, "balance-check", "-d", str(definicion), "-n", "1", "--umbral", "1") == 0
+
+
+def test_build_toma_los_bancos_del_toml(tmp_path, monkeypatch):
+    definicion = _proyecto(tmp_path, 'input_banco = ["bancos/b.txt"]\n')
+    monkeypatch.chdir(tmp_path)
+    assert _correr(monkeypatch, "build", "-d", str(definicion), "-n", "1", "-f", "html", "--umbral", "1",
+                   "-o", str(tmp_path / "o")) == 0
