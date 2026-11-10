@@ -58,6 +58,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Cambiado
 
+- **examen**: el dato del estudiante es «Legajo / DNI», en lugar de «Padrón / DNI» e «ID/Matrícula»; la hoja de asistencia dice «Legajo». `--padron` y `padron.txt` de `repartir` siguen igual: son la lista de usuarios de GitHub.
 - **GIFT**: los bancos se importan en Moodle tal cual. Las etiquetas van en un comentario (`// [tag, punteros, facil]`) y la categoría de una pregunta en `// [category, …]`, sin `:` (`[tag:x]`, el formato que exporta Moodle, se lee y `lint-gift --fix` lo cambia); el desarrollo es `{}` y su tamaño una etiqueta (`[tag, desarrollo-grande]`). Las preguntas no usan `:` (salvo los bloques `estructura` y las fórmulas, que hay que preprocesar de todas formas): `alucard lint-gift` lo marca como error. La sintaxis anterior se sigue leyendo con un aviso y `alucard lint-gift --fix` la migra.
 - **pdf**: Typst es el único motor de PDF y `alucard doctor` lo exige (también comprueba que el módulo se pueda importar). Se quitó WeasyPrint, con sus dependencias del sistema (Pango, Cairo y GTK3 en Windows). Si Typst no compila, `alucard generar` dice en qué pregunta y sale con 1, en vez de armar otro PDF con un formato distinto; `alucard ver` hace lo mismo.
 - **diagramas**: más contraste en las listas enlazadas: las etiquetas `dato`, `*sig`, `*ant` y `sig:…`/`ant:… | sig:…` pasan de gris a negro (sin negrita) y un punto más grandes.

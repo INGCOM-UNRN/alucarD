@@ -42,7 +42,7 @@ def generar_plantilla_omr(
         '#rect(width: 100%, inset: 8pt, stroke: 0.8pt + rgb("4a5568"))[',
         '  #grid(columns: (2fr, 1.2fr),',
         '    [*Estudiante:* #line(length: 70%, stroke: 0.4pt)],',
-        '    [*Padrón / DNI:* #line(length: 50%, stroke: 0.4pt)]',
+        '    [*Legajo / DNI:* #line(length: 50%, stroke: 0.4pt)]',
         '  )',
         ']',
         '#v(8pt)',

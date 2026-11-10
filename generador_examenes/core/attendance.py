@@ -15,15 +15,15 @@ def generar_acta_asistencia(
     lineas = [
         f"# 📝 Acta de Asistencia y Firmas: {nombre_examen}",
         f"**Total de Estudiantes Inscriptos:** {len(alumnos)}\n",
-        "| Padrón | Apellido y Nombre | Tema Asignado | Firma Entrega |",
+        "| Legajo | Apellido y Nombre | Tema Asignado | Firma Entrega |",
         "|---|---|:---:|:---:|",
     ]
 
     for a in alumnos:
-        padron = a.get("padron", "------")
+        legajo = a.get("legajo", a.get("padron", "------"))
         nombre = a.get("nombre", "Estudiante")
         tema = a.get("tema", "Tema 1")
-        lineas.append(f"| `{padron}` | {nombre} | {tema} | [                      ] |")
+        lineas.append(f"| `{legajo}` | {nombre} | {tema} | [                      ] |")
 
     resultado = "\n".join(lineas)
     if output_path:
