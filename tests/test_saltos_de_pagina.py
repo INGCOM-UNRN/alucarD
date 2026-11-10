@@ -448,3 +448,44 @@ def test_lo_que_no_se_puede_acomodar_se_avisa_con_su_pregunta(tmp_path, caso, ca
 
 def test_lo_que_entra_no_avisa(tmp_path, capsys, monkeypatch):
     assert "Revisá antes de imprimir" not in avisos_de(tmp_path, "```c\nint a;\n```\n", capsys, monkeypatch)
+
+
+
+def test_debug_candidatas_lista_banco_id_y_etiquetas(tmp_path):
+    (tmp_path / ".git").mkdir()
+    (tmp_path / "alucard.toml").write_text("debug_candidatas = true\n", encoding="utf-8")
+    (tmp_path / "e.yaml").write_text(
+        "nombre_examen: x\ninstitucion: x\nmateria: x\nconfiguracion_examen: {}\nsecciones_examen:\n"
+        "  - nombre: s\n    pools:\n      - tipos: [desarrollo]\n        etiquetas: [listas]\n        cantidad: 1\n",
+        encoding="utf-8")
+    (tmp_path / "b.gift").write_text(
+        "$CATEGORY: teoria/listas\n\n// [tag, desarrollo-grande, listas, tda]\n::una::Explicá\n{}\n\n"
+        "// [tag, listas]\n::otra::Otra\n{}\n\n// [tag, pilas]\n::afuera::No va\n{}\n", encoding="utf-8")
+    resultado = CliRunner().invoke(app, ["generar", "-d", str(tmp_path / "e.yaml"), "-i", str(tmp_path / "b.gift"),
+                                         "-o", str(tmp_path / "out"), "-f", "html"])
+    assert resultado.exit_code == 0, resultado.output
+    renglones = (tmp_path / "out" / "candidatas.txt").read_text(encoding="utf-8").splitlines()
+    entradas = [r for r in renglones if r and not r.startswith("#")]
+    assert len(entradas) == 4 and "afuera" not in "\n".join(entradas)
+    assert entradas[0].startswith("b.gift:") and entradas[2].startswith("b.gift:")
+    assert entradas[1] == "// [tag, desarrollo-grande, listas, tda] [category, teoria/listas]"
+    assert entradas[3] == "// [tag, listas] [category, teoria/listas]"
+    assert "# 2 candidatas, 1 salió" in renglones
+
+
+def test_sin_debug_candidatas_no_hay_listado(tmp_path):
+    _, salida = generar_con_toml(tmp_path, "")
+    assert not (salida / "candidatas.txt").exists()
+
+
+def test_la_definicion_apaga_debug_candidatas_del_toml(tmp_path):
+    _, salida = generar_con_toml(tmp_path, "debug_candidatas = true\n", "  debug_candidatas: false\n")
+    assert not (salida / "candidatas.txt").exists()
+
+
+def test_debug_candidatas_invalido_lo_dice_con_el_archivo(tmp_path):
+    from generador_examenes.config import proyecto
+    (tmp_path / ".git").mkdir()
+    (tmp_path / "alucard.toml").write_text('debug_candidatas = "si"\n', encoding="utf-8")
+    with pytest.raises(ValueError, match="debug_candidatas"):
+        proyecto.cargar(tmp_path)

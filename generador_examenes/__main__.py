@@ -246,6 +246,7 @@ numero_temas = 2
 semilla = 2026
 formato = ["html"]
 # debug_consignas = "titulo"     # para revisar: muestra de qué pregunta salió cada una ("titulo" o "id")
+# debug_candidatas = true        # para revisar los pools: candidatas.txt con cada pregunta que podía salir
 
 [ortografia]
 idioma = "es-AR"

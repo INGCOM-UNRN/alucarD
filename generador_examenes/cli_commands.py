@@ -647,9 +647,11 @@ def generar_examen(args, logger) -> int:
 
         # De qué pregunta salió cada una: la definición manda sobre el curso.
         configuracion = definicion.configuracion_examen
-        if curso.debug_consignas and "debug_consignas" not in configuracion.model_fields_set:
+        del_curso = {campo: getattr(curso, campo) for campo in ("debug_consignas", "debug_candidatas")
+                     if getattr(curso, campo) and campo not in configuracion.model_fields_set}
+        if del_curso:
             definicion = definicion.model_copy(update={"configuracion_examen": configuracion.model_copy(
-                update={"debug_consignas": curso.debug_consignas})})
+                update=del_curso)})
         if definicion.configuracion_examen.debug_consignas:
             _avisar(args, "debug_consignas está activo: el examen muestra de qué pregunta salió cada una; "
                           "sacalo antes de imprimir.")
@@ -854,6 +856,15 @@ def generar_examen(args, logger) -> int:
                 print(f"✓ Informe: {informe}")
         except Exception as e:  # el informe no debe impedir el examen
             logger.warning(f"No se pudo armar el informe de la generación: {e}")
+
+        if definicion.configuracion_examen.debug_candidatas:
+            from generador_examenes.core.informe import armar_candidatas
+            candidatas = output_dir / "candidatas.txt"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            candidatas.write_text(armar_candidatas(definicion, banco_completo, temas_generados), encoding="utf-8")
+            archivos_generados.append(str(candidatas))
+            if not getattr(args, 'json_output', False):
+                print(f"✓ Candidatas: {candidatas}")
 
         # Auditoría tipográfica de código si fue solicitada
         if getattr(args, 'audit_typography', False):

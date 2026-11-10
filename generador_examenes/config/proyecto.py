@@ -13,6 +13,7 @@ numero_temas = 2
 semilla = 2026
 formato = ["pdf"]
 debug_consignas = "titulo"                 # muestra de qué pregunta salió cada una: "titulo" o "id"
+debug_candidatas = true                    # candidatas.txt: cada pregunta que podía salir, como banco:id
 
 [ortografia]
 servidor = "http://localhost:8081"
@@ -60,6 +61,7 @@ class ConfiguracionProyecto:
     palabras: list[str] = field(default_factory=list)
     estilo: dict[str, Any] = field(default_factory=dict)  # [estilo], con el logotipo ya resuelto
     debug_consignas: Optional[str] = None
+    debug_candidatas: bool = False
 
 
 def buscar(desde: Optional[Path] = None) -> Optional[Path]:
@@ -117,9 +119,13 @@ def cargar(desde: Optional[Path] = None) -> ConfiguracionProyecto:
         debug = "titulo"
     if debug not in (False, "titulo", "id"):
         raise ValueError(f'{ruta}: debug_consignas es "titulo", "id" o false: {debug!r}')
+    candidatas = datos.get("debug_candidatas", False)
+    if not isinstance(candidatas, bool):
+        raise ValueError(f"{ruta}: debug_candidatas es true o false: {candidatas!r}")
     return ConfiguracionProyecto(
         ruta=ruta,
         debug_consignas=debug or None,
+        debug_candidatas=candidatas,
         definicion=rutas(datos.get("definicion")),
         input_banco=rutas(datos.get("input_banco")),
         output_dir=ruta_sola(datos.get("output_dir")),

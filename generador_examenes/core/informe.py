@@ -5,6 +5,8 @@
 - Orden de cada tema: los temas comparten preguntas y cambian el orden (y el de las opciones).
 - Consignas prácticas que no entraron en ningún pool, con el filtro que las dejó afuera, y las del
   proyecto que tienen `publicar: false`.
+
+Con `debug_candidatas`, además `candidatas.txt`: cada pregunta que cada pool podía elegir.
 """
 
 from __future__ import annotations
@@ -66,6 +68,33 @@ def no_publicadas(rutas: Iterable[str]) -> List[Pregunta]:
             continue
         resultado += [p for p in todas.values() if not p.metadata.get("publicar", True)]
     return resultado
+
+
+def comentario_de_etiquetas(pregunta: Pregunta) -> str:
+    """El comentario `// [tag, …] [category, …]` de la pregunta, como se escribe en un GIFT."""
+    etiquetas = ([f"desarrollo-{pregunta.tamano_desarrollo}"] if pregunta.tamano_desarrollo else []) + [
+        e.replace("]", "\\]") for e in pregunta.etiquetas]
+    partes = [f"[tag, {', '.join(etiquetas)}]"] if etiquetas else []
+    return "// " + " ".join(partes + [f"[category, {pregunta.categoria}]"])
+
+
+def armar_candidatas(definicion: DefinicionExamen, banco: Dict[str, Pregunta], temas: List[Dict[str, Any]]) -> str:
+    """`candidatas.txt`: por pool, cada pregunta que podía salir como `banco:id`, con sus etiquetas en
+    el renglón de abajo. Los renglones con `#` dicen de qué sección y pool son."""
+    from generador_examenes.core.logic import candidatas_pool
+
+    salieron = {p.id for t in temas for s in t.get("secciones", []) for p in s.get("preguntas", [])}
+    l = [f"# Candidatas: {definicion.nombre_examen}",
+         "# Cada pregunta que un pool podía elegir: banco:id y, abajo, sus etiquetas."]
+    for seccion in definicion.secciones_examen:
+        for n, pool in enumerate(seccion.pools, 1):
+            candidatas = candidatas_pool(pool, banco)  # en el orden de los bancos
+            elegidas = sum(1 for p in candidatas if p.id in salieron)
+            l += ["", f"# Sección «{seccion.nombre}», pool {n}: {pool}",
+                  f"# {len(candidatas)} candidatas, {elegidas} {'salió' if elegidas == 1 else 'salieron'}"]
+            for p in candidatas:
+                l += [f"{p.fuente_banco or '?'}:{p.id}", comentario_de_etiquetas(p)]
+    return "\n".join(l) + "\n"
 
 
 def _temas_distintos(temas: List[Dict[str, Any]]) -> bool:

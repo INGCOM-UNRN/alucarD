@@ -240,6 +240,9 @@ class ConfiguracionExamen(BaseModel):
     # Para revisar un examen: muestra junto a cada pregunta cuál salió del banco. Por omisión, el de
     # `debug_consignas` de alucard.toml.
     debug_consignas: Optional[Literal["titulo", "id"]] = None
+    # Para revisar los pools: `candidatas.txt` junto al examen, con cada pregunta que podía salir
+    # (`banco:id` y sus etiquetas). Por omisión, el de `debug_candidatas` de alucard.toml.
+    debug_candidatas: Optional[bool] = None
 
     _espacio = field_validator("espacio_desarrollo", mode="before")(_nombre_de_tamano)
 

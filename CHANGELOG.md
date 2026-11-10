@@ -11,6 +11,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Agregado
 
+- **debug_candidatas**: en `alucard.toml` o en `configuracion_examen`, `generar` deja `candidatas.txt` en la salida con cada pregunta que cada pool podía elegir, como `banco:id` y con su comentario de etiquetas en el renglón de abajo.
 - **PlantUML**: `configuracion_examen.escala_plantuml` cambia el tamaño de todos los diagramas sin `[escala]`. `[ancho]` y `[alto]` son límites: un diagrama chico ya no se agranda.
 - **sortear_por_tema**: en `configuracion_examen` o en un pool, cada tema toma otras preguntas y se usan todas las candidatas antes de repetir. El informe muestra las de todos los temas.
 - **avisos de desborde**: `generar` avisa, con la pregunta y los temas, de los renglones de código, fórmulas, tablas y partes de una pregunta que el armado del PDF no puede acomodar.

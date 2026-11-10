@@ -106,6 +106,9 @@ Junto a los temas, `alucard generar` deja un `informe.md` con:
 - las consignas prácticas que no podían entrar, con el filtro que las dejó afuera (categoría, tipo,
   etiquetas, minutos) o `publicar: false`.
 
+Con [`debug_candidatas`](#debug_candidatas) también deja `candidatas.txt`, con todas las preguntas que
+cada pool podía elegir.
+
 #### Mientras se escribe: `--watch`
 
 `alucard generar -d parcial.yaml --watch` (o `-w`) genera y vuelve a generar cada vez que se guarda
@@ -1390,6 +1393,7 @@ rutas del YAML son relativas a la carpeta desde la que se ejecuta alucard.
 | `escala_plantuml` | número, hasta 4 | `1` | Tamaño de los diagramas PlantUML que no traen su `[escala]`. |
 | `numerar_codigo` | booleano | `false` | Números de línea en todos los bloques de código, salvo los que dicen `// [sin-numerar]`. Ver [Números de línea en el código](#números-de-línea-en-el-código). |
 | `debug_consignas` | `titulo` o `id` | el del toml | Muestra junto a cada pregunta cuál salió del banco. Ver [`debug_consignas`](#debug_consignas). |
+| `debug_candidatas` | booleano | el del toml | Deja `candidatas.txt` con cada pregunta que cada pool podía elegir. Ver [`debug_candidatas`](#debug_candidatas). |
 | `presentacion_consignas` | sección | ver abajo | Ver [`presentacion_consignas`](#presentacion_consignas). |
 
 #### `presentacion_consignas`
@@ -1476,6 +1480,7 @@ Va en `estilo` de la definición y en `[estilo]` de `alucard.toml`. Más detalle
 | `semilla` | entero | — | Semilla, si el YAML no la dice. |
 | `formato` | texto o lista | — | `html`, `pdf` o ambos, si el YAML no lo dice. |
 | `debug_consignas` | `"titulo"`, `"id"`, `true` o `false` | `false` | Muestra junto a cada pregunta cuál salió del banco. `true` es `"titulo"`. |
+| `debug_candidatas` | booleano | `false` | Deja `candidatas.txt` con cada pregunta que cada pool podía elegir. |
 
 #### `[ortografia]`
 
@@ -1506,3 +1511,25 @@ Un examen lo cambia con `configuracion_examen.debug_consignas`, y `debug_consign
 ese examen. La clave con `"id"` también lo muestra; con `"titulo"` no hace falta, porque ya lleva el
 título. `alucard generar` avisa mientras esté activo, para que no se
 imprima por error: el título de una pregunta puede dar pistas sobre la respuesta.
+
+### `debug_candidatas`
+
+Para revisar los pools: además de los temas, `alucard generar` deja en la carpeta de salida un
+`candidatas.txt` con cada pregunta que cada pool podía elegir, en el orden de los bancos. Cada una va
+como `banco:id`, con su comentario de etiquetas en el renglón de abajo, escrito como en un GIFT. Los
+renglones con `#` dicen de qué sección y pool son, cuántas candidatas tenía y cuántas salieron.
+
+```toml
+debug_candidatas = true
+```
+
+```text
+# Sección «B. Análisis de código», pool 1: Pool(cat:analisis/parcial_3_diagramas, tipos:[desarrollo], cant:1, pts:20.0)
+# 10 candidatas, 4 salieron
+analisis.gift:gift_51_analisis-p3-lista-diagrama-v1
+// [tag, desarrollo-grande, analisis, parcial_3, listas, tda, memoria_dinamica, tema_a] [category, analisis/parcial_3_diagramas]
+```
+
+El banco es el nombre del archivo, o su ruta dentro de la carpeta de `input_banco`; el de una consigna
+práctica es su carpeta. Un examen lo cambia con `configuracion_examen.debug_candidatas`. No toca el
+examen, así que se puede dejar activo junto con `debug_consignas` o sin él.
