@@ -56,6 +56,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - **`lint-gift --fix`**: agregaba renglones en blanco en cada pasada; ahora solo escribe lo que corrige.
 - **texto**: los caracteres en ancho completo se normalizan también en las preguntas sin `[markdown]`.
 - **texto**: los superíndices, subíndices y fracciones ya no se pierden al leer un banco: `O(n²)` salía `O(n2)` y `O(2ⁿ)`, `O(2n)`, también en los diagramas.
+- **pools**: el filtro `banco` se ignoraba y el pool tomaba preguntas de todos los bancos; ahora filtra por el nombre del archivo.
 - **Moodle XML**: la categoría de un `<question type="category">` no se aplicaba y todo caía en `General`. Vale para las preguntas que le siguen, como ruta (`$course$/top/estructuras/listas` es `estructuras/listas`).
 - **GIFT**: `{=a =b}` es una respuesta corta con varias respuestas aceptadas, no una selección múltiple sin incorrectas; `{TAD}` o `{FIFO}` son respuestas cortas, no verdadero/falso; y los escapes (`\=`, `\{`…) se aplican también en el enunciado, donde se imprimían con la barra.
 - **diagramas**: en `call_stack` con `steps`, la columna de cada momento crece con su rótulo; un rótulo largo («segunda llamada, antes de c++») ya no se corta ni lo pisa la columna siguiente.

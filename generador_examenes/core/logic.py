@@ -319,12 +319,25 @@ def _presentar(preguntas: List[Pregunta], pool: PoolConfig,
     return [presentar_consigna(p, presentacion) if p.tipo == "consigna_practica" else p for p in preguntas]
 
 
+def _es_del_banco(fuente: str, banco: str) -> bool:
+    """Si coinciden los finales de las rutas: `teoria.gift` vale para `unidad1/teoria.gift` y
+    `unidad1/teoria.gift` deja afuera a `unidad2/teoria.gift`."""
+    de_la_fuente, del_pool = Path(fuente).parts, Path(banco).parts
+    largo = min(len(de_la_fuente), len(del_pool))
+    return de_la_fuente[-largo:] == del_pool[-largo:]
+
+
 def candidatas_pool(pool: PoolConfig, banco: Dict[str, Pregunta]) -> List[Pregunta]:
     """Las preguntas del banco que el pool puede elegir: las fijadas, o las que pasan los filtros de
     categoría, tipo, etiquetas y tiempo (sin sortear ni recortar por cantidad o presupuesto)."""
     if pool.preguntas_fijadas:
         return [banco[id_p] for id_p in pool.preguntas_fijadas if id_p in banco]
     candidatas = list(banco.values())
+
+    # Filtro 1: Banco de origen, por nombre de archivo (`bancos/codigo.xml` o `codigo.xml`)
+    if pool.banco:
+        candidatas = [p for p in candidatas if p.fuente_banco and _es_del_banco(p.fuente_banco, pool.banco)]
+        logger.debug(f"  → Filtro banco '{pool.banco}': {len(candidatas)} candidatas")
 
     # Filtro 2: Categoría o categorías (soporta categorías anidadas)
     if pool.categoria:

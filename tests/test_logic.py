@@ -659,3 +659,17 @@ class TestCalcularPuntajeTotal:
         examen_data = {'secciones': []}
         total = logic.calcular_puntaje_total(examen_data)
         assert total == 0.0
+
+
+def test_el_pool_filtra_por_banco(tmp_path):
+    from generador_examenes.core.logic import candidatas_pool, cargar_bancos
+    from generador_examenes.core.models import PoolConfig
+
+    uno, otro = tmp_path / "uno.gift", tmp_path / "otro.gift"
+    uno.write_text("::A::a {=x ~y}\n", encoding="utf-8")
+    otro.write_text("::B::b {=x ~y}\n", encoding="utf-8")
+    banco = cargar_bancos([uno, otro])
+    assert [p.nombre for p in candidatas_pool(PoolConfig(banco="otro.gift"), banco)] == ["B"]
+    assert [p.nombre for p in candidatas_pool(PoolConfig(banco="bancos/uno.gift"), banco)] == ["A"]
+    assert candidatas_pool(PoolConfig(banco="no_existe.gift"), banco) == []
+    assert len(candidatas_pool(PoolConfig(), banco)) == 2
