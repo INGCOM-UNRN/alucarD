@@ -58,6 +58,19 @@ def revisar_formulas(content):
     return problemas
 
 
+def revisar_tablas(content):
+    """Los bloques ```tabla que no se pueden armar, con su línea y su pregunta."""
+    from generador_examenes.core.markdown_utils import markdown_to_html
+    from generador_examenes.tablas import errores_en_texto
+
+    lines = content.split("\n")
+    problemas = []
+    for pos, motivo in errores_en_texto(content, markdown_to_html):
+        linea = content[:pos].count("\n") + 1
+        problemas.append(f"Línea {linea} («{_titulo_en(lines, linea)}»): tabla inválida: {motivo}")
+    return problemas
+
+
 _BLOQUE_C = re.compile(r"^```[ \t]*c[ \t]*\n(?P<codigo>.*?)^```[ \t]*$", re.S | re.M)
 
 
@@ -161,7 +174,7 @@ def lint_gift_file(filepath, fix=False, compilar=False):
             stats['errors'] += len(errs)
         issues.extend(errs)
     
-    for problema in revisar_diagramas(content) + revisar_formulas(content):
+    for problema in revisar_diagramas(content) + revisar_tablas(content) + revisar_formulas(content):
         issues.append(problema)
         stats['errors'] += 1
     if compilar:

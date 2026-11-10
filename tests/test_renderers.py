@@ -285,3 +285,18 @@ class TestRegistroRenderers:
         renderer1 = obtener_renderer('HTML')
         renderer2 = obtener_renderer('html')
         assert type(renderer1) == type(renderer2)
+
+
+def test_las_celdas_vacias_de_una_tabla_son_para_completar():
+    from generador_examenes.core.markdown_utils import markdown_to_html
+    from generador_examenes.generators.typst_markup import html_a_typst
+
+    typst = html_a_typst(markdown_to_html("| Paso | Valor |\n|---|---|\n| `[M1]` |  |"))
+    assert "columns: (auto, 1fr,)" in typst and "#box(height: 1em)" in typst
+
+
+def test_una_tabla_sin_celdas_vacias_se_ajusta_al_contenido():
+    from generador_examenes.generators.typst_markup import html_a_typst
+
+    assert "columns: 2," in html_a_typst("<table><tr><td>a</td><td>b</td></tr></table>")
+

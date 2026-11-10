@@ -13,6 +13,7 @@ import logging
 
 from generador_examenes.diagramas import expandir_en_markdown, reponer_svgs
 from generador_examenes.matematica import expandir_formulas, reponer_formulas
+from generador_examenes.tablas import expandir_tablas
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +55,55 @@ def normalizar_fullwidth(text: str) -> str:
     return normalized
 
 
+_SEPARADOR_TABLA = re.compile(r"\s*\|?\s*:?-+:?\s*(?:\|\s*:?-+:?\s*)*\|?\s*")
+_VALLA = re.compile(r"\s*(```|~~~)")
+
+
+_RAYA_PARA_COMPLETAR = re.compile(r"(`[^`]*`)|_{3,}")
+
+
+def _raya_literal(m: re.Match) -> str:
+    """`________` en una celda es una raya para completar: Markdown la tomaría por negrita e itálica."""
+    return m.group(1) or m.group(0).replace("_", "\\_")
+
+
+def separar_tablas(text: str) -> str:
+    """Aparta las tablas `| a | b |` del texto que las rodea con renglones en blanco.
+
+    Markdown sólo reconoce una tabla como bloque propio, y en un GIFT un renglón en blanco corta la
+    pregunta para Moodle: las tablas sin bloque ```tabla pueden ir pegadas al texto. El código no se toca.
+    """
+    lineas = text.split("\n")
+    salida: list[str] = []
+    valla = None
+    i = 0
+    while i < len(lineas):
+        linea = lineas[i]
+        marca = _VALLA.match(linea)
+        if marca and valla in (None, marca.group(1)):
+            valla = None if valla else marca.group(1)
+        elif (not valla and "|" in linea and i + 1 < len(lineas) and "|" in lineas[i + 1]
+              and _SEPARADOR_TABLA.fullmatch(lineas[i + 1])):
+            if salida and salida[-1].strip():
+                salida.append("")
+            while i < len(lineas) and "|" in lineas[i]:
+                salida.append(_RAYA_PARA_COMPLETAR.sub(_raya_literal, lineas[i]))
+                i += 1
+            if i < len(lineas) and lineas[i].strip():
+                salida.append("")
+            continue
+        salida.append(linea)
+        i += 1
+    return "\n".join(salida)
+
+
+def _expandir_bloques(text: str) -> tuple[str, dict[str, str]]:
+    """Cambia los bloques que no son código por marcadores; devuelve el texto y el HTML de cada uno."""
+    text, bloques = expandir_en_markdown(text)
+    text, tablas = expandir_tablas(text, markdown_to_html)
+    return text, bloques | tablas
+
+
 def markdown_to_html(text: str, saltos_de_linea: bool = True) -> str:
     """
     Convierte texto markdown a HTML con syntax highlighting para bloques de código.
@@ -71,10 +121,11 @@ def markdown_to_html(text: str, saltos_de_linea: bool = True) -> str:
     
     # Normalizar caracteres fullwidth antes de procesar
     text = normalizar_fullwidth(text)
-    # Los bloques ```estructura pasan a diagramas SVG (statics)
-    text, diagramas = expandir_en_markdown(text)
+    # Los bloques ```estructura pasan a diagramas SVG y los ```tabla, a tablas
+    text, diagramas = _expandir_bloques(text)
     # Las fórmulas $...$ pasan a MathML después de Markdown, que si no se comería sus `_` y `*`
     text, formulas = expandir_formulas(text)
+    text = separar_tablas(text)
 
     # Configurar extensiones de markdown con syntax highlighting
     md = markdown.Markdown(
@@ -112,8 +163,8 @@ def process_code_blocks_manual(text: str) -> str:
     """
     # Normalizar caracteres fullwidth antes de procesar
     text = normalizar_fullwidth(text)
-    text, diagramas = expandir_en_markdown(text)
-    
+    text, diagramas = _expandir_bloques(text)
+
     # Pattern para bloques de código con lenguaje especificado: ```language\ncode\n```
     pattern_with_lang = r'```(\w+)\n(.*?)```'
     

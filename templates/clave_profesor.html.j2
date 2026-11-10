@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ i18n.answer_key }} - {{ definicion.nombre_examen }}</title>
     <style>
+.question-text table { border-collapse: collapse; margin: 0.5em 0; }
+.question-text th, .question-text td { border: 1px solid currentColor; padding: 0.25em 0.5em; text-align: left; }
+.question-text td:empty { min-width: 6em; height: 1.6em; }
         body {
             font-family: {{ estilo.fuente_css | safe }};{% if estilo.tamano_css %}
   font-size: {{ estilo.tamano_css }};{% endif %}

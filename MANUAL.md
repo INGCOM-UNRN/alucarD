@@ -521,6 +521,51 @@ repos:
         files: ^banco/.*\.md$
 ```
 
+### Tablas en las preguntas
+
+Las tablas van en un bloque ```` ```tabla ````, con sintaxis Markdown y sin HTML. Las opciones de
+presentación van en comentarios, entre corchetes: varias por renglón, en los renglones que hagan falta.
+
+````gift
+::traza::[markdown]Completá lo que imprime cada paso
+```tabla
+// [centrado] [ancho, 80%] [columnas, auto, 1fr, 1fr]
+// [alinear, izquierda, centro, centro] [sombrear-encabezado]
+| Paso | Valor | Salida |
+|---|---|---|
+| `[M1]` |  | No aplicable. |
+| `[M2]` | `base = ` ________ |  |
+```
+{}
+````
+
+Moodle descarta los comentarios y, si se importa el GIFT directo, muestra el bloque como código, sin
+chocar con la sintaxis de GIFT. `voight unify … -o banco.xml` lo convierte en una tabla HTML. Las
+opciones valen para el PDF; el HTML siempre muestra la tabla con bordes.
+
+| Opción | Efecto en el PDF |
+| :--- | :--- |
+| `[centrado]`, `[izquierda]`, `[derecha]` | Dónde va la tabla. Se nota si es más angosta que la página. |
+| `[ancho, 80%]` | Ancho de la tabla, en `%`, `cm`, `mm`, `pt` o `em`. Las columnas se reparten ese ancho. |
+| `[columnas, auto, 2fr, 30%]` | Ancho de cada columna: `auto`, una fracción o una medida. |
+| `[alinear, izquierda, centro, derecha]` | Alineación del texto de cada columna. |
+| `[alto, 3em]` | Alto de las celdas vacías, para escribir. |
+| `[relleno, 8pt]` | Margen interno de las celdas. |
+| `[letra, 0.85em]` | Tamaño de la letra. |
+| `[bordes, todos]`, `[bordes, horizontales]`, `[bordes, ninguno]` | Qué líneas se dibujan. |
+| `[sombrear-encabezado]`, `[cebra]` | Fondo gris en el encabezado, o en una de cada dos filas. |
+| `[sin-encabezado]` | No imprime la primera fila. |
+
+Una opción desconocida, o una lista que no coincide con las columnas, es error en `lint-gift` y en
+`alucard generar`, y la tabla sale como un aviso.
+
+- **Celda vacía:** es para completar a mano. Sin `[columnas]`, su columna toma el ancho que sobra, así
+  que no hacen falta `&nbsp;`.
+- **Completar al lado de un texto:** con `________` en la celda.
+- **Un `|` adentro de una celda:** `\|`, o en código. Una fórmula `$|x|$` no necesita escaparlo.
+
+Una tabla sin el bloque también se lee, pegada al texto o no, pero no admite opciones y choca con GIFT.
+
 ### `alucard lint-gift` (antes `gift-linter`)
 
 Valida bancos GIFT: el formato de cada pregunta, los bloques ```` ```estructura ```` y, con

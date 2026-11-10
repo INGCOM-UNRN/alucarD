@@ -8,6 +8,7 @@ from typing import Dict, List, Optional
 from generador_examenes.core.models import Pregunta, Opcion
 from generador_examenes.parsers.base import BaseParser
 from generador_examenes.core.markdown_utils import detect_and_convert_format
+from generador_examenes.tablas import proteger_comentarios
 
 
 def _sin_parrafo(html: str) -> str:
@@ -96,7 +97,7 @@ class GiftParser(BaseParser):
                 content = f.read()
             
             # Dividir en bloques de preguntas (separadas por líneas en blanco)
-            bloques = self._dividir_bloques(content)
+            bloques = self._dividir_bloques(proteger_comentarios(content))
             
             for i, (bloque, categoria) in enumerate(bloques):
                 try:

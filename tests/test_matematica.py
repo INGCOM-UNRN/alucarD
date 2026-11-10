@@ -153,6 +153,11 @@ def test_formula_al_pdf():
     assert "$O \\( n^(2) \\)$" in typst and "$ frac(a, b) $" in typst
 
 
+def test_formula_en_tabla_al_pdf():
+    typst = html_a_typst(markdown_to_html("| a |\n|---|\n| $x^2$ |"))
+    assert "$x^(2)$" in typst
+
+
 def test_errores_en_texto_para_el_linter():
     assert [e[1:] for e in errores_en_texto(r"bien $x$ y mal $\noexiste$")] == [(r"$\noexiste$", r"comando desconocido: \noexiste")]
 

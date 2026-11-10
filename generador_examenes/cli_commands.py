@@ -747,19 +747,19 @@ def fuentes_de_generacion(args) -> tuple[list[Path], list[Path]]:
 
 
 def diagramas_invalidos(examen: dict) -> list[str]:
-    """«La pregunta X (banco) tiene un diagrama inválido: …» por cada bloque ```estructura que no se
-    pudo dibujar (en el examen quedaría como un recuadro de error)."""
+    """«La pregunta X (banco) tiene un diagrama inválido: …» por cada bloque ```estructura o ```tabla
+    que no se pudo armar (en el examen quedaría como un recuadro de error)."""
     import html as html_mod
     import re
 
     problemas = []
     for seccion in examen.get("secciones", []):
         for p in seccion.get("preguntas", []):
-            for m in re.finditer(r'class="estructura-error"><strong>Diagrama inválido:</strong> (.*?)</p>',
-                                 getattr(p, "enunciado_html", "") or ""):
+            for m in re.finditer(r'class="(?:estructura|tabla)-error"><strong>(Diagrama inválido|Tabla inválida):'
+                                 r'</strong> (.*?)</p>', getattr(p, "enunciado_html", "") or ""):
                 banco = f" de {p.fuente_banco}" if getattr(p, "fuente_banco", None) else ""
-                problemas.append(f"la pregunta «{p.nombre}»{banco} tiene un diagrama inválido: "
-                                 f"{html_mod.unescape(m.group(1))}")
+                cosa = "un diagrama inválido" if m.group(1).startswith("Diagrama") else "una tabla inválida"
+                problemas.append(f"la pregunta «{p.nombre}»{banco} tiene {cosa}: {html_mod.unescape(m.group(2))}")
     return problemas
 
 

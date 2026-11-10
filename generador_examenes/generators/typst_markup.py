@@ -10,6 +10,7 @@ matemática de Typst (`data-typst`), y el resto del texto se escapa. Las demás 
 from __future__ import annotations
 
 import html
+import json
 import re
 
 _ESPECIALES = re.compile(r"([\\#$*_`<>@\[\]~/=+\-])")
@@ -18,7 +19,8 @@ _PRE = re.compile(r"<pre\b[^>]*>(?:\s*<code\b(?P<attrs>[^>]*)>)?(?P<codigo>.*?)(
 _FENCE = re.compile(r"```(?P<lang>[\w+#-]*)\n(?P<codigo>.*?)```", re.S)
 _CODE = re.compile(r"<code\b[^>]*>(?P<codigo>.*?)</code>", re.S | re.I)
 _LENGUAJE = re.compile(r"language-([\w+#-]+)")
-_TABLA = re.compile(r"<table\b[^>]*>(?P<cuerpo>.*?)</table>", re.S | re.I)
+_TABLA = re.compile(r"<table\b(?P<attrs>[^>]*)>(?P<cuerpo>.*?)</table>", re.S | re.I)
+_OPCIONES_TABLA = re.compile(r'\bdata-opciones="(?P<opciones>[^"]*)"')
 _FILA = re.compile(r"<tr\b[^>]*>(?P<celdas>.*?)</tr>", re.S | re.I)
 _CELDA = re.compile(r"<t(?P<tipo>[hd])\b[^>]*>(?P<contenido>.*?)</t[hd]>", re.S | re.I)
 _SVG = re.compile(r"<svg\b(?P<attrs>[^>]*)>.*?</svg>", re.S | re.I)
@@ -39,6 +41,49 @@ def _texto_plano(fragmento: str) -> str:
 
 def escapar(texto: str) -> str:
     return _ESPECIALES.sub(r"\\\1", texto)
+
+
+def _tabla_typst(filas: list, opciones: dict) -> str:
+    """Una tabla como `(tipo, contenido)` por celda, con las opciones de un bloque ```tabla."""
+    if opciones.get("sin-encabezado"):
+        filas = [f for f in filas if f[0][0] != "h"]
+    if not filas:
+        return ""
+    # Una celda vacía es para completar a mano: su columna toma el ancho que sobra y conserva el alto
+    # de un renglón aunque toda la fila esté vacía.
+    columnas = [("1fr" if any(j < len(f) and not f[j][1].strip() for f in filas) else "auto")
+                for j in range(max(len(f) for f in filas))]
+    if "ancho" in opciones and "1fr" not in columnas:
+        columnas = ["1fr"] * len(columnas)
+    columnas = opciones.get("columnas", columnas)
+    vacia = f"[#box(height: {opciones.get('alto', '1em')})]"
+    argumentos = [f"columns: ({', '.join(columnas)},)" if "1fr" in columnas or "columnas" in opciones
+                  else f"columns: {len(columnas)}",
+                  f"inset: {opciones.get('relleno', '4pt')}"]
+    # `align` pasa a las celdas: con la tabla ubicada en la página, se fija el de ellas.
+    if "alinear" in opciones:
+        argumentos.append(f"align: ({', '.join(opciones['alinear'])},)")
+    elif "posicion" in opciones:
+        argumentos.append("align: left")
+    if opciones.get("bordes") == "ninguno":
+        argumentos.append("stroke: none")
+    elif opciones.get("bordes") == "horizontales":
+        argumentos.append("stroke: (x: none, y: 0.5pt)")
+    sombra = [c for clave, c in (("sombrear-encabezado", "y == 0"), ("cebra", "(y > 0 and calc.even(y))"))
+              if opciones.get(clave)]
+    if sombra:
+        argumentos.append(f"fill: (_, y) => if {' or '.join(sombra)} {{ luma(235) }}")
+    celdas = ", ".join(f"[#strong[{c}]]" if tipo == "h" else f"[{c}]" if c.strip() else vacia
+                       for f in filas for tipo, c in f)
+    tabla = f"#table({', '.join(argumentos)}, {celdas})"
+    if "letra" in opciones:
+        tabla = f"#text(size: {opciones['letra']})[{tabla}]"
+    if "ancho" in opciones:
+        tabla = f"#block(width: {opciones['ancho']})[{tabla}]"
+    if "posicion" in opciones:
+        lugar = {"centrado": "center", "izquierda": "left", "derecha": "right"}[opciones["posicion"]]
+        tabla = f"#align({lugar})[{tabla}]"
+    return f"\n{tabla}\n"
 
 
 def html_a_typst(fragmento: object) -> str:
@@ -64,11 +109,8 @@ def html_a_typst(fragmento: object) -> str:
         filas = [[(c.group("tipo").lower(), html_a_typst(c.group("contenido"))) for c in _CELDA.finditer(f.group("celdas"))]
                  for f in _FILA.finditer(m.group("cuerpo"))]
         filas = [f for f in filas if f]
-        if not filas:
-            return ""
-        columnas = max(len(f) for f in filas)
-        celdas = ", ".join(f"[#strong[{c}]]" if tipo == "h" else f"[{c}]" for f in filas for tipo, c in f)
-        return apartar(f"\n#table(columns: {columnas}, inset: 4pt, {celdas})\n")
+        opciones = _OPCIONES_TABLA.search(m.group("attrs"))
+        return apartar(_tabla_typst(filas, json.loads(html.unescape(opciones.group("opciones"))) if opciones else {}))
 
     def svg(m: re.Match) -> str:
         # Los diagramas de estructuras (statics): a 0.6 pt por px, sin pasar del ancho disponible.

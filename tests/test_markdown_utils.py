@@ -350,3 +350,37 @@ def test_los_superindices_no_se_normalizan(texto):
 
 def test_el_ancho_completo_se_normaliza_igual_al_lado_de_un_superindice():
     assert normalizar_fullwidth("Costo： O(n²)　y ﬁn") == "Costo: O(n²) y fin"
+
+
+class TestTablas:
+    TABLA = "| Paso | Valor |\n|---|---|\n| `[M1]` |  |"
+
+    @pytest.mark.parametrize("texto", [
+        f"Completá:\n{TABLA}\nFin",
+        f"#### Título\n{TABLA}",
+        f"{TABLA}\n#### Otro",
+        f"Antes\n\n{TABLA}\n\nDespués",
+    ])
+    def test_se_reconoce_pegada_al_texto(self, texto):
+        resultado = markdown_to_html(texto)
+        assert "<table>" in resultado and "<th>Paso</th>" in resultado and "<td></td>" in resultado
+        assert "|" not in resultado
+
+    def test_el_texto_de_alrededor_queda_afuera(self):
+        resultado = markdown_to_html(f"Antes\n{self.TABLA}\nDespués")
+        assert resultado.index("Antes") < resultado.index("<table>")
+        assert resultado.index("</table>") < resultado.index("Después")
+
+    def test_dentro_de_un_bloque_de_codigo_no_es_tabla(self):
+        assert "<table>" not in markdown_to_html(f"```\n{self.TABLA}\n```")
+
+    def test_un_pipe_en_codigo_o_en_una_formula_no_corta_la_celda(self):
+        resultado = markdown_to_html("Texto\n| a | b |\n|---|---|\n| `x || y` | $|x|$ |")
+        assert resultado.count("<td>") == 2 and "x || y" in resultado
+
+    def test_una_linea_con_pipes_sin_separador_no_es_tabla(self):
+        assert "<table>" not in markdown_to_html("a | b\nc | d")
+
+    def test_una_raya_para_completar_queda_tal_cual(self):
+        resultado = markdown_to_html("| a |\n|---|\n| `x_y = ` ________ |")
+        assert "________" in resultado and "<strong>" not in resultado and "<code>x_y =</code>" in resultado
