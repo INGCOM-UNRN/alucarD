@@ -106,5 +106,14 @@ def test_en_gift_una_tabla_admite_los_escapes(tmp_path):
     assert "x: y" in list(GiftParser().parse(banco).values())[0].enunciado_html
 
 
+def test_para_moodle_es_html_en_un_renglon_con_sus_bordes():
+    from generador_examenes.tablas import tabla_a_moodle
+
+    resultado = tabla_a_moodle(f"// [centrado]\n{TABLA}\n", markdown_to_html)
+    assert "\n" not in resultado and "data-opciones" not in resultado
+    assert resultado.startswith('<table style="border-collapse:collapse">') and "border:1px solid" in resultado
+    assert ">&nbsp;</td>" in resultado and "<code>[M1]</code>" in resultado
+
+
 def test_las_opciones_admiten_los_dos_separadores():
     assert "columns: (auto, 2fr,)" in typst("[columnas:auto,2fr]")

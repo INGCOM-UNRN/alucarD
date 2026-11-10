@@ -39,6 +39,8 @@ _CON_COMENTARIOS = re.compile(r"^(?P<valla>`{3,}|~{3,})[ \t]*tabla[ \t]*\n.*?^(?
 
 
 
+_CELDA_MOODLE = "border:1px solid #888;padding:0.25em 0.5em;min-width:4em;text-align:left"
+
 
 class ErrorTabla(ValueError):
     """Un bloque ```tabla que no se puede interpretar."""
@@ -96,6 +98,15 @@ def tabla_a_html(cuerpo: str, a_html: Callable[[str], str]) -> str:
         return resultado
     datos = html.escape(json.dumps(opciones), quote=True)
     return resultado.replace("<table>", f'<table data-opciones="{datos}">', 1)
+
+
+def tabla_a_moodle(cuerpo: str, a_html: Callable[[str], str]) -> str:
+    """Un bloque como una tabla HTML en un solo renglón, con los bordes en línea: Moodle no aplica
+    nuestros estilos, y en un campo Markdown un renglón en blanco cortaría el bloque."""
+    resultado = re.sub(r"<table[^>]*>", '<table style="border-collapse:collapse">', tabla_a_html(cuerpo, a_html))
+    resultado = re.sub(r"<(t[hd])\b[^>]*>", rf'<\1 style="{_CELDA_MOODLE}">', resultado)
+    resultado = re.sub(r"(<td[^>]*>)(</td>)", r"\1&nbsp;\2", resultado)
+    return re.sub(r">\s+<", "><", resultado).strip()
 
 
 def expandir_tablas(texto: str, a_html: Callable[[str], str]) -> Tuple[str, Dict[str, str]]:

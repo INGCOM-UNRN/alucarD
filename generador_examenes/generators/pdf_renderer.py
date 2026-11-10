@@ -34,7 +34,10 @@ def _fuentes_typst(libreria):
 
 
 def compilar_typst_a_pdf(typst_source: str, output_pdf: Path, root_dir: Optional[Path] = None) -> Path:
-    """Compila código Typst a un archivo PDF usando la librería python o el binario CLI."""
+    """Compila código Typst a un archivo usando la librería python o el binario CLI.
+
+    El formato sale de la extensión de `output_pdf`: PDF o, para una fórmula suelta, SVG.
+    """
     output_pdf.parent.mkdir(parents=True, exist_ok=True)
 
     with tempfile.NamedTemporaryFile(suffix=".typ", mode="w", encoding="utf-8", delete=False) as tmp:
@@ -53,6 +56,8 @@ def compilar_typst_a_pdf(typst_source: str, output_pdf: Path, root_dir: Optional
             try:
                 fuentes = _fuentes_typst(libreria_typst)
                 extra = {"font_paths": fuentes} if fuentes is not None else {}
+                if output_pdf.suffix == ".svg":
+                    extra["format"] = "svg"
                 libreria_typst.compile(str(tmp_path), output=str(output_pdf), root=root, **extra)
             except Exception as e_py:
                 raise RuntimeError(f"Fallo en compilación Typst: {e_py}") from e_py

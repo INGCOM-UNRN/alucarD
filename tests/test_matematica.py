@@ -9,7 +9,7 @@ import pytest
 
 from generador_examenes.core.markdown_utils import detect_and_convert_format, markdown_to_html
 from generador_examenes.generators.typst_markup import html_a_typst
-from generador_examenes.matematica import ErrorFormula, a_html, a_typst, errores_en_texto, expandir_formulas
+from generador_examenes.matematica import ErrorFormula, a_html, a_svg, a_typst, errores_en_texto, expandir_formulas
 
 MML = "{http://www.w3.org/1998/Math/MathML}"
 
@@ -249,3 +249,14 @@ def test_lint_gift_no_confunde_las_llaves_de_una_formula_con_las_respuestas(tmp_
                      encoding="utf-8")
     monkeypatch.setattr(sys, "argv", ["alucard", "lint-gift", str(banco)])
     assert main() == 0
+
+
+@pytest.mark.parametrize("fuente, bloque", [(r"\frac{1}{2}", False), (r"\sum_{i=1}^{n} i", True)])
+def test_una_formula_se_dibuja_como_svg(fuente, bloque):
+    svg = a_svg(fuente, bloque)
+    assert svg.lstrip().startswith(("<svg", "<?xml")) and "<path" in svg
+
+
+def test_una_formula_invalida_no_se_dibuja():
+    with pytest.raises(ErrorFormula):
+        a_svg(r"\noexiste")

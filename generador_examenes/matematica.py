@@ -604,6 +604,23 @@ def tramos_de_formulas(texto: str) -> List[Tuple[int, int]]:
     return [m.span() for m in _FORMULAS.finditer(texto) if _fuente(m)[0] is not None]
 
 
+def a_svg(fuente: str, bloque: bool = False) -> str:
+    """La fórmula como imagen SVG, para donde no se puede usar MathML, como las preguntas de Moodle.
+
+    Typst dibuja el texto como trazos, así que la imagen no depende de las fuentes del que la mira.
+    """
+    import tempfile
+    from pathlib import Path
+
+    from generador_examenes.generators.pdf_renderer import compilar_typst_a_pdf
+
+    matematica = a_typst(fuente)
+    codigo = ("#set page(width: auto, height: auto, margin: 1pt, fill: none)\n#set text(size: 12pt)\n"
+              + (f"$ {matematica} $" if bloque else f"${matematica}$"))
+    with tempfile.TemporaryDirectory(prefix="alucard-formula-") as tmp:
+        return compilar_typst_a_pdf(codigo, Path(tmp) / "formula.svg").read_text(encoding="utf-8")
+
+
 def reponer_formulas(html_texto: str, formulas: Dict[str, str]) -> str:
     for marcador, formula in formulas.items():
         html_texto = html_texto.replace(marcador, formula)
