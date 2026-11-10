@@ -61,7 +61,7 @@ Cada tarea es un comando. Las formas anteriores (`--init`, `--wizard`, `--catego
 
 | Comando | Qué hace |
 | :--- | :--- |
-| `alucard generar -d YAML` | Genera los temas (HTML y/o PDF), con claves, OMR e imprenta si se piden. |
+| `alucard generar [-d YAML…]` | Genera los temas (HTML y/o PDF), con claves, OMR e imprenta si se piden. Sin `-d`, los exámenes de `alucard.toml`. |
 | `alucard validar -d YAML` | Valida la definición y sus pools sin escribir archivos. |
 | `alucard ortografia -d YAML` | Revisa ortografía y gramática con LanguageTool. |
 | `alucard categorias BANCO…` | Árbol HTML de categorías de bancos o carpetas de consignas. |
@@ -122,6 +122,7 @@ relativas al archivo. La línea de comandos manda sobre la definición YAML, y l
 `alucard.toml`.
 
 ```toml
+definicion = ["parcial1.yaml", "recuperatorio.yaml"]   # o una sola: definicion = "parcial.yaml"
 input_banco = ["bancos/teoria.gift", "bancos/sintetizados"]   # archivos o carpetas (.gift y .xml, con sus subcarpetas)
 output_dir = "output"
 path_images = "imagenes"
@@ -137,7 +138,25 @@ palabras = ["malloc", "struct", "GIFT"]
 diccionario = "diccionario.txt"   # más palabras, una por renglón (# comenta)
 ```
 
-Con eso, `alucard generar -d parcial.yaml` alcanza. Las `palabras` y las del `diccionario` son el
+Con eso, `alucard generar` alcanza, y `alucard validar` revisa las mismas definiciones. Sin `-d`,
+el `alucard.toml` se busca desde la carpeta actual; con `-d`, sólo se generan las que se nombran
+(`-d` se repite: `alucard generar -d parcial1.yaml -d parcial2.yaml`).
+
+Con más de una definición, cada examen sale en una subcarpeta de la salida con el nombre de su YAML
+(`output/parcial1/`, `output/recuperatorio/`), porque los archivos se llaman igual en todos. Una
+definición elige otra carpeta con `subdirectorio`, relativa a la salida, que sirve para agrupar las
+partes de un examen compuesto y vale también cuando se genera sola:
+
+```yaml
+# teoria.yaml: sale en output/parcial1/teoria/
+subdirectorio: "parcial1/teoria"
+```
+
+Dos definiciones que caen en la misma carpeta son un error, y `subdirectorio` no puede ser absoluto
+ni salir de la salida con `..`. Si una falla, las demás se generan igual y el comando
+sale con 1; con `--json`, el resultado de cada una va en `examenes`.
+
+Las `palabras` y las del `diccionario` son el
 diccionario de la cátedra: `alucard ortografia` no las marca, y se suman a las de
 `--lt-ignore-words`.
 
@@ -180,9 +199,9 @@ escribir nada. La vista previa (`alucard ver`) usa el estilo del curso.
 
 | Opción / Bandera | Tipo | Por Defecto | Descripción |
 | :--- | :--- | :--- | :--- |
-| `-d`, `--definicion` | `<path>` | `Requerido` | Ruta al archivo de definición YAML del examen. |
+| `-d`, `--definicion` | `<path>` | `definicion` del toml | Definición YAML del examen; se repite para generar varios. |
 | `-i`, `--input-banco` | `<path>` | `None` | Ruta(s) a los archivos de banco de preguntas (anula lo definido en el YAML). |
-| `-o`, `--output-dir` | `<path>` | `./output` | Directorio de salida para los exámenes y soluciones generadas. |
+| `-o`, `--output-dir` | `<path>` | `output_dir` del YAML o del toml; si no, `./output` | Directorio de salida para los exámenes y soluciones generadas. |
 | `-p`, `--path-images` | `<path>` | `None` | Directorio de imágenes referenciadas en las preguntas. |
 | `-n`, `--numero-temas` | `<int>` | `1` | Cantidad de temas/variantes independientes a generar. |
 | `-s`, `--semilla` | `<int>` | `42` | Semilla pseudo-aleatoria para reproducibilidad matemática. |

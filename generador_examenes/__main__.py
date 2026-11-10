@@ -107,6 +107,11 @@ configuracion_examen:
     lineas: 20                  # renglones para resolver
     solucion_en_clave: true
 
+# Carpeta de este examen dentro de la salida de alucard.toml; sirve para agrupar las partes de un
+# examen compuesto (parcial1/teoria, parcial1/practica). Sin ella y con varias definiciones en el
+# toml, el examen sale en una carpeta con el nombre de este archivo.
+# subdirectorio: "parcial1/teoria"
+
 # Consignas prácticas de deckard del proyecto (consignas/<tema>/<id>/ejercicio.yaml)
 input_consignas: ["consignas"]
 
@@ -223,6 +228,9 @@ int sumar_pares(const int arreglo[], size_t cantidad)
     configuracion = Path('alucard.toml')
     if not configuracion.exists():
         configuracion.write_text('''# Configuración del curso para alucard (la línea de comandos y la definición YAML mandan).
+# Los exámenes de `alucard generar` y `alucard validar`. Con varios, cada uno sale en
+# output/<nombre del YAML>/ o en el `subdirectorio` que diga su definición.
+definicion = ["definicion_ejemplo.yaml"]
 input_banco = ["bancos/banco_ejemplo.gift"]
 output_dir = "output"
 numero_temas = 2
@@ -264,6 +272,7 @@ Este proyecto usa **alucarD** (generador-examenes) para crear exámenes personal
 ├── templates/           # Plantillas Jinja2 personalizables
 ├── i18n/                # Archivos de internacionalización
 ├── output/              # Exámenes generados
+├── alucard.toml         # Definiciones, bancos, salida, temas y formato del curso
 └── definicion_ejemplo.yaml  # Ejemplo de definición de examen
 ```
 
@@ -272,24 +281,21 @@ Este proyecto usa **alucarD** (generador-examenes) para crear exámenes personal
 ### 1. Validar la definición
 
 ```bash
-generador-examenes -d definicion_ejemplo.yaml \\
-  -i bancos/banco_ejemplo.gift \\
-  --validate
+alucard validar
 ```
 
 ### 2. Generar exámenes
 
 ```bash
-generador-examenes -d definicion_ejemplo.yaml \\
-  -i bancos/banco_ejemplo.gift \\
-  -o output \\
-  -n 3 \\
-  -f html
+alucard generar
 ```
+
+Las definiciones, los bancos y la carpeta de salida salen de `alucard.toml`. Para más de un examen,
+sumá sus YAML a `definicion`. Las opciones mandan sobre el archivo: `alucard generar -n 3 -f pdf`.
 
 ## Siguientes Pasos
 
-1. Edita `definicion_ejemplo.yaml` con tu configuración
+1. Edita `definicion_ejemplo.yaml` y `alucard.toml` con tu configuración
 2. Agrega tus bancos de preguntas en `bancos/` y tus consignas prácticas en `consignas/`
    (o sumá repositorios de la computadora con `repositorios_externos` en la definición)
 3. Personaliza las plantillas en `templates/` (opcional)
@@ -314,14 +320,14 @@ Para más información, consulta la documentación oficial de alucarD.
     print("  - consignas/          (consignas prácticas deckard)")
     print("  - output/             (exámenes generados)")
     print("  - definicion_ejemplo.yaml")
-    print("  - alucard.toml          (bancos, salida, temas y formato del curso)")
+    print("  - alucard.toml          (definiciones, bancos, salida, temas y formato del curso)")
     print("  - banco_ejemplo.gift")
     print("  - README_PROYECTO.md")
     print("\nPróximos pasos:")
     print("  1. Edita definicion_ejemplo.yaml con tu configuración")
     print("  2. Agrega tus bancos de preguntas en bancos/")
-    print("  3. Validá: alucard validar -d definicion_ejemplo.yaml -i bancos/banco_ejemplo.gift")
-    print("  4. Generá los temas: alucard generar -d definicion_ejemplo.yaml -i bancos/banco_ejemplo.gift -n 3")
+    print("  3. Validá: alucard validar")
+    print("  4. Generá los temas: alucard generar -n 3")
     print()
 
 
@@ -338,8 +344,10 @@ def _cli(
         None, "--category-tree", metavar="BANCO", hidden=True,
         help="Generar árbol HTML de categorías de uno o más bancos (archivos, o carpetas de preguntas o consignas deckard; con -d, también las fuentes de la definición)",
     ),
-    definicion: Optional[Path] = typer.Option(
-        None, "-d", "--definicion", help="Ruta al archivo de definición YAML del examen",
+    definicion: Optional[List[Path]] = typer.Option(
+        None, "-d", "--definicion",
+        help="Definición YAML del examen; repetila para varios exámenes, cada uno en su subcarpeta "
+             "(sin -d: la clave definicion de alucard.toml)",
     ),
     input_banco: Optional[List[Path]] = typer.Option(
         None, "-i", "--input-banco",
@@ -348,7 +356,7 @@ def _cli(
     ),
     output_dir: Optional[Path] = typer.Option(
         None, "-o", "--output-dir",
-        help="Directorio de salida para los exámenes generados (tiene prioridad sobre el YAML; si no está en ninguno: ./output)",
+        help="Directorio de salida para los exámenes generados (tiene prioridad sobre el YAML y alucard.toml; si no está en ninguno: ./output)",
     ),
     path_images: Optional[Path] = typer.Option(
         None, "-p", "--path-images",
@@ -449,6 +457,13 @@ def _ejecutar(valores: dict) -> None:
     """El modo principal con los valores de las opciones (los que falten toman su valor por defecto)."""
     args = SimpleNamespace(**{**_DEFECTOS, **valores})
 
+    # -d se repite en generar y validar; los demás modos trabajan con una sola definición.
+    d = args.definicion
+    args.definiciones = list(d) if isinstance(d, (list, tuple)) else [d] if d else []
+    args.definicion = args.definiciones[0] if args.definiciones else None
+    if len(args.definiciones) > 1 and (getattr(args, "spellcheck", False) or args.category_tree):
+        _usage_error("este comando acepta una sola definición (-d)")
+
     if args.formato:
         for fmt in args.formato:
             if fmt not in ("html", "pdf"):
@@ -473,13 +488,8 @@ def _ejecutar(valores: dict) -> None:
         codigo = cli_commands.ejecutar_spellcheck(args, logger)
     elif args.category_tree:
         codigo = cli_commands.ejecutar_category_tree(args, logger)
-    elif getattr(args, "vigilar", False) and args.definicion:
-        from generador_examenes.core.vigilancia import vigilar
-        _, salida = cli_commands.fuentes_de_generacion(args)
-        codigo = vigilar(lambda: cli_commands.fuentes_de_generacion(args)[0],
-                         lambda: cli_commands.generar_examen(args, logger), excluir=salida)
     else:
-        codigo = cli_commands.generar_examen(args, logger)
+        codigo = cli_commands.ejecutar_generacion(args, logger)
 
     _ultimo_codigo_salida["code"] = codigo
 
@@ -514,10 +524,13 @@ def _comando_de_opciones(nombre: str, opciones: List[str], fijos: dict, ayuda: s
     app.command(nombre)(comando)
 
 
-_comando_de_opciones("generar", _OPCIONES_GENERAR, {},
-                     "Genera los temas del examen de una definición YAML (HTML y/o PDF, claves, OMR).")
-_comando_de_opciones("validar", ["definicion", "input_banco", "json_output", "debug"], {"validate": True},
-                     "Valida la definición y sus pools sin generar archivos.")
+# usar_curso: sólo estos comandos toman las definiciones del alucard.toml; `alucard` a secas no genera.
+_comando_de_opciones("generar", _OPCIONES_GENERAR, {"usar_curso": True},
+                     "Genera los temas de una o más definiciones YAML (HTML y/o PDF, claves, OMR). "
+                     "Sin -d, las de alucard.toml.")
+_comando_de_opciones("validar", ["definicion", "input_banco", "json_output", "debug"],
+                     {"validate": True, "usar_curso": True},
+                     "Valida una o más definiciones y sus pools sin generar archivos. Sin -d, las de alucard.toml.")
 _comando_de_opciones("ortografia", ["definicion", "input_banco", *_OPCIONES_LT, "output_md", "json_output", "debug"],
                      {"spellcheck": True},
                      "Revisa ortografía y gramática de las preguntas con LanguageTool.")

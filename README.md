@@ -279,10 +279,11 @@ alucard validar -d mi_examen.yaml \
 
 ### Configuración del curso (`alucard.toml`)
 
-Los bancos, la carpeta de salida, la cantidad de temas, la semilla, el formato y las
-opciones de ortografía del curso pueden ir en un `alucard.toml` (lo crea `alucard iniciar`).
-La línea de comandos manda sobre la definición, y la definición sobre `alucard.toml`. Ver el
-MANUAL.
+Las definiciones de los exámenes, los bancos, la carpeta de salida, la cantidad de temas, la
+semilla, el formato y las opciones de ortografía del curso pueden ir en un `alucard.toml` (lo crea
+`alucard iniciar`). Con `definicion` y `output_dir` ahí, `alucard generar` alcanza; con varias
+definiciones, cada examen sale en su subcarpeta, o en la que diga su `subdirectorio`. La línea de comandos manda sobre la definición, y
+la definición sobre `alucard.toml`. Ver el MANUAL.
 
 ### 4️⃣ Explorar Categorías de Bancos
 
@@ -517,6 +518,7 @@ input_banco:                    # Bancos de preguntas: archivos o carpetas (.gif
   - "bancos/practica"
   
 output_dir: "./examenes"        # Directorio de salida (default: "./output")
+subdirectorio: "parcial1/teoria" # Carpeta de este examen dentro de la salida (opcional)
 
 path_images: "./imagenes"       # Directorio de imágenes (opcional)
 
@@ -1418,9 +1420,9 @@ Al reportar un issue, incluye:
 
 | Opción | Descripción |
 |:--|:--|
-| `--definicion`, `-d` | Ruta al archivo de definición YAML del examen |
+| `--definicion`, `-d` | Definición YAML del examen; repetila para varios exámenes, cada uno en su subcarpeta (sin -d: la clave definicion de alucard.toml) |
 | `--input-banco`, `-i` | Ruta(s) a los archivos de banco de preguntas (tiene prioridad sobre el YAML) |
-| `--output-dir`, `-o` | Directorio de salida para los exámenes generados (tiene prioridad sobre el YAML; si no está en ninguno: ./output) |
+| `--output-dir`, `-o` | Directorio de salida para los exámenes generados (tiene prioridad sobre el YAML y alucard.toml; si no está en ninguno: ./output) |
 | `--path-images`, `-p` | Ruta al directorio de imágenes referenciadas en las preguntas (tiene prioridad sobre el YAML) |
 | `--numero-temas`, `-n` | Número de temas/versiones a generar (tiene prioridad sobre el YAML; si no está en ninguno: 1) |
 | `--semilla`, `-s` | Semilla pseudo-aleatoria para generación (tiene prioridad sobre el YAML; si no está en ninguno: 42) |
@@ -1447,8 +1449,8 @@ Al reportar un issue, incluye:
 
 | Comando | Descripción |
 |:--|:--|
-| `alucard generar` | Genera los temas del examen de una definición YAML (HTML y/o PDF, claves, OMR). |
-| `alucard validar` | Valida la definición y sus pools sin generar archivos. |
+| `alucard generar` | Genera los temas de una o más definiciones YAML (HTML y/o PDF, claves, OMR). Sin -d, las de alucard.toml. |
+| `alucard validar` | Valida una o más definiciones y sus pools sin generar archivos. Sin -d, las de alucard.toml. |
 | `alucard ortografia` | Revisa ortografía y gramática de las preguntas con LanguageTool. |
 | `alucard iniciar` | Crea un proyecto de ejemplo en la carpeta actual (definición, banco y plantillas). |
 | `alucard asistente` | Asistente interactivo para crear o editar la definición de un examen. |

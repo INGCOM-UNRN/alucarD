@@ -5,6 +5,7 @@ nivel: la línea de comandos manda sobre la definición YAML y la definición so
 Las rutas relativas se resuelven desde la carpeta del archivo.
 
 ```toml
+definicion = ["parcial1.yaml", "recuperatorio.yaml"]   # los exámenes de `alucard generar` sin -d
 input_banco = ["bancos/teoria.gift", "bancos/sintetizados"]
 output_dir = "output"
 path_images = "imagenes"
@@ -45,6 +46,7 @@ ARCHIVO = "alucard.toml"
 @dataclass
 class ConfiguracionProyecto:
     ruta: Optional[Path] = None
+    definicion: list[Path] = field(default_factory=list)
     input_banco: list[Path] = field(default_factory=list)
     output_dir: Optional[Path] = None
     path_images: Optional[Path] = None
@@ -110,6 +112,7 @@ def cargar(desde: Optional[Path] = None) -> ConfiguracionProyecto:
         raise ValueError(f"{ruta}: [estilo] inválido: {e}") from e
     return ConfiguracionProyecto(
         ruta=ruta,
+        definicion=rutas(datos.get("definicion")),
         input_banco=rutas(datos.get("input_banco")),
         output_dir=ruta_sola(datos.get("output_dir")),
         path_images=ruta_sola(datos.get("path_images")),

@@ -8,9 +8,12 @@ logger configurado por el entrypoint. Se mantiene la lógica original
 sin cambios de comportamiento; el objetivo es reducir el tamaño de
 ``__main__.py`` (848 LOC) separando orquestación de parseo de CLI.
 """
+import contextlib
+import io
 import json
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Optional
 
 from generador_examenes.cli_errors import usage_error as _usage_error
@@ -436,10 +439,99 @@ def ejecutar_category_tree(args, logger) -> int:
         return 1
 
 
+def _subdirectorio_de(definicion: Path) -> Optional[str]:
+    """El `subdirectorio` del YAML; una definición ilegible se informa cuando le toca generarse."""
+    import yaml
+
+    try:
+        datos = yaml.safe_load(definicion.read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError):
+        return None
+    return datos.get("subdirectorio") if isinstance(datos, dict) else None
+
+
+def definiciones_a_generar(args) -> list[Path]:
+    """Los exámenes de esta corrida: los -d o, sin ellos, la clave `definicion` del alucard.toml.
+
+    Con varios, cada uno sale en su `subdirectorio` o, si no tiene, en una subcarpeta con el nombre
+    de su YAML. Dos en la misma carpeta se pisarían: son un error (ValueError), igual que uno que no
+    existe, y se avisa antes de escribir nada.
+    """
+    rutas = list(getattr(args, "definiciones", None) or [])
+    if not rutas and getattr(args, "usar_curso", False):
+        from generador_examenes.config import proyecto
+        rutas = proyecto.cargar().definicion
+    rutas = list({r.resolve(): r for r in reversed(rutas)}.values())[::-1]  # el mismo archivo, una vez
+    faltan = [str(r) for r in rutas if not r.is_file()]
+    if faltan:
+        raise ValueError(f"no existe la definición: {', '.join(faltan)}")
+    if len(rutas) < 2:
+        return rutas
+    nombres = [Path(_subdirectorio_de(r) or r.stem).as_posix() for r in rutas]
+    repetidos = sorted({n for n in nombres if nombres.count(n) > 1})
+    if repetidos:
+        raise ValueError(f"dos definiciones saldrían en la misma subcarpeta: {', '.join(repetidos)}")
+    return rutas
+
+
+def _generar_varias(corridas: list, args, logger) -> int:
+    """Genera cada definición aunque otra falle; sale con 1 si falló alguna. Con --json, un solo
+    documento con el resultado de cada una en `examenes`."""
+    como_json = getattr(args, "json_output", False)
+    examenes, codigos = [], []
+    for corrida in corridas:
+        if not como_json:
+            print(f"\n=== {corrida.definicion} ===")
+        salida = io.StringIO()
+        with contextlib.redirect_stdout(salida) if como_json else contextlib.nullcontext():
+            try:
+                codigo = generar_examen(corrida, logger)
+            except SystemExit as e:  # error de uso en esta definición: no frena las demás
+                codigo = e.code if isinstance(e.code, int) else 1
+        codigos.append(codigo)
+        texto = salida.getvalue()
+        examenes.append({"definicion": str(corrida.definicion), "codigo": codigo,
+                         **(json.loads(texto) if texto.strip() else {})})
+    if como_json:
+        print(json.dumps({"version": "1.0", "command": "validate" if args.validate else "generar_examen",
+                          "examenes": examenes}, indent=2, ensure_ascii=False))
+    else:
+        fallidas = [str(c.definicion) for c, codigo in zip(corridas, codigos) if codigo]
+        if fallidas:
+            print(f"\nError: fallaron {len(fallidas)} de {len(corridas)}: {', '.join(fallidas)}", file=sys.stderr)
+    return 1 if any(codigos) else 0
+
+
+def ejecutar_generacion(args, logger) -> int:
+    """`alucard generar` y `validar`: una definición o varias, una vez o con --watch."""
+    try:
+        rutas = definiciones_a_generar(args)
+    except ValueError as e:
+        if getattr(args, "json_output", False):
+            print(json.dumps({"version": "1.0", "command": "generar_examen", "error": str(e)},
+                             indent=2, ensure_ascii=False))
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+    if not rutas:
+        return generar_examen(args, logger)  # explica qué falta
+    corridas = [SimpleNamespace(**{**vars(args), "definicion": r,
+                                   "subcarpeta": r.stem if len(rutas) > 1 else None}) for r in rutas]
+
+    def generar() -> int:
+        return generar_examen(corridas[0], logger) if len(corridas) == 1 else _generar_varias(corridas, args, logger)
+
+    if not getattr(args, "vigilar", False):
+        return generar()
+    from generador_examenes.core.vigilancia import vigilar
+    salidas = [s for c in corridas for s in fuentes_de_generacion(c)[1]]
+    return vigilar(lambda: [f for c in corridas for f in fuentes_de_generacion(c)[0]], generar, excluir=salidas)
+
+
 def generar_examen(args, logger) -> int:
     # Validar argumentos requeridos
     if not args.definicion:
-        _usage_error("Se requiere --definicion (o --init para inicializar, o --wizard para configurar, o --category-tree para ver categorías)")
+        _usage_error("Se requiere --definicion o la clave `definicion` en alucard.toml "
+                     "(o `alucard iniciar` para crear un proyecto de ejemplo)")
     
     logger.info(f"Iniciando generador de exámenes v5.7.0")
     logger.info(f"Definición: {args.definicion}")
@@ -494,6 +586,11 @@ def generar_examen(args, logger) -> int:
         ) or curso.input_banco or None
         output_dir = args.output_dir or (
             Path(del_yaml("output_dir")) if del_yaml("output_dir") else None) or curso.output_dir or Path('./output')
+        # El YAML elige su carpeta dentro de la salida; con varias definiciones, si no lo hace, va
+        # una con su nombre, porque los archivos se llaman igual en todas.
+        subcarpeta = definicion.subdirectorio or getattr(args, "subcarpeta", None)
+        if subcarpeta:
+            output_dir = output_dir / subcarpeta
         path_images = args.path_images or (
             Path(del_yaml("path_images")) if del_yaml("path_images") else None) or curso.path_images
         numero_temas = next(v for v in (args.numero_temas, del_yaml("numero_temas"), curso.numero_temas, 1)

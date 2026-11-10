@@ -4,6 +4,7 @@ Modelos de datos usando Pydantic para validación de estructuras
 import re
 
 from pydantic import BaseModel, Field, field_validator, model_validator
+from pathlib import Path
 from typing import List, Dict, Any, Literal, Optional
 
 
@@ -242,11 +243,19 @@ class DefinicionExamen(BaseModel):
     input_consignas: Optional[List[str]] = Field(default=None, description="Carpetas locales de consignas prácticas deckard (--init crea consignas/)")
     repositorios_externos: List[RepositorioExterno] = Field(default_factory=list, description="Repositorios de preguntas o de consignas deckard de la misma computadora")
     output_dir: Optional[str] = Field(default="./output", description="Directorio de salida")
+    subdirectorio: Optional[str] = Field(default=None, description="Subcarpeta de este examen dentro de la salida (-o, output_dir o alucard.toml)")
     path_images: Optional[str] = Field(default=None, description="Directorio de imágenes")
     numero_temas: Optional[int] = Field(default=1, description="Número de temas a generar")
     semilla: Optional[int] = Field(default=42, description="Semilla aleatoria")
     formato: Optional[List[str]] = Field(default=["html"], description="Formatos de salida")
     
+    @field_validator("subdirectorio")
+    @classmethod
+    def _subdirectorio_dentro_de_la_salida(cls, valor: Optional[str]) -> Optional[str]:
+        if valor and (Path(valor).is_absolute() or ".." in Path(valor).parts):
+            raise ValueError(f"subdirectorio debe quedar dentro de la salida: {valor}")
+        return valor
+
     def __str__(self) -> str:
         fecha_str = f" ({self.fecha})" if self.fecha else ""
         duracion_str = f" - {self.duracion_minutos}min" if self.duracion_minutos else ""
