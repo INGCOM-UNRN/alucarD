@@ -134,14 +134,15 @@ def cargar_bancos(rutas_bancos: List[Path]) -> Dict[str, Pregunta]:
     Returns:
         Diccionario combinado de todas las preguntas {id: Pregunta}
     """
+    from generador_examenes.core import cache_bancos
+
     banco_completo = {}
-    
+
     for ruta, raiz in _archivos_de_bancos(rutas_bancos).items():
         logger.info(f"Cargando banco: {ruta}")
         
         try:
-            parser = obtener_parser(ruta)
-            preguntas = parser.parse(ruta)
+            preguntas = cache_bancos.leer_banco(ruta, lambda r: obtener_parser(r).parse(r))
             if raiz:
                 # Con la ruta dentro de la carpeta: dos subcarpetas pueden tener un `teoria.gift`.
                 for pregunta in preguntas.values():

@@ -1098,6 +1098,7 @@ Reglas de la carga:
 - **Carpeta vacía.** Una carpeta sin `.gift` ni `.xml` no es un error; `generar` lo avisa.
 - **Categorías.** La carpeta no cambia la categoría de las preguntas: sigue siendo la del
   `$CATEGORY:` del GIFT o la `<category>` del XML.
+- **Caché.** Lo que se leyó de cada banco queda guardado: ver [Caché de los bancos](#caché-de-los-bancos).
 
 **El filtro `banco` de un pool.** Para las preguntas que vienen de una carpeta, su banco es la ruta
 del archivo dentro de esa carpeta (`unidad1/teoria.gift`). El filtro compara el final de la ruta,
@@ -1116,6 +1117,26 @@ pools:
 Las carpetas valen también en `alucard lint-gift bancos` (revisa sus `.gift`), en `alucard categorias bancos`
 y en los `-i` de `ver`, `build` y `balance-check`. Con `--watch`, un archivo nuevo dentro de la carpeta
 dispara otra generación.
+
+#### Caché de los bancos
+
+Leer un banco grande lleva tiempo (el Markdown, el código y los diagramas de cada pregunta), así que
+alucard guarda lo leído de cada `.gift` y `.xml` en `~/.cache/alucard/bancos/` y la próxima vez lo
+toma de ahí si el archivo no cambió. No hay que hacer nada para usarlo ni para invalidarlo:
+
+- La clave es el **contenido** del archivo, no su fecha: editarlo lo vuelve a leer, y un `git checkout`
+  que no cambia el texto no.
+- Actualizar alucard (o cambiar su código) descarta lo guardado.
+- Los avisos del banco (una pregunta omitida, la sintaxis vieja de GIFT) se repiten aunque salga del
+  caché.
+- Lo que no se usa en 60 días se borra solo.
+
+| Variable de entorno | Qué hace |
+| :--- | :--- |
+| `ALUCARD_SIN_CACHE=1` | No usa el caché: lee siempre los bancos y no guarda nada. |
+| `ALUCARD_CACHE_DIR` | Otra carpeta para el caché (por omisión, `$XDG_CACHE_HOME/alucard/bancos`). |
+
+Para vaciarlo, alcanza con borrar la carpeta: `rm -r ~/.cache/alucard/bancos`.
 
 ### Consignas prácticas y repositorios externos
 

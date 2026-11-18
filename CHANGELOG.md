@@ -11,6 +11,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Agregado
 
+- **bancos**: caché de los bancos ya leídos en `~/.cache/alucard/bancos/`, por contenido del archivo y versión del código, con los avisos del parser; `ALUCARD_SIN_CACHE=1` lo apaga y `ALUCARD_CACHE_DIR` lo mueve.
 - **criterio de corrección**: el comentario pegado arriba de una pregunta GIFT, salvo las etiquetas, la categoría y los separadores, sale en la clave del profesor.
 - **debug_candidatas**: en `alucard.toml` o en `configuracion_examen`, `generar` deja `candidatas.txt` en la salida con cada pregunta que cada pool podía elegir, como `banco:id` y con su comentario de etiquetas en el renglón de abajo.
 - **PlantUML**: `configuracion_examen.escala_plantuml` cambia el tamaño de todos los diagramas sin `[escala]`. `[ancho]` y `[alto]` son límites: un diagrama chico ya no se agranda.

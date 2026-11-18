@@ -6,6 +6,13 @@ import logging
 
 
 @pytest.fixture(autouse=True)
+def cache_bancos_aislado(tmp_path_factory, monkeypatch):
+    """El caché de bancos de cada test, en una carpeta propia: ni ensucia ~/.cache ni lo lee."""
+    monkeypatch.setenv("ALUCARD_CACHE_DIR", str(tmp_path_factory.mktemp("cache_bancos")))
+    monkeypatch.delenv("ALUCARD_SIN_CACHE", raising=False)
+
+
+@pytest.fixture(autouse=True)
 def reset_logging():
     """Reset logging después de cada test"""
     yield
