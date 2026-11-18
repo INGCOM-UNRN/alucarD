@@ -222,7 +222,7 @@ escribir nada. La vista previa (`alucard ver`) usa el estilo del curso.
 | Opción / Bandera | Tipo | Por Defecto | Descripción |
 | :--- | :--- | :--- | :--- |
 | `-d`, `--definicion` | `<path>` | `definicion` del toml | Definición YAML del examen; se repite para generar varios. |
-| `-i`, `--input-banco` | `<path>` | `None` | Ruta(s) a los archivos de banco de preguntas (anula lo definido en el YAML). |
+| `-i`, `--input-banco` | `<path>` | `None` | Bancos de preguntas: archivos o carpetas, con sus subcarpetas (ver [Bancos en una carpeta](#bancos-en-una-carpeta)). Se repite; anula lo definido en el YAML. |
 | `-o`, `--output-dir` | `<path>` | `output_dir` del YAML o del toml; si no, `./output` | Directorio de salida para los exámenes y soluciones generadas. |
 | `-p`, `--path-images` | `<path>` | `None` | Directorio de imágenes referenciadas en las preguntas. |
 | `-n`, `--numero-temas` | `<int>` | `1` | Cantidad de temas/variantes independientes a generar. |
@@ -1060,6 +1060,63 @@ secciones_examen:
         lineas_justificacion: 0               # sin justificación
 ```
 
+### Bancos en una carpeta
+
+En lugar de nombrar cada archivo, `input_banco` (y `-i`) acepta una carpeta: alucard carga todos los
+`.gift` y `.xml` que encuentra en ella y en sus subcarpetas. Archivos y carpetas se pueden mezclar.
+
+```text
+bancos/
+├── unidad1/
+│   ├── teoria.gift
+│   └── codigo.xml
+├── unidad2/
+│   └── teoria.gift
+├── borrador.txt        # no se lee: dentro de una carpeta sólo cuentan .gift y .xml
+└── .viejos/            # no se lee: se saltean las carpetas ocultas
+    └── teoria.gift
+```
+
+```yaml
+# En la definición (o en alucard.toml, con las rutas relativas a ese archivo)
+input_banco:
+  - "bancos"                    # los tres bancos de arriba
+  - "extra/banco_ejemplo.txt"   # un .txt se lee sólo si se lo nombra
+```
+
+```bash
+alucard generar -d parcial.yaml -i bancos        # -i reemplaza al input_banco de la definición
+alucard generar -d parcial.yaml -i bancos -i extra/repaso.gift   # -i se repite
+```
+
+Reglas de la carga:
+
+- **Sin repetir.** Un archivo que aparece por su carpeta y también nombrado aparte se carga una sola vez.
+- **Ids.** Los ids de las preguntas tienen que ser únicos entre todos los archivos: si dos repiten un
+  id, queda la del último que se carga (las rutas en el orden en que se nombran y, dentro de una
+  carpeta, en orden alfabético) y `generar` lo avisa.
+- **Carpeta vacía.** Una carpeta sin `.gift` ni `.xml` no es un error; `generar` lo avisa.
+- **Categorías.** La carpeta no cambia la categoría de las preguntas: sigue siendo la del
+  `$CATEGORY:` del GIFT o la `<category>` del XML.
+
+**El filtro `banco` de un pool.** Para las preguntas que vienen de una carpeta, su banco es la ruta
+del archivo dentro de esa carpeta (`unidad1/teoria.gift`). El filtro compara el final de la ruta,
+así que puede ser tan preciso como haga falta:
+
+```yaml
+pools:
+  - banco: "unidad1/teoria.gift"   # sólo el de unidad1
+    cantidad: 3
+  - banco: "teoria.gift"           # los dos teoria.gift, el de unidad1 y el de unidad2
+    cantidad: 2
+  - banco: "codigo.xml"
+    cantidad: 1
+```
+
+Las carpetas valen también en `alucard lint-gift bancos` (revisa sus `.gift`), en `alucard categorias bancos`
+y en los `-i` de `ver`, `build` y `balance-check`. Con `--watch`, un archivo nuevo dentro de la carpeta
+dispara otra generación.
+
 ### Consignas prácticas y repositorios externos
 
 Además de los bancos GIFT/XML (`input_banco` / `-i`), la definición puede sumar:
@@ -1370,7 +1427,7 @@ rutas del YAML son relativas a la carpeta desde la que se ejecuta alucard.
 | `idioma` | texto | `es` | Textos fijos del examen: `es` o `en`. |
 | `variables_personalizadas` | diccionario | `{}` | Textos con `{nombre_examen}`, `{fecha_actual}`, `{anio_actual}` y otros campos. Sólo el HTML muestra `profesor` y `aula`. |
 | `estilo` | sección | `{}` | Ver [`estilo`](#estilo). Se suma al `[estilo]` del curso. |
-| `input_banco` | lista de rutas | la del toml | Bancos `.gift` y `.xml`, o carpetas con sus subcarpetas. `-i` la reemplaza. |
+| `input_banco` | lista de rutas | la del toml | Bancos `.gift` y `.xml`, o carpetas con sus subcarpetas (ver [Bancos en una carpeta](#bancos-en-una-carpeta)). `-i` la reemplaza. |
 | `input_consignas` | lista de rutas | — | Carpetas de consignas prácticas de deckard. `--consignas` se suma. |
 | `repositorios_externos` | lista | `[]` | Ver [`repositorios_externos`](#repositorios_externos). `--repositorio` se suma. |
 | `output_dir` | ruta | la del toml; si no, `./output` | Carpeta de salida. `-o` la reemplaza. |
