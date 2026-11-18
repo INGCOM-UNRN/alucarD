@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, Sequence
 
 from generador_examenes.core.models import DefinicionExamen, PoolConfig, Pregunta
 
@@ -112,8 +112,20 @@ def _preguntas_de_todos_los_temas(examen_base: Dict[str, Any], temas: List[Dict[
     return {**examen_base, "secciones": secciones}
 
 
+def _seccion_repetidos(repetidos: Sequence[Any]) -> List[str]:
+    """Los ids repetidos: la pregunta descartada no puede salir en el examen."""
+    if not repetidos:
+        return []
+    return ["", "## Ids repetidos", "",
+            "Dos preguntas con el mismo id: queda la última que se cargó y la otra no puede salir en el examen.",
+            "", "| Id | Pregunta | Queda la de | Se descarta la de |", "| --- | --- | --- | --- |",
+            *(f"| {_celda(r.id)} | {_celda(r.nombre)} | {_celda(r.queda)} | {_celda(r.descartada)} |"
+              for r in repetidos)]
+
+
 def armar_informe(definicion: DefinicionExamen, banco: Dict[str, Pregunta], examen_base: Dict[str, Any],
-                  temas: List[Dict[str, Any]], semilla: int, formatos: List[str]) -> str:
+                  temas: List[Dict[str, Any]], semilla: int, formatos: List[str],
+                  repetidos: Sequence[Any] = ()) -> str:
     from generador_examenes.core.logic import candidatas_pool
 
     l: List[str] = [f"# Informe de generación: {definicion.nombre_examen}", ""]
@@ -162,6 +174,7 @@ def armar_informe(definicion: DefinicionExamen, banco: Dict[str, Pregunta], exam
         l += ["", "## Consignas que no podían entrar", ""]
         l += fuera
         l += [f"- «{_celda(c.nombre)}» ({c.id}): publicar: false" for c in ocultas]
+    l += _seccion_repetidos(repetidos)
     return "\n".join(l) + "\n"
 
 
@@ -173,7 +186,8 @@ _TIPOS = {
 }
 
 
-def inventario(preguntas: Dict[str, Pregunta], definicion: Optional[DefinicionExamen] = None) -> tuple[str, bool]:
+def inventario(preguntas: Dict[str, Pregunta], definicion: Optional[DefinicionExamen] = None,
+               repetidos: Sequence[Any] = ()) -> tuple[str, bool]:
     """Cuántas preguntas hay por categoría y tipo y, con `definicion`, si cada pool tiene las que pide.
 
     Devuelve (texto, alcanza): `alcanza` es False si algún pool pide más de las que puede elegir.
@@ -194,6 +208,9 @@ def inventario(preguntas: Dict[str, Pregunta], definicion: Optional[DefinicionEx
         celdas = "  ".join(f"{(cuenta[t] or ''):>9}" for t in tipos)
         lineas.append(f"{categoria:<{ancho}}  {sum(cuenta.values()):>5}  {celdas}")
     lineas.append(f"{'Total':<{ancho}}  {len(preguntas):>5}")
+    if repetidos:
+        lineas += ["", f"! Ids repetidos ({len(repetidos)}): la descartada no cuenta en el total ni puede salir."]
+        lineas += [f"  ! {r}" for r in repetidos]
 
     alcanza = True
     if definicion is not None:

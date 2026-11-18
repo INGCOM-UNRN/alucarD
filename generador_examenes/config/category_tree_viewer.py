@@ -89,24 +89,26 @@ def build_category_tree(banco_preguntas: Dict) -> CategoryNode:
     return root
 
 
-def cargar_fuentes(banco_paths: List[Path], definicion: Any = None) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
+def cargar_fuentes(banco_paths: List[Path], definicion: Any = None,
+                   repetidos: Optional[list] = None) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
     """Las preguntas de los bancos (archivos GIFT/XML, o carpetas: repositorios de preguntas o de
-    consignas deckard) y, con `definicion`, sus consignas locales y repositorios externos."""
+    consignas deckard) y, con `definicion`, sus consignas locales y repositorios externos. Los ids
+    que aparecen más de una vez se suman a `repetidos`."""
     from generador_examenes.core.consignas import cargar_consignas, cargar_repositorio
+    from generador_examenes.core.logic import cargar_bancos, sumar_preguntas
     from generador_examenes.core.models import RepositorioExterno
-    from generador_examenes.parsers import obtener_parser
 
     fuentes: List[Tuple[str, str, Any]] = []
     for banco_path in banco_paths:
         if banco_path.is_dir():
-            fuentes.append((str(banco_path), "carpeta", lambda r=banco_path: cargar_repositorio(RepositorioExterno(ruta=str(r)))))
+            fuentes.append((str(banco_path), "carpeta", lambda r=banco_path: cargar_repositorio(RepositorioExterno(ruta=str(r)), repetidos)))
         else:
-            fuentes.append((str(banco_path), banco_path.suffix, lambda r=banco_path: obtener_parser(r).parse(r)))
+            fuentes.append((str(banco_path), banco_path.suffix, lambda r=banco_path: cargar_bancos([r], repetidos)))
     if definicion is not None:
         for c in definicion.input_consignas or []:
             fuentes.append((str(c), "consignas", lambda c=c: cargar_consignas(c)))
         for repo in definicion.repositorios_externos:
-            fuentes.append((repo.ruta, f"repositorio {repo.tipo}", lambda repo=repo: cargar_repositorio(repo)))
+            fuentes.append((repo.ruta, f"repositorio {repo.tipo}", lambda repo=repo: cargar_repositorio(repo, repetidos)))
 
     all_questions: Dict[str, Any] = {}
     banco_info: List[Dict[str, Any]] = []
@@ -116,7 +118,7 @@ def cargar_fuentes(banco_paths: List[Path], definicion: Any = None) -> Tuple[Dic
         except Exception as e:
             logger.error(f"✗ Error cargando {ruta}: {e}")
             continue
-        all_questions.update(preguntas)
+        sumar_preguntas(all_questions, preguntas, repetidos)
         banco_info.append({'path': ruta, 'name': Path(ruta).name, 'count': len(preguntas), 'tipo': tipo})
         logger.info(f"✓ Cargado: {Path(ruta).name} ({len(preguntas)} preguntas)")
     return all_questions, banco_info

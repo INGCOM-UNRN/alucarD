@@ -7,6 +7,7 @@ import base64
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from copy import deepcopy
+from dataclasses import dataclass
 import re
 
 from generador_examenes.core.markdown_utils import numerar_todo
@@ -105,6 +106,42 @@ def categoria_coincide(pregunta_cat: str, filtro_cat: str) -> bool:
     return False
 
 
+@dataclass(frozen=True)
+class IdRepetido:
+    """Dos preguntas con el mismo id: queda la última que se cargó y la otra no puede salir en el examen."""
+    id: str
+    nombre: str
+    queda: str          # de dónde salió la que queda
+    descartada: str     # de dónde salió la que se pierde
+
+    def __str__(self) -> str:
+        return (f"id repetido {self.id} («{self.nombre}»): queda la de {self.queda}, "
+                f"se descarta la de {self.descartada}")
+
+
+def origen_de(pregunta: Pregunta) -> str:
+    """De dónde salió una pregunta, para decirlo en un aviso."""
+    return str(pregunta.metadata.get("ruta") or pregunta.fuente_banco or "?")
+
+
+def sumar_preguntas(banco: Dict[str, Pregunta], nuevas: Dict[str, Pregunta],
+                    repetidos: Optional[List[IdRepetido]] = None,
+                    origen: Optional[Dict[str, str]] = None, de_donde: Optional[str] = None) -> None:
+    """Suma `nuevas` a `banco`: un id que ya estaba se reemplaza, con aviso y anotado en `repetidos`.
+    `origen` (id → archivo) y `de_donde` (el archivo de `nuevas`) precisan el aviso."""
+    origen = origen if origen is not None else {}
+    for pid, pregunta in nuevas.items():
+        if pid in banco:
+            repetido = IdRepetido(pid, pregunta.nombre, de_donde or origen_de(pregunta),
+                                  origen.get(pid) or origen_de(banco[pid]))
+            logger.warning(f"Pregunta duplicada: {repetido}")
+            if repetidos is not None:
+                repetidos.append(repetido)
+        banco[pid] = pregunta
+        if de_donde:
+            origen[pid] = de_donde
+
+
 def _archivos_de_bancos(rutas_bancos: List[Path]) -> Dict[Path, Optional[Path]]:
     """Los archivos a cargar, sin repetir, con la carpeta de la que salió cada uno (None si se nombró
     directamente). Una carpeta aporta sus bancos y los de sus subcarpetas."""
@@ -124,19 +161,21 @@ def _archivos_de_bancos(rutas_bancos: List[Path]) -> Dict[Path, Optional[Path]]:
     return archivos
 
 
-def cargar_bancos(rutas_bancos: List[Path]) -> Dict[str, Pregunta]:
+def cargar_bancos(rutas_bancos: List[Path], repetidos: Optional[List[IdRepetido]] = None) -> Dict[str, Pregunta]:
     """
     Carga múltiples bancos de preguntas y los combina en uno solo
     
     Args:
         rutas_bancos: Lista de rutas a archivos de bancos o a carpetas (recorridas con sus subcarpetas)
+        repetidos: Si se pasa, se le suman los ids que aparecen más de una vez
         
     Returns:
         Diccionario combinado de todas las preguntas {id: Pregunta}
     """
     from generador_examenes.core import cache_bancos, carpetas_banco
 
-    banco_completo = {}
+    banco_completo: Dict[str, Pregunta] = {}
+    origen: Dict[str, str] = {}
     reglas: Dict[Path, carpetas_banco.ReglasDeCarpetas] = {}
 
     for ruta, raiz in _archivos_de_bancos(rutas_bancos).items():
@@ -152,11 +191,7 @@ def cargar_bancos(rutas_bancos: List[Path]) -> Dict[str, Pregunta]:
                 de_la_raiz = reglas.setdefault(raiz, carpetas_banco.ReglasDeCarpetas(raiz))
                 carpetas_banco.aplicar(preguntas.values(), ruta, raiz, de_la_raiz.de_archivo(ruta))
 
-            # Combinar preguntas, verificando duplicados
-            for id_pregunta, pregunta in preguntas.items():
-                if id_pregunta in banco_completo:
-                    logger.warning(f"Pregunta duplicada encontrada: {pregunta} - sobrescribiendo")
-                banco_completo[id_pregunta] = pregunta
+            sumar_preguntas(banco_completo, preguntas, repetidos, origen, str(ruta))
             
         except Exception as e:
             logger.error(f"Error cargando banco {ruta}: {e}")
@@ -251,20 +286,20 @@ def _embeber_imagenes_en_html(html: str, path_imagenes: Path) -> str:
 
 
 def cargar_banco_definicion(definicion: DefinicionExamen,
-                            rutas_bancos: Optional[List[Path]] = None) -> Dict[str, Pregunta]:
+                            rutas_bancos: Optional[List[Path]] = None,
+                            repetidos: Optional[List[IdRepetido]] = None) -> Dict[str, Pregunta]:
     """Todo el banco de una definición: los bancos (`rutas_bancos`, o su `input_banco`), sus consignas
-    prácticas locales (`input_consignas`) y sus repositorios externos."""
+    prácticas locales (`input_consignas`) y sus repositorios externos. Los ids que aparecen más de
+    una vez se suman a `repetidos`."""
     if rutas_bancos is None:
         rutas_bancos = [Path(b) for b in definicion.input_banco or []]
-    banco = cargar_bancos(list(rutas_bancos))
+    banco = cargar_bancos(list(rutas_bancos), repetidos)
     if definicion.input_consignas or definicion.repositorios_externos:
         from generador_examenes.core.consignas import cargar_fuentes_complementarias
 
-        complemento = cargar_fuentes_complementarias(definicion.input_consignas, definicion.repositorios_externos)
-        for pid, pregunta in complemento.items():
-            if pid in banco:
-                logger.warning(f"Pregunta duplicada encontrada: {pregunta} - sobrescribiendo")
-            banco[pid] = pregunta
+        complemento = cargar_fuentes_complementarias(definicion.input_consignas, definicion.repositorios_externos,
+                                                     repetidos)
+        sumar_preguntas(banco, complemento, repetidos)
     return banco
 
 

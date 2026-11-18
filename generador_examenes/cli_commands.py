@@ -371,8 +371,9 @@ def ejecutar_inventario(bancos: list[Path], definicion: Optional[Path]) -> int:
     from generador_examenes.core.informe import inventario
 
     modelo = _leer_definicion(definicion) if definicion else None
-    preguntas, _ = cargar_fuentes(bancos, modelo)
-    texto, alcanza = inventario(preguntas, modelo)
+    repetidos: list = []
+    preguntas, _ = cargar_fuentes(bancos, modelo, repetidos)
+    texto, alcanza = inventario(preguntas, modelo, repetidos)
     print(texto)
     return 0 if alcanza else 1
 
@@ -693,7 +694,11 @@ def generar_examen(args, logger) -> int:
         
         # Cargar bancos de preguntas
         logger.info("Cargando bancos de preguntas...")
-        banco_completo = logic.cargar_banco_definicion(definicion, list(input_banco or []))
+        repetidos: list = []
+        banco_completo = logic.cargar_banco_definicion(definicion, list(input_banco or []), repetidos)
+        # Una pregunta tapada por otra con el mismo id no puede salir: que quede en el resumen.
+        for repetido in repetidos:
+            _avisar(args, str(repetido))
         
         if not banco_completo:
             logger.error("No se cargaron preguntas de los bancos")
@@ -850,7 +855,7 @@ def generar_examen(args, logger) -> int:
             informe = output_dir / "informe.md"
             output_dir.mkdir(parents=True, exist_ok=True)
             informe.write_text(armar_informe(definicion, banco_completo, examen_base, temas_generados,
-                                             semilla, list(formato)), encoding="utf-8")
+                                             semilla, list(formato), repetidos), encoding="utf-8")
             archivos_generados.append(str(informe))
             if not getattr(args, 'json_output', False):
                 print(f"✓ Informe: {informe}")

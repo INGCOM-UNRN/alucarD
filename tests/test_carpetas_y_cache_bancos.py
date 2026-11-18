@@ -204,3 +204,85 @@ def test_una_entrada_ilegible_se_vuelve_a_parsear(arbol, monkeypatch):
     assert len(cargar_bancos([arbol])) == 4
     assert len(llamadas) == 4
 
+
+# --- ids repetidos --------------------------------------------------------------------------------
+
+@pytest.fixture
+def repetidos_en_carpetas(tmp_path):
+    """Dos `teoria.gift` con la misma primera pregunta: el id (gift_1_a) choca."""
+    raiz = tmp_path / "bancos"
+    escribir(raiz, {"u1/teoria.gift": "::a::Uno {T}\n", "u2/teoria.gift": "::a::Dos {T}\n\n::b::Otra {F}\n"})
+    return raiz
+
+
+def test_los_ids_repetidos_quedan_anotados(repetidos_en_carpetas, caplog):
+    repetidos = []
+    with caplog.at_level(logging.WARNING):
+        banco = cargar_bancos([repetidos_en_carpetas], repetidos)
+    r, = repetidos
+    assert r.id == "gift_1_a" and r.nombre == "a"
+    assert r.queda.endswith("u2/teoria.gift") and r.descartada.endswith("u1/teoria.gift")
+    assert "Dos" in banco["gift_1_a"].enunciado_html
+    assert "id repetido gift_1_a" in caplog.text and "se descarta la de" in caplog.text
+
+
+def test_los_ids_repetidos_se_anotan_aunque_salgan_del_cache(repetidos_en_carpetas):
+    cargar_bancos([repetidos_en_carpetas])
+    repetidos = []
+    cargar_bancos([repetidos_en_carpetas], repetidos)
+    assert [r.id for r in repetidos] == ["gift_1_a"]
+
+
+def _definicion(tmp_path, banco):
+    definicion = tmp_path / "def.yaml"
+    definicion.write_text(f"""nombre_examen: "P"
+institucion: "I"
+materia: "M"
+configuracion_examen:
+  generar_clave_profesor: false
+input_banco: ["{banco}"]
+secciones_examen:
+  - nombre: "A"
+    pools:
+      - cantidad: 1
+""", encoding="utf-8")
+    return definicion
+
+
+def test_generar_avisa_los_ids_repetidos_y_los_deja_en_el_informe(repetidos_en_carpetas, tmp_path, monkeypatch, capsys):
+    import sys
+
+    from generador_examenes.__main__ import main
+
+    salida = tmp_path / "out"
+    monkeypatch.setattr(sys, "argv", ["alucard", "generar", "-d", str(_definicion(tmp_path, repetidos_en_carpetas)),
+                                      "-o", str(salida)])
+    assert main() == 0                      # un aviso, no un error
+    err = capsys.readouterr().err
+    assert "Revisá antes de imprimir (1):" in err and "id repetido gift_1_a" in err
+    informe = (salida / "informe.md").read_text(encoding="utf-8")
+    assert "## Ids repetidos" in informe
+    fila = next(linea for linea in informe.splitlines() if linea.startswith("| gift_1_a |"))
+    assert "u2/teoria.gift" in fila and "u1/teoria.gift" in fila
+
+
+def test_el_informe_no_tiene_la_seccion_sin_repetidos(arbol, tmp_path, monkeypatch):
+    import sys
+
+    from generador_examenes.__main__ import main
+
+    salida = tmp_path / "out"
+    monkeypatch.setattr(sys, "argv", ["alucard", "generar", "-d", str(_definicion(tmp_path, arbol)), "-o", str(salida)])
+    assert main() == 0
+    assert "Ids repetidos" not in (salida / "informe.md").read_text(encoding="utf-8")
+
+
+def test_el_inventario_muestra_los_ids_repetidos(repetidos_en_carpetas, monkeypatch, capsys):
+    import sys
+
+    from generador_examenes.__main__ import main
+
+    monkeypatch.setattr(sys, "argv", ["alucard", "categorias", "--resumen", str(repetidos_en_carpetas)])
+    main()
+    out = capsys.readouterr().out
+    assert "! Ids repetidos (1)" in out and "id repetido gift_1_a" in out

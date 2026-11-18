@@ -128,7 +128,7 @@ def bancos_de_carpeta(ruta: Path) -> List[Path]:
     )
 
 
-def cargar_repositorio(repo: RepositorioExterno) -> Dict[str, Pregunta]:
+def cargar_repositorio(repo: RepositorioExterno, repetidos: Optional[list] = None) -> Dict[str, Pregunta]:
     """Las preguntas o consignas de un repositorio externo."""
     from generador_examenes.core.logic import cargar_bancos
 
@@ -142,7 +142,7 @@ def cargar_repositorio(repo: RepositorioExterno) -> Dict[str, Pregunta]:
         return cargar_consignas(ruta, fuente=nombre, incluir_no_publicados=repo.incluir_no_publicados)
     # La carpeta entera, no sus archivos: así vale su `banco.toml` y el banco de cada pregunta es su
     # ruta dentro del repositorio.
-    preguntas = cargar_bancos([ruta])
+    preguntas = cargar_bancos([ruta], repetidos)
     for p in preguntas.values():
         if f"repo:{nombre}" not in p.etiquetas:
             p.etiquetas.append(f"repo:{nombre}")
@@ -150,17 +150,18 @@ def cargar_repositorio(repo: RepositorioExterno) -> Dict[str, Pregunta]:
 
 
 def cargar_fuentes_complementarias(
-    input_consignas: Optional[List[str]], repositorios: List[RepositorioExterno]
+    input_consignas: Optional[List[str]], repositorios: List[RepositorioExterno],
+    repetidos: Optional[list] = None,
 ) -> Dict[str, Pregunta]:
-    """Consignas locales (`input_consignas`) y repositorios externos, para sumar al banco del proyecto."""
+    """Consignas locales (`input_consignas`) y repositorios externos, para sumar al banco del proyecto.
+    Los ids que aparecen más de una vez se suman a `repetidos`."""
+    from generador_examenes.core.logic import sumar_preguntas
+
     banco: Dict[str, Pregunta] = {}
     fuentes = [cargar_consignas(c) for c in input_consignas or []]
-    fuentes += [cargar_repositorio(r) for r in repositorios]
+    fuentes += [cargar_repositorio(r, repetidos) for r in repositorios]
     for preguntas in fuentes:
-        for pid, pregunta in preguntas.items():
-            if pid in banco:
-                logger.warning(f"Pregunta duplicada encontrada: {pregunta} - sobrescribiendo")
-            banco[pid] = pregunta
+        sumar_preguntas(banco, preguntas, repetidos)
     return banco
 
 

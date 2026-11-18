@@ -93,6 +93,7 @@ alucard categorias --resumen -d parcial.yaml        # con los bancos de la defin
 Muestra en la terminal cuántas preguntas hay en cada categoría, por tipo, y con `-d` si cada pool
 tiene las que pide (✓ alcanza, ! no alcanza pero el pool usa todas o advierte, ✗ no alcanza: el
 examen no se puede generar). Sale con 1 si algún pool no alcanza, así sirve en un script o en CI.
+Si hay [ids repetidos](#ids-repetidos), los lista al final.
 Sin bancos toma los de la definición (o los del `alucard.toml`). Sin `--resumen`, `categorias`
 arma el árbol HTML.
 
@@ -104,7 +105,8 @@ Junto a los temas, `alucard generar` deja un `informe.md` con:
 - las preguntas elegidas, con su sección, tipo, categoría, banco y puntaje;
 - el orden de cada tema (los temas comparten preguntas y cambian el orden);
 - las consignas prácticas que no podían entrar, con el filtro que las dejó afuera (categoría, tipo,
-  etiquetas, minutos) o `publicar: false`.
+  etiquetas, minutos) o `publicar: false`;
+- los [ids repetidos](#ids-repetidos), si hay: qué pregunta quedó y cuál se descartó, con sus archivos.
 
 Con [`debug_candidatas`](#debug_candidatas) también deja `candidatas.txt`, con todas las preguntas que
 cada pool podía elegir.
@@ -1093,8 +1095,8 @@ Reglas de la carga:
 
 - **Sin repetir.** Un archivo que aparece por su carpeta y también nombrado aparte se carga una sola vez.
 - **Ids.** Los ids de las preguntas tienen que ser únicos entre todos los archivos: si dos repiten un
-  id, queda la del último que se carga (las rutas en el orden en que se nombran y, dentro de una
-  carpeta, en orden alfabético) y `generar` lo avisa.
+  id, queda la del último que se carga y la otra se descarta. Queda asentado: ver
+  [Ids repetidos](#ids-repetidos).
 - **Carpeta vacía.** Una carpeta sin `.gift` ni `.xml` no es un error; `generar` lo avisa.
 - **Categorías y etiquetas.** Sin un `banco.toml`, la carpeta no cambia la categoría de las
   preguntas (sigue siendo la del `$CATEGORY:` del GIFT o la `<category>` del XML) ni sus etiquetas.
@@ -1118,6 +1120,33 @@ pools:
 Las carpetas valen también en `alucard lint-gift bancos` (revisa sus `.gift`), en `alucard categorias bancos`
 y en los `-i` de `ver`, `build` y `balance-check`. Con `--watch`, un archivo nuevo dentro de la carpeta
 dispara otra generación.
+
+#### Ids repetidos
+
+El id de una pregunta GIFT sale de su posición en el archivo y de su nombre (`gift_1_a` es la
+primera, `::a::`); el de una de Moodle XML, igual (`moodle_1_a`), y el de una consigna, de su
+`ejercicio.yaml` (`deckard:<id>`). Por eso dos bancos armados con la misma plantilla, como
+`unidad1/teoria.gift` y `unidad2/teoria.gift`, pueden repetir ids aunque el texto sea distinto.
+
+Cuando dos preguntas tienen el mismo id, queda la del último banco que se carga (las rutas en el orden
+en que se nombran y, dentro de una carpeta, en orden alfabético; los bancos antes que las consignas
+y los repositorios externos) y la otra no puede salir en el examen. No frena la generación, pero
+queda asentado en:
+
+- el **resumen del final** de `alucard generar` y `validar`, entre lo que hay que revisar antes de
+  imprimir (y en `avisos` con `--json`):
+
+  ```text
+  Revisá antes de imprimir (1):
+    ! parcial.yaml: id repetido gift_1_a («a»): queda la de bancos/unidad2/teoria.gift, se descarta la de bancos/unidad1/teoria.gift
+  ```
+
+- el **`informe.md`**, en la sección «Ids repetidos», con una fila por id: la pregunta, el archivo de
+  la que queda y el de la descartada;
+- el **inventario** (`alucard categorias --resumen`), al final, porque la descartada no cuenta en los
+  totales.
+
+Para resolverlo, cambiá el nombre (`::a::`) de una de las dos o su lugar en el archivo.
 
 #### Categorías y etiquetas por carpeta
 
