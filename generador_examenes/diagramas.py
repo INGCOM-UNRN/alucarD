@@ -178,7 +178,7 @@ def _cabecera(c: _Lienzo, x: float, y: float, ancho: float, cabecera: Dict[str, 
     c.t(x, y - 6, _titulo_cabecera(cabecera), size=10.5, peso=700)
     nombres = max(len(campo.nombre) for campo in campos) * 7.4 + 16
     centros = []
-    for i, (campo, valor) in enumerate(zip(campos, valores)):
+    for i, (campo, valor) in enumerate(zip(campos, valores, strict=True)):
         fila = y + i * FILA_CABECERA
         c.r(x, fila, ancho, FILA_CABECERA, relleno="fillPointerBox" if campo.destino is not None else "fillCell")
         c.linea(x + nombres, fila, x + nombres, fila + FILA_CABECERA, color="strokeMain", ancho=1, flecha=None)
@@ -577,7 +577,7 @@ def _matriz_dinamica(c: _Lienzo, b: Dict[str, Any], dentada: bool = False) -> Tu
         fila_filas = next((i for i, campo in enumerate(campos) if campo.destino == "rows"), 0)
         y_dueno = max(top + 22, y0 + celda_h / 2 - FILA_CABECERA / 2 - fila_filas * FILA_CABECERA)
         centros = _cabecera(c, 0, y_dueno, m_w, dueno, campos, valores_dueno)
-        for campo, centro in zip(campos, centros):
+        for campo, centro in zip(campos, centros, strict=True):
             if campo.destino == "rows":
                 c.ruta((m_w, centro), (m_w + 30, centro), (m_w + 30, y0 + celda_h / 2), (x_ptr - 3, y0 + celda_h / 2))
             elif campo.destino == "lengths":
@@ -737,7 +737,7 @@ def _lista(c: _Lienzo, b: Dict[str, Any]) -> Tuple[float, float]:
         # El primer renglón queda a la altura de los nodos: si apunta al primero, la flecha va derecha.
         centros = _cabecera(c, 0, y + 27 - FILA_CABECERA / 2, cabeza_w, cabecera, campos, valores_cabecera)
         abajo = y + alto_nodo + (50 if circular else 28)
-        for k, (campo, centro) in enumerate(zip(campos, centros)):
+        for k, (campo, centro) in enumerate(zip(campos, centros, strict=True)):
             if campo.destino is None or sin_flechas:
                 continue
             destino = int(campo.destino)

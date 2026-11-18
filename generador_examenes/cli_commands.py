@@ -516,8 +516,8 @@ def _resumen(corridas: list, resultados: list[tuple[int, str]], validando: bool)
     """Lo último que se ve: entre tantos renglones de log, un fallo o un aviso pasaban de largo y
     quedaba en la salida el examen de la corrida anterior."""
     nombre = [Path(c.definicion).name if c.definicion else "?" for c in corridas]
-    fallos = [f"  ✗ {n}: {motivo}" for n, (codigo, motivo) in zip(nombre, resultados) if codigo]
-    avisos = [f"  ! {n}: {aviso}" for n, c in zip(nombre, corridas) for aviso in c.avisos]
+    fallos = [f"  ✗ {n}: {motivo}" for n, (codigo, motivo) in zip(nombre, resultados, strict=True) if codigo]
+    avisos = [f"  ! {n}: {aviso}" for n, c in zip(nombre, corridas, strict=True) for aviso in c.avisos]
     total = len(corridas)
     if not fallos and not avisos:
         if total > 1:
