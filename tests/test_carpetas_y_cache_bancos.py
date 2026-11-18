@@ -1,11 +1,13 @@
-"""Caché de los bancos ya leídos."""
+"""Categorías y etiquetas por carpeta (`banco.toml`) y caché de los bancos ya leídos."""
 
 import logging
 
 import pytest
 
 from generador_examenes.core import cache_bancos
-from generador_examenes.core.logic import cargar_bancos
+from generador_examenes.core.carpetas_banco import categoria
+from generador_examenes.core.logic import candidatas_pool, cargar_bancos
+from generador_examenes.core.models import PoolConfig
 
 
 def escribir(raiz, archivos):
@@ -29,6 +31,106 @@ def arbol(tmp_path):
 
 def por_nombre(banco):
     return {p.nombre: p for p in banco.values()}
+
+
+# --- banco.toml -----------------------------------------------------------------------------------
+
+def test_sin_banco_toml_las_carpetas_no_cambian_nada(arbol):
+    preguntas = por_nombre(cargar_bancos([arbol]))
+    assert preguntas["a"].categoria == "General" and preguntas["a"].etiquetas == []
+    assert preguntas["b"].categoria == "$course$/Top/Repaso"
+
+
+def test_categoria_carpeta_y_etiquetas(arbol):
+    escribir(arbol, {"banco.toml": 'categoria = "carpeta"\netiquetas = true\n'})
+    preguntas = por_nombre(cargar_bancos([arbol]))
+    assert preguntas["a"].categoria == "punteros" and preguntas["a"].etiquetas == ["punteros"]
+    assert preguntas["b"].categoria == "punteros/arreglos"
+    assert preguntas["b"].etiquetas == ["punteros", "arreglos"]
+    assert preguntas["c"].etiquetas == ["facil", "listas"]
+    # En la raíz no hay carpetas: queda lo del archivo.
+    assert preguntas["d"].categoria == "General" and preguntas["d"].etiquetas == []
+
+
+def test_prefijo_antepone_la_carpeta_sin_el_contexto_de_moodle(arbol):
+    escribir(arbol, {"banco.toml": 'categoria = "prefijo"\n'})
+    preguntas = por_nombre(cargar_bancos([arbol]))
+    assert preguntas["a"].categoria == "punteros"
+    assert preguntas["b"].categoria == "punteros/arreglos/Repaso"
+
+
+def test_si_falta_respeta_la_categoria_del_archivo(arbol):
+    escribir(arbol, {"banco.toml": 'categoria = "si_falta"\n'})
+    preguntas = por_nombre(cargar_bancos([arbol]))
+    assert preguntas["a"].categoria == "punteros"
+    assert preguntas["b"].categoria == "$course$/Top/Repaso"
+
+
+def test_incluir_archivo_suma_el_nombre_del_archivo(arbol):
+    escribir(arbol, {"banco.toml": 'categoria = "carpeta"\netiquetas = true\nincluir_archivo = true\n'})
+    preguntas = por_nombre(cargar_bancos([arbol]))
+    assert preguntas["a"].categoria == "punteros/teoria"
+    assert preguntas["d"].categoria == "suelto" and preguntas["d"].etiquetas == ["suelto"]
+
+
+def test_un_banco_toml_mas_adentro_cambia_solo_su_subarbol(arbol):
+    escribir(arbol, {
+        "banco.toml": 'categoria = "carpeta"\nagregar_etiquetas = ["parcial1"]\n',
+        "punteros/arreglos/banco.toml": 'categoria = "archivo"\netiquetas = true\n',
+    })
+    preguntas = por_nombre(cargar_bancos([arbol]))
+    assert preguntas["a"].categoria == "punteros" and preguntas["a"].etiquetas == ["parcial1"]
+    assert preguntas["b"].categoria == "$course$/Top/Repaso"
+    assert preguntas["b"].etiquetas == ["punteros", "arreglos", "parcial1"]
+
+
+def test_los_pools_filtran_por_las_categorias_y_etiquetas_de_carpeta(arbol):
+    escribir(arbol, {"banco.toml": 'categoria = "carpeta"\netiquetas = true\n'})
+    banco = cargar_bancos([arbol])
+    por_categoria = PoolConfig(nombre="p", cantidad=1, puntos_por_pregunta=1, categoria="punteros")
+    por_etiqueta = PoolConfig(nombre="q", cantidad=1, puntos_por_pregunta=1, etiquetas=["arreglos"])
+    assert {p.nombre for p in candidatas_pool(por_categoria, banco)} == {"a", "b"}
+    assert {p.nombre for p in candidatas_pool(por_etiqueta, banco)} == {"b"}
+
+
+def test_un_archivo_nombrado_directamente_no_usa_banco_toml(arbol):
+    escribir(arbol, {"banco.toml": 'categoria = "carpeta"\netiquetas = true\n'})
+    pregunta, = cargar_bancos([arbol / "punteros" / "teoria.gift"]).values()
+    assert pregunta.categoria == "General" and pregunta.etiquetas == []
+
+
+@pytest.mark.parametrize("contenido, mensaje", [
+    ('categoria = "otra"\n', "categoria es"),
+    ("etiquetas = 1\n", "etiquetas es true o false"),
+    ('agregar_etiquetas = "x"\n', "agregar_etiquetas es una lista"),
+    ("categorias = true\n", "claves desconocidas: categorias"),
+    ("categoria = \n", "banco.toml"),
+])
+def test_un_banco_toml_mal_escrito_es_un_error_con_su_nombre(arbol, contenido, mensaje):
+    escribir(arbol, {"punteros/banco.toml": contenido})
+    with pytest.raises(ValueError, match=mensaje):
+        cargar_bancos([arbol])
+
+
+@pytest.mark.parametrize("propia, carpetas, modo, esperada", [
+    ("Punteros", ["u1"], "archivo", "Punteros"),
+    ("Punteros", [], "carpeta", "Punteros"),
+    ("$course$/Default/Punteros", ["u1"], "prefijo", "u1/Punteros"),
+    ("", ["u1", "x"], "si_falta", "u1/x"),
+])
+def test_categoria(propia, carpetas, modo, esperada):
+    assert categoria(propia, carpetas, modo) == esperada
+
+
+def test_un_repositorio_externo_de_preguntas_usa_su_banco_toml(arbol):
+    from generador_examenes.core.consignas import cargar_repositorio
+    from generador_examenes.core.models import RepositorioExterno
+
+    escribir(arbol, {"banco.toml": 'categoria = "carpeta"\n'})
+    preguntas = por_nombre(cargar_repositorio(RepositorioExterno(ruta=str(arbol), nombre="cat")))
+    assert preguntas["b"].categoria == "punteros/arreglos"
+    assert preguntas["b"].fuente_banco == "punteros/arreglos/practica.gift"
+    assert "repo:cat" in preguntas["b"].etiquetas
 
 
 # --- caché ----------------------------------------------------------------------------------------
@@ -63,6 +165,14 @@ def test_editar_el_banco_lo_vuelve_a_parsear(arbol, monkeypatch):
     banco = cargar_bancos([arbol])
     assert llamadas.count("suelto.gift") == 2
     assert "Otro texto" in por_nombre(banco)["d"].enunciado_html
+
+
+def test_las_reglas_de_carpeta_no_quedan_en_el_cache(arbol):
+    cargar_bancos([arbol])
+    escribir(arbol, {"banco.toml": 'categoria = "carpeta"\n'})
+    assert por_nombre(cargar_bancos([arbol]))["a"].categoria == "punteros"
+    (arbol / "banco.toml").unlink()
+    assert por_nombre(cargar_bancos([arbol]))["a"].categoria == "General"
 
 
 def test_el_cache_repite_los_avisos_del_parser(tmp_path, monkeypatch, caplog):

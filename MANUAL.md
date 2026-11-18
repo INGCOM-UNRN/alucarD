@@ -1096,8 +1096,9 @@ Reglas de la carga:
   id, queda la del último que se carga (las rutas en el orden en que se nombran y, dentro de una
   carpeta, en orden alfabético) y `generar` lo avisa.
 - **Carpeta vacía.** Una carpeta sin `.gift` ni `.xml` no es un error; `generar` lo avisa.
-- **Categorías.** La carpeta no cambia la categoría de las preguntas: sigue siendo la del
-  `$CATEGORY:` del GIFT o la `<category>` del XML.
+- **Categorías y etiquetas.** Sin un `banco.toml`, la carpeta no cambia la categoría de las
+  preguntas (sigue siendo la del `$CATEGORY:` del GIFT o la `<category>` del XML) ni sus etiquetas.
+  Con uno, salen de las carpetas: ver [Categorías y etiquetas por carpeta](#categorías-y-etiquetas-por-carpeta).
 - **Caché.** Lo que se leyó de cada banco queda guardado: ver [Caché de los bancos](#caché-de-los-bancos).
 
 **El filtro `banco` de un pool.** Para las preguntas que vienen de una carpeta, su banco es la ruta
@@ -1118,6 +1119,62 @@ Las carpetas valen también en `alucard lint-gift bancos` (revisa sus `.gift`), 
 y en los `-i` de `ver`, `build` y `balance-check`. Con `--watch`, un archivo nuevo dentro de la carpeta
 dispara otra generación.
 
+#### Categorías y etiquetas por carpeta
+
+Si las carpetas ya ordenan las preguntas por tema, no hace falta repetir ese orden con `$CATEGORY:` y
+`[tag, …]` en cada archivo: un `banco.toml` en la carpeta del banco le dice a alucard que lo tome de
+la estructura.
+
+```toml
+# bancos/banco.toml
+categoria = "prefijo"            # de dónde sale la categoría (ver la tabla)
+etiquetas = true                 # cada carpeta del camino, una etiqueta
+incluir_archivo = false          # el nombre del archivo, sin extensión, cuenta como una carpeta más
+agregar_etiquetas = ["parcial1"] # etiquetas fijas para todo lo que hay debajo
+```
+
+| `categoria` | `bancos/punteros/arreglos/practica.gift` con `$CATEGORY: $course$/Top/Repaso` | Sin `$CATEGORY` |
+| :--- | :--- | :--- |
+| `archivo` (por omisión) | `$course$/Top/Repaso` | `General` |
+| `carpeta` | `punteros/arreglos` | `punteros/arreglos` |
+| `prefijo` | `punteros/arreglos/Repaso` | `punteros/arreglos` |
+| `si_falta` | `$course$/Top/Repaso` | `punteros/arreglos` |
+
+Con `etiquetas = true`, esa pregunta suma `punteros` y `arreglos` a las suyas. Con
+`incluir_archivo = true`, el archivo cuenta como un nivel más: categoría `punteros/arreglos/practica`
+y etiqueta `practica`. La carpeta nombrada en `input_banco` no cuenta (es la raíz), así que un banco
+que está directamente en ella conserva su categoría (salvo con `incluir_archivo`) y sólo suma
+`agregar_etiquetas`. `prefijo` descarta el
+contexto de Moodle (`$course$`, `Top`, `Default`) antes de colgar la categoría del archivo debajo de la
+carpeta.
+
+Un `banco.toml` vale para su carpeta y todo lo que tiene adentro. Uno en una subcarpeta cambia sólo
+las claves que escribe, para ese subárbol:
+
+```text
+bancos/
+├── banco.toml                  # categoria = "carpeta", agregar_etiquetas = ["parcial1"]
+├── punteros/teoria.gift        # categoría punteros, etiqueta parcial1
+└── importados/
+    ├── banco.toml              # categoria = "archivo": estos ya traen su $CATEGORY de Moodle
+    └── moodle.xml              # su propia categoría, etiqueta parcial1
+```
+
+Los pools filtran con lo que queda, como con cualquier categoría o etiqueta:
+
+```yaml
+pools:
+  - categoria: "punteros"         # punteros/… y todas sus subcarpetas
+    cantidad: 2
+  - etiquetas: ["arreglos"]
+    cantidad: 1
+```
+
+Un archivo nombrado directamente (no a través de su carpeta) no usa `banco.toml`. Una clave
+desconocida o un valor inválido es un error con el nombre del `banco.toml`, para que un nombre mal
+escrito no pase en silencio. Los `repositorios_externos` de preguntas también lo usan. Para ver cómo quedaron las categorías:
+`alucard categorias bancos`.
+
 #### Caché de los bancos
 
 Leer un banco grande lleva tiempo (el Markdown, el código y los diagramas de cada pregunta), así que
@@ -1127,6 +1184,8 @@ toma de ahí si el archivo no cambió. No hay que hacer nada para usarlo ni para
 - La clave es el **contenido** del archivo, no su fecha: editarlo lo vuelve a leer, y un `git checkout`
   que no cambia el texto no.
 - Actualizar alucard (o cambiar su código) descarta lo guardado.
+- `banco.toml` no entra en el caché: las categorías y etiquetas por carpeta se aplican en cada corrida,
+  así que cambiarlo vale enseguida.
 - Los avisos del banco (una pregunta omitida, la sintaxis vieja de GIFT) se repiten aunque salga del
   caché.
 - Lo que no se usa en 60 días se borra solo.

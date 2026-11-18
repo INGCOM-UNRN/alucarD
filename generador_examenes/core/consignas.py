@@ -140,8 +140,9 @@ def cargar_repositorio(repo: RepositorioExterno) -> Dict[str, Pregunta]:
     logger.info(f"Repositorio externo '{nombre}' ({tipo}): {ruta}")
     if tipo == "deckard":
         return cargar_consignas(ruta, fuente=nombre, incluir_no_publicados=repo.incluir_no_publicados)
-    bancos = [ruta] if ruta.is_file() else bancos_de_carpeta(ruta)
-    preguntas = cargar_bancos(bancos)
+    # La carpeta entera, no sus archivos: así vale su `banco.toml` y el banco de cada pregunta es su
+    # ruta dentro del repositorio.
+    preguntas = cargar_bancos([ruta])
     for p in preguntas.values():
         if f"repo:{nombre}" not in p.etiquetas:
             p.etiquetas.append(f"repo:{nombre}")

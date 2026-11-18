@@ -134,9 +134,10 @@ def cargar_bancos(rutas_bancos: List[Path]) -> Dict[str, Pregunta]:
     Returns:
         Diccionario combinado de todas las preguntas {id: Pregunta}
     """
-    from generador_examenes.core import cache_bancos
+    from generador_examenes.core import cache_bancos, carpetas_banco
 
     banco_completo = {}
+    reglas: Dict[Path, carpetas_banco.ReglasDeCarpetas] = {}
 
     for ruta, raiz in _archivos_de_bancos(rutas_bancos).items():
         logger.info(f"Cargando banco: {ruta}")
@@ -147,6 +148,9 @@ def cargar_bancos(rutas_bancos: List[Path]) -> Dict[str, Pregunta]:
                 # Con la ruta dentro de la carpeta: dos subcarpetas pueden tener un `teoria.gift`.
                 for pregunta in preguntas.values():
                     pregunta.fuente_banco = ruta.relative_to(raiz).as_posix()
+                # Categorías y etiquetas por carpeta, según los `banco.toml` de la carpeta.
+                de_la_raiz = reglas.setdefault(raiz, carpetas_banco.ReglasDeCarpetas(raiz))
+                carpetas_banco.aplicar(preguntas.values(), ruta, raiz, de_la_raiz.de_archivo(ruta))
 
             # Combinar preguntas, verificando duplicados
             for id_pregunta, pregunta in preguntas.items():
