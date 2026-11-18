@@ -501,6 +501,7 @@ def _correr(corrida, logger, entre_varias: bool = False) -> tuple[int, str]:
     """(código, motivo del fallo) de una definición. Los avisos quedan en `corrida.avisos`."""
     errores = _Errores()
     corrida.avisos = []
+    corrida.informe_fallo = None
     logging.getLogger().addHandler(errores)
     try:
         codigo = generar_examen(corrida, logger)
@@ -517,7 +518,8 @@ def _resumen(corridas: list, resultados: list[tuple[int, str]], validando: bool)
     """Lo último que se ve: entre tantos renglones de log, un fallo o un aviso pasaban de largo y
     quedaba en la salida el examen de la corrida anterior."""
     nombre = [Path(c.definicion).name if c.definicion else "?" for c in corridas]
-    fallos = [f"  ✗ {n}: {motivo}" for n, (codigo, motivo) in zip(nombre, resultados, strict=True) if codigo]
+    fallos = [f"  ✗ {n}: {motivo}" + (f"\n    diagnóstico: {c.informe_fallo}" if getattr(c, "informe_fallo", None) else "")
+              for n, c, (codigo, motivo) in zip(nombre, corridas, resultados, strict=True) if codigo]
     avisos = [f"  ! {n}: {aviso}" for n, c in zip(nombre, corridas, strict=True) for aviso in c.avisos]
     total = len(corridas)
     if not fallos and not avisos:
@@ -553,6 +555,7 @@ def _generar_varias(corridas: list, args, logger) -> int:
         examenes.append({"definicion": str(corrida.definicion), "codigo": codigo,
                          **({"motivo": motivo} if motivo else {}),
                          **({"avisos": corrida.avisos} if corrida.avisos else {}),
+                         **({"informe": corrida.informe_fallo} if getattr(corrida, "informe_fallo", None) else {}),
                          **(json.loads(texto) if texto.strip() else {})})
     if como_json:
         print(json.dumps({"version": "1.0", "command": "validate" if args.validate else "generar_examen",
@@ -602,6 +605,45 @@ def _avisar(args, aviso: str) -> None:
 
 
 def generar_examen(args, logger) -> int:
+    """Una generación. Si falla después de leer los bancos, deja igual el `informe.md` con el
+    diagnóstico: sin él no se ve qué categorías se cargaron ni qué filtro dejó vacío un pool."""
+    estado: dict = {}
+    errores = _Errores()
+    logging.getLogger().addHandler(errores)
+    codigo = 1
+    try:
+        codigo = _generar_examen(args, logger, estado)
+    except BaseException as e:
+        errores.mensajes.append(str(e) or type(e).__name__)
+        raise
+    finally:
+        logging.getLogger().removeHandler(errores)
+        if codigo and "banco" in estado and not getattr(args, "validate", False):
+            _informe_de_fallo(args, estado, errores.mensajes, logger)
+    return codigo
+
+
+def _informe_de_fallo(args, estado: dict, mensajes: list[str], logger) -> None:
+    from generador_examenes.core.informe import armar_informe_de_fallo
+
+    limpios = list(dict.fromkeys(m.removeprefix("Error durante la ejecución: ") for m in mensajes))
+    # Un error que se vuelve a registrar más arriba con contexto ("Error cargando banco …: <error>")
+    # aparece una sola vez.
+    error = "\n".join(m for i, m in enumerate(limpios) if not any(m in otro for otro in limpios[:i]))
+    informe = estado["output_dir"] / "informe.md"
+    try:
+        informe.parent.mkdir(parents=True, exist_ok=True)
+        informe.write_text(armar_informe_de_fallo(estado["definicion"], estado["banco"], error,
+                                                  estado["rutas_bancos"], estado["repetidos"]), encoding="utf-8")
+    except Exception as e:  # el diagnóstico no debe tapar el error original
+        logger.warning(f"No se pudo escribir el informe del fallo: {e}")
+        return
+    args.informe_fallo = str(informe)
+    if not getattr(args, "json_output", False):
+        print(f"✗ Diagnóstico del fallo: {informe}", file=sys.stderr)
+
+
+def _generar_examen(args, logger, estado: dict) -> int:
     # Validar argumentos requeridos
     if not args.definicion:
         _usage_error("Se requiere --definicion o la clave `definicion` en alucard.toml "
@@ -695,7 +737,11 @@ def generar_examen(args, logger) -> int:
         # Cargar bancos de preguntas
         logger.info("Cargando bancos de preguntas...")
         repetidos: list = []
+        # Desde acá, si algo falla queda el informe con el diagnóstico (ver generar_examen).
+        estado.update(definicion=definicion, banco={}, output_dir=output_dir,
+                      rutas_bancos=list(input_banco or []), repetidos=repetidos)
         banco_completo = logic.cargar_banco_definicion(definicion, list(input_banco or []), repetidos)
+        estado["banco"] = banco_completo
         # Una pregunta tapada por otra con el mismo id no puede salir: que quede en el resumen.
         for repetido in repetidos:
             _avisar(args, str(repetido))

@@ -11,6 +11,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Agregado
 
+- **informe**: si la generación falla después de leer los bancos, `informe.md` se escribe igual con el error, cada pool con lo que podía elegir, el filtro que lo dejó sin preguntas y qué hay parecido en el banco (`¿Quisiste decir «punteros»?`), las rutas de `input_banco`, las categorías y etiquetas cargadas y los ids repetidos; el resumen final dice dónde quedó. El error de un pool insuficiente también nombra el filtro y las sugerencias. El informe de una generación buena suma las categorías del banco.
 - **bancos**: un `banco.toml` en una carpeta de bancos toma la categoría (`categoria = "carpeta"`, `"prefijo"` o `"si_falta"`) y las etiquetas (`etiquetas = true`, `agregar_etiquetas`) de la estructura de carpetas; uno en una subcarpeta cambia sólo su subárbol.
 - **bancos**: los ids repetidos quedan asentados: qué pregunta queda y cuál se descarta, con sus archivos, en el resumen final de `generar` y `validar` (y en `avisos` con `--json`), en una sección de `informe.md` y al final de `alucard categorias --resumen`.
 - **bancos**: caché de los bancos ya leídos en `~/.cache/alucard/bancos/`, por contenido del archivo y versión del código, con los avisos del parser; `ALUCARD_SIN_CACHE=1` lo apaga y `ALUCARD_CACHE_DIR` lo mueve.

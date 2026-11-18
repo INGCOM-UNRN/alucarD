@@ -5,6 +5,10 @@
 - Orden de cada tema: los temas comparten preguntas y cambian el orden (y el de las opciones).
 - Consignas prácticas que no entraron en ningún pool, con el filtro que las dejó afuera, y las del
   proyecto que tienen `publicar: false`.
+- Categorías del banco, con cuántas preguntas tiene cada una, y sus etiquetas.
+
+Si la generación falla después de leer los bancos, `informe.md` igual se escribe con el error, qué
+filtro dejó vacío cada pool (y qué hay parecido en el banco) y lo que se cargó.
 
 Con `debug_candidatas`, además `candidatas.txt`: cada pregunta que cada pool podía elegir.
 """
@@ -15,6 +19,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence
 
+from generador_examenes.core.carpetas_banco import SIN_CATEGORIA
 from generador_examenes.core.models import DefinicionExamen, PoolConfig, Pregunta
 
 # Grupos de filtros de un pool, en el orden en que se aplican.
@@ -54,6 +59,149 @@ def motivo_fuera(pregunta: Pregunta, pool: PoolConfig) -> Optional[str]:
             return f"tipo {pregunta.tipo}"
         return f"etiquetas {', '.join(pregunta.etiquetas) or '(ninguna)'}"
     return None
+
+
+def _parecidas(buscada: str, existentes: Iterable[str], n: int = 3) -> List[str]:
+    """Las de `existentes` que más se parecen a `buscada` (sin mayúsculas ni separadores raros): un
+    nombre mal escrito, otra mayúscula o el último nivel de una categoría anidada."""
+    from difflib import get_close_matches
+
+    from generador_examenes.core.logic import normalizar_categoria
+
+    por_norma: Dict[str, str] = {}
+    for e in existentes:
+        por_norma.setdefault(normalizar_categoria(e), e)
+    clave = normalizar_categoria(buscada)
+    hoja = clave.rsplit("/", 1)[-1]
+    elegidas = get_close_matches(clave, por_norma, n=n, cutoff=0.6)
+    elegidas += [c for c in por_norma if hoja and hoja in c.split("/") and c not in elegidas]
+    return [por_norma[c] for c in elegidas[:n]]
+
+
+def _sugerencia(pool: PoolConfig, descripcion: str, antes: List[Pregunta]) -> str:
+    """Qué hay en el banco parecido a lo que pide el filtro que vació el pool."""
+    if descripcion.startswith("categor"):
+        buscadas = [pool.categoria] if pool.categoria else list(pool.categorias)
+        existentes = sorted({p.categoria for p in antes})
+        parecidas = list(dict.fromkeys(c for b in buscadas for c in _parecidas(b, existentes)))
+        if existentes == [SIN_CATEGORIA]:
+            return (f"Ninguna pregunta tiene categoría (todas quedaron en «{SIN_CATEGORIA}»): ponela con "
+                    "$CATEGORY: en el banco o, en una carpeta de bancos, con un banco.toml "
+                    '(categoria = "carpeta").')
+        if parecidas:
+            return f"¿Quisiste decir {', '.join(f'«{c}»' for c in parecidas)}?"
+        return f"Categorías que hay: {_lista(existentes)}." if existentes else ""
+    if descripcion.startswith("etiquetas"):
+        existentes = sorted({e for p in antes for e in p.etiquetas})
+        parecidas = list(dict.fromkeys(e for b in pool.etiquetas for e in _parecidas(b, existentes)))
+        if parecidas:
+            return f"¿Quisiste decir {', '.join(f'«{e}»' for e in parecidas)}?"
+        return f"Etiquetas que hay: {_lista(existentes)}." if existentes else "Ninguna pregunta tiene etiquetas."
+    if descripcion.startswith("tipos"):
+        from collections import Counter
+
+        tipos = Counter(p.tipo for p in antes)
+        return "Tipos que hay: " + ", ".join(f"{t} ({n})" for t, n in tipos.most_common()) + "." if tipos else ""
+    if descripcion.startswith("banco"):
+        existentes = sorted({p.fuente_banco for p in antes if p.fuente_banco})
+        parecidas = _parecidas(pool.banco or "", existentes)
+        if parecidas:
+            return f"¿Quisiste decir {', '.join(f'«{b}»' for b in parecidas)}?"
+        return f"Bancos que hay: {_lista(existentes)}." if existentes else ""
+    return ""
+
+
+def _lista(valores: List[str], hasta: int = 12) -> str:
+    resto = len(valores) - hasta
+    return ", ".join(f"«{v}»" for v in valores[:hasta]) + (f" y {resto} más" if resto > 0 else "")
+
+
+def por_que_no_alcanza(pool: PoolConfig, banco: Dict[str, Pregunta], pide: int) -> str:
+    """Qué filtro del pool dejó menos preguntas de las que pide, y qué hay parecido en el banco."""
+    from generador_examenes.core.logic import pasos_pool
+
+    pasos = pasos_pool(pool, banco)
+    if not banco:
+        return "El banco no tiene preguntas: revisá input_banco."
+    if pool.preguntas_fijadas:
+        faltan = [i for i in pool.preguntas_fijadas if i not in banco]
+        return f"No existen en el banco: {', '.join(faltan)}." if faltan else ""
+    for (_, antes), (descripcion, despues) in zip(pasos, pasos[1:], strict=False):
+        if len(despues) < pide:
+            texto = f"El filtro {descripcion} deja {len(despues)} de {len(antes)}."
+            sugerencia = _sugerencia(pool, descripcion, antes)
+            return f"{texto} {sugerencia}" if sugerencia else texto
+    if pool.presupuesto_minutos is not None:
+        return f"Los filtros dejan {len(pasos[-1][1])}, pero el presupuesto de {pool.presupuesto_minutos} min no alcanza."
+    return ""
+
+
+def _seccion_categorias(banco: Dict[str, Pregunta]) -> List[str]:
+    """Las categorías del banco con cuántas preguntas tiene cada una: lo primero a mirar cuando un
+    filtro de categoría no encuentra nada."""
+    from collections import Counter
+
+    cuenta = Counter(p.categoria or "(sin categoría)" for p in banco.values())
+    l = ["", "## Categorías del banco", ""]
+    if not cuenta:
+        return l + ["El banco no tiene preguntas."]
+    l += ["| Categoría | Preguntas |", "| --- | ---: |"]
+    l += [f"| {_celda(c)} | {n} |" for c, n in sorted(cuenta.items())]
+    etiquetas = Counter(e for p in banco.values() for e in p.etiquetas)
+    if etiquetas:
+        l += ["", "Etiquetas: " + ", ".join(f"`{_celda(e)}` ({n})" for e, n in sorted(etiquetas.items()))]
+    return l
+
+
+def armar_informe_de_fallo(definicion: DefinicionExamen, banco: Dict[str, Pregunta], error: str,
+                           rutas_bancos: Sequence[Path] = (), repetidos: Sequence[Any] = ()) -> str:
+    """El informe de una generación que falló: el error, cada pool con lo que podía elegir y qué
+    filtro lo vació, y lo que hay en el banco. Los temas de la carpeta son de la corrida anterior."""
+    from generador_examenes.core.logic import candidatas_pool
+
+    l: List[str] = [f"# Informe de generación: {definicion.nombre_examen} (falló)", ""]
+    l.append(f"{datetime.now():%d/%m/%Y %H:%M} · **la generación falló**: los temas que haya en esta "
+             "carpeta son de una corrida anterior.")
+    l += ["", "## Error", "", "```text", error.strip() or "el motivo está en el log", "```"]
+
+    l += ["", "## Pools", "", "| Sección | Pool | Filtro | Podía elegir | Pide | |",
+          "| --- | --- | --- | ---: | ---: | --- |"]
+    problemas: List[str] = []
+    for seccion in definicion.secciones_examen:
+        for n, pool in enumerate(seccion.pools, 1):
+            hay = len(candidatas_pool(pool, banco))
+            pide = pool.cantidad or hay
+            alcanza = hay >= pide and hay > 0
+            marca = "✓" if alcanza else ("!" if pool.accion_si_insuficiente != "error" else "✗")
+            l.append(f"| {_celda(seccion.nombre)} | {n} | {_celda(pool)} | {hay} | {pide} | {marca} |")
+            if not alcanza:
+                motivo = por_que_no_alcanza(pool, banco, max(pide, 1)) or "no alcanzan las preguntas"
+                problemas.append(f"- **{_celda(seccion.nombre)}, pool {n}** (pide {pide}, hay {hay}): {_celda(motivo)}")
+    if problemas:
+        l += ["", "### Por qué no alcanzan", "", *problemas]
+
+    if rutas_bancos:
+        l += ["", "## Bancos", ""]
+        from collections import Counter
+
+        por_banco = Counter(p.fuente_banco or "?" for p in banco.values())
+        from generador_examenes.core.consignas import bancos_de_carpeta
+
+        for ruta in map(Path, rutas_bancos):
+            if not ruta.exists():
+                estado = "no existe"
+            elif ruta.is_dir():
+                cuantos = len(bancos_de_carpeta(ruta))
+                estado = f"carpeta con {cuantos} banco(s) .gift o .xml" if cuantos else "carpeta sin bancos .gift ni .xml"
+            else:
+                estado = "archivo"
+            l.append(f"- `{ruta}` ({estado})")
+        if por_banco:
+            l += ["", "| Banco | Preguntas |", "| --- | ---: |"]
+            l += [f"| {_celda(b)} | {n} |" for b, n in sorted(por_banco.items())]
+    l += _seccion_categorias(banco)
+    l += _seccion_repetidos(repetidos)
+    return "\n".join(l) + "\n"
 
 
 def no_publicadas(rutas: Iterable[str]) -> List[Pregunta]:
@@ -174,6 +322,7 @@ def armar_informe(definicion: DefinicionExamen, banco: Dict[str, Pregunta], exam
         l += ["", "## Consignas que no podían entrar", ""]
         l += fuera
         l += [f"- «{_celda(c.nombre)}» ({c.id}): publicar: false" for c in ocultas]
+    l += _seccion_categorias(banco)
     l += _seccion_repetidos(repetidos)
     return "\n".join(l) + "\n"
 

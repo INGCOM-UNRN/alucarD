@@ -106,7 +106,35 @@ Junto a los temas, `alucard generar` deja un `informe.md` con:
 - el orden de cada tema (los temas comparten preguntas y cambian el orden);
 - las consignas prácticas que no podían entrar, con el filtro que las dejó afuera (categoría, tipo,
   etiquetas, minutos) o `publicar: false`;
+- las categorías del banco, con cuántas preguntas tiene cada una, y sus etiquetas;
 - los [ids repetidos](#ids-repetidos), si hay: qué pregunta quedó y cuál se descartó, con sus archivos.
+
+**Si la generación falla** después de leer los bancos (un pool sin preguntas suficientes, un banco
+vacío, un `banco.toml` mal escrito, una clave incompleta), el `informe.md` se escribe igual, con
+«(falló)» en el título, para ver qué se cargó en lugar de adivinarlo. Trae:
+
+- el error;
+- cada pool con cuántas preguntas podía elegir y cuántas pide (✓ alcanza, ✗ no alcanza);
+- por qué no alcanzan: el filtro que dejó menos preguntas de las que se piden y qué hay parecido en
+  el banco (`¿Quisiste decir «punteros»?`, las categorías, etiquetas o tipos que sí hay o, si ninguna
+  pregunta tiene categoría, cómo ponérsela con `$CATEGORY:` o un `banco.toml`);
+- cada ruta de `input_banco` (si no existe, o cuántos bancos tiene la carpeta) y cuántas preguntas
+  salieron de cada banco;
+- las categorías del banco y los ids repetidos.
+
+Los temas que haya en la carpeta siguen siendo los de la corrida anterior. El resumen del final
+indica dónde quedó el diagnóstico:
+
+```text
+Error: el examen falló: su carpeta sigue con lo de la corrida anterior.
+  ✗ parcial.yaml: Preguntas insuficientes en la sección «A», pool 1: se solicitaron 1, pero solo hay 0
+    disponibles con Pool(cat:Punteros/listas, cant:1). El filtro categoría «Punteros/listas» deja 0 de 2.
+    ¿Quisiste decir «punteros»? …
+    diagnóstico: output/informe.md
+```
+
+Con `--json` y varias definiciones, la ruta va en `informe` del resultado de cada examen. `alucard validar` no escribe
+archivos: da el mismo mensaje de error, pero sin el informe.
 
 Con [`debug_candidatas`](#debug_candidatas) también deja `candidatas.txt`, con todas las preguntas que
 cada pool podía elegir.

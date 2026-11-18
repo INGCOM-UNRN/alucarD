@@ -446,51 +446,56 @@ def _es_del_banco(fuente: str, banco: str) -> bool:
     return de_la_fuente[-largo:] == del_pool[-largo:]
 
 
-def candidatas_pool(pool: PoolConfig, banco: Dict[str, Pregunta]) -> List[Pregunta]:
-    """Las preguntas del banco que el pool puede elegir: las fijadas, o las que pasan los filtros de
-    categoría, tipo, etiquetas y tiempo (sin sortear ni recortar por cantidad o presupuesto)."""
+def pasos_pool(pool: PoolConfig, banco: Dict[str, Pregunta]) -> List[tuple[str, List[Pregunta]]]:
+    """Los filtros del pool en el orden en que se aplican, cada uno con las preguntas que deja: el
+    primero es todo el banco (o las fijadas). Sirve para decir qué filtro vació un pool."""
     if pool.preguntas_fijadas:
-        return [banco[id_p] for id_p in pool.preguntas_fijadas if id_p in banco]
+        return [("preguntas_fijadas", [banco[id_p] for id_p in pool.preguntas_fijadas if id_p in banco])]
     candidatas = list(banco.values())
+    pasos: List[tuple[str, List[Pregunta]]] = [("todo el banco", candidatas)]
+
+    def paso(descripcion: str, quedan: List[Pregunta]) -> List[Pregunta]:
+        logger.debug(f"  → Filtro {descripcion}: {len(quedan)} candidatas")
+        pasos.append((descripcion, quedan))
+        return quedan
 
     # Filtro 1: Banco de origen, por nombre de archivo (`bancos/codigo.xml` o `codigo.xml`)
     if pool.banco:
-        candidatas = [p for p in candidatas if p.fuente_banco and _es_del_banco(p.fuente_banco, pool.banco)]
-        logger.debug(f"  → Filtro banco '{pool.banco}': {len(candidatas)} candidatas")
+        candidatas = paso(f"banco «{pool.banco}»", [
+            p for p in candidatas if p.fuente_banco and _es_del_banco(p.fuente_banco, pool.banco)])
 
     # Filtro 2: Categoría o categorías (soporta categorías anidadas)
     if pool.categoria:
-        candidatas = [p for p in candidatas if categoria_coincide(p.categoria, pool.categoria)]
-        logger.debug(f"  → Filtro categoría '{pool.categoria}': {len(candidatas)} candidatas")
+        candidatas = paso(f"categoría «{pool.categoria}»", [
+            p for p in candidatas if categoria_coincide(p.categoria, pool.categoria)])
     elif pool.categorias:
         # Filtrar por múltiples categorías (OR lógico)
-        candidatas = [
-            p for p in candidatas 
-            if any(categoria_coincide(p.categoria, cat) for cat in pool.categorias)
-        ]
-        logger.debug(f"  → Filtro categorías {pool.categorias}: {len(candidatas)} candidatas")
-    
+        candidatas = paso(f"categorías {pool.categorias}", [
+            p for p in candidatas if any(categoria_coincide(p.categoria, cat) for cat in pool.categorias)])
+
     # Filtro 3: Tipos
     if pool.tipos:
-        candidatas = [p for p in candidatas if p.tipo in pool.tipos]
-        logger.debug(f"  → Filtro tipos {pool.tipos}: {len(candidatas)} candidatas")
-    
+        candidatas = paso(f"tipos {pool.tipos}", [p for p in candidatas if p.tipo in pool.tipos])
+
     # Filtro 4: Etiquetas (debe tener al menos una de las etiquetas)
     if pool.etiquetas:
-        candidatas = [
-            p for p in candidatas 
-            if any(tag in p.etiquetas for tag in pool.etiquetas)
-        ]
-        logger.debug(f"  → Filtro etiquetas {pool.etiquetas}: {len(candidatas)} candidatas")
+        candidatas = paso(f"etiquetas {pool.etiquetas}", [
+            p for p in candidatas if any(tag in p.etiquetas for tag in pool.etiquetas)])
 
     # Filtro 5: tiempo requerido (minutos estimados); sin estimación, la pregunta no califica
     if pool.minutos_min is not None or pool.minutos_max is not None:
         minimo = pool.minutos_min if pool.minutos_min is not None else 0
         maximo = pool.minutos_max if pool.minutos_max is not None else float("inf")
-        candidatas = [p for p in candidatas if _minutos(p) is not None and minimo <= _minutos(p) <= maximo]  # type: ignore[operator]
-        logger.debug(f"  → Filtro minutos [{pool.minutos_min}, {pool.minutos_max}]: {len(candidatas)} candidatas")
+        candidatas = paso(f"minutos [{pool.minutos_min}, {pool.minutos_max}]", [
+            p for p in candidatas if _minutos(p) is not None and minimo <= _minutos(p) <= maximo])  # type: ignore[operator]
 
-    return candidatas
+    return pasos
+
+
+def candidatas_pool(pool: PoolConfig, banco: Dict[str, Pregunta]) -> List[Pregunta]:
+    """Las preguntas del banco que el pool puede elegir: las fijadas, o las que pasan los filtros de
+    categoría, tipo, etiquetas y tiempo (sin sortear ni recortar por cantidad o presupuesto)."""
+    return pasos_pool(pool, banco)[-1][1]
 
 
 def _filtrar_preguntas_pool(pool: PoolConfig, banco: Dict[str, Pregunta],
@@ -545,9 +550,15 @@ def _filtrar_preguntas_pool(pool: PoolConfig, banco: Dict[str, Pregunta],
             f"Preguntas insuficientes{f' en {donde}' if donde else ''}: se solicitaron {cantidad_solicitada}, "
             f"pero solo hay {len(candidatas)} disponibles con {pool}"
         )
+        from generador_examenes.core.informe import por_que_no_alcanza
+
+        explicacion = por_que_no_alcanza(pool, banco, cantidad_solicitada)
+        if explicacion:
+            mensaje += f". {explicacion}"
         if pool.accion_si_insuficiente == "error":
-            mensaje += (". Sumá preguntas a esa categoría, bajá la cantidad del pool o poné "
-                        "accion_si_insuficiente: usar_todas (o advertir)")
+            mensaje += ("" if mensaje.endswith(("?", ".")) else ".") + (
+                " Sumá preguntas, corregí el filtro, bajá la cantidad del pool o poné "
+                "accion_si_insuficiente: usar_todas (o advertir)")
         
         if pool.accion_si_insuficiente == "error":
             raise ValueError(mensaje)
