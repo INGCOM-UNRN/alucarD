@@ -7,6 +7,15 @@
   header: context [
     {% if estilo.logo_typst %}#let logo = {{ estilo.logo_typst }}
     {% endif %}#{{ estilo.encabezado_typst }}
+    {% if estilo.nombre_en_hojas %}
+    // Cada hoja nueva (las páginas impares, salvo la primera, que tiene el cuadro de datos) lleva
+    // un renglón para el nombre: si las hojas se separan, se sabe de quién es cada una.
+    #let hoja = counter(page).get().first()
+    #if hoja > 1 and calc.odd(hoja) [
+      #v(1.5mm, weak: true)
+      #text(size: 9pt)[*Apellido y Nombre:* #box(width: 1fr, line(length: 100%, stroke: 0.5pt))]
+    ]
+    {% endif %}
   ],
   footer: context [
     #line(length: 100%, stroke: 0.5pt + rgb("{{ c.linea_pie }}"))

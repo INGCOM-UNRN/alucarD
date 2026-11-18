@@ -129,6 +129,7 @@ class EstiloExamen(BaseModel):
     logo_posicion: Literal["izquierda", "derecha"] = "izquierda"
     logo_alto_mm: float = Field(default=12, ge=4, le=30)
     alto_contraste: bool = False                            # texto negro, sin grises; bordes negros
+    nombre_en_hojas: bool = True                            # renglón para el nombre en cada hoja (págs. impares desde la 3)
 
     @field_validator("fuente", "fuente_codigo", mode="before")
     @classmethod

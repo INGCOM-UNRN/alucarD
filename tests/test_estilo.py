@@ -155,11 +155,44 @@ def test_pdf_con_estilo_completo(tmp_path, monkeypatch, logo, formato):
     assert 'font: ("Liberation Serif",), size: 11pt' in examen
     assert '#show raw: set text(font: ("DejaVu Sans Mono",))' in examen
     assert f'format: "{formato}", height: 20mm' in examen and "align(right + horizon, logo)" in examen
-    assert "margin: (top: 32.0mm" in examen  # el margen crece con el logotipo
+    assert "margin: (top: 39.0mm" in examen  # el margen crece con el logotipo y el renglón del nombre
     assert "#set raw(theme: none)" in examen
     grises = re.findall(r'rgb\("([0-9a-f]{6})"\)', examen)
     assert set(grises) <= {"000000", "ffffff"}  # sin grises en el examen
     assert not re.search(r"#(334155|475569|64748b)", examen)  # ni en los diagramas
+
+
+def _texto_de_paginas(pdf):
+    import pypdf
+    return [pagina.extract_text() for pagina in pypdf.PdfReader(pdf).pages]
+
+
+def _examen_largo(n=14):
+    preguntas = [Pregunta(id=f"q{i}", tipo="desarrollo", nombre=f"q{i}", categoria="a",
+                          enunciado_html=f"<p>Explicá el concepto {i}.</p>") for i in range(n)]
+    return {"secciones": [{"nombre": "S", "preguntas": preguntas}]}
+
+
+@pytest.mark.parametrize("estilo, renglones", [
+    ({}, [False, False, True, False]),
+    ({"nombre_en_hojas": False}, [False, False, False, False]),
+])
+def test_renglon_del_nombre_en_las_paginas_impares_menos_la_primera(tmp_path, estilo, renglones):
+    definicion = _definicion(**estilo)
+    pdf = PdfRenderer().renderizar_examen(_examen_largo(), definicion, tmp_path, 0)
+    paginas = _texto_de_paginas(pdf)
+    assert len(paginas) == len(renglones)
+    # La primera tiene el cuadro de datos (con su «Apellido y Nombre»); las demás impares, el renglón.
+    assert "Apellido y Nombre" in paginas[0]
+    assert ["Apellido y Nombre" in t for t in paginas[1:]] == renglones[1:]
+    clave = PdfRenderer().renderizar_clave(_examen_largo(), definicion, tmp_path, 0)
+    assert not any("Apellido y Nombre" in t for t in _texto_de_paginas(clave))
+
+
+def test_sin_logo_el_renglon_del_nombre_no_cambia_el_margen():
+    assert contexto_estilo(_definicion(), 0)["estilo"]["margen_sup_mm"] == 20.0
+    assert contexto_estilo(_definicion(), 0)["estilo"]["nombre_en_hojas"]
+    assert not contexto_estilo(_definicion(), 0, clave=True)["estilo"]["nombre_en_hojas"]
 
 
 def test_html_con_contraste_y_diagramas_en_negro(tmp_path):

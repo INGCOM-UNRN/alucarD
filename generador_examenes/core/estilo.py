@@ -189,12 +189,17 @@ def contexto_estilo(definicion: DefinicionExamen, tema: int, clave: bool = False
         logo_typst = f'image({fuente_logo}, format: "{formato}", height: {estilo.logo_alto_mm:g}mm)'
         logo_html = f"data:{_MIME[formato]};base64,{base64.b64encode(datos).decode('ascii')}"
 
-    # El logotipo vive en el margen superior: si es alto, el margen crece.
-    margen_sup = max(20.0, estilo.logo_alto_mm + 12) if logo_typst else 20.0
+    # El logotipo vive en el margen superior: si es alto, el margen crece. Sin logo, el renglón del
+    # nombre entra en los 20 mm; con logo, se le hace lugar debajo.
+    nombre_en_hojas = estilo.nombre_en_hojas and not clave
+    margen_sup = (max(20.0, estilo.logo_alto_mm + 12 + (7 if nombre_en_hojas else 0))
+                  if logo_typst else 20.0)
     return {
         "c": paleta,
         "estilo": {
             "alto_contraste": estilo.alto_contraste,
+            # El renglón del nombre va en el examen, no en la clave.
+            "nombre_en_hojas": nombre_en_hojas,
             "tamano": f"{estilo.tamano or TAMANO:g}",
             "fuente_typst": _familias_typst(fuente),
             "fuente_codigo_typst": _familias_typst(fuente_codigo),

@@ -229,6 +229,7 @@ logo = "logo.png"                                # PNG, JPG, GIF o SVG
 logo_posicion = "derecha"                        # "izquierda" (por omisión) o "derecha"
 logo_alto_mm = 12                                # de 4 a 30
 alto_contraste = true
+nombre_en_hojas = true                           # renglón para el nombre en cada hoja
 ```
 
 | Clave | Por omisión | Qué hace |
@@ -240,6 +241,7 @@ alto_contraste = true
 | `logo` | — | Logotipo en el encabezado. Relativo al archivo que lo nombra (`alucard.toml` o la definición). |
 | `logo_posicion`, `logo_alto_mm` | `izquierda`, `12` | Dónde y de qué alto; si es alto, el margen superior crece. |
 | `alto_contraste` | `false` | Todo el texto en negro, sin grises (también en los diagramas y en el código, sin resaltado), y bordes negros. |
+| `nombre_en_hojas` | `true` | En el PDF del examen, un renglón «Apellido y Nombre» debajo del encabezado de cada página impar desde la 3: cada hoja nueva impresa a doble faz. La primera ya tiene el cuadro de datos. Con logotipo, el margen superior crece 7 mm para que entre. No sale en la clave ni en HTML. |
 
 En el encabezado y el pie se puede escribir `{institucion}`, `{materia}`, `{examen}`, `{fecha}`,
 `{tema}`, `{pagina}` y `{paginas}`; un marcador desconocido es un error de la definición. En HTML
@@ -1665,6 +1667,7 @@ Va en `estilo` de la definición y en `[estilo]` de `alucard.toml`. Más detalle
 | `logo_posicion` | `izquierda` o `derecha` | `izquierda` | Dónde va el logotipo. |
 | `logo_alto_mm` | número, 4 a 30 | `12` | Alto del logotipo. |
 | `alto_contraste` | booleano | `false` | Texto negro, sin grises, y bordes negros. |
+| `nombre_en_hojas` | booleano | `true` | Renglón para el nombre en las páginas impares desde la 3 (PDF del examen). |
 
 ### Configuración del curso (`alucard.toml`)
 
