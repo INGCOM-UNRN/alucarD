@@ -118,12 +118,14 @@ secciones_examen:
         monkeypatch.setattr(sys, 'argv', [
             'generador-examenes',
             '-d', str(definicion),
-            '-i', str(banco)
+            '-i', str(banco),
+            '-o', str(tmp_path / 'out'),   # el informe del fallo, fuera del repositorio
         ])
         
         exit_code = main()
         
         assert exit_code == 1
+        assert "No se cargaron preguntas" in (tmp_path / "out" / "informe.md").read_text(encoding="utf-8")
     
     def test_main_sin_definicion_muestra_error(self, monkeypatch):
         """Sin --definicion debe mostrar error"""
