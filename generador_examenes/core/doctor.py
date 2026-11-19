@@ -97,6 +97,8 @@ def diagnosticar() -> List[Dict[str, Any]]:
 
     for modulo, proposito, sugerencia in (
         ("pypdf", "Empaquetado de PDFs para imprenta (--bundle-print)", "pip install pypdf"),
+        ("segno", "Códigos QR de los exámenes con carátula OMR (alucard omr)", "uv sync"),
+        ("jsonschema", "Validación del manifiesto omr-layout/2 (alucard omr)", "uv sync"),
     ):
         info = chequear_modulo_python(modulo)
         chequeos.append({
@@ -113,6 +115,14 @@ def diagnosticar() -> List[Dict[str, Any]]:
         "detalle": " ".join(plantuml) if plantuml else "No encontrado en $PATH",
         "proposito": "Diagramas de los bloques ```plantuml",
         "sugerencia": "" if plantuml else "sudo dnf install plantuml  (o) ALUCARD_PLANTUML / PLANTUML_JAR",
+    })
+
+    pdftoppm = shutil.which("pdftoppm")
+    chequeos.append({
+        "nombre": "pdftoppm", "requerido": False, "ok": pdftoppm is not None,
+        "detalle": pdftoppm or "No encontrado en $PATH",
+        "proposito": "Rasterizar carátulas OMR (alucard omr verify-geometry)",
+        "sugerencia": "" if pdftoppm else "sudo dnf install poppler-utils  (o) sudo apt install poppler-utils",
     })
 
     lt_info = chequear_conectividad_languagetool()
