@@ -10,6 +10,9 @@
 
 Sin OpenCV: los marcadores son del PDF que generó alucard (vectoriales, sin rotar), así que basta
 con Pillow. Una página escaneada, torcida o con perspectiva es trabajo de la app.
+
+Una página puede tener varios marcos (la planilla docente: un marco por estudiante). Cada marcador 0
+se junta con los 1, 2 y 3 que quedan donde los pone el manifiesto, y cada marco se verifica aparte.
 """
 
 from __future__ import annotations
@@ -59,6 +62,7 @@ class Medicion:
 class Pagina:
     numero: int
     marcadores: list[Marcador]
+    marco: int = 0                  # en una página con varios marcos, cuál (desde 1); 0 si hay uno solo
     mediciones: list[Medicion] = field(default_factory=list)
     problemas: list[str] = field(default_factory=list)
 
@@ -271,23 +275,39 @@ def medir_burbuja(px, w: int, h: int, cx: float, cy: float, radio_px: float) -> 
     return sum(xs) / len(xs), sum(ys) / len(ys), sum(diametros) / len(diametros)
 
 
-def verificar_pagina(imagen, manifiesto: dict[str, Any], numero: int = 1, tolerancia: float = TOLERANCIA_MM,
-                     dpi: int = DPI) -> Pagina:
-    px_mm = dpi / 25.4
-    encontrados = marcadores(imagen, px_mm)
-    pagina = Pagina(numero=numero, marcadores=encontrados)
-    ids = [m.id for m in encontrados]
-    if sorted(ids) != [0, 1, 2, 3]:
-        pagina.problemas.append(f"se esperaban los marcadores 0, 1, 2 y 3; se encontraron {ids or 'ninguno'}")
-        return pagina
-    for m in encontrados:
+def marcos(encontrados: list[Marcador], manifiesto: dict[str, Any], px_mm: float,
+           holgura_mm: float = 5.0) -> tuple[list[list[Marcador]], list[Marcador]]:
+    """Agrupa los marcadores de una página en marcos [0, 1, 2, 3], de arriba hacia abajo, y devuelve
+    también los que no forman ninguno."""
+    w, h = manifiesto["frame_mm"]["w"] * px_mm, manifiesto["frame_mm"]["h"] * px_mm
+    libres = list(encontrados)
+    grupos = []
+    for cero in sorted((m for m in encontrados if m.id == 0), key=lambda m: (m.cy, m.cx)):
+        grupo = [cero]
+        for id_, dx, dy in ((1, w, 0.0), (2, w, h), (3, 0.0, h)):
+            esperado = (cero.cx + dx, cero.cy + dy)
+            candidatos = [m for m in libres if m.id == id_]
+            if not candidatos:
+                break
+            mejor = min(candidatos, key=lambda m: math.dist((m.cx, m.cy), esperado))
+            if math.dist((mejor.cx, mejor.cy), esperado) > holgura_mm * px_mm:
+                break
+            grupo.append(mejor)
+        if len(grupo) == 4:
+            grupos.append(grupo)
+            libres = [m for m in libres if all(m is not g for g in grupo)]
+    return grupos, libres
+
+
+def _verificar_marco(imagen, manifiesto: dict[str, Any], pagina: Pagina, tolerancia: float, px_mm: float) -> None:
+    por_id = {m.id: m for m in pagina.marcadores}
+    for m in pagina.marcadores:
         if m.rotacion:
             pagina.problemas.append(f"el marcador {m.id} está rotado {m.rotacion * 90}°")
         if abs(m.lado_mm - manifiesto["marker_mm"]) > tolerancia:
             pagina.problemas.append(f"el marcador {m.id} mide {m.lado_mm:.2f} mm (debería medir "
                                     f"{manifiesto['marker_mm']:g})")
     w_mm, h_mm = manifiesto["frame_mm"]["w"], manifiesto["frame_mm"]["h"]
-    por_id = {m.id: m for m in encontrados}
     canonico = [(0.0, 0.0), (w_mm, 0.0), (w_mm, h_mm), (0.0, h_mm)]
     h = homografia(canonico, [(por_id[i].cx, por_id[i].cy) for i in range(4)])
     h_inv = inversa(h)
@@ -315,7 +335,38 @@ def verificar_pagina(imagen, manifiesto: dict[str, Any], numero: int = 1, tolera
         elif abs(diametro - manifiesto["bubble_diameter_mm"]) >= tolerancia:
             pagina.problemas.append(f"{campo}={valor}: el contorno mide {diametro:.2f} mm "
                                     f"(debería medir {manifiesto['bubble_diameter_mm']:g})")
-    return pagina
+
+
+def verificar_marcos(imagen, manifiesto: dict[str, Any], numero: int = 1, tolerancia: float = TOLERANCIA_MM,
+                     dpi: int = DPI) -> list[Pagina]:
+    """Un resultado por marco de la página. Con un solo juego de marcadores 0-3 (la carátula), uno;
+    en la planilla docente, uno por estudiante. Sin ningún marco completo, un resultado con el problema."""
+    px_mm = dpi / 25.4
+    encontrados = marcadores(imagen, px_mm)
+    ids = [m.id for m in encontrados]
+    if sorted(ids) == [0, 1, 2, 3]:
+        pagina = Pagina(numero=numero, marcadores=encontrados)
+        _verificar_marco(imagen, manifiesto, pagina, tolerancia, px_mm)
+        return [pagina]
+    grupos, libres = marcos(encontrados, manifiesto, px_mm)
+    if not grupos:
+        pagina = Pagina(numero=numero, marcadores=encontrados)
+        pagina.problemas.append(f"se esperaban los marcadores 0, 1, 2 y 3; se encontraron {ids or 'ninguno'}")
+        return [pagina]
+    resultado = []
+    for n, grupo in enumerate(grupos, 1):
+        pagina = Pagina(numero=numero, marcadores=grupo, marco=n)
+        _verificar_marco(imagen, manifiesto, pagina, tolerancia, px_mm)
+        resultado.append(pagina)
+    if libres:
+        resultado[-1].problemas.append(f"marcadores que no forman un marco: {[m.id for m in libres]}")
+    return resultado
+
+
+def verificar_pagina(imagen, manifiesto: dict[str, Any], numero: int = 1, tolerancia: float = TOLERANCIA_MM,
+                     dpi: int = DPI) -> Pagina:
+    """El primer marco de la página (la carátula tiene uno solo)."""
+    return verificar_marcos(imagen, manifiesto, numero, tolerancia, dpi)[0]
 
 
 def paginas_del_pdf(pdf: Path) -> int:
@@ -332,10 +383,10 @@ def verificar(pdf: Path, manifiesto: dict[str, Any], paginas: list[int] | None =
     numeros = range(1, paginas_del_pdf(pdf) + 1) if todas else (paginas or [1])
     salida = []
     for n in numeros:
-        pagina = verificar_pagina(rasterizar(pdf, n), manifiesto, n, tolerancia)
-        if todas and not pagina.marcadores:
-            continue
-        salida.append(pagina)
+        for pagina in verificar_marcos(rasterizar(pdf, n), manifiesto, n, tolerancia):
+            if todas and not pagina.marcadores:
+                continue
+            salida.append(pagina)
     return salida
 
 
@@ -347,12 +398,13 @@ def texto(paginas: list[Pagina], tolerancia: float = TOLERANCIA_MM) -> str:
         estado = "✓" if p.ok else "✗"
         detalle = (f"{len(medidas)} burbujas, error máximo {maximo:.3f} mm (tolerancia < {tolerancia:g} mm)"
                    if maximo is not None else "sin burbujas medidas")
-        lineas.append(f"{estado} página {p.numero}: {len(p.marcadores)} marcadores; {detalle}")
+        donde = f"página {p.numero}" + (f", marco {p.marco}" if p.marco else "")
+        lineas.append(f"{estado} {donde}: {len(p.marcadores)} marcadores; {detalle}")
         lineas += [f"    {problema}" for problema in p.problemas]
     return "\n".join(lineas)
 
 
 def a_dict(paginas: list[Pagina]) -> list[dict[str, Any]]:
-    return [{"pagina": p.numero, "ok": p.ok, "marcadores": [m.id for m in p.marcadores],
+    return [{"pagina": p.numero, "marco": p.marco, "ok": p.ok, "marcadores": [m.id for m in p.marcadores],
              "error_maximo_mm": p.error_maximo, "burbujas": len(p.mediciones), "problemas": p.problemas}
             for p in paginas]

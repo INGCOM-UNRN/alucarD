@@ -68,8 +68,9 @@
 // - `rellenos`: {"<campo>=<valor>": fracción}, para la hoja de calibración.
 // - `qr`: (svg: …, x: …, y: …, lado: …) en mm del marco, o none.
 // - `respaldo`: líneas de texto legible debajo del QR (nombre y STUDENT_ID).
+// - `leyenda` y `divisoria`: none las omite (la planilla docente no las lleva).
 #let omr-franja(m, ox: 15mm, oy: 15mm, qr: none, respaldo: (), texto: (x: 103, y: 30, ancho: 37),
-                rellenos: (:), divisoria: 9mm) = {
+                rellenos: (:), divisoria: 9mm, leyenda: auto) = {
   let w = m.frame_mm.w * 1mm
   let h = m.frame_mm.h * 1mm
   let lado = m.marker_mm * 1mm
@@ -113,8 +114,14 @@
     place(dx: ox + texto.x * 1mm, dy: oy + texto.y * 1mm, box(width: texto.ancho * 1mm,
           align(center, text(size: 8pt, fill: omr-negro, respaldo.join(linebreak())))))
   }
-  place(dx: ox, dy: oy + h + lado / 2 + 1mm, box(width: w, align(center, text(size: 7pt, fill: omr-gris)[
-    Zona reservada para el docente — no escribir · Rellenar el círculo con lapicera, no tildar ni cruzar
-  ])))
-  place(dx: ox - 5mm, dy: oy + h + divisoria, line(length: w + 10mm, stroke: 0.5pt + omr-gris))
+  if leyenda != none {
+    let contenido = if leyenda == auto [
+      Zona reservada para el docente — no escribir · Rellenar el círculo con lapicera, no tildar ni cruzar
+    ] else { leyenda }
+    place(dx: ox, dy: oy + h + lado / 2 + 1mm, box(width: w, align(center, text(size: 7pt, fill: omr-gris,
+          contenido))))
+  }
+  if divisoria != none {
+    place(dx: ox - 5mm, dy: oy + h + divisoria, line(length: w + 10mm, stroke: 0.5pt + omr-gris))
+  }
 }

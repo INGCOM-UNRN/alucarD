@@ -1165,10 +1165,19 @@ def _omr_build(
                                             "sólo para el layout estándar)."),
     nueva_clave: bool = typer.Option(False, "--nueva-clave",
                                      help="Otra hmac_key: invalida las carátulas ya impresas con la anterior."),
+    modo: str = typer.Option("caratula", "--modo",
+                             help="caratula (las burbujas en la página 1 de cada examen, por omisión) o planilla "
+                                  "(los exámenes sin franja y una planilla docente con el marco de cada estudiante)."),
+    por_hoja: Optional[int] = typer.Option(None, "--por-hoja", min=1,
+                                           help="Modo planilla: como mucho tantos marcos por hoja (por omisión, "
+                                                "los que entran)."),
     json_output: bool = typer.Option(False, "--json", help="El resumen del lote como JSON."),
 ) -> None:
     """Genera el lote: un examen con carátula OMR por estudiante, la nómina, el manifiesto, la hoja docente
     con el QR de configuración y la hoja de calibración.
+
+    Con --modo planilla, las burbujas no ocupan lugar en las hojas de los estudiantes: van en
+    planilla_<exam_id>.pdf, un marco por estudiante (con su nombre y su QR), que se escanea igual.
 
     Antes de compilar los PDF imprime la tabla de verificación de la curva de notas.
     """
@@ -1178,6 +1187,10 @@ def _omr_build(
 
     if qr_config_mode not in ("compressed", "compact"):
         _usage_error(f"--qr-config-mode: {qr_config_mode!r} (elegir entre 'compressed' y 'compact')")
+    if modo not in ("caratula", "planilla"):
+        _usage_error(f"--modo: {modo!r} (elegir entre 'caratula' y 'planilla')")
+    if por_hoja is not None and modo != "planilla":
+        _usage_error("--por-hoja sólo tiene sentido con --modo planilla")
     cfg = _omr_config(config)
     if cfg is None:
         return
@@ -1193,7 +1206,7 @@ def _omr_build(
         print(texto_tabla(cfg) + "\n")
     try:
         resultado = lote.build(cfg, inscriptos, out or Path("dist") / cfg.exam_id, questions,
-                               modo_qr=qr_config_mode, nueva_clave=nueva_clave)
+                               modo_qr=qr_config_mode, nueva_clave=nueva_clave, modo=modo, por_hoja=por_hoja)
     except (lote.ErrorLote, ErrorCuerpo) as e:
         print(f"Error: {e}", file=sys.stderr)
         _ultimo_codigo_salida["code"] = 1
@@ -1201,12 +1214,20 @@ def _omr_build(
     if json_output:
         print(lote.a_json(lote.resumen_json(resultado)))
         return
-    for archivo in (resultado.examenes, resultado.nomina, resultado.manifiesto, resultado.config_qr,
-                    resultado.config_qr_svg, resultado.calibracion, resultado.registro):
-        print(f"✓ {archivo}")
+    for archivo in (resultado.examenes, resultado.planilla, resultado.nomina, resultado.manifiesto,
+                    resultado.config_qr, resultado.config_qr_svg, resultado.calibracion, resultado.registro):
+        if archivo is not None:
+            print(f"✓ {archivo}")
+    if resultado.planilla is not None:
+        from generador_examenes.omr.layout import construir
+
+        por = lote.marcos_por_hoja(construir(cfg), por_hoja)
+        print(f"\nPlanilla docente: {por} marco(s) por hoja. Las notas se cargan en la planilla; los exámenes "
+              "no llevan burbujas.")
     print(f"\n{len(inscriptos)} estudiante(s), manifiesto sha256 {resultado.huella}")
     print(f"⚠ {resultado.nomina.name} y {resultado.config_qr.name} son sólo para docentes: la nómina vincula "
-          "student_id con la persona y la hoja docente lleva la hmac_key.")
+          "student_id con la persona y la hoja docente lleva la hmac_key."
+          + (f" {resultado.planilla.name} es para el docente: no se entrega con los exámenes." if resultado.planilla else ""))
     if resultado.avisos:
         print(f"\nRevisá antes de imprimir ({len(resultado.avisos)}):")
         for aviso in resultado.avisos:
@@ -1253,7 +1274,8 @@ def _omr_calibration_sheet(
 
 @omr_app.command("verify-geometry")
 def _omr_verify_geometry(
-    pdf: Path = typer.Option(..., "--pdf", exists=True, dir_okay=False, help="examenes_<exam_id>.pdf u otro PDF con carátulas."),
+    pdf: Path = typer.Option(..., "--pdf", exists=True, dir_okay=False,
+                             help="examenes_<exam_id>.pdf, planilla_<exam_id>.pdf u otro PDF con marcos OMR."),
     manifest: Path = typer.Option(..., "--manifest", exists=True, dir_okay=False, help="layout_<id>_v<n>.json."),
     pagina: Optional[List[int]] = typer.Option(None, "--pagina", min=1, help="Página a verificar (repetible; por omisión, la 1)."),
     todas: bool = typer.Option(False, "--todas", help="Todas las páginas con carátula (las que tienen los cuatro marcadores)."),
@@ -1261,7 +1283,9 @@ def _omr_verify_geometry(
     json_output: bool = typer.Option(False, "--json", help="El resultado como JSON."),
 ) -> None:
     """Rasteriza la carátula a 300 DPI, detecta los cuatro ArUco, rectifica el marco y verifica que el centro de
-    cada burbuja dibujada coincida con el manifiesto (error < 0,3 mm). Sale con 1 si alguna no coincide."""
+    cada burbuja dibujada coincida con el manifiesto (error < 0,3 mm). Sale con 1 si alguna no coincide.
+
+    En la planilla docente, cada página tiene varios marcos: se verifica cada uno."""
     import json
 
     from generador_examenes.omr import geometria

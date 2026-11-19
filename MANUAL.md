@@ -1785,13 +1785,37 @@ Cada examen de `examenes_<exam_id>.pdf`:
 
 La `hmac_key` se genera una vez y queda en `.hmac_key` (permisos 600). Así, regenerar el lote no
 invalida las carátulas ya impresas ni la sesión de la app; `--nueva-clave` la cambia. Un
-`.gitignore` en la salida deja fuera del repositorio la clave, la nómina y la hoja docente.
+`.gitignore` en la salida deja fuera del repositorio la clave, la nómina, la hoja docente y la planilla.
 `--qr-config-mode compact` usa el QR compacto como principal. No alcanza, y `build` sale con 1, si:
 
 - la escala no es de 1 a 10;
 - el redondeo no es `half_up`;
 - un ejercicio tiene etiquetas propias;
 - `cloud_sync_default` está activo.
+
+**Modo planilla (`--modo planilla`).** Las burbujas no ocupan lugar en las hojas de los estudiantes.
+El docente carga las notas en una planilla aparte y la digitaliza con la misma app:
+
+```bash
+alucard omr build --config exam.yaml --roster inscriptos.csv --out dist/P1/ --modo planilla
+alucard omr verify-geometry --pdf dist/P1/planilla_P1.pdf --manifest dist/P1/layout_OMR5E_v7.json --todas
+```
+
+- `examenes_<exam_id>.pdf` sale sin franja ni QR de pie. Cada examen conserva el nombre del
+  estudiante y su `VARIANTE`, porque la nómina asigna la variante de cada uno. El encabezado vuelve a
+  estar en la página 1.
+- `planilla_<exam_id>.pdf` tiene, por estudiante y en el orden de la nómina, el mismo marco que la
+  carátula: los cuatro ArUco, las burbujas del manifiesto, el QR `V/EXAM_ID/STUDENT_ID/…` con su `CHK`,
+  y el nombre con el `STUDENT_ID` y la variante. Como el marco y el QR no cambian, la app lo lee igual
+  que una carátula. El manifiesto, la hoja docente y la de calibración tampoco cambian.
+- En cada hoja entran tantos marcos como permite el alto del marco: 3 con el mínimo de 55 mm y 2 con
+  los 74 mm del ejemplo de la SPEC. `--por-hoja N` pone como mucho N.
+- Entre marco y marco quedan 22 mm y una línea de corte (✂). Se escanea un marco por vez. Si la
+  cámara toma también los marcadores del marco vecino y la app se confunde, recortá la planilla por
+  las líneas, o generala con `--por-hoja 1`.
+
+`verify-geometry` reconoce las páginas con varios marcos. Junta cada marcador 0 con los 1, 2 y 3 que
+están donde los pone el manifiesto y verifica cada marco por separado: informa «página 1, marco 2».
 
 El QR `OMRCFG2:` lleva el manifiesto entero, y con la rúbrica de ejemplo de la SPEC sale en versión
 28-M. Por eso la hoja docente lo imprime con 0,5 mm por módulo, unos 65 mm de lado.
@@ -1808,7 +1832,7 @@ redondeada nunca cruza un umbral que el porcentaje no alcanzó: con 59,9 %, 3,99
 4. mide el centro del contorno de cada burbuja contra su lugar en el manifiesto.
 
 Sale con 1 si alguna burbuja queda a 0,3 mm o más (`--tolerancia`). Por omisión revisa la página 1;
-`--todas` revisa cada página con carátula, y `--pagina N` revisa la que se le indique.
+`--todas` revisa cada página con carátula (o con marcos de la planilla), y `--pagina N` revisa la que se le indique.
 `alucard doctor` dice si está `pdftoppm`.
 
 El corpus sintético de §11.4 (marcas simuladas, perspectiva, ruido) corre el módulo OMR de la app

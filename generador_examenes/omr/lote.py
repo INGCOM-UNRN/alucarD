@@ -5,11 +5,19 @@ En `--out` (por omisión `dist/<exam_id>/`):
 | Archivo | Qué es |
 | --- | --- |
 | `examenes_<exam_id>.pdf` | Un examen por estudiante: carátula personalizada y enunciado. Cada uno ocupa un número par de páginas (doble faz). |
+| `planilla_<exam_id>.pdf` | Sólo en modo planilla: el marco OMR de cada estudiante (fiduciales, burbujas, QR y nombre), varios por hoja. |
 | `roster_<exam_id>.csv` | `student_id,legajo,apellido,nombre,variante` (UTF-8 con BOM): el único vínculo con la persona. |
 | `layout_<layout_id>_v<version>.json` y `.sha256` | El manifiesto `omr-layout/2`. |
 | `config_qr_<exam_id>.pdf` y `.svg` | La hoja docente con el QR de configuración, que lleva la `hmac_key`. |
 | `layout_test_<layout_id>.pdf` | La hoja de calibración, con burbujas rellenas al 0, 25, 50 y 100 %. |
 | `build_<exam_id>.log` | Lo generado, con el `sha256` del manifiesto y de cada PDF. |
+
+**Modo planilla** (`modo="planilla"`). Las notas no se cargan en la hoja del estudiante sino en una
+planilla para el docente: los exámenes salen sin franja (con el nombre y la variante) y
+`planilla_<exam_id>.pdf` tiene, por estudiante, el mismo marco que la carátula: los cuatro ArUco, las
+burbujas del manifiesto, el QR `V/EXAM_ID/STUDENT_ID/...` firmado y el nombre. La app lo escanea igual
+que una carátula, marco por marco. Entre marcos queda una línea de corte: si la cámara toma también los
+marcadores del marco vecino, se recorta.
 
 La `hmac_key` queda en `.hmac_key` (permisos 600) para que regenerar el lote no invalide las
 carátulas ya impresas ni la sesión de la app; `--nueva-clave` la cambia. Un `.gitignore` deja
@@ -40,7 +48,13 @@ PIE_LADO = 12.0                     # el QR de pie de las páginas 2..N
 MARGEN_INFERIOR = 30.0
 PAGINAS_PROBABLES = 30
 PLANTILLA_CARATULA = Path(__file__).resolve().parents[2] / "templates" / "omr" / "caratula.typ"
-IGNORAR = ".hmac_key\nroster_*.csv\nconfig_qr_*\n.omr/\n"
+IGNORAR = ".hmac_key\nroster_*.csv\nconfig_qr_*\nplanilla_*.pdf\n.omr/\n"
+
+# La planilla docente: los marcos uno debajo del otro, con OX y el primero en OY como en la carátula.
+SEPARACION_PLANILLA = 22.0          # mm entre el borde de los marcadores de un marco y los del siguiente
+LIMITE_PLANILLA = 278.0             # el centroide de los marcadores de abajo, como mucho (≥ 12 mm del borde)
+PIE_PLANILLA = 287.0
+Modo = Literal["caratula", "planilla"]
 
 
 class ErrorLote(RuntimeError):
@@ -61,6 +75,8 @@ class Lote:
     inscriptos: list[nomina.Inscripto]
     modo_qr: str
     avisos: list[str] = field(default_factory=list)
+    modo: str = "caratula"
+    planilla: Path | None = None
 
 
 def _cadena(texto: str) -> str:
@@ -108,8 +124,13 @@ def _contexto_omr(config: ConfigExamen, manifiesto: dict, ruta_manifiesto: str, 
         "texto_x": TEXTO_X, "texto_y": TEXTO_Y, "texto_ancho": TEXTO_ANCHO,
         "pies": pies, "pie_lado": PIE_LADO, "margen_inf_mm": MARGEN_INFERIOR,
         "salto_mm": max(0.0, alto_franja + 4 - margen_sup),
-        "nombre": inscripto.nombre_completo, "variante": inscripto.variante,
+        "nombre": inscripto.nombre_completo, "variante": inscripto.variante, "franja": True,
     }
+
+
+def _contexto_sin_franja(inscripto: nomina.Inscripto) -> dict[str, Any]:
+    """El examen del modo planilla: el nombre y la variante del estudiante, sin carátula OMR."""
+    return {"franja": False, "nombre": inscripto.nombre_completo, "variante": inscripto.variante}
 
 
 def _paginas(pdf: Path) -> int:
@@ -120,7 +141,7 @@ def _paginas(pdf: Path) -> int:
 
 def build(config: ConfigExamen, inscriptos: list[nomina.Inscripto], salida: Path,
           preguntas: list[Path] | None = None, modo_qr: Literal["compressed", "compact"] = "compressed",
-          nueva_clave: bool = False, avisar=print) -> Lote:
+          nueva_clave: bool = False, avisar=print, modo: Modo = "caratula", por_hoja: int | None = None) -> Lote:
     from generador_examenes.core.alucard_qol import empaquetar_pdfs_para_imprenta
     from generador_examenes.core.estilo import contexto_estilo
     from generador_examenes.generators.pdf_renderer import PdfRenderer
@@ -134,10 +155,14 @@ def build(config: ConfigExamen, inscriptos: list[nomina.Inscripto], salida: Path
     if modo_qr == "compact" and motivos:
         raise ErrorLote("--qr-config-mode compact no alcanza para esta configuración: " + "; ".join(motivos))
 
+    if modo not in ("caratula", "planilla"):
+        raise ErrorLote(f"modo {modo!r}: elegir entre 'caratula' y 'planilla'")
     manifiesto = layout.construir(config)
     problemas = layout.problemas(manifiesto)
     if problemas:
         raise ErrorLote("el manifiesto no cumple omr-layout/2: " + "; ".join(problemas))
+    if por_hoja is not None and por_hoja < 1:
+        raise ErrorLote("--por-hoja: al menos 1 marco por hoja")
     cuerpo = modulo_cuerpo.armar(config, preguntas)
 
     salida.mkdir(parents=True, exist_ok=True)
@@ -158,7 +183,13 @@ def build(config: ConfigExamen, inscriptos: list[nomina.Inscripto], salida: Path
         variante = inscripto.variante
         paginas = paginas_de.get(variante, PAGINAS_PROBABLES)
         destino = temporal / f"{inscripto.student_id}.pdf"
-        for _ in range(2):
+        if modo == "planilla":
+            extra = {"omr": _contexto_sin_franja(inscripto)}
+            _, _, fuente = renderer.fuente_examen(cuerpo.variantes[variante], cuerpo.definicion, temas[variante], extra)
+            marcas = []
+            _compilar(fuente, destino, salida, marcas)
+            reales = _paginas(destino)
+        for _ in range(0 if modo == "planilla" else 2):
             extra = {"omr": _contexto_omr(config, manifiesto, "/" + ruta_manifiesto.name, inscripto, clave, paginas,
                                           margen_sup)}
             _, _, fuente = renderer.fuente_examen(cuerpo.variantes[variante], cuerpo.definicion, temas[variante], extra)
@@ -188,18 +219,23 @@ def build(config: ConfigExamen, inscriptos: list[nomina.Inscripto], salida: Path
     _compilar(hoja_docente(config, manifiesto, huella, principal, compacto, motivos, fuente_texto), hoja, salida)
     calibracion = salida / f"layout_test_{config.layout_id}.pdf"
     _compilar(hoja_calibracion(manifiesto, "/" + ruta_manifiesto.name, fuente_texto), calibracion, salida)
+    planilla = None
+    if modo == "planilla":
+        planilla = salida / f"planilla_{config.exam_id}.pdf"
+        _compilar(hoja_planilla(config, manifiesto, "/" + ruta_manifiesto.name, inscriptos, clave, fuente_texto,
+                                por_hoja), planilla, salida)
     shutil.rmtree(temporal, ignore_errors=True)
 
     registro = salida / f"build_{config.exam_id}.log"
     _registrar(registro, config, manifiesto, huella, inscriptos, paginas_de, modo_qr,
-               [examenes, ruta_nomina, hoja, svg, calibracion])
+               [examenes, ruta_nomina, hoja, svg, calibracion] + ([planilla] if planilla else []), modo)
     return Lote(salida=salida, examenes=examenes, nomina=ruta_nomina, manifiesto=ruta_manifiesto, huella=huella,
                 config_qr=hoja, config_qr_svg=svg, calibracion=calibracion, registro=registro,
-                inscriptos=inscriptos, modo_qr=modo_qr, avisos=avisos)
+                inscriptos=inscriptos, modo_qr=modo_qr, avisos=avisos, modo=modo, planilla=planilla)
 
 
 def _registrar(registro: Path, config: ConfigExamen, manifiesto: dict, huella: str, inscriptos, paginas_de,
-               modo_qr: str, archivos: list[Path]) -> None:
+               modo_qr: str, archivos: list[Path], modo: str = "caratula") -> None:
     from generador_examenes import __version__
 
     lineas = [f"{datetime.now().isoformat(timespec='seconds')} alucard {__version__} omr build {config.exam_id}",
@@ -207,7 +243,8 @@ def _registrar(registro: Path, config: ConfigExamen, manifiesto: dict, huella: s
               f"estudiantes {len(inscriptos)}; variantes "
               + ", ".join(f"{v}: {sum(1 for i in inscriptos if i.variante == v)} ({paginas_de.get(v, 0)} págs.)"
                           for v in config.variants),
-              f"qr de configuración {modo_qr}"]
+              f"qr de configuración {modo_qr}",
+              "notas en " + ("la planilla docente" if modo == "planilla" else "la carátula de cada examen")]
     for archivo in archivos:
         lineas.append(f"sha256 {hashlib.sha256(archivo.read_bytes()).hexdigest()}  {archivo.name}")
     registro.write_text("\n".join(lineas) + "\n", encoding="utf-8")
@@ -312,6 +349,56 @@ Escaneala con la app para ajustar los umbrales de marca de esa impresora.
 """
 
 
+def marcos_por_hoja(manifiesto: dict, pedido: int | None = None) -> int:
+    """Cuántos marcos entran en una hoja A4 de la planilla (o el pedido, si es menos)."""
+    h = manifiesto["frame_mm"]["h"]
+    paso = h + manifiesto["marker_mm"] + SEPARACION_PLANILLA
+    entran = max(1, 1 + int((LIMITE_PLANILLA - OY - h) // paso))
+    return min(entran, pedido) if pedido else entran
+
+
+def posiciones_planilla(manifiesto: dict, cantidad: int, pedido: int | None = None) -> list[tuple[int, float]]:
+    """(hoja, oy) del marco de cada estudiante, en orden: hojas desde 1, oy en mm desde arriba."""
+    por_hoja = marcos_por_hoja(manifiesto, pedido)
+    paso = manifiesto["frame_mm"]["h"] + manifiesto["marker_mm"] + SEPARACION_PLANILLA
+    return [(i // por_hoja + 1, OY + (i % por_hoja) * paso) for i in range(cantidad)]
+
+
+def hoja_planilla(config: ConfigExamen, manifiesto: dict, ruta_manifiesto: str, inscriptos: list[nomina.Inscripto],
+                  clave: str, fuente: str, por_hoja: int | None = None) -> str:
+    """La planilla docente: por estudiante, el marco de la carátula (ArUco, burbujas, QR firmado y nombre)."""
+    h, lado = manifiesto["frame_mm"]["h"], manifiesto["marker_mm"]
+    posiciones = posiciones_planilla(manifiesto, len(inscriptos), por_hoja)
+    hojas = posiciones[-1][0] if posiciones else 1
+    bloques: dict[int, list[str]] = {}
+    for inscripto, (hoja, oy) in zip(inscriptos, posiciones):
+        contenido = qr.contenido_caratula(config, inscripto.student_id, inscripto.variante, clave)
+        respaldo = ", ".join(_cadena(t) for t in (inscripto.nombre_completo,
+                                                  f"{inscripto.student_id} · Variante {inscripto.variante}"))
+        partes = bloques.setdefault(hoja, [])
+        partes.append(f"""#place(top + left, omr-franja(m, ox: {OX}mm, oy: {oy}mm, leyenda: none, divisoria: none,
+  qr: (svg: {_cadena(qr.svg(qr.qr_caratula(contenido)))}, x: {QR_X}, y: {QR_Y}, lado: {QR_LADO}),
+  respaldo: ({respaldo},), texto: (x: {TEXTO_X}, y: {TEXTO_Y}, ancho: {TEXTO_ANCHO})))""")
+        if len(partes) > 1:
+            corte = oy - lado / 2 - SEPARACION_PLANILLA / 2
+            partes.append(f"""#place(top + left, dx: 8mm, dy: {corte}mm, box(width: 194mm, grid(columns: (auto, 1fr),
+  column-gutter: 2mm, align: horizon, text(size: 8pt, fill: omr-gris)[✂],
+  line(length: 100%, stroke: (paint: omr-gris, thickness: 0.4pt, dash: "dashed")))))""")
+    paginas = []
+    for hoja in range(1, hojas + 1):
+        pie = (f"#place(top + left, dx: {OX}mm, dy: {PIE_PLANILLA}mm, box(width: {manifiesto['frame_mm']['w']}mm, "
+               f"text(size: 7pt, fill: omr-gris)[Planilla docente — {_e(config.title)} — `{config.exam_id}` · "
+               f"hoja {hoja} de {hojas} · Rellenar el círculo con lapicera; escanear un marco por vez]))")
+        paginas.append("\n".join(bloques.get(hoja, []) + [pie]))
+    return f"""{PLANTILLA_CARATULA.read_text(encoding="utf-8")}
+#set page(paper: "a4", margin: 0mm)
+#set text(font: {fuente}, size: 9pt, lang: "es")
+#let m = json({_cadena(ruta_manifiesto)})
+// Cada marco mide {h:g} mm de alto; {marcos_por_hoja(manifiesto, por_hoja)} por hoja.
+{(chr(10) + "#pagebreak()" + chr(10)).join(paginas)}
+"""
+
+
 def _e(texto: str) -> str:
     from generador_examenes.generators.typst_markup import escapar
 
@@ -323,7 +410,7 @@ def resumen_json(lote: Lote) -> dict[str, Any]:
             "manifiesto": str(lote.manifiesto), "sha256": lote.huella, "config_qr": str(lote.config_qr),
             "config_qr_svg": str(lote.config_qr_svg), "calibracion": str(lote.calibracion),
             "registro": str(lote.registro), "estudiantes": len(lote.inscriptos), "qr_config_mode": lote.modo_qr,
-            "avisos": lote.avisos}
+            "modo": lote.modo, "planilla": str(lote.planilla) if lote.planilla else None, "avisos": lote.avisos}
 
 
 def a_json(datos: Any) -> str:

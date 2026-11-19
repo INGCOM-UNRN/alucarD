@@ -5,7 +5,7 @@
 **Sistema profesional de generación de exámenes** basado en plantillas YAML, con soporte para bancos Moodle/GIFT, múltiples layouts y optimización para impresión.
 
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/tests-1321%20passing-success.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-1329%20passing-success.svg)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-90%25-green.svg)](htmlcov/)
 [![License](https://img.shields.io/badge/license-GPL--3.0--or--later-blue.svg)](LICENSE)
 
@@ -76,7 +76,7 @@
 - ✅ **Arquitectura de Plugins**: Extensible vía clases base abstractas
 - ✅ **Sintetizador `daedalus`**: genera preguntas paramétricas de C cuya respuesta correcta se verifica compilando y ejecutando el snippet con GCC
 - ✅ **Registro de exámenes tomados** (nuevo): `alucard registro` guarda cada examen en JSON, deja afuera las preguntas ya usadas en el cuatrimestre y analiza dificultad, discriminación y distractores
-- ✅ **Carátula OMR** (nuevo): `alucard omr` arma un examen por estudiante con fiduciales ArUco, burbujas de la rúbrica y QR firmado, y verifica la geometría del PDF
+- ✅ **Carátula OMR** (nuevo): `alucard omr` arma un examen por estudiante con fiduciales ArUco, burbujas de la rúbrica y QR firmado, y verifica la geometría del PDF. Con `--modo planilla`, las burbujas van a una planilla docente en lugar de las hojas de los estudiantes
 - ✅ **Diagramas de control de procesos** (nuevo): nueve tipos cuyas cuentas (simulación, márgenes, raíces) hace alucarD, con variantes «en blanco» para completar
 - ✅ **Aviso de temas repetidos** (nuevo): `generar` avisa si dos temas quedan con las mismas preguntas
 
@@ -107,7 +107,7 @@
 - ✅ **Nombre en cada hoja**: renglón «Apellido y Nombre» en cada página impar desde la 3 (`nombre_en_hojas` en `[estilo]`), por si las hojas se separan
 
 ### 🧪 Calidad y Testing
-- ✅ **1321 Tests**: Suite completa con pytest
+- ✅ **1329 Tests**: Suite completa con pytest
 - ✅ **90% Coverage**: Cobertura de código
 - ✅ **6 Exámenes de Prueba**: Validación en escenarios reales
 - ✅ **CI Ready**: Configurado para integración continua
@@ -1112,6 +1112,10 @@ alucard omr build --config exam.yaml --roster inscriptos.csv --out dist/P1/
 alucard omr verify-geometry --pdf dist/P1/examenes_P1.pdf --manifest dist/P1/layout_OMR5E_v7.json
 ```
 
+Con `--modo planilla`, las burbujas no ocupan lugar en las hojas de los estudiantes: los exámenes
+salen sin franja y `planilla_<exam_id>.pdf` reúne el marco OMR de cada estudiante, con su nombre y su
+QR, varios por hoja. El docente carga ahí las notas y las digitaliza con la misma app.
+
 Ver [Exámenes con carátula OMR](MANUAL.md#exámenes-con-carátula-omr-alucard-omr).
 
 ### Diagramas de control de procesos
@@ -1177,7 +1181,7 @@ done
 
 ### Métricas de Calidad
 
-- **1321 tests** pasando
+- **1329 tests** pasando
 - **90% cobertura** de código
 - **0 errores** de linting
 - **Type hints** completos

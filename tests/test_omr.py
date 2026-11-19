@@ -407,3 +407,96 @@ def test_cli_verify_geometry_y_calibration_sheet(lote, tmp_path, monkeypatch, ca
     destino = tmp_path / "cal.pdf"
     assert _cli(monkeypatch, "omr", "calibration-sheet", "--manifest", manifiesto, "--out", str(destino)) == 0
     assert destino.stat().st_size > 0 and not (lote / ".omr").exists()
+
+
+# --- Modo planilla: las notas en una planilla docente, no en las hojas de los estudiantes ------------------
+
+@pytest.fixture(scope="module")
+def planilla(proyecto):
+    salida = proyecto / "dist_planilla"
+    mp = pytest.MonkeyPatch()
+    try:
+        assert _cli(mp, "omr", "build", "--config", str(proyecto / "exam.yaml"), "--roster",
+                    str(proyecto / "inscriptos.csv"), "--questions", str(proyecto / "banco"),
+                    "--out", str(salida), "--modo", "planilla") == 0
+    finally:
+        mp.undo()
+    return salida
+
+
+def test_en_modo_planilla_los_examenes_no_llevan_franja(planilla):
+    import pypdf
+
+    assert (planilla / "planilla_PROG1-2026-P1.pdf").is_file()
+    assert "planilla_*.pdf" in (planilla / ".gitignore").read_text()
+    lector = pypdf.PdfReader(str(planilla / "examenes_PROG1-2026-P1.pdf"))
+    assert len(lector.pages) % 2 == 0
+    texto = lector.pages[0].extract_text()
+    assert "Pérez, Ana" in texto and "VARIANTE A" in texto and "Zona reservada" not in texto
+    assert "notas en la planilla docente" in (planilla / "build_PROG1-2026-P1.log").read_text()
+
+
+@CON_POPPLER
+def test_los_examenes_del_modo_planilla_no_tienen_marcadores(planilla):
+    m = json.loads((planilla / "layout_OMR5E_v7.json").read_text(encoding="utf-8"))
+    assert geometria.verificar(planilla / "examenes_PROG1-2026-P1.pdf", m, []) == []
+
+
+@CON_POPPLER
+def test_la_planilla_tiene_un_marco_por_estudiante_y_cada_uno_es_exacto(planilla):
+    m = json.loads((planilla / "layout_OMR5E_v7.json").read_text(encoding="utf-8"))
+    from generador_examenes.omr.lote import marcos_por_hoja
+
+    assert marcos_por_hoja(m) == 2                          # el marco de la SPEC mide 74 mm
+    marcos = geometria.verificar(planilla / "planilla_PROG1-2026-P1.pdf", m, [])
+    assert [(p.numero, p.marco) for p in marcos] == [(1, 1), (1, 2), (2, 0)]
+    for p in marcos:
+        assert p.ok, p.problemas
+        assert len(p.mediciones) == len(layout.burbujas(m)) and p.error_maximo < 0.3
+
+
+@CON_POPPLER
+def test_los_qr_de_la_planilla_son_los_de_la_caratula(planilla):
+    zxingcpp = pytest.importorskip("zxingcpp")
+    clave = (planilla / ".hmac_key").read_text().strip().partition(":")[2]
+    pdf = planilla / "planilla_PROG1-2026-P1.pdf"
+    leidos = sorted(c.text for n in (1, 2) for c in zxingcpp.read_barcodes(geometria.rasterizar(pdf, n)))
+    assert [t.split("/")[2:4] for t in leidos] == [["C001", "A"], ["C002", "B"], ["C003", "A"]]
+    assert all(qr.verificar_caratula(t, clave) for t in leidos)
+
+
+def test_marcos_por_hoja_y_posiciones():
+    from generador_examenes.omr import lote
+
+    m = layout.construir(_config())
+    entran = lote.marcos_por_hoja(m)
+    assert entran >= 2 and lote.marcos_por_hoja(m, 1) == 1 and lote.marcos_por_hoja(m, 99) == entran
+    posiciones = lote.posiciones_planilla(m, entran + 1)
+    assert posiciones[0] == (1, lote.OY) and posiciones[-1] == (2, lote.OY)
+    alto = m["frame_mm"]["h"]
+    assert all(oy + alto <= lote.LIMITE_PLANILLA for _, oy in posiciones)
+    assert all(b - a >= alto + m["marker_mm"] + lote.SEPARACION_PLANILLA
+               for (_, a), (_, b) in zip(posiciones, posiciones[1:entran]))
+
+
+@CON_POPPLER
+def test_por_hoja_reparte_los_marcos(proyecto, tmp_path, monkeypatch):
+    salida = tmp_path / "dist"
+    assert _cli(monkeypatch, "omr", "build", "--config", str(proyecto / "exam.yaml"), "--roster",
+                str(proyecto / "inscriptos.csv"), "--questions", str(proyecto / "banco"), "--out", str(salida),
+                "--modo", "planilla", "--por-hoja", "1") == 0
+    m = json.loads((salida / "layout_OMR5E_v7.json").read_text(encoding="utf-8"))
+    marcos = geometria.verificar(salida / "planilla_PROG1-2026-P1.pdf", m, [])
+    assert [(p.numero, p.marco) for p in marcos] == [(1, 0), (2, 0), (3, 0)] and all(p.ok for p in marcos)
+
+
+@pytest.mark.parametrize("argumentos, mensaje", [
+    (["--modo", "hoja"], "--modo"),
+    (["--por-hoja", "2"], "--por-hoja sólo"),
+])
+def test_opciones_del_modo_invalidas(proyecto, tmp_path, monkeypatch, capsys, argumentos, mensaje):
+    with pytest.raises(SystemExit) as salida:
+        _cli(monkeypatch, "omr", "build", "--config", str(proyecto / "exam.yaml"), "--roster",
+             str(proyecto / "inscriptos.csv"), "--out", str(tmp_path / "d"), *argumentos)
+    salidas = capsys.readouterr()
+    assert salida.value.code == 2 and mensaje in salidas.out + salidas.err

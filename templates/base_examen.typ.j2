@@ -1,6 +1,9 @@
 // Plantilla Typst para Examen Teórico (alucarD)
-{% set margen_inf = omr.margen_inf_mm if omr else 20 %}
-{% if omr %}
+{# Con `omr`, el examen es de un estudiante (nombre y variante). `franja`: la carátula OMR en la
+   página 1; sin ella (modo planilla), las notas se cargan en la planilla docente. #}
+{% set franja = omr and omr.franja %}
+{% set margen_inf = omr.margen_inf_mm if franja else 20 %}
+{% if franja %}
 // Carátula OMR (OMR_SPEC.md): la franja de la página 1 sale del manifiesto, leído con json().
 {{ omr.modulo }}
 #let omr-m = json({{ omr.manifiesto | typst_cadena }})
@@ -10,7 +13,7 @@
 #set document(title: "{{ definicion.nombre_examen }} - Tema {{ tema + 1 }}", author: "{{ definicion.institucion }}")
 #set page(
   paper: "a4",
-  background: {% if omr %}context {
+  background: {% if franja %}context {
     // La franja va desde el origen de la página, fuera de los márgenes: A4 exacto, sin escala.
     if counter(page).get().first() == 1 {
       place(top + left, omr-franja(omr-m, ox: {{ omr.ox_mm }}mm, oy: {{ omr.oy_mm }}mm, divisoria: {{ omr.divisoria_mm }}mm,
@@ -24,7 +27,7 @@
   header: context {
     let hoja = counter(page).get().first()
     // Con carátula OMR, la página 1 no lleva encabezado: arriba está la franja.
-    if {{ 'hoja > 1' if omr else 'true' }} [
+    if {{ 'hoja > 1' if franja else 'true' }} [
     {% if estilo.logo_typst %}#let logo = {{ estilo.logo_typst }}
     {% endif %}#{{ estilo.encabezado_typst }}
     {% if estilo.nombre_en_hojas %}
@@ -38,7 +41,7 @@
     ]
   },
   footer: context [
-    {% if omr %}
+    {% if franja %}
     #let hoja = counter(page).get().first()
     #grid(columns: (1fr, {{ omr.pie_lado }}mm), column-gutter: 4mm, align: horizon,
       [
@@ -138,7 +141,7 @@
   }
 }
 
-{% if omr %}
+{% if franja %}
 // El cuerpo empieza debajo de la línea divisoria de la franja: nunca la invade.
 #v({{ omr.salto_mm }}mm)
 {% endif %}
