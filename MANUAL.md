@@ -67,6 +67,7 @@ Cada tarea es un comando. Las formas anteriores (`--init`, `--wizard`, `--catego
 | `alucard categorias BANCO…` | Árbol HTML de categorías de bancos o carpetas de consignas. |
 | `alucard asistente YAML` | Asistente interactivo para crear o editar una definición. |
 | `alucard iniciar` | Crea un proyecto de ejemplo en la carpeta actual. |
+| `alucard omr build\|validate\|preview-curve\|calibration-sheet\|verify-geometry` | Exámenes con carátula OMR para la app Escáner OMR. Ver [Exámenes con carátula OMR](#exámenes-con-carátula-omr-alucard-omr). |
 | `alucard build`, `balance-check`, `lint-gift`, `sintetizar`, `diagrama`, `doctor` | Ver sus secciones. |
 
 #### Vista previa de una pregunta: `alucard ver`
@@ -1517,6 +1518,106 @@ Antes de imprimir conviene revisar las consignas que salieron. Los filtros garan
 tiempo, pero no la calidad de cada enunciado.
 
 ---
+
+### Exámenes con carátula OMR: `alucard omr`
+
+Implementa [`OMR_SPEC.md`](OMR_SPEC.md): un examen por estudiante cuya página 1 lleva una franja que
+corrige la app Android **Escáner OMR**. La franja tiene:
+
+- cuatro fiduciales ArUco;
+- una fila de burbujas por ejercicio de la rúbrica;
+- las cifras de la nota final y la marca de ausente;
+- un QR con el `STUDENT_ID` interno del estudiante (nunca el DNI ni el legajo).
+
+En la SPEC el programa se llama `omr-gen`. Acá sus subcomandos van debajo de `alucard omr`, porque
+`alucard build` ya existe.
+
+```bash
+alucard omr validate --config exam.yaml --roster inscriptos.csv
+alucard omr preview-curve --config exam.yaml
+alucard omr build --config exam.yaml --roster inscriptos.csv --questions bancos/ --out dist/PROG1-2026-P1/
+alucard omr calibration-sheet --manifest dist/PROG1-2026-P1/layout_OMR5E_v7.json --out layout_test.pdf
+alucard omr verify-geometry --pdf dist/PROG1-2026-P1/examenes_PROG1-2026-P1.pdf \
+  --manifest dist/PROG1-2026-P1/layout_OMR5E_v7.json --todas
+```
+
+**`exam.yaml`** (o `exam.json`) tiene las claves de la SPEC (§3.1): `exam_id`, `title`, `layout_id`,
+`layout_version`, `variants`, `cloud_sync_default`, `grade_scale`, `grade_map` y `rubric`. alucard
+suma dos claves para el enunciado:
+
+| Clave | Qué hace |
+| :--- | :--- |
+| `definicion` | Una definición de examen de alucard (relativa a `exam.yaml`). Cada variante es un tema de esa definición: A es el tema 1, B el 2, con la semilla de la definición. |
+| `seed` | La semilla del sorteo (por omisión, la de la definición, la de `alucard.toml` o 42). |
+
+Sin `definicion`, el enunciado tiene una pregunta por ejercicio de la rúbrica, en su orden. Es la del
+banco que tiene la etiqueta con el `id` del ejercicio (`// [tag, ej1]`), y si hay varias, cada
+variante toma otra. Con `--questions`, los bancos (archivos o carpetas) reemplazan al `input_banco`
+de la definición.
+
+**Validación (§3.3).** `validate` y `build` revisan todas las reglas y listan cada problema en su
+renglón; con alguno, salen con 1. Además de las reglas de la SPEC, alucard pide:
+
+- que `min` y `max` sean enteros y que la fila de unidades tenga hasta 11 burbujas;
+- que `step` sea `null`, `0.5` o `0.25`;
+- que el QR de la carátula entre en 47 caracteres.
+
+`validate --roster` también revisa la nómina.
+
+**Nómina (`inscriptos.csv`).** Las columnas `legajo,apellido,nombre` son obligatorias; `student_id` y
+`variante` son opcionales.
+
+- Al que no trae `student_id` le toca el siguiente libre de `C001`…`C999`, en el orden de la nómina.
+- Las variantes que faltan se reparten en ronda.
+- El legajo y el `student_id` no pueden repetirse.
+
+**Lote (§8).** Todo va en `--out` (por omisión, `dist/<exam_id>/`):
+
+| Archivo | Qué es |
+| :--- | :--- |
+| `examenes_<exam_id>.pdf` | Un examen por estudiante, en A4 exacto. Ver la lista de abajo. |
+| `roster_<exam_id>.csv` | `student_id,legajo,apellido,nombre,variante`, UTF-8 con BOM. **Sólo docentes.** |
+| `layout_<layout_id>_v<version>.json` y `.sha256` | El manifiesto `omr-layout/2`, validado con su JSON Schema. |
+| `config_qr_<exam_id>.pdf` y `.svg` | La hoja docente: el QR `OMRCFG2:` (más el respaldo `OMRCFG/2` cuando alcanza), la rúbrica, el `sha256` del manifiesto y la tabla porcentaje → nota. **Lleva la `hmac_key`.** |
+| `layout_test_<layout_id>.pdf` | La hoja de calibración: en cada fila, las burbujas rellenas al 0, 25, 50 y 100 %. |
+| `build_<exam_id>.log` | Lo generado, con el `sha256` del manifiesto y de cada archivo. |
+
+Cada examen de `examenes_<exam_id>.pdf`:
+
+- en la página 1, la franja y el nombre ya escrito;
+- desde la página 2, el QR `EXAM_ID/STUDENT_ID/P<n>` en el pie;
+- un número par de páginas, así cada carátula cae en el frente de una hoja impresa a doble faz.
+
+La `hmac_key` se genera una vez y queda en `.hmac_key` (permisos 600). Así, regenerar el lote no
+invalida las carátulas ya impresas ni la sesión de la app; `--nueva-clave` la cambia. Un
+`.gitignore` en la salida deja fuera del repositorio la clave, la nómina y la hoja docente.
+`--qr-config-mode compact` usa el QR compacto como principal. No alcanza, y `build` sale con 1, si:
+
+- la escala no es de 1 a 10;
+- el redondeo no es `half_up`;
+- un ejercicio tiene etiquetas propias;
+- `cloud_sync_default` está activo.
+
+El QR `OMRCFG2:` lleva el manifiesto entero, y con la rúbrica de ejemplo de la SPEC sale en versión
+28-M. Por eso la hoja docente lo imprime con 0,5 mm por módulo, unos 65 mm de lado.
+
+**Curva (§5).** `preview-curve`, y `build` antes de compilar, imprimen la nota y la condición en los
+puntos de §5: 0 %, 30 %, justo antes de cada umbral y en él, los puntos medios y 100 %. La nota
+redondeada nunca cruza un umbral que el porcentaje no alcanzó: con 59,9 %, 3,99 queda en 3,9.
+
+**Geometría (§11.2).** `verify-geometry` hace estos pasos, sin OpenCV:
+
+1. rasteriza la página a 300 DPI con `pdftoppm` (poppler-utils);
+2. detecta los cuatro ArUco y decodifica su matriz;
+3. rectifica el marco con una homografía;
+4. mide el centro del contorno de cada burbuja contra su lugar en el manifiesto.
+
+Sale con 1 si alguna burbuja queda a 0,3 mm o más (`--tolerancia`). Por omisión revisa la página 1;
+`--todas` revisa cada página con carátula, y `--pagina N` revisa la que se le indique.
+`alucard doctor` dice si está `pdftoppm`.
+
+El corpus sintético de §11.4 (marcas simuladas, perspectiva, ruido) corre el módulo OMR de la app
+Android, que no es parte de alucard.
 
 ### Entregar los temas con uatu
 
