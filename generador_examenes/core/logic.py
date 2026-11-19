@@ -365,6 +365,47 @@ def _sortea_por_tema(pool: PoolConfig, configuracion: ConfiguracionExamen) -> bo
     return configuracion.sortear_por_tema if pool.sortear_por_tema is None else pool.sortear_por_tema
 
 
+def _enumerar(numeros: List[int]) -> str:
+    textos = [str(n) for n in numeros]
+    return textos[0] if len(textos) == 1 else f"{', '.join(textos[:-1])} y {textos[-1]}"
+
+
+def temas_con_mismas_preguntas(temas: List[Dict[str, Any]], definicion: DefinicionExamen,
+                               comparar_orden: bool = True) -> List[str]:
+    """Los temas que salen con las mismas preguntas: con sólo el orden cambiado y, si
+    `comparar_orden`, también los idénticos (mismo orden de preguntas y de opciones)."""
+    def preguntas(tema):
+        return [p for s in tema.get("secciones", []) for p in s.get("preguntas", [])]
+
+    por_conjunto: Dict[frozenset, List[int]] = {}
+    for n, tema in enumerate(temas, 1):
+        por_conjunto.setdefault(frozenset(p.id for p in preguntas(tema)), []).append(n)
+
+    sortea = any(_sortea_por_tema(pool, definicion.configuracion_examen)
+                 for seccion in definicion.secciones_examen for pool in seccion.pools)
+    avisos = []
+    for conjunto, numeros in por_conjunto.items():
+        if len(numeros) < 2 or not conjunto:
+            continue
+        grupos: Dict[tuple, List[int]] = {}
+        if comparar_orden:
+            for n in numeros:
+                huella = tuple((p.id, tuple(o.texto_html for o in p.opciones)) for p in preguntas(temas[n - 1]))
+                grupos.setdefault(huella, []).append(n)
+        for iguales in grupos.values():
+            if len(iguales) > 1:
+                avisos.append(f"los temas {_enumerar(iguales)} son idénticos: mismas preguntas, en el mismo orden "
+                              "y con las mismas opciones. Activá mezclar_preguntas_dentro_seccion y "
+                              "mezclar_opciones_dentro_pregunta, o sortear_por_tema.")
+        if len(grupos) != 1:
+            como = "cambia sólo el orden" if comparar_orden else "puede cambiar sólo el orden"
+            arreglo = ("los pools que sortean por tema no tienen preguntas suficientes para que cada tema "
+                       "tenga otras: sumá preguntas al banco o bajá la cantidad" if sortea else
+                       "para que cada tema tenga otras, usá sortear_por_tema")
+            avisos.append(f"los temas {_enumerar(numeros)} tienen las mismas preguntas ({como}): {arreglo}.")
+    return avisos
+
+
 def pools_de_temas(definicion: DefinicionExamen, banco: Dict[str, Pregunta], semilla: int,
                    numero_temas: int) -> List[Dict[str, Any]]:
     """El pool de cada tema: el mismo, salvo que algún pool sortee por tema."""

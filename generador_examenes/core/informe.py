@@ -304,6 +304,9 @@ def armar_informe(definicion: DefinicionExamen, banco: Dict[str, Pregunta], exam
               "Cada tema toma sus preguntas de los pools que sortean por tema; cambian su orden y el de las opciones."
               if _temas_distintos(temas) else
               "Todos los temas tienen las mismas preguntas; cambian su orden y el de las opciones.", ""]
+        from generador_examenes.core.logic import temas_con_mismas_preguntas
+        for aviso in temas_con_mismas_preguntas(temas, definicion):
+            l += [f"> ⚠ {aviso[0].upper()}{aviso[1:]}", ""]
         for i, tema in enumerate(temas, 1):
             orden = [p.nombre for s in tema.get("secciones", []) for p in s.get("preguntas", [])]
             l.append(f"- **Tema {i}:** " + " → ".join(_celda(o) for o in orden))

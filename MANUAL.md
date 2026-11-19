@@ -1311,6 +1311,25 @@ pools:
 
 Sin puntaje fijo, los temas pueden sumar distinto; `generar` lo avisa.
 
+**Temas con las mismas preguntas.** `generar` avisa, en el resumen del final (y en `avisos` con
+`--json`) y en la sección «Orden de cada tema» del `informe.md`, cuando dos o más temas salen con las
+mismas preguntas:
+
+```text
+Revisá antes de imprimir (2):
+  ! parcial.yaml: los temas 1 y 3 son idénticos: mismas preguntas, en el mismo orden y con las mismas opciones. …
+  ! parcial.yaml: los temas 1, 2 y 3 tienen las mismas preguntas (cambia sólo el orden): para que cada tema tenga otras, usá sortear_por_tema.
+```
+
+- **Idénticos** son los temas con las mismas preguntas, en el mismo orden y con las opciones en el
+  mismo orden: pasa con `mezclar_preguntas_dentro_seccion` y `mezclar_opciones_dentro_pregunta`
+  apagadas, o con preguntas sin opciones y una sola por sección.
+- **Mismas preguntas en otro orden** es lo que pasa siempre sin `sortear_por_tema`. Con
+  `sortear_por_tema`, quiere decir que los pools que sortean no tienen candidatas suficientes para
+  que cada tema tenga otras: hay que sumar preguntas al banco o bajar la cantidad.
+
+`validar` compara las preguntas de cada tema, pero no su orden, que se sortea al generar.
+
 **Comandos.** Todos usan las fuentes de la definición:
 
 ```bash

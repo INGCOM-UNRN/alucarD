@@ -782,6 +782,9 @@ def _generar_examen(args, logger, estado: dict) -> int:
         
         # Modo validación
         if args.validate:
+            if numero_temas > 1:
+                for aviso in logic.temas_con_mismas_preguntas(bases[:numero_temas], definicion, comparar_orden=False):
+                    _avisar(args, aviso)
             if getattr(args, 'json_output', False):
                 secciones_json = []
                 for seccion in examen_base['secciones']:
@@ -890,6 +893,9 @@ def _generar_examen(args, logger, estado: dict) -> int:
                 archivos_generados.append(str(spec_file))
                 if not getattr(args, 'json_output', False):
                     print(f"✓ OMR y Descriptor JSON generados para tema {i + 1}: {spec_file.name}")
+
+        for aviso in logic.temas_con_mismas_preguntas(temas_generados, definicion):
+            _avisar(args, aviso)
 
         # Informe de la generación: qué se eligió, de dónde y por qué quedó afuera cada consigna.
         for (pregunta, motivo), temas in desbordes.items():
