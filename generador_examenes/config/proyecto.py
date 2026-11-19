@@ -62,6 +62,7 @@ class ConfiguracionProyecto:
     estilo: dict[str, Any] = field(default_factory=dict)  # [estilo], con el logotipo ya resuelto
     debug_consignas: Optional[str] = None
     debug_candidatas: bool = False
+    registro: dict[str, Any] = field(default_factory=dict)  # [registro]: carpeta (resuelta), cuatrimestre, repetidas
 
 
 def buscar(desde: Optional[Path] = None) -> Optional[Path]:
@@ -119,6 +120,15 @@ def cargar(desde: Optional[Path] = None) -> ConfiguracionProyecto:
         debug = "titulo"
     if debug not in (False, "titulo", "id"):
         raise ValueError(f'{ruta}: debug_consignas es "titulo", "id" o false: {debug!r}')
+    registro = dict(datos.get("registro") or {})
+    desconocidas = sorted(set(registro) - {"carpeta", "cuatrimestre", "repetidas"})
+    if desconocidas:
+        raise ValueError(f"{ruta}: [registro]: claves desconocidas: {', '.join(desconocidas)} "
+                         "(valen carpeta, cuatrimestre y repetidas)")
+    if registro.get("repetidas", "evitar") not in ("evitar", "avisar", "permitir"):
+        raise ValueError(f'{ruta}: [registro] repetidas es "evitar", "avisar" o "permitir": {registro["repetidas"]!r}')
+    if registro.get("carpeta"):
+        registro["carpeta"] = base / str(registro["carpeta"])
     candidatas = datos.get("debug_candidatas", False)
     if not isinstance(candidatas, bool):
         raise ValueError(f"{ruta}: debug_candidatas es true o false: {candidatas!r}")
@@ -138,4 +148,5 @@ def cargar(desde: Optional[Path] = None) -> ConfiguracionProyecto:
         lt_ignorar_reglas=list(orto.get("ignorar_reglas") or []),
         palabras=palabras,
         estilo=estilo,
+        registro=registro,
     )

@@ -561,14 +561,14 @@ def _generar_varias(corridas: list, args, logger) -> int:
         print(json.dumps({"version": "1.0", "command": "validate" if args.validate else "generar_examen",
                           "examenes": examenes}, indent=2, ensure_ascii=False))
     else:
-        _resumen(corridas, resultados, args.validate)
+        _resumen(corridas, resultados, args.validate or getattr(args, "solo_registrar", False))
     return 1 if any(codigo for codigo, _ in resultados) else 0
 
 
 def _generar_una(corrida, logger) -> int:
     codigo, motivo = _correr(corrida, logger)
     if not getattr(corrida, "json_output", False):
-        _resumen([corrida], [(codigo, motivo)], corrida.validate)
+        _resumen([corrida], [(codigo, motivo)], corrida.validate or getattr(corrida, "solo_registrar", False))
     return codigo
 
 
@@ -618,7 +618,8 @@ def generar_examen(args, logger) -> int:
         raise
     finally:
         logging.getLogger().removeHandler(errores)
-        if codigo and "banco" in estado and not getattr(args, "validate", False):
+        if codigo and "banco" in estado and not getattr(args, "validate", False) \
+                and not getattr(args, "solo_registrar", False):
             _informe_de_fallo(args, estado, errores.mensajes, logger)
     return codigo
 
@@ -641,6 +642,72 @@ def _informe_de_fallo(args, estado: dict, mensajes: list[str], logger) -> None:
     args.informe_fallo = str(informe)
     if not getattr(args, "json_output", False):
         print(f"✗ Diagnóstico del fallo: {informe}", file=sys.stderr)
+
+
+def _sin_las_ya_usadas(args, definicion, banco: dict, cfg) -> tuple[dict, list[str]]:
+    """El banco para los pools, sin las preguntas que ya salieron en otro examen registrado del mismo
+    cuatrimestre (con `repetidas: evitar`). Las fijadas en un pool se quedan, con un aviso."""
+    from generador_examenes.core import registro
+
+    if cfg.repetidas == "permitir":
+        return banco, []
+    registros, fallas = registro.todos(cfg.carpeta, cfg.cuatrimestre)
+    for falla in fallas:
+        _avisar(args, f"registro: {falla}")
+    tabla = registro.usos(registro.anteriores(registros, cfg.id), excepto=cfg.id)
+    if not tabla:
+        return banco, []
+    fijadas = {pid for s in definicion.secciones_examen for pool in s.pools for pid in pool.preguntas_fijadas}
+    disponibles, excluidas, examenes = {}, [], set()
+    for clave, pregunta in banco.items():
+        usos = registro.usada(pregunta, tabla)
+        if not usos:
+            disponibles[clave] = pregunta
+            continue
+        donde = ", ".join(sorted({u.examen for u in usos}))
+        examenes.update(u.examen for u in usos)
+        if cfg.repetidas == "avisar" or clave in fijadas:
+            disponibles[clave] = pregunta
+            if clave in fijadas and cfg.repetidas == "evitar":
+                _avisar(args, f"registro: «{pregunta.nombre}» está fijada en un pool y ya salió en {donde} "
+                              f"({cfg.cuatrimestre})")
+        else:
+            excluidas.append(clave)
+    if cfg.repetidas == "avisar":
+        # El aviso es por las que efectivamente salen: se ve después del sorteo, en el registro.
+        args.repetidas_cuatrimestre = {k: u for k, u in ((k, registro.usada(p, tabla)) for k, p in banco.items()) if u}
+    elif excluidas:
+        _avisar(args, f"registro: {len(excluidas)} pregunta(s) del banco ya salieron en {cfg.cuatrimestre} "
+                      f"({', '.join(sorted(examenes))}) y quedaron afuera")
+    return disponibles, excluidas
+
+
+def _avisar_repetidas(args, banco: dict, temas: list, cfg) -> None:
+    """Con `repetidas: avisar`, cada pregunta elegida que ya salió este cuatrimestre."""
+    repetidas = getattr(args, "repetidas_cuatrimestre", None) or {}
+    salen = {p.id for t in temas for s in t.get("secciones", []) for p in s.get("preguntas", [])}
+    for pid in sorted(salen & set(repetidas)):
+        donde = ", ".join(sorted({u.examen for u in repetidas[pid]}))
+        _avisar(args, f"registro: «{banco[pid].nombre}» ya salió en {donde} ({cfg.cuatrimestre})")
+
+
+def _registrar(args, cfg, definicion, banco: dict, temas: list, semilla: int, bancos, excluidas) -> int:
+    """Anota el examen en el registro (`alucard registro guardar` o `generar --registrar`)."""
+    from generador_examenes.core import registro
+
+    try:
+        nuevo = registro.armar(cfg, definicion, Path(args.definicion), banco, temas, semilla, bancos or [], excluidas)
+        guardado, avisos = registro.guardar(nuevo, cfg.archivo, forzar=getattr(args, "forzar", False))
+    except registro.ErrorRegistro as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+    for aviso in avisos:
+        _avisar(args, f"registro: {aviso}")
+    args.archivo_registro = cfg.archivo
+    if not getattr(args, "json_output", False):
+        print(f"✓ Registro: {cfg.archivo} (revisión {guardado['revision']}, {len(guardado['preguntas'])} preguntas, "
+              f"{len(temas)} tema(s))")
+    return 0
 
 
 def _generar_examen(args, logger, estado: dict) -> int:
@@ -755,9 +822,27 @@ def _generar_examen(args, logger, estado: dict) -> int:
             logger.info("Procesando imágenes...")
             logic.procesar_imagenes(banco_completo, path_images)
         
+        # Registro de exámenes tomados: lo que ya salió este cuatrimestre queda afuera (o se avisa).
+        from generador_examenes.core import registro as modulo_registro
+        try:
+            config_registro = modulo_registro.configuracion(
+                definicion, Path(args.definicion), curso, getattr(args, "cuatrimestre", None),
+                getattr(args, "registro_id", None))
+        except modulo_registro.ErrorRegistro as e:
+            print(f"Error: {e}", file=sys.stderr)
+            return 1
+        banco_pools, excluidas = _sin_las_ya_usadas(args, definicion, banco_completo, config_registro)
+
         # Construir pool del examen
         logger.info("Construyendo pool del examen...")
-        bases = logic.pools_de_temas(definicion, banco_completo, semilla, max(numero_temas, 1))
+        try:
+            bases = logic.pools_de_temas(definicion, banco_pools, semilla, max(numero_temas, 1))
+        except ValueError as e:
+            if not excluidas:
+                raise
+            raise ValueError(f"{e} El registro dejó afuera {len(excluidas)} pregunta(s) ya usada(s) en "
+                             f"{config_registro.cuatrimestre}; con `repetidas: avisar` en `registro:` de la "
+                             "definición (o en [registro] de alucard.toml) se pueden volver a usar.") from e
         examen_base = bases[0]
         distintas = list({id(b): b for b in bases}.values())  # sin sorteo por tema, es una sola
 
@@ -827,21 +912,19 @@ def _generar_examen(args, logger, estado: dict) -> int:
         logger.info(f"Generando {numero_temas} tema(s)...")
         archivos_generados = []
         uso_global: dict = {}  # posición de la correcta en los temas ya generados (balance entre temas)
-        temas_generados = []
         desbordes: dict = {}  # (pregunta, motivo): los temas en los que el layout no pudo acomodarlo
+        # Primero se mezclan todos los temas (el balance de claves va en orden) y después se dibujan.
+        temas_generados = [logic.mezclar_examen(bases[i], semilla + i, definicion.configuracion_examen,
+                                                uso_global=uso_global) for i in range(numero_temas)]
+        _avisar_repetidas(args, banco_completo, temas_generados, config_registro)
+        if getattr(args, "solo_registrar", False):
+            return _registrar(args, config_registro, definicion, banco_completo, temas_generados, semilla,
+                              input_banco, excluidas)
 
         for i in range(numero_temas):
             semilla_tema = semilla + i
             logger.info(f"Generando tema {i + 1}/{numero_temas} (semilla: {semilla_tema})")
-            
-            # Mezclar examen para este tema
-            examen_mezclado = logic.mezclar_examen(
-                bases[i],
-                semilla_tema,
-                definicion.configuracion_examen,
-                uso_global=uso_global,
-            )
-            temas_generados.append(examen_mezclado)
+            examen_mezclado = temas_generados[i]
             
             # Generar en cada formato solicitado
             # Un formato que no se puede generar corta la corrida: no se sale con 0 sin el archivo.
@@ -913,6 +996,12 @@ def _generar_examen(args, logger, estado: dict) -> int:
                 print(f"✓ Informe: {informe}")
         except Exception as e:  # el informe no debe impedir el examen
             logger.warning(f"No se pudo armar el informe de la generación: {e}")
+
+        if getattr(args, "registrar", False):
+            codigo = _registrar(args, config_registro, definicion, banco_completo, temas_generados, semilla,
+                                input_banco, excluidas)
+            if codigo:
+                return codigo
 
         if definicion.configuracion_examen.debug_candidatas:
             from generador_examenes.core.informe import armar_candidatas

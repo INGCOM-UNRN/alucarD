@@ -261,6 +261,17 @@ class ConfiguracionExamen(BaseModel):
         return f"ConfiguracionExamen(mezcla_p={self.mezclar_preguntas_dentro_seccion}, mezcla_o={self.mezclar_opciones_dentro_pregunta}, clave={self.generar_clave_profesor})"
 
 
+class RegistroDefinicion(BaseModel):
+    """`registro:` de la definición: cómo se anota el examen en el registro de exámenes tomados.
+
+    Lo que no se escribe sale de `[registro]` de `alucard.toml`, de la fecha del examen (el cuatrimestre)
+    y del nombre del archivo (el id).
+    """
+    id: Optional[str] = None
+    cuatrimestre: Optional[str] = None
+    repetidas: Optional[Literal["evitar", "avisar", "permitir"]] = None
+
+
 class DefinicionExamen(BaseModel):
     """Modelo principal para la definición del examen en YAML"""
     nombre_examen: str
@@ -275,6 +286,8 @@ class DefinicionExamen(BaseModel):
     variables_personalizadas: Dict[str, str] = Field(default_factory=dict)
     # Tipografía, encabezado y pie, logotipo y contraste (se suma al [estilo] de alucard.toml)
     estilo: EstiloExamen = Field(default_factory=EstiloExamen)
+    # Registro de exámenes tomados (preguntas usadas en el cuatrimestre, resultados)
+    registro: Optional[RegistroDefinicion] = None
     
     # Configuración de generación (puede ser overrideada por CLI)
     input_banco: Optional[List[str]] = Field(default=None, description="Rutas a archivos de banco de preguntas")

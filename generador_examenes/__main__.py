@@ -428,6 +428,20 @@ def _cli(
         False, "--audit-typography",
         help="Auditar calidad tipográfica y líneas huérfanas en bloques de código de preguntas",
     ),
+    registrar: bool = typer.Option(
+        False, "--registrar",
+        help="Anotar el examen generado en el registro de exámenes tomados (como `alucard registro guardar`)",
+    ),
+    cuatrimestre: Optional[str] = typer.Option(
+        None, "--cuatrimestre",
+        help="Cuatrimestre del registro, como 2026-2C (por omisión, el de registro:, [registro] o la fecha del examen)",
+    ),
+    registro_id: Optional[str] = typer.Option(
+        None, "--registro-id", help="Id del examen en el registro (por omisión, el nombre del archivo de la definición)",
+    ),
+    forzar: bool = typer.Option(
+        False, "--forzar", help="Reemplazar un registro con resultados aunque cambien las preguntas (los descarta)",
+    ),
     vigilar: bool = typer.Option(
         False, "--watch", "-w",
         help="Volver a generar cada vez que cambia la definición, un banco, una consigna o una imagen (Ctrl+C termina)",
@@ -516,11 +530,12 @@ _DEFECTOS = {n: (None if v is ... else v) for n, v in _DEFECTOS.items()}
 _OPCIONES_LT = [n for n in _PARAMETROS if n.startswith("lt_")]
 _OPCIONES_GENERAR = [
     "definicion", "input_banco", "output_dir", "path_images", "numero_temas", "semilla", "formato",
-    "typst_template", "json_output", "debug", "omr", "accessible", "bundle_print", "audit_typography", "vigilar",
+    "typst_template", "json_output", "debug", "omr", "accessible", "bundle_print", "audit_typography",
+    "registrar", "cuatrimestre", "registro_id", "forzar", "vigilar",
 ]
 
 
-def _comando_de_opciones(nombre: str, opciones: List[str], fijos: dict, ayuda: str) -> None:
+def _comando_de_opciones(nombre: str, opciones: List[str], fijos: dict, ayuda: str, destino=None) -> None:
     """Registra `alucard <nombre>` con las mismas opciones (nombre, tipo, ayuda) que el modo raíz."""
     firma = inspect.signature(_cli)
     parametros = [firma.parameters[n] for n in opciones]
@@ -532,7 +547,7 @@ def _comando_de_opciones(nombre: str, opciones: List[str], fijos: dict, ayuda: s
     comando.__annotations__ = {n: _cli.__annotations__[n] for n in opciones if n in _cli.__annotations__}
     comando.__doc__ = ayuda
     comando.__name__ = f"_comando_{nombre}"
-    app.command(nombre)(comando)
+    (destino or app).command(nombre)(comando)
 
 
 # usar_curso: sólo estos comandos toman las definiciones del alucard.toml; `alucard` a secas no genera.
@@ -542,6 +557,15 @@ _comando_de_opciones("generar", _OPCIONES_GENERAR, {"usar_curso": True},
 _comando_de_opciones("validar", ["definicion", "input_banco", "json_output", "debug"],
                      {"validate": True, "usar_curso": True},
                      "Valida una o más definiciones y sus pools sin generar archivos. Sin -d, las de alucard.toml.")
+registro_app = typer.Typer(context_settings=dict(CONTEXTO), add_completion=False, no_args_is_help=True,
+                           help="Registro de exámenes tomados: preguntas usadas en el cuatrimestre y calidad de cada pregunta.")
+app.add_typer(registro_app, name="registro")
+_comando_de_opciones("guardar", ["definicion", "input_banco", "numero_temas", "semilla", "cuatrimestre", "registro_id",
+                                 "forzar", "json_output", "debug"],
+                     {"solo_registrar": True, "usar_curso": True},
+                     "Guarda en el registro el examen tal como lo arma `generar` con las mismas opciones (preguntas, "
+                     "orden y opciones de cada tema), sin generar archivos. Volver a guardarlo lo reemplaza.",
+                     destino=registro_app)
 _comando_de_opciones("ortografia", ["definicion", "input_banco", *_OPCIONES_LT, "output_md", "json_output", "debug"],
                      {"spellcheck": True},
                      "Revisa ortografía y gramática de las preguntas con LanguageTool.")
@@ -895,6 +919,158 @@ def _diagrama(
         print(f"✓ {destino}")
         escritos += 1
     _ultimo_codigo_salida["code"] = 0 if escritos else 1
+
+
+_AYUDA_CARPETA_REGISTRO = "Carpeta del registro (por omisión, la de [registro] de alucard.toml o ./registro)."
+
+
+def _carpeta_registro(carpeta: Optional[Path]) -> Path:
+    if carpeta is not None:
+        return carpeta
+    from generador_examenes.config import proyecto
+
+    curso = proyecto.cargar(Path.cwd())
+    if curso.registro.get("carpeta"):
+        return Path(curso.registro["carpeta"])
+    return (curso.ruta.parent if curso.ruta else Path.cwd()) / "registro"
+
+
+def _registros(carpeta: Optional[Path], cuatrimestre: Optional[str]):
+    from generador_examenes.core import registro
+
+    ruta = _carpeta_registro(carpeta)
+    registros, fallas = registro.todos(ruta, cuatrimestre)
+    for falla in fallas:
+        print(f"Aviso: {falla}", file=sys.stderr)
+    return ruta, registros
+
+
+@registro_app.command("listar")
+def _registro_listar(
+    cuatrimestre: Optional[str] = typer.Option(None, "--cuatrimestre", help="Sólo los de este cuatrimestre (como 2026-2C)."),
+    carpeta: Optional[Path] = typer.Option(None, "--carpeta", help=_AYUDA_CARPETA_REGISTRO),
+    json_output: bool = typer.Option(False, "--json", help="La lista como JSON."),
+) -> None:
+    """Los exámenes registrados: cuatrimestre, fecha, temas, preguntas y si tienen resultados."""
+    import json
+
+    ruta, registros = _registros(carpeta, cuatrimestre)
+    filas = [{"cuatrimestre": r["cuatrimestre"], "id": r["id"], "examen": r["examen"]["nombre"],
+              "fecha": r["examen"].get("fecha"), "revision": r["revision"], "temas": len(r["temas"]),
+              "preguntas": len(r["preguntas"]),
+              "estudiantes": len((r.get("resultados") or {}).get("estudiantes") or [])} for r in registros]
+    if json_output:
+        print(json.dumps(filas, indent=2, ensure_ascii=False))
+        return
+    if not filas:
+        print(f"No hay exámenes registrados en {ruta}.")
+        return
+    print(f"{'Cuatrimestre':<13} {'Id':<22} {'Fecha':<11} {'Rev':>3} {'Temas':>5} {'Preg.':>5} {'Result.':>7}  Examen")
+    for f in filas:
+        print(f"{f['cuatrimestre']:<13} {f['id']:<22} {f['fecha'] or '—':<11} {f['revision']:>3} {f['temas']:>5} "
+              f"{f['preguntas']:>5} {f['estudiantes'] or '—':>7}  {f['examen']}")
+
+
+@registro_app.command("usadas")
+def _registro_usadas(
+    cuatrimestre: Optional[str] = typer.Option(None, "--cuatrimestre", help="Sólo las de este cuatrimestre."),
+    carpeta: Optional[Path] = typer.Option(None, "--carpeta", help=_AYUDA_CARPETA_REGISTRO),
+    json_output: bool = typer.Option(False, "--json", help="La lista como JSON."),
+) -> None:
+    """Cada pregunta registrada con los exámenes en que salió (una pregunta es la misma por su contenido)."""
+    import json
+
+    _, registros = _registros(carpeta, cuatrimestre)
+    por_huella: dict = {}
+    for r in registros:
+        for qid, p in r["preguntas"].items():
+            fila = por_huella.setdefault(p["huella"], {"huella": p["huella"], "ids": [], "nombre": p["nombre"],
+                                                         "categoria": p["categoria"], "examenes": []})
+            if qid not in fila["ids"]:
+                fila["ids"].append(qid)
+            fila["examenes"].append({"cuatrimestre": r["cuatrimestre"], "id": r["id"], "fecha": r["examen"].get("fecha")})
+    filas = sorted(por_huella.values(), key=lambda f: (-len(f["examenes"]), f["categoria"], f["nombre"]))
+    if json_output:
+        print(json.dumps(filas, indent=2, ensure_ascii=False))
+        return
+    for f in filas:
+        donde = ", ".join(f"{e['cuatrimestre']}/{e['id']}" for e in f["examenes"])
+        marca = "!" if len({e["cuatrimestre"] for e in f["examenes"]}) < len(f["examenes"]) else " "
+        print(f"{marca} {len(f['examenes']):>2}  {f['categoria']} · {f['nombre']}  ({donde})")
+    if any(len({e["cuatrimestre"] for e in f["examenes"]}) < len(f["examenes"]) for f in filas):
+        print("\n! salió más de una vez en el mismo cuatrimestre")
+
+
+@registro_app.command("resultados")
+def _registro_resultados(
+    examen: str = typer.Argument(..., help="Id del examen registrado."),
+    archivo: Path = typer.Argument(..., exists=True, dir_okay=False,
+                                   help="CSV con una fila por estudiante: estudiante, tema, [ausente] y una columna "
+                                        "por pregunta (su número en el tema o su id)."),
+    cuatrimestre: Optional[str] = typer.Option(None, "--cuatrimestre", help="Si hay exámenes con ese id en varios cuatrimestres."),
+    carpeta: Optional[Path] = typer.Option(None, "--carpeta", help=_AYUDA_CARPETA_REGISTRO),
+    forzar: bool = typer.Option(False, "--forzar", help="Reemplazar resultados ya importados."),
+) -> None:
+    """Importa los resultados de un examen registrado: la letra marcada o el puntaje de cada pregunta."""
+    from generador_examenes.core import registro
+
+    ruta = _carpeta_registro(carpeta)
+    candidatos = sorted(ruta.glob(f"{cuatrimestre or '*'}/{examen}.json"))
+    if len(candidatos) != 1:
+        print(f"Error: {'no hay' if not candidatos else 'hay varios'} exámenes registrados con id {examen} en {ruta}"
+              + ("" if not candidatos else ": indicá --cuatrimestre"), file=sys.stderr)
+        _ultimo_codigo_salida["code"] = 1
+        return
+    try:
+        actual = registro.leer(candidatos[0])
+        if actual.get("resultados") and not forzar:
+            raise registro.ErrorRegistro(f"{candidatos[0].name} ya tiene resultados ({actual['resultados']['fuente']}): "
+                                         "con --forzar se reemplazan")
+        nuevo, avisos = registro.importar_resultados(actual, archivo)
+        registro.escribir(nuevo, candidatos[0])
+    except (registro.ErrorRegistro, OSError) as e:
+        print(f"Error: {e}", file=sys.stderr)
+        _ultimo_codigo_salida["code"] = 1
+        return
+    for aviso in avisos:
+        print(f"Aviso: {aviso}", file=sys.stderr)
+    estudiantes = nuevo["resultados"]["estudiantes"]
+    ausentes = sum(1 for e in estudiantes if e["ausente"])
+    print(f"✓ {candidatos[0]}: {len(estudiantes)} estudiante(s), {ausentes} ausente(s)")
+
+
+@registro_app.command("analizar")
+def _registro_analizar(
+    cuatrimestre: Optional[str] = typer.Option(None, "--cuatrimestre", help="Sólo los exámenes de este cuatrimestre."),
+    examen: Optional[List[str]] = typer.Option(None, "--examen", help="Sólo estos exámenes (por id; repetible)."),
+    carpeta: Optional[Path] = typer.Option(None, "--carpeta", help=_AYUDA_CARPETA_REGISTRO),
+    salida: Optional[Path] = typer.Option(None, "-o", "--output", help="Escribir el informe en Markdown."),
+    json_output: bool = typer.Option(False, "--json", help="El análisis como JSON."),
+) -> None:
+    """La calidad de cada pregunta con resultados: dificultad, discriminación, omisiones y distractores,
+    sumando todos los exámenes en que salió, y la confiabilidad (alfa) de cada tema."""
+    import json
+
+    from generador_examenes.core import registro
+
+    _, registros = _registros(carpeta, cuatrimestre)
+    if examen:
+        registros = [r for r in registros if r["id"] in examen]
+    analisis, temas = registro.analizar(registros)
+    if not analisis:
+        print("No hay resultados importados para analizar (alucard registro resultados).", file=sys.stderr)
+        _ultimo_codigo_salida["code"] = 1
+        return
+    if json_output:
+        print(json.dumps(registro.a_dict(analisis, temas), indent=2, ensure_ascii=False))
+    texto = registro.informe(analisis, temas)
+    if salida is not None:
+        salida.parent.mkdir(parents=True, exist_ok=True)
+        salida.write_text(texto, encoding="utf-8")
+        if not json_output:
+            print(f"✓ {salida}")
+    elif not json_output:
+        print(texto)
 
 
 omr_app = typer.Typer(context_settings=dict(CONTEXTO), add_completion=False, no_args_is_help=True,
