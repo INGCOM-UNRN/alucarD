@@ -35,7 +35,7 @@
 - `typst` (>= 0.11), `gcc` (para compilación de variantes de código C).
 
 ### Integración en el Ecosistema
-- CLI `alucard`, `generador-examenes`, `gift-linter`. Subcomando `doctor` (`generador-examenes doctor`) para verificar gcc, Typst, pypdf y conectividad con LanguageTool.
+- CLI `alucard` (con alias de compatibilidad `generador-examenes` y `gift-linter`). Subcomando `doctor` (`alucard doctor`) para verificar gcc, Typst, pypdf y conectividad con LanguageTool.
 
 ---
 
@@ -1425,7 +1425,7 @@ Al reportar un issue, incluye:
 | Opción | Descripción |
 |:--|:--|
 | `--definicion`, `-d` | Definición YAML del examen; repetila para varios exámenes, cada uno en su subcarpeta (sin -d: la clave definicion de alucard.toml) |
-| `--input-banco`, `-i` | Ruta(s) a los archivos de banco de preguntas (tiene prioridad sobre el YAML) |
+| `--input-banco`, `-i` | Ruta(s) a los bancos de preguntas: archivos o carpetas, con sus subcarpetas (tiene prioridad sobre el YAML) |
 | `--output-dir`, `-o` | Directorio de salida para los exámenes generados (tiene prioridad sobre el YAML y alucard.toml; si no está en ninguno: ./output) |
 | `--path-images`, `-p` | Ruta al directorio de imágenes referenciadas en las preguntas (tiene prioridad sobre el YAML) |
 | `--numero-temas`, `-n` | Número de temas/versiones a generar (tiene prioridad sobre el YAML; si no está en ninguno: 1) |
@@ -1447,6 +1447,10 @@ Al reportar un issue, incluye:
 | `--accessible`, `--large-text` | Generar versión con letra grande y contraste adaptado para accesibilidad |
 | `--bundle-print`, `--empaquetar-imprenta` | Empaquetar y concatenar los PDFs de todos los temas en un único archivo para imprenta |
 | `--audit-typography` | Auditar calidad tipográfica y líneas huérfanas en bloques de código de preguntas |
+| `--registrar` | Anotar el examen generado en el registro de exámenes tomados (como `alucard registro guardar`) |
+| `--cuatrimestre` | o la fecha del examen) |
+| `--registro-id` | Id del examen en el registro (por omisión, el nombre del archivo de la definición) |
+| `--forzar` | Reemplazar un registro con resultados aunque cambien las preguntas (los descarta) |
 | `--watch`, `-w` | Volver a generar cada vez que cambia la definición, un banco, una consigna o una imagen (Ctrl+C termina) |
 
 ### Comandos de `alucard`
@@ -1462,12 +1466,14 @@ Al reportar un issue, incluye:
 | `alucard ver` | Vista previa de una pregunta (o de un banco) como sale en el examen, con sus diagramas. |
 | `alucard build` | Genera los temas en PDF desde un banco (sin YAML basta -i, --consignas o --repositorio) y audita el balance de claves. |
 | `alucard balance-check` | Audita que ninguna letra sea la correcta en más del 30 % de los casos en las variantes generadas. |
-| `alucard lint-gift` | Revisa (y con --fix corrige) bancos GIFT: formato, bloques estructura y, con --compilar, el código C. |
+| `alucard lint-gift` | Revisa (y con --fix corrige) bancos GIFT: formato, compatibilidad con Moodle, bloques estructura y, con --compilar, el código C. |
 | `alucard sintetizar` | Genera un banco de preguntas de C con daedalus: cada respuesta se verifica con gcc. |
 | `alucard repartir` | Reparte los temas en PDF entre los estudiantes, para entregarlos cifrados con uatu. |
 | `alucard diagramas-md` | Dibuja los bloques ```estructura de los Markdown como SVG versionados, para publicarlos sin alucarD. |
 | `alucard diagrama` | Dibuja estructuras de datos y diagramas de algoritmos como SVG, con el formato de bloques de statics. |
 | `alucard doctor` | Diagnostica gcc, Typst, pypdf y conectividad LanguageTool. |
+| `alucard registro` | Registro de exámenes tomados: preguntas usadas en el cuatrimestre y calidad de cada pregunta. |
+| `alucard omr` | Exámenes con carátula OMR para la app Escáner OMR (OMR_SPEC.md). |
 
 Ayuda de cada comando: `alucard <comando> -h`.
 

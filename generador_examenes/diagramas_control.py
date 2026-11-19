@@ -1176,7 +1176,7 @@ def _dibujar_serie(c: d._Lienzo, serie: list, x: float, y: float, ancho: float) 
             w = max(m[0] for _, m in ramas) + 24
             yy = y
             ys = []
-            for rama, (rw, rh) in ramas:
+            for rama, (_rw, rh) in ramas:
                 c.linea(x, yy, x + 12, yy, color="strokeMain", ancho=1.5, flecha=None)
                 _dibujar_serie(c, rama, x + 12, yy, w - 24)
                 c.linea(x + w - 12, yy, x + w, yy, color="strokeMain", ancho=1.5, flecha=None)
@@ -1307,7 +1307,7 @@ def _dibujar_grafcet(c: d._Lienzo, seq: list, x: float, y: float) -> float:
             ramas = e.get("or") or e.get("and")
             medidas = [_medir_grafcet(r) for r in ramas]
             ejes, cx = [], x
-            for k, (l, r, _) in enumerate(medidas):
+            for k, (l, _r, _) in enumerate(medidas):
                 if k:
                     cx += medidas[k - 1][1] + 30 + l
                 ejes.append(cx)

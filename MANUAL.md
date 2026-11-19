@@ -1,7 +1,7 @@
 # Manual de Uso y Referencia Técnica: alucarD
 
 > **ALUCARD** — Sistema profesional de generación y maquetación de exámenes impresos basado en Typst y bancos GIFT/Moodle XML.
-> **Versión:** `5.0.0` · **CLIs principales:** `generador-examenes`, `alucard`, `gift-linter`
+> **Versión:** `5.11.0` · **CLI principal:** `alucard` (alias de compatibilidad: `generador-examenes`, `gift-linter`)
 
 ---
 
@@ -14,9 +14,9 @@
 - Síntesis de variantes numéricas y lógicas de enunciados mediante semillas reproducibles (`--semilla`).
 - Diseño y renderizado de plantillas de examen con hojas de respuestas y descriptores OMR (Optical Mark Recognition).
 - Modos accesibles con letra grande (`--accessible`) y empaquetado para imprenta (`--bundle-print`).
-- Linting y formateo in-place de archivos de preguntas en formato GIFT (`gift-linter`).
+- Linting y formateo in-place de archivos de preguntas en formato GIFT (`alucard lint-gift`).
 - Auditoría ortográfica y gramatical vía LanguageTool integrada.
-- Diagnóstico del entorno y dependencias del sistema (`generador-examenes doctor`).
+- Diagnóstico del entorno y dependencias del sistema (`alucard doctor`).
 
 ### Límites de Responsabilidad y Delegación (Qué no cubre)
 - Calificación masiva de entregas de código fuente en C (delegado a `dredd`).
@@ -40,7 +40,7 @@ uv tool install "generador-examenes[ecosistema,languagetool] @ git+https://githu
 
 ### Verificación del Entorno
 ```bash
-generador-examenes doctor
+alucard doctor
 ```
 Diagnostica la presencia y versiones de `gcc`, `typst`, `pypdf` y la conectividad con el servidor LanguageTool. Typst es obligatorio: es el único motor de PDF, y sin él `doctor` sale con 1.
 
@@ -48,13 +48,11 @@ Diagnostica la presencia y versiones de `gcc`, `typst`, `pypdf` y la conectivida
 
 ## 3. Guía Integral de Comandos (CLI)
 
-`alucarD` provee dos ejecutables principales:
-1. `generador-examenes` (alias `alucard`): Generación, validación y exportación de exámenes.
-2. `gift-linter`: Validación sintáctica y auto-corrección de bancos de preguntas en formato GIFT.
+`alucarD` expone un único ejecutable principal (`alucard`) que agrupa todos los subcomandos. Los nombres históricos `generador-examenes` y `gift-linter` se mantienen como alias de compatibilidad (`gift-linter` equivale a `alucard lint-gift`).
 
 ---
 
-### CLI 1: `alucard`
+### CLI: `alucard`
 
 Cada tarea es un comando. Las formas anteriores (`--init`, `--wizard`, `--category-tree`,
 `--spellcheck`, `--validate` y generar sin comando) siguen andando, con un aviso.
@@ -67,9 +65,10 @@ Cada tarea es un comando. Las formas anteriores (`--init`, `--wizard`, `--catego
 | `alucard categorias BANCO…` | Árbol HTML de categorías de bancos o carpetas de consignas. |
 | `alucard asistente YAML` | Asistente interactivo para crear o editar una definición. |
 | `alucard iniciar` | Crea un proyecto de ejemplo en la carpeta actual. |
+| `alucard ver` | Vista previa de una pregunta (o de un banco) como sale en el examen, con sus diagramas. |
 | `alucard registro guardar\|listar\|usadas\|resultados\|analizar` | Registro de exámenes tomados: no repetir preguntas en el cuatrimestre y analizar la calidad de cada una. Ver [Registro de exámenes tomados](#registro-de-exámenes-tomados-alucard-registro). |
 | `alucard omr build\|validate\|preview-curve\|calibration-sheet\|verify-geometry` | Exámenes con carátula OMR para la app Escáner OMR. Ver [Exámenes con carátula OMR](#exámenes-con-carátula-omr-alucard-omr). |
-| `alucard build`, `balance-check`, `lint-gift`, `sintetizar`, `diagrama`, `doctor` | Ver sus secciones. |
+| `alucard build`, `balance-check`, `lint-gift`, `sintetizar`, `repartir`, `diagramas-md`, `diagrama`, `doctor` | Ver sus secciones. |
 
 #### Vista previa de una pregunta: `alucard ver`
 
@@ -303,12 +302,12 @@ escribir nada. La vista previa (`alucard ver`) usa el estilo del curso.
 
 ---
 
-### Subcomando: `generador-examenes doctor`
+### Subcomando: `alucard doctor`
 
 Verifica la disponibilidad y salud del toolchain de soporte.
 
 ```bash
-generador-examenes doctor
+alucard doctor
 ```
 
 Salida esperada:
