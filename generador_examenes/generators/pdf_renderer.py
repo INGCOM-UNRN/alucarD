@@ -35,19 +35,24 @@ def _fuentes_typst(libreria):
 
 
 def compilar_typst_a_pdf(typst_source: str, output_pdf: Path, root_dir: Optional[Path] = None,
-                         desbordes: Optional[list] = None) -> Path:
+                         desbordes: Optional[list] = None, carpeta: Optional[Path] = None) -> Path:
     """Compila código Typst a un archivo usando la librería python o el binario CLI.
 
     El formato sale de la extensión de `output_pdf`: PDF o, para una fórmula suelta, SVG. En `desbordes`
     deja las marcas <desborde> de la plantilla; sólo la librería puede leerlas sin otro proceso.
+    `carpeta`: dónde va el `.typ` temporal; con `root_dir` encima, el código lee sus archivos con
+    rutas desde `root_dir` (`json("/layout.json")`).
     """
     output_pdf.parent.mkdir(parents=True, exist_ok=True)
+    if carpeta is not None:
+        carpeta.mkdir(parents=True, exist_ok=True)
 
-    with tempfile.NamedTemporaryFile(suffix=".typ", mode="w", encoding="utf-8", delete=False) as tmp:
+    with tempfile.NamedTemporaryFile(suffix=".typ", mode="w", encoding="utf-8", delete=False,
+                                     dir=carpeta) as tmp:
         tmp.write(typst_source)
         tmp_path = Path(tmp.name)
 
-    root = str(root_dir) if (root_dir and tmp_path.is_relative_to(root_dir)) else None
+    root = str(root_dir) if (root_dir and tmp_path.resolve().is_relative_to(Path(root_dir).resolve())) else None
     try:
         try:
             import typst as libreria_typst
@@ -127,6 +132,21 @@ class PdfRenderer(BaseRenderer):
         Renderiza un examen en formato PDF usando Typst.
         """
         output_dir.mkdir(parents=True, exist_ok=True)
+        template, contexto, typst_content = self.fuente_examen(examen_data, definicion, tema)
+        output_file = output_dir / f"examen_tema_{tema + 1:02d}.pdf"
+
+        try:
+            self.desbordes: list[dict] = []
+            compilar_typst_a_pdf(typst_content, output_file, root_dir=self.templates_dir, desbordes=self.desbordes)
+            logger.info(f"Examen PDF generado con Typst: {output_file}")
+            return output_file
+        except Exception as e:
+            raise self._error_typst(e, template, contexto) from e
+
+    def fuente_examen(self, examen_data: Any, definicion: DefinicionExamen, tema: int,
+                      extra: Optional[dict] = None) -> tuple[Any, dict, str]:
+        """La plantilla, el contexto y el código Typst del examen; `extra` se suma al contexto
+        (la carátula OMR va en `extra["omr"]`)."""
         logger.debug(f"Generando Typst para PDF del tema {tema + 1}")
 
         from jinja2 import Environment, FileSystemLoader
@@ -143,11 +163,13 @@ class PdfRenderer(BaseRenderer):
             with open(i18n_file, 'r', encoding='utf-8') as f:
                 i18n = json.load(f)
 
-        contexto = {**contexto_estilo(definicion, tema, clave=False),
+        omr = (extra or {}).get("omr")
+        contexto = {**contexto_estilo(definicion, tema, clave=False, nombre_tema=omr["variante"] if omr else None),
             'definicion': definicion,
             'secciones': preparar_examen(examen_data, definicion).get('secciones', []),
             'tema': tema,
-            'i18n': i18n
+            'i18n': i18n,
+            **(extra or {}),
         }
 
         # Cargar plantilla Typst
@@ -165,16 +187,7 @@ class PdfRenderer(BaseRenderer):
             ))
             template = env.get_template('base_examen.typ.j2')
 
-        typst_content = template.render(**contexto)
-        output_file = output_dir / f"examen_tema_{tema + 1:02d}.pdf"
-
-        try:
-            self.desbordes: list[dict] = []
-            compilar_typst_a_pdf(typst_content, output_file, root_dir=self.templates_dir, desbordes=self.desbordes)
-            logger.info(f"Examen PDF generado con Typst: {output_file}")
-            return output_file
-        except Exception as e:
-            raise self._error_typst(e, template, contexto) from e
+        return template, contexto, template.render(**contexto)
 
     def renderizar_clave(
         self,

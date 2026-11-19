@@ -89,9 +89,10 @@ def leer_logo(ruta: Optional[str]) -> Optional[tuple[str, bytes]]:
         raise ErrorEstilo(f"logotipo {archivo}: {e.strerror}") from e
 
 
-def _valores(definicion: DefinicionExamen, tema: int) -> Dict[str, str]:
+def _valores(definicion: DefinicionExamen, tema: int, nombre_tema: Optional[str] = None) -> Dict[str, str]:
     return {"institucion": definicion.institucion or "", "materia": definicion.materia or "",
-            "examen": definicion.nombre_examen or "", "fecha": definicion.fecha or "", "tema": str(tema + 1)}
+            "examen": definicion.nombre_examen or "", "fecha": definicion.fecha or "",
+            "tema": nombre_tema or str(tema + 1)}
 
 
 def _por_omision(definicion: DefinicionExamen, clave: bool) -> tuple[Franja, Franja]:
@@ -167,10 +168,12 @@ def _familias_css(familias: list[str], generica: str) -> str:
     return ", ".join([f"'{f}'" for f in nombres] + [generica])
 
 
-def contexto_estilo(definicion: DefinicionExamen, tema: int, clave: bool = False) -> Dict[str, Any]:
-    """Lo que necesitan las plantillas: `estilo.*` para Typst y para HTML, y la paleta en `c`."""
+def contexto_estilo(definicion: DefinicionExamen, tema: int, clave: bool = False,
+                    nombre_tema: Optional[str] = None) -> Dict[str, Any]:
+    """Lo que necesitan las plantillas: `estilo.*` para Typst y para HTML, y la paleta en `c`.
+    `nombre_tema`: lo que dice `{tema}` en el encabezado y el pie (la variante de un examen OMR)."""
     estilo: EstiloExamen = definicion.estilo
-    valores = _valores(definicion, tema)
+    valores = _valores(definicion, tema, nombre_tema)
     enc_omision, pie_omision = _por_omision(definicion, clave)
     encabezado, pie = estilo.encabezado or enc_omision, estilo.pie or pie_omision
     paleta = PALETA_CONTRASTE if estilo.alto_contraste else PALETA
