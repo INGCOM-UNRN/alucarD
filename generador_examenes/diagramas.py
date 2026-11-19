@@ -2329,7 +2329,11 @@ def renderizar(bloque: Dict[str, Any], tinta: bool = True) -> str:
     if tipo not in _RENDERIZADORES:
         raise ErrorDiagrama(f"tipo de bloque no soportado: {tipo!r} (disponibles: {', '.join(TIPOS)})")
     pal = PALETAS[bool(bloque.get("inkSaver", tinta))]
-    sufijo = hashlib.sha1(json.dumps(bloque, sort_keys=True, default=str).encode()).hexdigest()[:8]
+    try:
+        huella = json.dumps(bloque, sort_keys=True, default=str)
+    except TypeError:  # claves de otro tipo (YAML lee `no:` como false)
+        huella = repr(bloque)
+    sufijo = hashlib.sha1(huella.encode()).hexdigest()[:8]
     lienzo = _Lienzo(pal, sufijo)
     try:
         ancho, alto = _RENDERIZADORES[tipo](lienzo, bloque)
@@ -2488,3 +2492,11 @@ def sincronizar_svgs(directorio: "Path", tinta: bool = True, escribir: bool = Tr
         if escribir and not any(destino.iterdir()):
             destino.rmdir()
     return res
+
+
+# Los diagramas de control de procesos (bloques, respuesta temporal, Bode, Nyquist, plano s, P&ID,
+# escalera y GRAFCET) viven en su módulo y se suman acá.
+from generador_examenes import diagramas_control as _control  # noqa: E402
+
+_RENDERIZADORES.update(_control.RENDERIZADORES)
+TIPOS = TIPOS + tuple(_control.RENDERIZADORES)

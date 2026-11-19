@@ -1,0 +1,126 @@
+- id: bloques
+  type: block_diagram
+  title: Lazo de control de temperatura
+  input: "R(s)"
+  output: "Y(s)"
+  error: "E(s)"
+  forward:
+    - {label: "Gc(s)", out: "U(s)"}
+    - {label: "Gv(s)", out: "M(s)"}
+    - "Gp(s)"
+  disturbance: {at: 2, label: "D(s)", block: "Gd(s)"}
+  feedback: ["H(s)"]
+  measured: "B(s)"
+- id: cascada
+  type: block_diagram
+  title: Control en cascada
+  forward:
+    - "Gc1(s)"
+    - loop:
+        forward: ["Gc2(s)", "Gp2(s)"]
+        feedback: ["H2(s)"]
+    - "Gp1(s)"
+  feedback: ["H1(s)"]
+- id: respuesta2
+  type: time_response
+  title: Segundo orden subamortiguado
+  system: {gain: 1, zeta: 0.3, wn: 2}
+  annotations: [final, overshoot, peak, rise, settling]
+- id: fopdt
+  type: time_response
+  title: Curva de reacción (Ziegler-Nichols)
+  system: {gain: 2, num: [2], den: [15, 8, 1], delay: 1}
+  annotations: [final, tangent]
+  blankAnnotations: true
+- id: zetas
+  type: time_response
+  title: Efecto de ζ
+  systems:
+    - {label: "ζ = 0,2", zeta: 0.2, wn: 1}
+    - {label: "ζ = 0,5", zeta: 0.5, wn: 1}
+    - {label: "ζ = 1", zeta: 1, wn: 1}
+  tEnd: 20
+- id: pi
+  type: time_response
+  title: Lazo cerrado con PI y perturbación
+  closedLoop:
+    plant: {gain: 2, tau: 5, delay: 1}
+    controller: {kp: 1.2, ki: 0.25}
+  disturbance: {at: 30, amplitude: -0.5}
+  tEnd: 60
+  annotations: [overshoot, settling]
+- id: bode
+  type: bode
+  title: Bode de L(s) = 10 / (s(s+1)(s+10))
+  system: {k: 10, poles: [0, -1, -10]}
+  asymptotes: true
+  margins: true
+- id: nyquist
+  type: nyquist
+  title: Nyquist
+  system: {k: 5, poles: [-1, -2, -3]}
+  unitCircle: true
+- id: polos
+  type: pole_zero
+  title: Polos y ceros
+  poles: [-1, [-2, 3]]
+  zeros: [-4]
+  dampingLines: [0.5]
+  wnCircles: [3]
+  showValues: true
+- id: lugar
+  type: root_locus
+  title: Lugar de las raíces de K / (s(s+1)(s+2))
+  system: {k: 1, poles: [0, -1, -2]}
+  marks: [1]
+- id: pid
+  type: instrumentation
+  title: Control de nivel de un tanque
+  equipment:
+    - {id: TK, kind: tank, at: [3, 3], label: "TK-101", level: 0.6}
+    - {id: P1, kind: pump, at: [6, 5.2], label: "P-101"}
+    - {id: LV, kind: control_valve, at: [8.5, 4.8], label: "LV-101"}
+  instruments:
+    - {id: LT, tag: "LT 101", at: [5, 2]}
+    - {id: LIC, tag: "LIC 101", at: [7, 1], location: dcs}
+  lines:
+    - {from: [0.5, 1.4], to: TK, label: "entrada", via: [[3, 1.4]]}
+    - {from: TK, to: P1, via: [[3, 5.2]]}
+    - {from: P1, to: LV, via: [[7, 4.8]]}
+    - {from: LV, to: [11, 4.8], label: "salida"}
+    - {from: TK, to: LT, kind: capillary, via: [[4, 2]]}
+    - {from: LT, to: LIC, kind: electric, via: [[5, 1]]}
+    - {from: LIC, to: LV, kind: electric, via: [[8.5, 1]]}
+- id: escalera
+  type: ladder
+  title: Arranque y parada con enclavamiento
+  rungs:
+    - comment: "Motor con enclavamiento"
+      logic:
+        - or:
+            - [{no: "I0.0", label: "Marcha"}]
+            - [{no: "Q0.0"}]
+        - {nc: "I0.1", label: "Parada"}
+        - {nc: "I0.2", label: "Térmico"}
+        - {coil: "Q0.0", label: "Motor"}
+    - comment: "Temporizador de llenado"
+      logic:
+        - {no: "Q0.0"}
+        - {ton: "T1", preset: "10 s"}
+    - logic:
+        - {no: "T1"}
+        - {set: "Q0.1", label: "Alarma"}
+- id: grafcet
+  type: grafcet
+  title: Llenado y mezcla
+  steps:
+    - {step: 0, initial: true}
+    - {transition: "Marcha · nivel bajo"}
+    - {step: 1, actions: ["Abrir V1"]}
+    - {transition: "nivel alto"}
+    - and:
+        - [{step: 2, actions: ["Agitador"]}, {transition: "t/X2/30 s"}, {step: 4}]
+        - [{step: 3, actions: ["Calentar"]}, {transition: "T > 60 °C"}, {step: 5}]
+    - {transition: "1"}
+    - {step: 6, actions: ["Abrir V2"]}
+    - {transition: "nivel bajo"}
