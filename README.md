@@ -1584,9 +1584,7 @@ Este proyecto está licenciado bajo la Licencia MIT - ver el archivo LICENSE par
 
 ## 📧 Contacto
 
-**Mantenedor**: [Tu Nombre]  
-**Email**: tu@email.com  
-**Repositorio**: https://github.com/tu-usuario/alucard
+Martín René Vilugrón - mrvilugron@unrn.edu.ar - Ingeniería en Computación UNRN Andina
 
 ---
 
