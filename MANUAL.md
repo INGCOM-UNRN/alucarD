@@ -433,7 +433,8 @@ Cuidados:
 
 Las preguntas (GIFT `[markdown]`, Markdown) y los enunciados de las consignas de deckard pueden
 incluir diagramas de arreglos, matrices, listas enlazadas, pilas, la pila y el árbol de llamadas,
-colas, árboles, structs, TADs, complejidad, flujo, costos y trazas. Se escriben en un bloque de
+colas, árboles, structs, TADs, complejidad, flujo, costos y trazas, y los de control de procesos
+(ver [Control de procesos](#control-de-procesos)). Se escriben en un bloque de
 código `estructura`, en YAML o JSON, con el formato de bloques de
 statics (`estructuras.html`): un bloque exportado de statics se pega tal cual. alucarD lo
 dibuja como SVG, en línea en el HTML y como imagen en el PDF de Typst, sin navegador ni dependencias
@@ -799,6 +800,74 @@ Cuidados:
 - Por omisión, los diagramas usan la paleta de ahorro de tinta de statics (negro); `inkSaver: false`
   en el bloque usa la de color.
 - Un bloque inválido no corta la generación: el examen muestra «Diagrama inválido» con el motivo.
+
+#### Control de procesos
+
+Nueve tipos para evaluar y ejemplificar los temas de una asignatura de control de procesos. Las
+cuentas las hace alucarD sin dependencias nuevas: simula la respuesta temporal, evalúa la respuesta
+en frecuencia, calcula raíces y márgenes. Así, lo que dice el dibujo coincide con la teoría.
+
+| `type` | Qué dibuja | Claves principales |
+| :--- | :--- | :--- |
+| `block_diagram` | Diagrama de bloques | `forward` (bloques en serie: texto, o `label`, `out` (la señal de salida), `blank`; o `loop` para un lazo interno, en cascada), `feedback` (bloques de realimentación; `[]` es unitaria; sin la clave, lazo abierto), `sign` (`-` o `+`), `input`, `output`, `error`, `measured`, `disturbance` (`at`: antes de qué bloque entra, `label`, `block`, `sign`), `blankSigns` |
+| `time_response` | Respuesta temporal | `system`, `systems` (para comparar, cada uno con `label`) o `closedLoop`; `data` (puntos medidos `[t, y]`); `input` (`step`, `ramp`, `impulse`), `amplitude`, `tEnd`, `disturbance` (`at`, `amplitude`, `where`: `output` o `input`), `annotations` (`final`, `overshoot`, `peak`, `rise`, `settling`, `tau`, `delay`, `tangent`, o `all`), `settlingBand` (0,02 o 0,05), `showInput`, `yMin`, `yMax`, `blankAnnotations` |
+| `bode` | Magnitud y fase | `system`, `systems` o `closedLoop` (dibuja el lazo abierto L(s)), `wMin`, `wMax`, `asymptotes`, `margins` (MG, MF, ω180, ωc), `show` (`both`, `magnitude`, `phase`), `blankMargins` |
+| `nyquist` | Diagrama de Nyquist | `system`, `systems` o `closedLoop`, `wMin`, `wMax`, `limit` (radio máximo), `unitCircle`, `showNegative` (ω negativas, punteadas) |
+| `pole_zero` | Polos y ceros en el plano s | `poles`, `zeros` (o `system`, o `closedLoop`: los del lazo cerrado), `dampingLines` (ζ constantes), `wnCircles` (ωn constantes), `showValues`, `blank` (sólo los ejes, para ubicarlos), `xRange`, `yRange` |
+| `root_locus` | Lugar de las raíces | `system` o `closedLoop` (el lazo abierto), `kMax`, `asymptotes`, `showCrossing` (Kcrít y ωcrít), `marks` (ganancias marcadas ■), `dampingLines`, `blankMarks` |
+| `instrumentation` | P&ID con símbolos ISA-5.1 | `equipment` (`id`, `kind`: `tank`, `vessel`, `reactor`, `column`, `pump`, `control_valve`, `valve`, `heat_exchanger`; `at: [x, y]` en la grilla, `label`, `size`, `level`, `orientation: v`), `instruments` (`id`, `tag`: `"LIC 101"`, `at`, `location`: `field`, `panel`, `panel_back`, `dcs`, `plc`; `blank`), `lines` (`from`, `to`: un id o `[x, y]`; `kind`: `process`, `electric`, `pneumatic`, `data`, `capillary`; `via`, `route` (`hv` o `vh`), `label`, `arrow`), `grid` (px por unidad), `legend` |
+| `ladder` | Diagrama escalera (PLC) | `rungs` (cada uno con `logic` y `comment`). En `logic`: contactos `no` (o `na`), `nc`, `p`, `n`; salidas `coil`, `ncoil`, `set`, `reset`; temporizadores `ton`, `tof`, `tp` y contadores `ctu`, `ctd` con `preset`; `or` (ramas en paralelo, cada una una lista); `label` (descripción) y `blank` en cada uno. El escalón termina en sus salidas |
+| `grafcet` | GRAFCET | `steps` en orden: `step` (número, `initial`, `actions`, `blank`), `transition` (la receptividad, `blank`), `or` y `and` (divergencias en O y en Y: listas de secuencias); `loop` (vuelve a la etapa inicial; por omisión, sí) |
+
+**Sistemas.** `system`, cada elemento de `systems` y las partes de `closedLoop` se escriben de
+cualquiera de estas formas, todas con `delay` (el tiempo muerto) opcional:
+
+| Forma | Es | Ejemplo |
+| :--- | :--- | :--- |
+| `num`, `den` | Coeficientes en s, de la mayor potencia a la menor | `num: [1]`, `den: [1, 3, 2]` |
+| `gain`, `tau` | Primer orden, K / (τs + 1) | `gain: 2`, `tau: 5`, `delay: 1` |
+| `gain`, `zeta`, `wn` | Segundo orden, K ωn² / (s² + 2ζωn s + ωn²) | `zeta: 0.3`, `wn: 2` |
+| `k`, `poles`, `zeros` | Ganancia, polos y ceros; `[re, im]` es un par complejo | `k: 10`, `poles: [0, -1, [-2, 3]]` |
+| `kp`, `ki`, `kd` | Un controlador PID (sólo como `controller`) | `kp: 1.2`, `ki: 0.25` |
+
+`closedLoop` tiene:
+
+- `plant`, la planta;
+- `controller`, que por omisión es 1;
+- `feedback`, el sensor, que por omisión es 1;
+- `sign`, que por omisión es `-`.
+
+En el tiempo, el lazo se simula con su tiempo muerto, y un PID se simula discreto, con el derivativo
+filtrado. En frecuencia, Bode, Nyquist y el lugar de las raíces usan el lazo abierto L(s) = C·G·H.
+
+```estructura
+type: time_response
+title: Curva de reacción
+system:
+  gain: 2
+  tau: 5
+  delay: 1
+annotations: [final, tangent]
+blankAnnotations: true
+```
+
+```estructura
+type: block_diagram
+input: "R(s)"
+output: "Y(s)"
+forward:
+  - label: "Gc(s)"
+    out: "U(s)"
+  - "Gp(s)"
+disturbance:
+  at: 1
+  label: "D(s)"
+feedback: ["H(s)"]
+```
+
+En GIFT, el YAML del bloque se escribe sin llaves, en forma de bloque (como arriba): las llaves son
+de las respuestas. En la escalera, YAML lee `no:` como `false`; alucarD lo entiende igual, y `na:`
+también vale.
 
 `alucard diagrama` dibuja un archivo suelto: un bloque, una lista de bloques o un documento de
 statics. Escribe un SVG por bloque y saltea los que no son diagramas (texto, recortables):
