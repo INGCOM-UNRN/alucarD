@@ -67,6 +67,7 @@ Cada tarea es un comando. Las formas anteriores (`--init`, `--wizard`, `--catego
 | `alucard categorias BANCO…` | Árbol HTML de categorías de bancos o carpetas de consignas. |
 | `alucard asistente YAML` | Asistente interactivo para crear o editar una definición. |
 | `alucard iniciar` | Crea un proyecto de ejemplo en la carpeta actual. |
+| `alucard registro guardar\|listar\|usadas\|resultados\|analizar` | Registro de exámenes tomados: no repetir preguntas en el cuatrimestre y analizar la calidad de cada una. Ver [Registro de exámenes tomados](#registro-de-exámenes-tomados-alucard-registro). |
 | `alucard omr build\|validate\|preview-curve\|calibration-sheet\|verify-geometry` | Exámenes con carátula OMR para la app Escáner OMR. Ver [Exámenes con carátula OMR](#exámenes-con-carátula-omr-alucard-omr). |
 | `alucard build`, `balance-check`, `lint-gift`, `sintetizar`, `diagrama`, `doctor` | Ver sus secciones. |
 
@@ -262,6 +263,7 @@ escribir nada. La vista previa (`alucard ver`) usa el estilo del curso.
 | `-s`, `--semilla` | `<int>` | `42` | Semilla pseudo-aleatoria para reproducibilidad matemática. |
 | `-f`, `--formato` | `<str>` | `html` | Formato(s) de salida: `pdf`, `html` o ambos (`html,pdf`). |
 | `-t`, `--template` | `<path>` | `None` | Ruta a plantilla Typst personalizada (`.typ` o `.typ.j2`). |
+| `--registrar` | `flag` | `False` | Anota el examen generado en el registro de exámenes tomados (ver [Registro](#registro-de-exámenes-tomados-alucard-registro)). Con `--cuatrimestre`, `--registro-id` y `--forzar`. |
 | `--omr` | `flag` | `False` | Genera hoja de respuestas OMR de lectura óptica y descriptor JSON de corrección. |
 | `--accessible` | `flag` | `False` | Edición accesible: letra de 14 puntos (o la del `[estilo]`, si es más grande) y alto contraste, con los títulos y, en el PDF, los diagramas en proporción. |
 | `--bundle-print` | `flag` | `False` | Concatena todos los temas generados en un único archivo PDF listo para imprenta. |
@@ -1519,6 +1521,131 @@ tiempo, pero no la calidad de cada enunciado.
 
 ---
 
+### Registro de exámenes tomados: `alucard registro`
+
+Cada examen que se toma se puede anotar en un registro: un JSON por examen, con la definición tal
+como estaba, cada pregunta con su contenido y el orden de preguntas y opciones de cada tema. Con eso:
+
+- **No se repiten preguntas en el cuatrimestre.** `generar` y `validar` dejan afuera las preguntas
+  que ya salieron en otro examen registrado del mismo cuatrimestre.
+- **Se cruzan datos.** `alucard registro usadas` muestra en qué exámenes salió cada pregunta.
+- **Se mide la calidad de cada pregunta.** Con los resultados importados, `alucard registro analizar`
+  calcula su dificultad, su discriminación, las omisiones y cómo funcionan los distractores, sumando
+  todos los exámenes en que salió.
+
+Registrar es explícito, porque un examen se arma de a poco y sólo cuenta como tomado la versión que
+se guarda:
+
+```bash
+alucard validar -d parcial1.yaml                 # se itera sobre la definición
+alucard registro guardar -d parcial1.yaml        # la versión que se toma (o: alucard generar --registrar)
+alucard registro resultados parcial1 notas.csv   # después del examen
+alucard registro analizar -o calidad.md          # todas las preguntas con resultados
+alucard registro listar
+alucard registro usadas --cuatrimestre 2026-2C
+```
+
+`registro guardar` arma el examen igual que `generar` con las mismas opciones (`-n`, `-s`, `-i`): las
+mismas preguntas, en el mismo orden y con las mismas opciones. No genera archivos. Volver a guardarlo
+lo reemplaza y sube su `revision`. Si el examen ya tiene resultados, se conservan si las preguntas no
+cambiaron; si cambiaron, hace falta `--forzar` y los resultados se descartan.
+
+**Dónde y con qué nombre.** Cada examen va en `<carpeta>/<cuatrimestre>/<id>.json`, un archivo por
+examen, para versionarlo en git sin conflictos.
+
+| Dato | De dónde sale, en orden |
+| :--- | :--- |
+| carpeta | `carpeta` de `[registro]` en `alucard.toml`; si no, `registro/` junto al `alucard.toml` (o a la definición). `--carpeta` en `listar`, `usadas`, `resultados` y `analizar`. |
+| cuatrimestre | `--cuatrimestre`, `registro.cuatrimestre` de la definición, `cuatrimestre` de `[registro]`. Si no está en ninguno, sale de la `fecha` del examen (o de hoy): `2026-1C` de enero a julio, `2026-2C` de agosto a diciembre. |
+| id | `--registro-id`, `registro.id` de la definición o el nombre del archivo de la definición (`parcial1`). |
+
+```toml
+[registro]
+carpeta = "registro"
+cuatrimestre = "2026-2C"
+repetidas = "evitar"         # "evitar" (por omisión), "avisar" o "permitir"
+```
+
+**Preguntas repetidas.** Una pregunta es la misma si tiene el mismo `id` o la misma huella. La huella
+se calcula sobre el contenido: el tipo, el enunciado y las opciones, sin importar su orden. Así, cambiarle
+el nombre o moverla de banco no la esconde. Lo que pasa con una pregunta que ya salió en el cuatrimestre
+depende de `repetidas`:
+
+| `repetidas` | Qué pasa |
+| :--- | :--- |
+| `evitar` | Queda afuera de los pools. Si un pool se queda sin preguntas, el error lo dice. Una pregunta fijada (`preguntas_fijadas`) se queda igual, con un aviso. |
+| `avisar` | Se puede elegir, y cada una que sale queda en el resumen («Revisá antes de imprimir»). |
+| `permitir` | No se mira el registro. |
+
+A un examen ya registrado sólo lo restringen los exámenes registrados antes que él. Así, volver a
+guardar `parcial1` da las mismas preguntas aunque después se haya registrado `parcial2` con otras.
+Otros cuatrimestres no cuentan.
+
+**Resultados.** `alucard registro resultados <id> <archivo.csv>` lee un CSV con una fila por
+estudiante:
+
+| Columna | Qué lleva |
+| :--- | :--- |
+| `estudiante` (o `student_id`, `legajo`) | Quién es. |
+| `tema` | El número de tema que rindió. |
+| `ausente` | Opcional: `si` si no se presentó. |
+| `1`, `2`… (o el id de la pregunta) | Una por pregunta, con su número en el tema. Va la letra marcada (`A`, `B`…; `V` o `F` en verdadero o falso), el puntaje obtenido (en desarrollos y consignas) o nada si la dejó en blanco. |
+
+```csv
+estudiante,tema,ausente,1,2,3,4
+C001,1,,B,A,V,2.5
+C002,2,,D,,F,1
+C003,1,si,,,,
+```
+
+Una letra que la pregunta no tiene, un puntaje fuera de rango o una columna que falta frenan la
+importación, con la fila. Para reemplazar resultados ya importados hace falta `--forzar`.
+
+**Calidad de las preguntas.** `alucard registro analizar` (con `--cuatrimestre`, `--examen`, `-o` o
+`--json`) suma cada pregunta en todos los exámenes en que salió y calcula:
+
+| Medida | Qué es | Cuándo avisa |
+| :--- | :--- | :--- |
+| Dificultad | Puntaje medio sobre el máximo (1 = todos bien). | Más de 0,90 (muy fácil) o menos de 0,20 (muy difícil). |
+| Discriminación | Correlación entre la pregunta y el resto del examen (ítem-resto). | Menos de 0,20, y negativa: a los que mejor les fue les va peor en esta, así que hay que revisar la clave. |
+| D | Dificultad en el 27 % al que mejor le fue menos en el 27 % al que peor le fue. | — |
+| Omisión | Cuántos la dejaron en blanco. | Más del 25 %. |
+| Opciones | Cuántos eligieron cada opción. | Un distractor que elige menos del 5 % no funciona. Uno que atrae a los que mejor les fue sugiere una clave o una redacción ambigua. |
+
+Con menos de 10 respuestas, el análisis avisa que es orientativo. Para cada tema calcula además el
+alfa de Cronbach, que mide la confiabilidad del examen.
+
+**El formato `alucard-examen/1`.** Se valida con su JSON Schema
+(`generador_examenes/core/esquemas/alucard-examen-1.schema.json`) al leerlo y al escribirlo:
+
+```json
+{
+  "schema": "alucard-examen/1", "id": "parcial1", "cuatrimestre": "2026-2C", "revision": 2,
+  "registrado": "2026-09-01T10:00:00.000000", "actualizado": "2026-09-08T18:30:00.000000", "alucard": "5.11.0",
+  "examen": {"nombre": "Parcial 1", "institucion": "UNRN", "materia": "Programación I", "fecha": "2026-09-10", "duracion_minutos": 120},
+  "definicion": {"archivo": "parcial1.yaml", "sha256": "…", "contenido": {"…": "la definición YAML tal como estaba"}},
+  "generacion": {"semilla": 42, "numero_temas": 2, "bancos": ["bancos"], "repetidas": "evitar", "excluidas": ["gift_3_q2"]},
+  "preguntas": {
+    "gift_1_q0": {"huella": "sha256:…", "nombre": "q0", "tipo": "seleccion_multiple", "categoria": "punteros",
+                  "etiquetas": [], "fuente_banco": "teoria.gift", "enunciado_html": "<p>…</p>",
+                  "opciones": [{"texto_html": "…", "es_correcta": true}, {"texto_html": "…", "es_correcta": false}]}
+  },
+  "temas": [
+    {"tema": 1, "semilla": 42, "secciones": [{"nombre": "Teoría", "preguntas": [
+      {"orden": 1, "id": "gift_1_q0", "puntaje": 2.0, "opciones": [1, 0], "correctas": ["B"]}]}]}
+  ],
+  "resultados": {"importado": "2026-09-12T09:00:00", "fuente": "notas.csv", "estudiantes": [
+    {"estudiante": "C001", "tema": 1, "ausente": false,
+     "respuestas": {"gift_1_q0": {"opcion": "B", "puntaje": 2.0, "omitida": false}}}]}
+}
+```
+
+- `preguntas` tiene cada pregunta una sola vez, con sus opciones en el orden del banco.
+- En cada tema, `opciones` dice qué opción del banco quedó en cada letra: `[1, 0]` es «A es la
+  segunda del banco, B la primera».
+- `correctas` son las letras correctas de ese tema.
+- `resultados` es `null` hasta que se importan.
+
 ### Exámenes con carátula OMR: `alucard omr`
 
 Implementa [`OMR_SPEC.md`](OMR_SPEC.md): un examen por estudiante cuya página 1 lleva una franja que
@@ -1695,6 +1822,7 @@ rutas del YAML son relativas a la carpeta desde la que se ejecuta alucard.
 | `numero_temas` | entero | el del toml; si no, `1` | Cuántos temas generar. `-n` lo reemplaza. |
 | `semilla` | entero | la del toml; si no, `42` | Semilla del sorteo: la misma da el mismo examen. `-s` la reemplaza. |
 | `formato` | lista | la del toml; si no, `["html"]` | `html`, `pdf` o ambos. `-f` lo reemplaza. |
+| `registro` | sección | — | `id`, `cuatrimestre` y `repetidas` (`evitar`, `avisar` o `permitir`) de este examen en el registro de exámenes tomados. Ver [Registro](#registro-de-exámenes-tomados-alucard-registro). |
 
 #### `configuracion_examen`
 
@@ -1816,6 +1944,16 @@ Va en `estilo` de la definición y en `[estilo]` de `alucard.toml`. Más detalle
 #### `[estilo]`
 
 Las mismas claves que [`estilo`](#estilo). La definición manda clave por clave.
+
+#### `[registro]`
+
+| Clave | Tipo | Por omisión | Qué hace |
+| :--- | :--- | :--- | :--- |
+| `carpeta` | ruta | `registro/` junto al `alucard.toml` | Dónde van los exámenes registrados. |
+| `cuatrimestre` | texto | el de la fecha del examen | Cuatrimestre de los exámenes que se registran, como `2026-2C`. |
+| `repetidas` | `"evitar"`, `"avisar"` o `"permitir"` | `"evitar"` | Qué pasa con una pregunta que ya salió en el cuatrimestre. |
+
+`registro:` de la definición manda clave por clave. Ver [Registro](#registro-de-exámenes-tomados-alucard-registro).
 
 ### `debug_consignas`
 
