@@ -41,6 +41,8 @@ dependencies = [
     "typst>=0.11,<0.14",
     # Núcleo común del ecosistema (N-ECO-14): contrato de línea de comandos y textos en español.
     "yutani @ git+https://github.com/INGCOM-UNRN-P1/yutani@cf49348fae40d264006fe07dee2cc9e88dd9c934",
+    "segno>=1.6,<2",
+    "jsonschema>=4.20,<5",
 ]
 
 [project.optional-dependencies]
@@ -84,6 +86,7 @@ dev = [
     "mypy>=1.0,<2.0",
     "types-PyYAML>=6.0",
     "types-Markdown>=3.5",
+    "zxing-cpp>=2.2",
 ]
 
 [tool.mypy]

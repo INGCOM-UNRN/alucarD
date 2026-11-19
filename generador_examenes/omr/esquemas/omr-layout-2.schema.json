@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/INGCOM-UNRN/alucarD/omr-layout-2.schema.json",
+  "title": "omr-layout/2",
+  "description": "Manifiesto geométrico de la carátula OMR. Coordenadas en mm desde el centroide del marcador ArUco 0.",
+  "type": "object",
+  "required": ["schema", "layout_id", "version", "frame_mm", "marker_mm", "px_per_mm", "bubble_diameter_mm",
+               "grade_scale", "grade_map", "fields"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {"const": "omr-layout/2"},
+    "layout_id": {"type": "string", "pattern": "^[A-Z0-9-]+$"},
+    "version": {"type": "integer", "minimum": 1},
+    "frame_mm": {
+      "type": "object", "required": ["w", "h"], "additionalProperties": false,
+      "properties": {"w": {"type": "number", "exclusiveMinimum": 0}, "h": {"type": "number", "exclusiveMinimum": 0}}
+    },
+    "marker_mm": {"type": "number", "minimum": 8.0},
+    "px_per_mm": {"type": "integer", "minimum": 1},
+    "bubble_diameter_mm": {"type": "number", "exclusiveMinimum": 0},
+    "grade_scale": {
+      "type": "object", "additionalProperties": false,
+      "required": ["min", "max", "decimals", "step", "rounding", "match_tolerance"],
+      "properties": {
+        "min": {"type": "number"},
+        "max": {"type": "number"},
+        "decimals": {"enum": [0, 1, 2]},
+        "step": {"enum": [null, 0.5, 0.25]},
+        "rounding": {"enum": ["half_up", "half_even"]},
+        "match_tolerance": {"type": "integer", "minimum": 0}
+      }
+    },
+    "grade_map": {
+      "type": "object", "additionalProperties": false,
+      "required": ["type", "pass_pct", "pass_grade", "promo_pct", "promo_grade", "curve_k", "fail_curve"],
+      "properties": {
+        "type": {"const": "piecewise_log"},
+        "pass_pct": {"type": "number", "minimum": 50.0, "maximum": 70.0},
+        "pass_grade": {"const": 4.0},
+        "promo_pct": {"type": ["number", "null"], "exclusiveMaximum": 100.0},
+        "promo_grade": {"type": ["number", "null"], "exclusiveMinimum": 4.0},
+        "curve_k": {"type": "number", "minimum": -10.0, "maximum": 10.0},
+        "fail_curve": {"const": "linear"}
+      }
+    },
+    "fields": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "label", "type", "required"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[A-Za-z0-9_-]+$"},
+          "label": {"type": "string"},
+          "type": {"enum": ["single_choice", "decimal_digits", "flag"]},
+          "required": {"type": "boolean"}
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"type": {"const": "single_choice"}}},
+            "then": {
+              "required": ["max_points", "levels", "options"],
+              "properties": {
+                "max_points": {"type": "number", "exclusiveMinimum": 0},
+                "levels": {"type": "integer", "minimum": 2, "maximum": 11},
+                "options": {
+                  "type": "array", "minItems": 2, "maxItems": 11,
+                  "items": {
+                    "type": "object", "additionalProperties": false,
+                    "required": ["step", "label", "x_mm", "y_mm"],
+                    "properties": {
+                      "step": {"type": "integer", "minimum": 0},
+                      "label": {"type": "string"},
+                      "x_mm": {"type": "number"},
+                      "y_mm": {"type": "number"}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "if": {"properties": {"type": {"const": "decimal_digits"}}},
+            "then": {
+              "required": ["digits"],
+              "properties": {
+                "role": {"const": "final_grade"},
+                "digits": {
+                  "type": "array", "minItems": 1, "maxItems": 3,
+                  "items": {
+                    "type": "object", "additionalProperties": false,
+                    "required": ["place", "start", "count", "x0_mm", "y0_mm", "step_mm", "axis"],
+                    "properties": {
+                      "place": {"enum": [1.0, 0.1, 0.01]},
+                      "start": {"type": "integer", "minimum": 0},
+                      "count": {"type": "integer", "minimum": 1, "maximum": 11},
+                      "values": {"type": "array", "items": {"type": "integer", "minimum": 0}},
+                      "x0_mm": {"type": "number"},
+                      "y0_mm": {"type": "number"},
+                      "step_mm": {"type": "number", "minimum": 8.0},
+                      "axis": {"enum": ["x", "y"]}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "if": {"properties": {"type": {"const": "flag"}}},
+            "then": {
+              "required": ["x_mm", "y_mm"],
+              "properties": {"x_mm": {"type": "number"}, "y_mm": {"type": "number"}}
+            }
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,25 +1,57 @@
 // Plantilla Typst para Examen Teórico (alucarD)
+{% set margen_inf = omr.margen_inf_mm if omr else 20 %}
+{% if omr %}
+// Carátula OMR (OMR_SPEC.md): la franja de la página 1 sale del manifiesto, leído con json().
+{{ omr.modulo }}
+#let omr-m = json({{ omr.manifiesto | typst_cadena }})
+// El QR de pie de cada página desde la 2: EXAM_ID/STUDENT_ID/P<n>.
+#let omr-pies = ({% for n, svg in omr.pies.items() %}"{{ n }}": {{ svg | typst_cadena }}, {% else %}:{% endfor %})
+{% endif %}
 #set document(title: "{{ definicion.nombre_examen }} - Tema {{ tema + 1 }}", author: "{{ definicion.institucion }}")
 #set page(
   paper: "a4",
-  background: {% if definicion.configuracion_examen.debug_consignas %}rotate(-45deg, text(size: 120pt, weight: "bold", fill: luma(225))[Debug]){% else %}none{% endif %},
-  margin: (top: {{ estilo.margen_sup_mm }}mm, bottom: 2cm, left: 2cm, right: 2cm),
-  header: context [
+  background: {% if omr %}context {
+    // La franja va desde el origen de la página, fuera de los márgenes: A4 exacto, sin escala.
+    if counter(page).get().first() == 1 {
+      place(top + left, omr-franja(omr-m, ox: {{ omr.ox_mm }}mm, oy: {{ omr.oy_mm }}mm, divisoria: {{ omr.divisoria_mm }}mm,
+        qr: (svg: {{ omr.qr | typst_cadena }}, x: {{ omr.qr_x }}, y: {{ omr.qr_y }}, lado: {{ omr.qr_lado }}),
+        respaldo: ({% for linea in omr.respaldo %}{{ linea | typst_cadena }}, {% endfor %}),
+        texto: (x: {{ omr.texto_x }}, y: {{ omr.texto_y }}, ancho: {{ omr.texto_ancho }})))
+    }{% if definicion.configuracion_examen.debug_consignas %}
+    place(center + horizon, rotate(-45deg, text(size: 120pt, weight: "bold", fill: luma(225))[Debug])){% endif %}
+  }{% elif definicion.configuracion_examen.debug_consignas %}rotate(-45deg, text(size: 120pt, weight: "bold", fill: luma(225))[Debug]){% else %}none{% endif %},
+  margin: (top: {{ estilo.margen_sup_mm }}mm, bottom: {{ margen_inf }}mm, left: 2cm, right: 2cm),
+  header: context {
+    let hoja = counter(page).get().first()
+    // Con carátula OMR, la página 1 no lleva encabezado: arriba está la franja.
+    if {{ 'hoja > 1' if omr else 'true' }} [
     {% if estilo.logo_typst %}#let logo = {{ estilo.logo_typst }}
     {% endif %}#{{ estilo.encabezado_typst }}
     {% if estilo.nombre_en_hojas %}
     // Cada hoja nueva (las páginas impares, salvo la primera, que tiene el cuadro de datos) lleva
     // un renglón para el nombre: si las hojas se separan, se sabe de quién es cada una.
-    #let hoja = counter(page).get().first()
     #if hoja > 1 and calc.odd(hoja) [
       #v(1.5mm, weak: true)
-      #text(size: 9pt)[*Apellido y Nombre:* #box(width: 1fr, line(length: 100%, stroke: 0.5pt))]
+      #text(size: 9pt)[*Apellido y Nombre:* {% if omr %}{{ omr.nombre | typst_texto }}{% else %}#box(width: 1fr, line(length: 100%, stroke: 0.5pt)){% endif %}]
     ]
     {% endif %}
-  ],
+    ]
+  },
   footer: context [
+    {% if omr %}
+    #let hoja = counter(page).get().first()
+    #grid(columns: (1fr, {{ omr.pie_lado }}mm), column-gutter: 4mm, align: horizon,
+      [
+        #line(length: 100%, stroke: 0.5pt + rgb("{{ c.linea_pie }}"))
+        #{{ estilo.pie_typst }}
+      ],
+      if hoja > 1 and str(hoja) in omr-pies {
+        image(bytes(omr-pies.at(str(hoja))), format: "svg", width: {{ omr.pie_lado }}mm, height: {{ omr.pie_lado }}mm)
+      } else { box(width: {{ omr.pie_lado }}mm) })
+    {% else %}
     #line(length: 100%, stroke: 0.5pt + rgb("{{ c.linea_pie }}"))
     #{{ estilo.pie_typst }}
+    {% endif %}
   ]
 )
 
@@ -65,7 +97,7 @@
 #let pregunta(partes, libre: false, hoja: false, nombre: "") = {
   if hoja { block(height: 0pt, above: 0pt, below: 0pt)[#metadata(none) <antes-de-la-hoja>] }
   context {
-  let alto = page.height - {{ estilo.margen_sup_mm }}mm - 2cm
+  let alto = page.height - {{ estilo.margen_sup_mm }}mm - {{ margen_inf }}mm
   let ancho = page.width - 4cm
   let caja(rompible, cuerpo) = block(
     width: 100%,
@@ -81,7 +113,7 @@
   let total = alto-de(todo)
   let cuadro = if hoja {
     let inicio = query(selector(<antes-de-la-hoja>).before(here())).last().location().position().y
-    let libre-en-hoja = page.height - 2cm - inicio - calc.rem-euclid(total / 1pt, alto / 1pt) * 1pt
+    let libre-en-hoja = page.height - {{ margen_inf }}mm - inicio - calc.rem-euclid(total / 1pt, alto / 1pt) * 1pt
     espacio(calc.max(60pt / 1pt, libre-en-hoja / 1pt - 40) * 1pt)
   }
   if libre {
@@ -106,6 +138,10 @@
   }
 }
 
+{% if omr %}
+// El cuerpo empieza debajo de la línea divisoria de la franja: nunca la invade.
+#v({{ omr.salto_mm }}mm)
+{% endif %}
 // Encabezado del Examen
 #align(center)[
   #text(size: 1.6em, weight: "bold", fill: rgb("{{ c.titulo }}"))[{{ definicion.nombre_examen | typst_texto }}]\
@@ -115,7 +151,7 @@
   {% endif %}
   #v(2pt)
   #text(size: 0.9em, fill: rgb("{{ c.sub }}"))[
-    {% if definicion.fecha %}*Fecha:* {{ definicion.fecha | typst_texto }} | {% endif %}{% if definicion.duracion_minutos %}*Duración:* {{ definicion.duracion_minutos }} min | {% endif %}*TEMA {{ tema + 1 }}*
+    {% if definicion.fecha %}*Fecha:* {{ definicion.fecha | typst_texto }} | {% endif %}{% if definicion.duracion_minutos %}*Duración:* {{ definicion.duracion_minutos }} min | {% endif %}{% if omr %}*VARIANTE {{ omr.variante }}*{% else %}*TEMA {{ tema + 1 }}*{% endif %}
   ]
 ]
 
@@ -125,7 +161,7 @@
 #rect(width: 100%, inset: 8pt, radius: 4pt, stroke: 0.8pt + rgb("{{ c.tenue }}"))[
   #grid(
     columns: (1.5fr, 1fr, 0.8fr),
-    [ *Apellido y Nombre:* #line(length: 65%, stroke: 0.5pt) ],
+    {% if omr %}[ *Apellido y Nombre:* {{ omr.nombre | typst_texto }} ],{% else %}[ *Apellido y Nombre:* #line(length: 65%, stroke: 0.5pt) ],{% endif %}
     [ *Legajo / DNI:* #line(length: 50%, stroke: 0.5pt) ],
     [ *Calificación:* #box(width: 30pt, height: 14pt, stroke: 0.5pt)[] ]
   )

@@ -897,6 +897,218 @@ def _diagrama(
     _ultimo_codigo_salida["code"] = 0 if escritos else 1
 
 
+omr_app = typer.Typer(context_settings=dict(CONTEXTO), add_completion=False, no_args_is_help=True,
+                      help="Exámenes con carátula OMR para la app Escáner OMR (OMR_SPEC.md).")
+app.add_typer(omr_app, name="omr")
+
+_AYUDA_CONFIG = "exam.yaml o exam.json: identidad del examen, variantes, escala, curva y rúbrica."
+
+
+def _omr_config(ruta: Path):
+    """La configuración OMR validada, o el error (código 1) con cada problema en su renglón."""
+    from generador_examenes.omr.config import ErrorConfig, cargar
+
+    try:
+        return cargar(ruta)
+    except ErrorConfig as e:
+        print(f"Error: {ruta}: la configuración no es válida:", file=sys.stderr)
+        for problema in e.problemas:
+            print(f"  - {problema}", file=sys.stderr)
+        _ultimo_codigo_salida["code"] = 1
+        return None
+
+
+@omr_app.command("validate")
+def _omr_validate(
+    config: Path = typer.Option(..., "--config", exists=True, dir_okay=False, help=_AYUDA_CONFIG),
+    roster: Optional[Path] = typer.Option(None, "--roster", exists=True, dir_okay=False,
+                                          help="inscriptos.csv (legajo,apellido,nombre[,student_id,variante])."),
+    json_output: bool = typer.Option(False, "--json", help="El resultado como JSON."),
+) -> None:
+    """Valida la configuración (§3.3), el manifiesto que sale de ella (omr-layout/2) y, si se pasa, la nómina.
+
+    Sale con 1 si algo no cumple, con cada problema en su renglón.
+    """
+    import json
+
+    from generador_examenes.omr import layout, nomina, qr
+
+    cfg = _omr_config(config)
+    if cfg is None:
+        return
+    problemas = [f"manifiesto: {p}" for p in layout.problemas(layout.construir(cfg))]
+    inscriptos = []
+    if roster is not None:
+        try:
+            inscriptos = nomina.leer(roster, cfg.variants)
+        except nomina.ErrorNomina as e:
+            problemas += [f"{roster.name}: {p}" for p in e.problemas]
+    largo = max((len(i.student_id) for i in inscriptos), default=4)
+    if qr.largo_maximo_caratula(cfg, largo) > qr.CAPACIDAD_CARATULA:
+        problemas.append(f"el QR de la carátula pasa de {qr.CAPACIDAD_CARATULA} caracteres (versión 3-Q)")
+    compacto = qr.motivos_sin_compacto(cfg)
+    if json_output:
+        print(json.dumps({"valido": not problemas, "exam_id": cfg.exam_id, "problemas": problemas,
+                          "inscriptos": len(inscriptos), "compacto_posible": not compacto,
+                          "sin_compacto": compacto}, indent=2, ensure_ascii=False))
+    elif problemas:
+        print(f"Error: {config}:", file=sys.stderr)
+        for problema in problemas:
+            print(f"  - {problema}", file=sys.stderr)
+    else:
+        print(f"✓ {config}: {cfg.exam_id}, {len(cfg.rubric)} ejercicio(s), variantes {', '.join(cfg.variants)}"
+              + (f", {len(inscriptos)} inscripto(s)" if roster else ""))
+        if compacto:
+            print(f"  El QR de configuración va sólo en OMRCFG2: ({'; '.join(compacto)}).")
+    _ultimo_codigo_salida["code"] = 1 if problemas else 0
+
+
+@omr_app.command("preview-curve")
+def _omr_preview_curve(
+    config: Path = typer.Option(..., "--config", exists=True, dir_okay=False, help=_AYUDA_CONFIG),
+) -> None:
+    """Imprime la tabla porcentaje → nota → condición de la curva, la misma cuenta que hace la app."""
+    from generador_examenes.omr.notas import texto_tabla
+
+    cfg = _omr_config(config)
+    if cfg is not None:
+        print(texto_tabla(cfg))
+
+
+@omr_app.command("build")
+def _omr_build(
+    config: Path = typer.Option(..., "--config", exists=True, dir_okay=False, help=_AYUDA_CONFIG),
+    roster: Path = typer.Option(..., "--roster", exists=True, dir_okay=False,
+                                help="inscriptos.csv (legajo,apellido,nombre[,student_id,variante])."),
+    questions: Optional[List[Path]] = typer.Option(None, "--questions", exists=True,
+                                                   help="Bancos o carpetas de bancos; reemplaza al input_banco "
+                                                        "de la definición."),
+    out: Optional[Path] = typer.Option(None, "--out", help="Carpeta del lote (por omisión, dist/<exam_id>/)."),
+    qr_config_mode: str = typer.Option("compressed", "--qr-config-mode",
+                                       help="compressed (OMRCFG2:, por omisión) o compact (OMRCFG/2, "
+                                            "sólo para el layout estándar)."),
+    nueva_clave: bool = typer.Option(False, "--nueva-clave",
+                                     help="Otra hmac_key: invalida las carátulas ya impresas con la anterior."),
+    json_output: bool = typer.Option(False, "--json", help="El resumen del lote como JSON."),
+) -> None:
+    """Genera el lote: un examen con carátula OMR por estudiante, la nómina, el manifiesto, la hoja docente
+    con el QR de configuración y la hoja de calibración.
+
+    Antes de compilar los PDF imprime la tabla de verificación de la curva de notas.
+    """
+    from generador_examenes.omr import lote, nomina
+    from generador_examenes.omr.cuerpo import ErrorCuerpo
+    from generador_examenes.omr.notas import texto_tabla
+
+    if qr_config_mode not in ("compressed", "compact"):
+        _usage_error(f"--qr-config-mode: {qr_config_mode!r} (elegir entre 'compressed' y 'compact')")
+    cfg = _omr_config(config)
+    if cfg is None:
+        return
+    try:
+        inscriptos = nomina.leer(roster, cfg.variants)
+    except nomina.ErrorNomina as e:
+        print(f"Error: {roster}:", file=sys.stderr)
+        for problema in e.problemas:
+            print(f"  - {problema}", file=sys.stderr)
+        _ultimo_codigo_salida["code"] = 1
+        return
+    if not json_output:
+        print(texto_tabla(cfg) + "\n")
+    try:
+        resultado = lote.build(cfg, inscriptos, out or Path("dist") / cfg.exam_id, questions,
+                               modo_qr=qr_config_mode, nueva_clave=nueva_clave)
+    except (lote.ErrorLote, ErrorCuerpo) as e:
+        print(f"Error: {e}", file=sys.stderr)
+        _ultimo_codigo_salida["code"] = 1
+        return
+    if json_output:
+        print(lote.a_json(lote.resumen_json(resultado)))
+        return
+    for archivo in (resultado.examenes, resultado.nomina, resultado.manifiesto, resultado.config_qr,
+                    resultado.config_qr_svg, resultado.calibracion, resultado.registro):
+        print(f"✓ {archivo}")
+    print(f"\n{len(inscriptos)} estudiante(s), manifiesto sha256 {resultado.huella}")
+    print(f"⚠ {resultado.nomina.name} y {resultado.config_qr.name} son sólo para docentes: la nómina vincula "
+          "student_id con la persona y la hoja docente lleva la hmac_key.")
+    if resultado.avisos:
+        print(f"\nRevisá antes de imprimir ({len(resultado.avisos)}):")
+        for aviso in resultado.avisos:
+            print(f"  ! {aviso}")
+
+
+@omr_app.command("calibration-sheet")
+def _omr_calibration_sheet(
+    manifest: Path = typer.Option(..., "--manifest", exists=True, dir_okay=False, help="layout_<id>_v<n>.json."),
+    out: Path = typer.Option(Path("layout_test.pdf"), "--out", help="PDF de la hoja de calibración."),
+) -> None:
+    """Genera la hoja de calibración de un manifiesto: la cabecera con burbujas rellenas al 0, 25, 50 y 100 %."""
+    import json
+
+    from generador_examenes.omr import layout, lote
+
+    try:
+        manifiesto = json.loads(manifest.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        _usage_error(f"{manifest}: {e}")
+    problemas = layout.problemas(manifiesto)
+    if problemas:
+        print(f"Error: {manifest}: no cumple omr-layout/2:", file=sys.stderr)
+        for problema in problemas:
+            print(f"  - {problema}", file=sys.stderr)
+        _ultimo_codigo_salida["code"] = 1
+        return
+    raiz = manifest.resolve().parent
+    from generador_examenes.core.estilo import FUENTE
+
+    fuente = "(" + ", ".join(json.dumps(f) for f in FUENTE) + ",)"
+    try:
+        destino = lote._compilar(lote.hoja_calibracion(manifiesto, "/" + manifest.name, fuente), out.resolve(), raiz)
+    except lote.ErrorLote as e:
+        print(f"Error: {e}", file=sys.stderr)
+        _ultimo_codigo_salida["code"] = 1
+        return
+    finally:
+        import shutil as _shutil
+
+        _shutil.rmtree(raiz / ".omr", ignore_errors=True)
+    print(f"✓ {destino}")
+
+
+@omr_app.command("verify-geometry")
+def _omr_verify_geometry(
+    pdf: Path = typer.Option(..., "--pdf", exists=True, dir_okay=False, help="examenes_<exam_id>.pdf u otro PDF con carátulas."),
+    manifest: Path = typer.Option(..., "--manifest", exists=True, dir_okay=False, help="layout_<id>_v<n>.json."),
+    pagina: Optional[List[int]] = typer.Option(None, "--pagina", min=1, help="Página a verificar (repetible; por omisión, la 1)."),
+    todas: bool = typer.Option(False, "--todas", help="Todas las páginas con carátula (las que tienen los cuatro marcadores)."),
+    tolerancia: float = typer.Option(0.3, "--tolerancia", min=0.01, help="Error máximo, en mm."),
+    json_output: bool = typer.Option(False, "--json", help="El resultado como JSON."),
+) -> None:
+    """Rasteriza la carátula a 300 DPI, detecta los cuatro ArUco, rectifica el marco y verifica que el centro de
+    cada burbuja dibujada coincida con el manifiesto (error < 0,3 mm). Sale con 1 si alguna no coincide."""
+    import json
+
+    from generador_examenes.omr import geometria
+
+    try:
+        manifiesto = json.loads(manifest.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        _usage_error(f"{manifest}: {e}")
+    try:
+        paginas = geometria.verificar(pdf, manifiesto, [] if todas else (pagina or [1]), tolerancia)
+    except geometria.ErrorGeometria as e:
+        print(f"Error: {e}", file=sys.stderr)
+        _ultimo_codigo_salida["code"] = 1
+        return
+    ok = bool(paginas) and all(p.ok for p in paginas)
+    if json_output:
+        print(json.dumps({"ok": ok, "tolerancia_mm": tolerancia, "paginas": geometria.a_dict(paginas)},
+                         indent=2, ensure_ascii=False))
+    else:
+        print(geometria.texto(paginas, tolerancia) if paginas else f"✗ {pdf}: ninguna página tiene carátula")
+    _ultimo_codigo_salida["code"] = 0 if ok else 1
+
+
 @app.command("doctor")
 def _doctor(
     json_output: bool = typer.Option(False, "--json", help="Emitir el diagnóstico como JSON (schema_version 1.0.0)."),
