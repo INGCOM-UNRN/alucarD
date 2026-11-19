@@ -205,7 +205,9 @@ def _fischer(c: d._Lienzo, b: dict) -> Punto:
                 _tq(c, cx + signo * (brazo + 4), yc + 4, texto, size=11, ancla="start" if signo > 0 else "end")
         # R/S: con priorities (lugares de mayor a menor) o, en un único centro, por CIP.
         config = None
-        if "priorities" in centro:
+        if centro.get("blank"):
+            pass                                     # sin los grupos no hay R/S: es lo que se completa
+        elif "priorities" in centro:
             lugares = [str(p) for p in centro["priorities"]]
             if sorted(lugares) != sorted(_LUGARES):
                 raise d.ErrorDiagrama(f"fischer: centers[{i}].priorities son top, right, bottom y left, en orden")
