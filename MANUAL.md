@@ -432,8 +432,8 @@ Cuidados:
 
 Las preguntas (GIFT `[markdown]`, Markdown) y los enunciados de las consignas de deckard pueden
 incluir diagramas de arreglos, matrices, listas enlazadas, pilas, la pila y el árbol de llamadas,
-colas, árboles, structs, TADs, complejidad, flujo, costos y trazas, y los de control de procesos
-(ver [Control de procesos](#control-de-procesos)). Se escriben en un bloque de
+colas, árboles, structs, TADs, complejidad, flujo, costos y trazas, los de control de procesos
+(ver [Control de procesos](#control-de-procesos)) y los de química (ver [Química](#química)). Se escriben en un bloque de
 código `estructura`, en YAML o JSON, con el formato de bloques de
 statics (`estructuras.html`): un bloque exportado de statics se pega tal cual. alucarD lo
 dibuja como SVG, en línea en el HTML y como imagen en el PDF de Typst, sin navegador ni dependencias
@@ -867,6 +867,53 @@ feedback: ["H(s)"]
 En GIFT, el YAML del bloque se escribe sin llaves, en forma de bloque (como arriba): las llaves son
 de las respuestas. En la escalera, YAML lee `no:` como `false`; alucarD lo entiende igual, y `na:`
 también vale.
+
+#### Química
+
+Trece tipos para evaluar y ejemplificar química general, inorgánica, orgánica, fisicoquímica y
+analítica. Las cuentas las hace alucarD (`generador_examenes/quimica.py`, sin dependencias nuevas):
+
+- el pH de cada punto de una titulación, por balance de cargas;
+- las configuraciones electrónicas, con las excepciones del Cr y el Cu y los cationes de transición;
+- el llenado de los orbitales moleculares, con o sin mezcla s-p;
+- la cinética, la pila con Nernst y la densidad de una celda unidad.
+
+Así, el pH de la equivalencia, el orden de enlace o la E de la pila que muestra el dibujo salen de la
+teoría.
+
+| `type` | Qué dibuja | Claves principales |
+| :--- | :--- | :--- |
+| `molecule` | Fórmula de Lewis o esqueletal | `atoms` (`id`, `el`, `at: [x, y]` en largos de enlace, o `from` + `angle` (y `length`, `bond`); `charge`, `lonePairs`, `radical`, `note` (δ+), `show`, `blank`), `rings` (`size`, `center`, `start`, `ids`, `aromatic`, `kekule`; dos anillos que comparten vértices se fusionan), `bonds` (`[a, b, orden]` o `{from, to, order: 1, 2, 3, 1.5, 0.5, stereo: wedge o hash, dashed, blank}`), `arrows` (flechas curvas de mecanismo: `from` y `to`, un átomo o un enlace `[a, b]`; `bend`, `half` para un electrón), `skeletal`, `bondLength`, `caption` |
+| `reaction` | Ecuación o mecanismo | `steps`: fórmulas, `"+"`, moléculas (como `molecule`), `{arrow: "->", "<=>", "<->" (resonancia) o "=>" (retrosíntesis), above, below, blank}` y `{blank: true, width}` (un producto para completar); `maxWidth` |
+| `vsepr` | Geometría molecular (TRePEV) | `central`, `ligands` y `lonePairs` (la geometría sale de los pares) o `geometry` (`linear`, `trigonal_planar`, `bent_trigonal`, `tetrahedral`, `trigonal_pyramidal`, `bent`, `trigonal_bipyramidal`, `seesaw`, `t_shaped`, `linear_tbp`, `octahedral`, `square_pyramidal`, `square_planar`); `showAngle`, `showHybridization`, `blank` (`true` o una lista de `axe`, `name`, `angle`, `hybridization`) |
+| `orbitals` | Casilleros u orbitales moleculares | `kind: atomic` (por omisión): `element`, `charge`, `core` (`[Ar]` y la capa de valencia), `showConfig`, `showUnpaired`, `blank`, `blankConfig`. `kind: molecular`: `atoms` (`[O, O]`, `[C, O]`; de H a Ne), `charge`, `blankElectrons`, `blankBondOrder`, `blankMagnetism`, `blank` |
+| `energy_profile` | Perfil de energía | `states` (`label`, `energy`, `ts` para un estado de transición), `catalyzed` (otro camino, punteado), `annotations` (`Ea` de cada etapa y `dH`), `unit`, `showEnergies`, `showRateDetermining`, `blankAnnotations` |
+| `titration` | Curva de titulación | `analyte` (`kind`: `strong_acid`, `strong_base`, `weak_acid`, `weak_base`; `conc`, `volume`, `pKa` (uno o una lista) o `pKb`, `charge` de la forma agregada: `-2` para el carbonato), `titrant` (`conc`, `name`), `vMax`, `annotations` (`equivalence`, `half`, `initial`), `indicator` (`name`, `range`), `data` (puntos medidos), `blankAnnotations` |
+| `speciation` | Fracciones α en función del pH | `pKa` (lista), `species` (por omisión H₃A, H₂A⁻…), `blankPKa`, `blankSpecies` |
+| `kinetics` | Cinética | `order` (0, 1, 2), `k`, `A0`, o `curves` (varias, para comparar); `plot: linear` (la recta de cada orden, con su pendiente) o `arrhenius` (`Ea` en kJ/mol, `A`, `T: [T1, T2]`); `model: consecutive` (`k1`, `k2`: A → B → C, con t máx) o `reversible` (`kf`, `kb`); `annotations: [halfLife]`, `showProduct`, `tEnd`, `blankAnnotations` |
+| `phase_diagram` | Diagrama de fases | `substance` (`water`, `co2`) o `triple` y `critical` (`[T en K, P en atm]`), `meltingSlope`, `normalMelting`, `normalBoiling`, `normalSublimation`; `scale` (`schematic`, por omisión, o `log`), `atm` (la recta de 1 atm), `points` (`T`, `P`, `label`), `supercritical`, `blankRegions`, `blankPoints`. `kind: eutectic`: `components`, `meltingA`, `meltingB`, `eutectic: [x %, T]`, `cooling` (una composición) |
+| `heating_curve` | Curva de calentamiento | `substance: water` o `cpSolid`, `cpLiquid`, `cpGas` (J/g·K), `melting`, `boiling` (°C), `hFusion`, `hVaporization` (J/g); `mass` (g), `from`, `to`; `showHeat`, `showTotal`, `blankHeat`, `blankPhases` |
+| `spectrum` | Espectros | `kind: ir` (`peaks`: `at` en cm⁻¹, `depth`, `width`, `broad`, `label`), `nmr` (`signals`: `shift`, `integration`, `multiplicity` (s, d, t, q…) o `neighbors` (regla n + 1), `J`, `label`; `MHz`, `tms`), `c13` (`signals`: `shift`, `label`), `uv` (`bands`: `at` en nm, `absorbance`, `width`) y `ms` (`peaks`: `mz`, `intensity`, `label`); `blankLabels` |
+| `galvanic_cell` | Pila | `halfCells`: dos semiceldas `{couple: "Zn^2+/Zn", E0, n, conc, electrode, solution, reaction}` (el ánodo es la de menor E°, a la izquierda); `saltBridge`, `showIons`, `showNotation`, `showDeltaG`; `blankPolarity`, `blankReactions`, `blankPotential`, `blankFlow`, `blankNotation` |
+| `unit_cell` | Celda unidad | `lattice` (`sc`, `bcc`, `fcc`, `nacl`, `cscl`), `element` o `species`, `a` (pm) y `molarMass` (g/mol) para la densidad; `blank` (`true` o una lista de `z`, `coordination`, `packing`, `density`) |
+
+**Fórmulas.** En los rótulos, un número que sigue a un símbolo o a un paréntesis queda como subíndice
+(`H2SO4`, `[Cu(NH3)4]`), lo que sigue a `^` como superíndice (`SO4^2-`, `Fe^3+`, `e^-`) y `_` fuerza
+un subíndice (`K_a`, `pK_a1`, `σ^*_{2p}`). Un número al principio o después de un espacio es un
+coeficiente (`2 H2O`).
+
+```yaml
+type: titration
+title: CH3COOH 0,1 M con NaOH 0,1 M
+analyte: {kind: weak_acid, pKa: 4.76, conc: 0.1, volume: 25}
+titrant: {conc: 0.1, name: NaOH}
+indicator: {name: fenolftaleína, range: [8.2, 10]}
+blankAnnotations: true        # el pH de la equivalencia y el pKa quedan para completar
+```
+
+Una curva de titulación marca solo los puntos de equivalencia que tienen un salto visible. Por eso, en
+la del H₃PO₄ no aparece el tercero. En la semiequivalencia, el dibujo muestra el pH calculado, que
+con un pKa bajo (el primero del fosfórico) ya no es igual al pKa.
 
 `alucard diagrama` dibuja un archivo suelto: un bloque, una lista de bloques o un documento de
 statics. Escribe un SVG por bloque y saltea los que no son diagramas (texto, recortables):

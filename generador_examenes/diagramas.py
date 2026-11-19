@@ -2500,3 +2500,10 @@ from generador_examenes import diagramas_control as _control  # noqa: E402
 
 _RENDERIZADORES.update(_control.RENDERIZADORES)
 TIPOS = TIPOS + tuple(_control.RENDERIZADORES)
+
+# Los de química universitaria (moléculas, reacciones, TRePEV, orbitales, perfiles de energía,
+# titulaciones, cinética, fases, espectros, pilas y celdas unidad), en el suyo.
+from generador_examenes import diagramas_quimica as _quimica  # noqa: E402
+
+_RENDERIZADORES.update(_quimica.RENDERIZADORES)
+TIPOS = TIPOS + tuple(_quimica.RENDERIZADORES)

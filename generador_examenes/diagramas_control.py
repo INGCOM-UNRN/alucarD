@@ -36,6 +36,8 @@ def _g(x: float | None, cifras: int = 3) -> str:
         return "—"
     if x == 0:
         return "0"
+    if 1e3 <= abs(x) < 1e6 and abs(x - round(x)) < 1e-6 * abs(x) + 1e-9:
+        return str(round(x))                     # 4000 cm⁻¹, no 4e+03
     texto = f"{x:.{cifras}g}"
     if "e" in texto:
         texto = f"{x:.2e}"
@@ -100,7 +102,7 @@ class _Ejes:
                     if m == 1:
                         c.t(x, y0 + h + 14, f"10^{e}" if abs(e) > 3 else _g(v), size=9, color="textSub", ancla="middle")
         else:
-            for v in _marcas(*xr):
+            for v in _marcas(*sorted(xr)):       # un eje invertido (de 4000 a 400) también tiene marcas
                 x = self.px(v)
                 if grilla:
                     c.linea(x, y0, x, y0 + h, color="strokeMuted", ancho=0.4, flecha=None, guiones="2 4")

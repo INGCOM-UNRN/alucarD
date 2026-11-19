@@ -5,7 +5,7 @@
 **Sistema profesional de generación de exámenes** basado en plantillas YAML, con soporte para bancos Moodle/GIFT, múltiples layouts y optimización para impresión.
 
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/tests-1329%20passing-success.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-1509%20passing-success.svg)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-90%25-green.svg)](htmlcov/)
 [![License](https://img.shields.io/badge/license-GPL--3.0--or--later-blue.svg)](LICENSE)
 
@@ -19,7 +19,7 @@
 - Diseño y renderizado de plantillas de examen con hojas de respuestas y descriptores OMR (Optical Mark Recognition).
 - Exámenes por estudiante con carátula OMR para la app Escáner OMR (`alucard omr`, según [OMR_SPEC.md](OMR_SPEC.md)).
 - Registro de los exámenes tomados (JSON por examen): evita repetir preguntas en el cuatrimestre y mide la calidad de cada pregunta (`alucard registro`).
-- Diagramas en SVG dentro de las preguntas: estructuras de datos, algoritmos y control de procesos (bloques, respuesta temporal, Bode, Nyquist, polos y ceros, lugar de las raíces, P&ID, escalera y GRAFCET).
+- Diagramas en SVG dentro de las preguntas: estructuras de datos, algoritmos, control de procesos (bloques, respuesta temporal, Bode, Nyquist, polos y ceros, lugar de las raíces, P&ID, escalera y GRAFCET) y química (Lewis y esqueletales, reacciones y mecanismos, TRePEV, orbitales, perfiles de energía, titulaciones, especiación, cinética, diagramas de fases, curvas de calentamiento, espectros, pilas y celdas unidad).
 - Linting y validación de archivos de preguntas en formato GIFT.
 
 ### Qué no cubre (Límites y Delegación)
@@ -78,6 +78,7 @@
 - ✅ **Registro de exámenes tomados** (nuevo): `alucard registro` guarda cada examen en JSON, deja afuera las preguntas ya usadas en el cuatrimestre y analiza dificultad, discriminación y distractores
 - ✅ **Carátula OMR** (nuevo): `alucard omr` arma un examen por estudiante con fiduciales ArUco, burbujas de la rúbrica y QR firmado, y verifica la geometría del PDF. Con `--modo planilla`, las burbujas van a una planilla docente en lugar de las hojas de los estudiantes
 - ✅ **Diagramas de control de procesos** (nuevo): nueve tipos cuyas cuentas (simulación, márgenes, raíces) hace alucarD, con variantes «en blanco» para completar
+- ✅ **Diagramas de química** (nuevo): trece tipos (moléculas, reacciones, TRePEV, orbitales, perfiles de energía, titulaciones, especiación, cinética, fases, curvas de calentamiento, espectros, pilas y celdas unidad) con las cuentas hechas por alucarD: el pH de la equivalencia, el orden de enlace o la E de la pila salen de la teoría
 - ✅ **Aviso de temas repetidos** (nuevo): `generar` avisa si dos temas quedan con las mismas preguntas
 
 ### 📐 Layouts de Secciones
@@ -107,7 +108,7 @@
 - ✅ **Nombre en cada hoja**: renglón «Apellido y Nombre» en cada página impar desde la 3 (`nombre_en_hojas` en `[estilo]`), por si las hojas se separan
 
 ### 🧪 Calidad y Testing
-- ✅ **1329 Tests**: Suite completa con pytest
+- ✅ **1509 Tests**: Suite completa con pytest
 - ✅ **90% Coverage**: Cobertura de código
 - ✅ **6 Exámenes de Prueba**: Validación en escenarios reales
 - ✅ **CI Ready**: Configurado para integración continua
@@ -1133,6 +1134,20 @@ Tipos: `block_diagram`, `time_response`, `bode`, `nyquist`, `pole_zero`, `root_l
 `instrumentation` (P&ID, ISA-5.1), `ladder` y `grafcet`. Ver
 [Control de procesos](MANUAL.md#control-de-procesos).
 
+### Diagramas de química
+
+```yaml
+type: orbitals
+kind: molecular
+atoms: [O, O]
+blankBondOrder: true   # el orden de enlace (2) queda para completar
+```
+
+Tipos: `molecule` (Lewis, esqueletal, cuñas, flechas de mecanismo), `reaction`, `vsepr`, `orbitals`
+(casilleros y OM de diatómicas), `energy_profile`, `titration`, `speciation`, `kinetics`,
+`phase_diagram` (una sustancia o un eutéctico), `heating_curve`, `spectrum` (IR, ¹H y ¹³C-RMN,
+UV-visible y masas), `galvanic_cell` y `unit_cell`. Ver [Química](MANUAL.md#química).
+
 ---
 
 ## 🧪 Testing y Calidad
@@ -1163,6 +1178,7 @@ tests/
 ├── test_registro.py         # Registro de exámenes y análisis de ítems
 ├── test_omr.py              # Carátula OMR, QR, nómina y geometría
 ├── test_diagramas_control.py # Cuentas y SVG de control de procesos
+├── test_diagramas_quimica.py # Cuentas y SVG de química
 └── bancos_ejemplo/          # Datos de prueba
     ├── banco_test.txt
     └── banco_test.xml
@@ -1181,7 +1197,7 @@ done
 
 ### Métricas de Calidad
 
-- **1329 tests** pasando
+- **1509 tests** pasando
 - **90% cobertura** de código
 - **0 errores** de linting
 - **Type hints** completos
@@ -1205,6 +1221,8 @@ generador_examenes/
 ├── diagramas.py            # Bloques ```estructura → SVG
 ├── diagramas_control.py    # Diagramas de control de procesos
 ├── control.py              # Cuentas de control (raíces, simulación, márgenes)
+├── diagramas_quimica.py    # Diagramas de química
+├── quimica.py              # Cuentas de química (pH, configuraciones, OM, cinética, fases, pilas)
 ├── omr/                    # Carátula OMR (OMR_SPEC.md): layout, QR, nómina, lote, geometría
 ├── parsers/                # Plugins de entrada
 │   ├── base.py            # BaseParser ABC

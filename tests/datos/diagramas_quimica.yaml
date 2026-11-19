@@ -1,0 +1,358 @@
+- id: lewis-agua
+  type: molecule
+  title: Estructura de Lewis del agua
+  atoms:
+    - {id: o, el: O, at: [0, 0], lonePairs: 2}
+    - {id: h1, el: H, from: o, angle: 218}
+    - {id: h2, el: H, from: o, angle: 322}
+- id: lewis-nitrato
+  type: molecule
+  title: Una estructura resonante del nitrato
+  atoms:
+    - {id: n, el: N, at: [0, 0], charge: 1}
+    - {id: o1, el: O, from: n, angle: 90, bond: 2, lonePairs: 2}
+    - {id: o2, el: O, from: n, angle: 210, lonePairs: 3, charge: -1}
+    - {id: o3, el: O, from: n, angle: 330, lonePairs: 3, charge: -1}
+- id: benceno-esqueletal
+  type: molecule
+  title: Ácido benzoico (esqueletal)
+  skeletal: true
+  rings: [{size: 6, center: [0, 0], ids: [c1, c2, c3, c4, c5, c6], aromatic: true}]
+  atoms:
+    - {id: c7, from: c1, angle: 90}
+    - {id: o1, el: O, from: c7, angle: 30, bond: 2}
+    - {id: o2, el: OH, from: c7, angle: 150}
+- id: naftaleno-kekule
+  type: molecule
+  title: Naftaleno (Kekulé, anillos fusionados)
+  skeletal: true
+  rings:
+    - {size: 6, center: [0, 0], start: 30, kekule: true}
+    - {size: 6, center: [1.732, 0], start: 30}
+  bonds:
+    - [r1_1, r1_2, 2]
+    - [r1_5, r1_0, 2]
+- id: estereo
+  type: molecule
+  title: Un carbono quiral con cuña y rayas
+  atoms:
+    - {id: c, el: C, at: [0, 0]}
+    - {id: br, el: Br, from: c, angle: 90}
+    - {id: h, el: H, from: c, angle: 210, bond: {stereo: hash}}
+    - {id: cl, el: Cl, from: c, angle: 330, bond: {stereo: wedge}}
+    - {id: f, el: F, from: c, angle: 270, length: 0.9, bond: {order: 1}}
+- id: mecanismo-sn2
+  type: molecule
+  title: SN2 (flechas curvas)
+  atoms:
+    - {id: oh, el: HO, at: [-2.2, 0], charge: -1, lonePairs: 2}
+    - {id: c, el: C, at: [0, 0]}
+    - {id: br, el: Br, from: c, angle: 0, lonePairs: 3}
+    - {id: h1, el: H, from: c, angle: 90}
+    - {id: h2, el: H, from: c, angle: 225}
+    - {id: h3, el: H, from: c, angle: 135, length: 0.8}
+  arrows:
+    - {from: oh, to: c, bend: 1}
+    - {from: [c, br], to: br, bend: -1}
+- id: reaccion-esterificacion
+  type: reaction
+  title: Esterificación de Fischer
+  steps:
+    - "CH3COOH"
+    - "+"
+    - "CH3CH2OH"
+    - {arrow: "<=>", above: "H2SO4", below: "Δ"}
+    - "CH3COOCH2CH3"
+    - "+"
+    - "H2O"
+- id: reaccion-resonancia
+  type: reaction
+  title: Resonancia del ion carboxilato
+  steps:
+    - atoms:
+        - {id: c, el: C, at: [0, 0]}
+        - {id: r, el: R, from: c, angle: 180}
+        - {id: o1, el: O, from: c, angle: 60, bond: 2, lonePairs: 2}
+        - {id: o2, el: O, from: c, angle: 300, lonePairs: 3, charge: -1}
+    - {arrow: "<->"}
+    - atoms:
+        - {id: c, el: C, at: [0, 0]}
+        - {id: r, el: R, from: c, angle: 180}
+        - {id: o1, el: O, from: c, angle: 60, lonePairs: 3, charge: -1}
+        - {id: o2, el: O, from: c, angle: 300, bond: 2, lonePairs: 2}
+- id: reaccion-completar
+  type: reaction
+  steps: ["Zn", "+", "2 HCl", {arrow: "->"}, {blank: true, width: 60}, "+", "H2"]
+- id: trepev-amoniaco
+  type: vsepr
+  title: Amoníaco
+  central: N
+  ligands: [H, H, H]
+  lonePairs: 1
+- id: trepev-sf4
+  type: vsepr
+  title: SF4
+  central: S
+  ligands: [F, F, F, F]
+  lonePairs: 1
+- id: trepev-xef4-blanco
+  type: vsepr
+  title: XeF4 (para completar)
+  central: Xe
+  ligands: [F, F, F, F]
+  lonePairs: 2
+  blank: [name, angle, hybridization]
+- id: trepev-sf6
+  type: vsepr
+  central: S
+  ligands: [F, F, F, F, F, F]
+- id: casilleros-hierro
+  type: orbitals
+  title: Hierro
+  element: Fe
+  core: true
+  showUnpaired: true
+- id: casilleros-oxigeno
+  type: orbitals
+  element: O
+  showUnpaired: true
+- id: casilleros-cobre-ion
+  type: orbitals
+  title: Cu²⁺ (para completar)
+  element: Cu
+  charge: 2
+  core: true
+  blank: true
+- id: om-oxigeno
+  type: orbitals
+  kind: molecular
+  title: O2
+  atoms: [O, O]
+- id: om-nitrogeno
+  type: orbitals
+  kind: molecular
+  atoms: [N, N]
+  blankBondOrder: true
+- id: om-co
+  type: orbitals
+  kind: molecular
+  title: Monóxido de carbono
+  atoms: [C, O]
+- id: om-hidrogeno
+  type: orbitals
+  kind: molecular
+  atoms: [H, H]
+- id: perfil-una-etapa
+  type: energy_profile
+  title: Reacción exotérmica en una etapa
+  states:
+    - {label: "A + B", energy: 0}
+    - {label: "ET‡", energy: 85, ts: true}
+    - {label: "C + D", energy: -40}
+  catalyzed:
+    - {energy: 0}
+    - {energy: 45, ts: true}
+    - {energy: -40}
+- id: perfil-dos-etapas
+  type: energy_profile
+  title: Dos etapas con un intermediario
+  states:
+    - {label: Reactivos, energy: 0}
+    - {label: "ET1", energy: 60, ts: true}
+    - {label: Intermediario, energy: 25}
+    - {label: "ET2", energy: 90, ts: true}
+    - {label: Productos, energy: 15}
+  showRateDetermining: true
+  blankAnnotations: true
+- id: titulacion-acetico
+  type: titration
+  title: CH3COOH 0,1 M con NaOH 0,1 M
+  analyte: {kind: weak_acid, pKa: 4.76, conc: 0.1, volume: 25}
+  titrant: {conc: 0.1, name: NaOH}
+  indicator: {name: fenolftaleína, range: [8.2, 10]}
+  annotations: [equivalence, half, initial]
+- id: titulacion-fosforico
+  type: titration
+  title: H3PO4 con NaOH
+  analyte: {kind: weak_acid, pKa: [2.15, 7.2, 12.35], conc: 0.1, volume: 20}
+  titrant: {conc: 0.1}
+- id: titulacion-amoniaco
+  type: titration
+  title: NH3 con HCl
+  analyte: {kind: weak_base, pKb: 4.75, conc: 0.1, volume: 25}
+  titrant: {conc: 0.1, name: HCl}
+  blankAnnotations: true
+- id: titulacion-fuerte
+  type: titration
+  analyte: {kind: strong_acid, conc: 0.1, volume: 25}
+  titrant: {conc: 0.1}
+- id: especies-fosfato
+  type: speciation
+  title: Especies del ácido fosfórico
+  pKa: [2.15, 7.2, 12.35]
+  species: [H3PO4, H2PO4^-, HPO4^2-, PO4^3-]
+- id: especies-carbonico-blanco
+  type: speciation
+  pKa: [6.35, 10.33]
+  species: [H2CO3, HCO3^-, CO3^2-]
+  blankPKa: true
+- id: cinetica-primer-orden
+  type: kinetics
+  title: Primer orden, k = 0,1 s⁻¹
+  order: 1
+  k: 0.1
+  A0: 1
+  annotations: [halfLife]
+  showProduct: true
+- id: cinetica-comparacion
+  type: kinetics
+  title: Órdenes 0, 1 y 2
+  curves:
+    - {order: 0, k: 0.05, A0: 1}
+    - {order: 1, k: 0.1, A0: 1}
+    - {order: 2, k: 0.2, A0: 1}
+  tEnd: 30
+- id: cinetica-lineal-segundo
+  type: kinetics
+  order: 2
+  k: 0.5
+  A0: 0.8
+  plot: linear
+- id: cinetica-consecutiva
+  type: kinetics
+  title: A → B → C
+  model: consecutive
+  k1: 0.5
+  k2: 0.2
+- id: cinetica-reversible
+  type: kinetics
+  model: reversible
+  kf: 0.3
+  kb: 0.1
+- id: arrhenius
+  type: kinetics
+  plot: arrhenius
+  Ea: 75
+  A: 1.0e+12
+  T: [290, 360]
+- id: fases-agua
+  type: phase_diagram
+  title: Diagrama de fases del agua (esquema)
+  substance: water
+  points: [{T: 300, P: 0.01, label: X}]
+- id: fases-co2-log
+  type: phase_diagram
+  title: CO2 (escala logarítmica)
+  substance: co2
+  scale: log
+- id: fases-blanco
+  type: phase_diagram
+  substance: co2
+  blankRegions: true
+  blankPoints: true
+- id: eutectico
+  type: phase_diagram
+  kind: eutectic
+  title: Sistema Pb–Sn
+  components: [Pb, Sn]
+  meltingA: 327
+  meltingB: 232
+  eutectic: [61.9, 183]
+  cooling: 30
+- id: calentamiento-agua
+  type: heating_curve
+  title: 100 g de hielo de −20 °C a 120 °C
+  substance: water
+  mass: 100
+  from: -20
+  to: 120
+- id: calentamiento-blanco
+  type: heating_curve
+  substance: water
+  mass: 50
+  from: -10
+  to: 110
+  blankHeat: true
+  blankPhases: true
+- id: ir-acido
+  type: spectrum
+  kind: ir
+  title: Espectro IR de un ácido carboxílico
+  peaks:
+    - {at: 3000, depth: 0.75, broad: true, width: 500, label: "O–H"}
+    - {at: 2950, depth: 0.35}
+    - {at: 1710, depth: 0.85, label: "C=O"}
+    - {at: 1280, depth: 0.55, label: "C–O"}
+- id: rmn-etanol
+  type: spectrum
+  kind: nmr
+  title: ¹H-RMN del etanol
+  tms: true
+  signals:
+    - {shift: 1.22, integration: 3, neighbors: 2, J: 7, label: "a"}
+    - {shift: 3.69, integration: 2, neighbors: 3, J: 7, label: "b"}
+    - {shift: 2.6, integration: 1, multiplicity: s, label: "c"}
+- id: c13-acetato
+  type: spectrum
+  kind: c13
+  signals:
+    - {shift: 171, label: "C=O"}
+    - {shift: 60.4, label: "OCH2"}
+    - {shift: 21, label: "CH3CO"}
+    - {shift: 14.2, label: "CH3"}
+- id: uv
+  type: spectrum
+  kind: uv
+  bands:
+    - {at: 254, absorbance: 0.9, width: 18}
+    - {at: 430, absorbance: 0.35, width: 40}
+- id: masas
+  type: spectrum
+  kind: ms
+  title: Masas del etanol
+  peaks:
+    - {mz: 46, intensity: 20, label: "M⁺"}
+    - {mz: 45, intensity: 45}
+    - {mz: 31, intensity: 100, label: "pico base"}
+    - {mz: 29, intensity: 25}
+    - {mz: 27, intensity: 20}
+- id: pila-daniell
+  type: galvanic_cell
+  title: Pila de Daniell
+  halfCells:
+    - {couple: "Cu^2+/Cu", E0: 0.34, n: 2, conc: 1}
+    - {couple: "Zn^2+/Zn", E0: -0.76, n: 2, conc: 0.01}
+  showDeltaG: true
+- id: pila-blanco
+  type: galvanic_cell
+  halfCells:
+    - {couple: "Ag^+/Ag", E0: 0.80, n: 1}
+    - {couple: "Cu^2+/Cu", E0: 0.34, n: 2}
+  blankPolarity: true
+  blankPotential: true
+  blankReactions: true
+  blankFlow: true
+- id: celda-fcc
+  type: unit_cell
+  title: Cobre (fcc)
+  lattice: fcc
+  element: Cu
+  a: 361.5
+  molarMass: 63.55
+- id: celda-bcc-blanco
+  type: unit_cell
+  lattice: bcc
+  element: Fe
+  blank: true
+- id: celda-nacl
+  type: unit_cell
+  lattice: nacl
+  a: 564
+  molarMass: 58.44
+- id: celda-cscl
+  type: unit_cell
+  lattice: cscl
+- id: celda-sc
+  type: unit_cell
+  lattice: sc
+  element: Po
