@@ -5,8 +5,8 @@
 **Sistema profesional de generación de exámenes** basado en plantillas YAML, con soporte para bancos Moodle/GIFT, múltiples layouts y optimización para impresión.
 
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/tests-297%20passing-success.svg)](tests/)
-[![Coverage](https://img.shields.io/badge/coverage-71%25-green.svg)](htmlcov/)
+[![Tests](https://img.shields.io/badge/tests-1321%20passing-success.svg)](tests/)
+[![Coverage](https://img.shields.io/badge/coverage-90%25-green.svg)](htmlcov/)
 [![License](https://img.shields.io/badge/license-GPL--3.0--or--later-blue.svg)](LICENSE)
 
 ---
@@ -17,6 +17,9 @@
 - Generación automatizada de exámenes y parciales institucionales en formatos Typst y PDF.
 - Síntesis de variantes numéricas y lógicas de enunciados mediante semillas reproducibles.
 - Diseño y renderizado de plantillas de examen con hojas de respuestas y descriptores OMR (Optical Mark Recognition).
+- Exámenes por estudiante con carátula OMR para la app Escáner OMR (`alucard omr`, según [OMR_SPEC.md](OMR_SPEC.md)).
+- Registro de los exámenes tomados (JSON por examen): evita repetir preguntas en el cuatrimestre y mide la calidad de cada pregunta (`alucard registro`).
+- Diagramas en SVG dentro de las preguntas: estructuras de datos, algoritmos y control de procesos (bloques, respuesta temporal, Bode, Nyquist, polos y ceros, lugar de las raíces, P&ID, escalera y GRAFCET).
 - Linting y validación de archivos de preguntas en formato GIFT.
 
 ### Qué no cubre (Límites y Delegación)
@@ -54,6 +57,7 @@
 - [Categorías y Filtros](#-categorías-y-filtros)
 - [Formatos de Banco](#-formatos-de-banco-de-preguntas)
 - [Ejemplos Prácticos](#-ejemplos-prácticos)
+- [Registro, OMR y Diagramas](#-registro-omr-y-diagramas)
 - [Testing y Calidad](#-testing-y-calidad)
 - [Arquitectura](#-arquitectura)
 - [Documentación Adicional](#-documentación-adicional)
@@ -70,7 +74,11 @@
 - ✅ **Validación con Pydantic**: Parseo seguro de definiciones YAML
 - ✅ **Templating con Jinja2**: Salidas HTML/PDF personalizables
 - ✅ **Arquitectura de Plugins**: Extensible vía clases base abstractas
-- ✅ **Sintetizador `daedalus`** (nuevo): genera preguntas paramétricas de C cuya respuesta correcta se verifica compilando y ejecutando el snippet con GCC
+- ✅ **Sintetizador `daedalus`**: genera preguntas paramétricas de C cuya respuesta correcta se verifica compilando y ejecutando el snippet con GCC
+- ✅ **Registro de exámenes tomados** (nuevo): `alucard registro` guarda cada examen en JSON, deja afuera las preguntas ya usadas en el cuatrimestre y analiza dificultad, discriminación y distractores
+- ✅ **Carátula OMR** (nuevo): `alucard omr` arma un examen por estudiante con fiduciales ArUco, burbujas de la rúbrica y QR firmado, y verifica la geometría del PDF
+- ✅ **Diagramas de control de procesos** (nuevo): nueve tipos cuyas cuentas (simulación, márgenes, raíces) hace alucarD, con variantes «en blanco» para completar
+- ✅ **Aviso de temas repetidos** (nuevo): `generar` avisa si dos temas quedan con las mismas preguntas
 
 ### 📐 Layouts de Secciones
 - **`default`**: Enunciado extenso (2/3) + opciones laterales (1/3)
@@ -96,10 +104,11 @@
 - ✅ **Page Breaks**: Inteligentes para mantener preguntas completas
 - ✅ **Márgenes Optimizados**: 1.5cm en impresión vs 2cm en pantalla
 - ✅ **Fuentes Legibles**: Tamaños y espaciado optimizados
+- ✅ **Nombre en cada hoja**: renglón «Apellido y Nombre» en cada página impar desde la 3 (`nombre_en_hojas` en `[estilo]`), por si las hojas se separan
 
 ### 🧪 Calidad y Testing
-- ✅ **253 Tests**: Suite completa con pytest
-- ✅ **77% Coverage**: Cobertura de código
+- ✅ **1321 Tests**: Suite completa con pytest
+- ✅ **90% Coverage**: Cobertura de código
 - ✅ **6 Exámenes de Prueba**: Validación en escenarios reales
 - ✅ **CI Ready**: Configurado para integración continua
 
@@ -1073,6 +1082,55 @@ Ver: `examenes_prueba/recuperatorio_mixto.yaml`
 
 ---
 
+## 🗃️ Registro, OMR y Diagramas
+
+### Registro de exámenes tomados
+
+Cada examen tomado se guarda como un JSON en `registro/<cuatrimestre>/<id>.json`, con la definición
+y las preguntas de cada tema. Guardar es explícito, porque el examen se arma de a poco:
+
+```bash
+alucard validar -d parcial1.yaml                 # se itera sobre la definición
+alucard registro guardar -d parcial1.yaml        # la versión que se toma (o: generar --registrar)
+alucard registro resultados parcial1 notas.csv   # después del examen
+alucard registro analizar -o calidad.md          # dificultad, discriminación, distractores, α
+alucard registro usadas --cuatrimestre 2026-2C
+```
+
+Las preguntas que ya salieron en otro examen registrado del cuatrimestre se dejan afuera
+(`repetidas = "evitar"` en `[registro]` de `alucard.toml`; también `"avisar"` o `"permitir"`).
+Ver [Registro de exámenes tomados](MANUAL.md#registro-de-exámenes-tomados-alucard-registro).
+
+### Exámenes con carátula OMR
+
+`alucard omr` implementa [OMR_SPEC.md](OMR_SPEC.md): un examen por estudiante cuya primera página
+lleva la franja que corrige la app Escáner OMR.
+
+```bash
+alucard omr validate --config exam.yaml --roster inscriptos.csv
+alucard omr build --config exam.yaml --roster inscriptos.csv --out dist/P1/
+alucard omr verify-geometry --pdf dist/P1/examenes_P1.pdf --manifest dist/P1/layout_OMR5E_v7.json
+```
+
+Ver [Exámenes con carátula OMR](MANUAL.md#exámenes-con-carátula-omr-alucard-omr).
+
+### Diagramas de control de procesos
+
+En un bloque ```` ```estructura ```` de la pregunta:
+
+```yaml
+type: bode
+system: {k: 1, poles: [0, -1, -2]}
+margins: true
+blankMargins: true     # los márgenes quedan para completar
+```
+
+Tipos: `block_diagram`, `time_response`, `bode`, `nyquist`, `pole_zero`, `root_locus`,
+`instrumentation` (P&ID, ISA-5.1), `ladder` y `grafcet`. Ver
+[Control de procesos](MANUAL.md#control-de-procesos).
+
+---
+
 ## 🧪 Testing y Calidad
 
 ### Ejecutar Tests
@@ -1098,6 +1156,9 @@ tests/
 ├── test_models.py           # Tests de modelos Pydantic
 ├── test_generators.py       # Tests de renderizado
 ├── test_markdown_utils.py   # Tests de Markdown
+├── test_registro.py         # Registro de exámenes y análisis de ítems
+├── test_omr.py              # Carátula OMR, QR, nómina y geometría
+├── test_diagramas_control.py # Cuentas y SVG de control de procesos
 └── bancos_ejemplo/          # Datos de prueba
     ├── banco_test.txt
     └── banco_test.xml
@@ -1116,8 +1177,8 @@ done
 
 ### Métricas de Calidad
 
-- **228 tests** pasando
-- **76% cobertura** de código
+- **1321 tests** pasando
+- **90% cobertura** de código
 - **0 errores** de linting
 - **Type hints** completos
 - **Docstrings** en todas las funciones públicas
@@ -1134,7 +1195,13 @@ generador_examenes/
 ├── core/
 │   ├── logic.py            # Orquestación y filtrado
 │   ├── models.py           # Modelos Pydantic
+│   ├── registro.py         # Registro de exámenes tomados y análisis de ítems
+│   ├── esquemas/           # JSON Schema del registro (alucard-examen/1)
 │   └── markdown_utils.py   # Procesamiento Markdown
+├── diagramas.py            # Bloques ```estructura → SVG
+├── diagramas_control.py    # Diagramas de control de procesos
+├── control.py              # Cuentas de control (raíces, simulación, márgenes)
+├── omr/                    # Carátula OMR (OMR_SPEC.md): layout, QR, nómina, lote, geometría
 ├── parsers/                # Plugins de entrada
 │   ├── base.py            # BaseParser ABC
 │   ├── gift_parser.py     # Parser GIFT
@@ -1147,9 +1214,12 @@ generador_examenes/
     ├── logging_config.py   # Configuración de logs
     └── exam_wizard.py      # Asistente interactivo
 
-templates/                   # Plantillas Jinja2
+templates/                   # Plantillas Jinja2 (HTML) y Typst (PDF)
 ├── base_examen.html.j2
-└── clave_profesor.html.j2
+├── base_examen.typ.j2
+├── clave_profesor.html.j2
+├── clave_profesor.typ.j2
+└── omr/caratula.typ
 
 i18n/                       # Internacionalización
 ├── es.json
@@ -1357,6 +1427,10 @@ Pregunta
 | **typst** | ≥0.11 | Generación PDF (obligatorio) |
 | **pygments** | ≥2.18 | Syntax highlighting |
 | **rich** | ≥13.9 | CLI interactiva |
+| **typer** | ≥0.12 | Subcomandos de la CLI |
+| **pypdf** | ≥6.16 | Unión y control de PDFs |
+| **segno** | ≥1.6 | QR de la carátula OMR |
+| **jsonschema** | ≥4.20 | Validación del manifiesto OMR y del registro |
 
 ### Testing
 
