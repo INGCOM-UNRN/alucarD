@@ -170,7 +170,8 @@ def test_formulas(texto, partes):
 
 def test_los_tipos_nuevos_estan_registrados():
     assert {"molecule", "reaction", "vsepr", "orbitals", "energy_profile", "titration", "speciation", "kinetics",
-            "phase_diagram", "heating_curve", "spectrum", "galvanic_cell", "unit_cell"} <= set(TIPOS)
+            "phase_diagram", "heating_curve", "spectrum", "galvanic_cell", "unit_cell", "newman", "chair", "fischer",
+            "crystal_field", "complex", "latimer", "frost", "born_haber"} <= set(TIPOS)
 
 
 @pytest.mark.parametrize("bloque", EJEMPLOS, ids=[b["id"] for b in EJEMPLOS])
@@ -267,5 +268,131 @@ def test_molecula_con_anillos_fusionados_comparte_atomos():
     ({"type": "unit_cell", "lattice": "hcp"}, "red"),
 ])
 def test_errores_claros(bloque, mensaje):
+    with pytest.raises(ErrorDiagrama, match=mensaje):
+        renderizar(bloque)
+
+
+# --- Orgánica -----------------------------------------------------------------------------------------
+
+@pytest.mark.parametrize("arriba, derecha, abajo, izquierda, esperado", [
+    ("CHO", "OH", "CH2OH", "H", "R"),        # D-gliceraldehído
+    ("CHO", "H", "CH2OH", "OH", "S"),        # L-gliceraldehído
+    ("COOH", "H", "CH3", "NH2", "S"),        # L-alanina
+    ("COOH", "NH2", "CH3", "H", "R"),        # D-alanina
+    ("H", "Cl", "CH3", "Br", "R"),           # el menor arriba: se lee directo
+])
+def test_r_s_en_fischer(arriba, derecha, abajo, izquierda, esperado):
+    rango = q.prioridades([arriba, derecha, abajo, izquierda])
+    assert q.configuracion_fischer(dict(zip(("top", "right", "bottom", "left"), rango))) == esperado
+
+
+def test_cip_pide_prioridades_si_hay_empate_o_un_grupo_desconocido():
+    with pytest.raises(q.ErrorQuimica, match="empatan"):
+        q.prioridades(["tBu", "Ph", "H", "OH"])
+    with pytest.raises(q.ErrorQuimica, match="priorities"):
+        q.prioridades(["CH2CH2CH2OH", "H", "OH", "Cl"])
+
+
+def test_glucosa_por_centro():
+    texto = _plano(renderizar(_ejemplo("fischer-glucosa")))
+    assert texto.count("(R)") == 3 and texto.count("(S)") == 1 and "Serie=D" in texto
+
+
+@pytest.mark.parametrize("diedro, nombre", [(180, "anti"), (60, "gauche"), (-60, "gauche"), (0, "sinperiplanar"),
+                                            (120, "anticlinal")])
+def test_conformaciones_de_newman(diedro, nombre):
+    assert nombre in q.conformacion_newman(diedro)
+
+
+def test_silla_estabilidad_y_cis_trans():
+    metilo = [{"position": 1, "group": "CH3", "axial": True}]
+    assert q.costo_axial(metilo) == pytest.approx(7.3)
+    cis = [{"position": 1, "group": "CH3", "axial": True}, {"position": 2, "group": "CH3", "axial": False}]
+    trans = [{"position": 1, "group": "CH3", "axial": False}, {"position": 2, "group": "CH3", "axial": False}]
+    assert q.relacion_cis_trans(cis) == "cis" and q.relacion_cis_trans(trans) == "trans"
+    cis_14 = [{"position": 1, "group": "tBu", "axial": False}, {"position": 4, "group": "CH3", "axial": True}]
+    assert q.relacion_cis_trans(cis_14) == "cis"
+    texto = _plano(renderizar(_ejemplo("silla-metil")))
+    assert "laderecha,por7,3kJ/mol" in texto
+
+
+# --- Inorgánica ---------------------------------------------------------------------------------------
+
+@pytest.mark.parametrize("geometria, d_e, alto, desapareados, eecc", [
+    ("octahedral", 6, False, 0, -2.4), ("octahedral", 6, True, 4, -0.4), ("octahedral", 5, True, 5, 0.0),
+    ("octahedral", 3, True, 3, -1.2), ("octahedral", 9, True, 1, -0.6), ("tetrahedral", 7, True, 3, -1.2),
+    ("square_planar", 8, False, 0, None),
+])
+def test_campo_cristalino(geometria, d_e, alto, desapareados, eecc):
+    cc = q.campo_cristalino(geometria, d_e, alto)
+    assert cc.desapareados == desapareados
+    assert cc.momento == pytest.approx(math.sqrt(desapareados * (desapareados + 2)))
+    if eecc is not None:
+        assert cc.eecc == pytest.approx(eecc, abs=1e-9)
+
+
+@pytest.mark.parametrize("metal, ox, d_e", [("Fe", 3, 5), ("Fe", 2, 6), ("Co", 3, 6), ("Cu", 2, 9), ("Pt", 2, 8),
+                                            ("Ti", 4, 0), ("Zn", 2, 10)])
+def test_electrones_d(metal, ox, d_e):
+    assert q.electrones_d(metal, ox) == d_e
+
+
+def test_serie_espectroquimica():
+    assert q.es_campo_fuerte("CN^-") and q.es_campo_fuerte("NH3") and not q.es_campo_fuerte("H2O")
+    texto = _plano(renderizar(_ejemplo("campo-co-nh3")))
+    assert "bajo" in texto and "Desapareados:0" in texto and "−2,4" in texto
+
+
+def test_latimer_y_frost_del_manganeso():
+    lt = q.latimer({"species": ["MnO4^-", "MnO4^2-", "MnO2", "Mn^3+", "Mn^2+", "Mn"],
+                    "oxidation": [7, 6, 4, 3, 2, 0], "potentials": [0.56, 2.26, 0.95, 1.51, -1.18]})
+    assert lt.potencial(0, 2) == pytest.approx(1.693, abs=1e-3)
+    assert lt.potencial(0, 4) == pytest.approx(1.508, abs=1e-3)
+    assert [round(x, 2) for x in lt.frost()] == [5.18, 4.62, 0.1, -0.85, -2.36, 0.0]
+    assert [lt.especies[k] for k in lt.desproporcionan()] == ["MnO4^2-", "Mn^3+"]
+    cobre = q.latimer({"species": ["Cu^2+", "Cu^+", "Cu"], "oxidation": [2, 1, 0], "potentials": [0.16, 0.52]})
+    assert cobre.desproporcionan() == [1] and cobre.potencial(0, 2) == pytest.approx(0.34)
+
+
+def test_born_haber():
+    nacl = q.born_haber({"steps": [{"dH": 107}, {"dH": 496}, {"dH": 122}, {"dH": -349}], "formation": -411})
+    assert nacl.energia_red == pytest.approx(-787)
+    assert "−787" in _texto(renderizar(_ejemplo("born-haber-nacl"))).replace("-", "−")
+    assert "689" not in _texto(renderizar(_ejemplo("born-haber-blanco")))
+
+
+@pytest.mark.parametrize("geometria, ligandos, esperado", [
+    ("octahedral", ["NH3", "NH3", "Cl", "Cl", "NH3", "NH3"], "trans"),
+    ("octahedral", ["Cl", "NH3", "Cl", "NH3", "NH3", "NH3"], "cis"),
+    ("octahedral", ["Cl", "NH3", "Cl", "NH3", "Cl", "NH3"], "fac"),
+    ("octahedral", ["Cl", "Cl", "Cl", "NH3", "NH3", "NH3"], "mer"),
+    ("square_planar", ["Cl", "NH3", "Cl", "NH3"], "cis"),
+    ("square_planar", ["Cl", "Cl", "NH3", "NH3"], "trans"),
+    ("tetrahedral", ["Cl", "Cl", "Br", "Br"], None),
+])
+def test_isomeros(geometria, ligandos, esperado):
+    assert q.isomero(geometria, ligandos) == esperado
+
+
+def test_complejo_estado_de_oxidacion_y_formula():
+    assert q.oxidacion_metal(1, ["NH3"] * 4 + ["Cl", "Cl"]) == 3
+    texto = _plano(renderizar(_ejemplo("complejo-trans")))
+    assert "Co(III)" in texto and "d6" in texto and "trans" in texto
+    assert "fac" not in _texto(renderizar(_ejemplo("complejo-fac-blanco")))
+
+
+@pytest.mark.parametrize("bloque, mensaje", [
+    ({"type": "newman", "front": ["H"], "back": ["H", "H", "H"]}, "tres sustituyentes"),
+    ({"type": "chair", "substituents": [{"position": 7, "group": "CH3"}]}, "de 1 a 6"),
+    ({"type": "fischer", "centers": []}, "centers"),
+    ({"type": "fischer", "top": "tBu", "bottom": "Ph", "centers": [{"left": "H", "right": "OH"}]}, "empatan"),
+    ({"type": "crystal_field", "geometry": "octahedral"}, "electrons"),
+    ({"type": "crystal_field", "metal": "Na", "oxidation": 1}, "transición"),
+    ({"type": "crystal_field", "electrons": 5, "ligand": "agua"}, "serie espectroquímica"),
+    ({"type": "complex", "ligands": ["Cl"] * 5}, "6 sitios"),
+    ({"type": "latimer", "species": ["A", "B"], "oxidation": [0, 2], "potentials": [1]}, "bajar"),
+    ({"type": "born_haber", "steps": []}, "faltan steps"),
+])
+def test_errores_de_organica_e_inorganica(bloque, mensaje):
     with pytest.raises(ErrorDiagrama, match=mensaje):
         renderizar(bloque)

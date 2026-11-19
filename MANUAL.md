@@ -870,7 +870,7 @@ también vale.
 
 #### Química
 
-Trece tipos para evaluar y ejemplificar química general, inorgánica, orgánica, fisicoquímica y
+Veintiún tipos para evaluar y ejemplificar química general, inorgánica, orgánica, fisicoquímica y
 analítica. Las cuentas las hace alucarD (`generador_examenes/quimica.py`, sin dependencias nuevas):
 
 - el pH de cada punto de una titulación, por balance de cargas;
@@ -897,10 +897,30 @@ teoría.
 | `galvanic_cell` | Pila | `halfCells`: dos semiceldas `{couple: "Zn^2+/Zn", E0, n, conc, electrode, solution, reaction}` (el ánodo es la de menor E°, a la izquierda); `saltBridge`, `showIons`, `showNotation`, `showDeltaG`; `blankPolarity`, `blankReactions`, `blankPotential`, `blankFlow`, `blankNotation` |
 | `unit_cell` | Celda unidad | `lattice` (`sc`, `bcc`, `fcc`, `nacl`, `cscl`), `element` o `species`, `a` (pm) y `molarMass` (g/mol) para la densidad; `blank` (`true` o una lista de `z`, `coordination`, `packing`, `density`) |
 
+**Química orgánica.** Para estereoquímica y conformaciones (las estructuras y los mecanismos son
+`molecule` y `reaction`):
+
+| `type` | Qué dibuja | Claves principales |
+| :--- | :--- | :--- |
+| `newman` | Proyección de Newman | `front` y `back` (los tres sustituyentes de cada carbono), `dihedral` (el diedro entre el primero de adelante y el primero de atrás: 180 anti, 60 gauche, 0 eclipsada), `start`, `axis`; nombra la conformación; `blank`, `blankName`, `blankDihedral` |
+| `chair` | Silla del ciclohexano | `substituents` (`position` de 1 a 6, `group`, `axial`, `blank`), `flip` (la inversión del anillo: los axiales pasan a ecuatoriales); dice si es cis o trans y, con valores A conocidos (CH₃ 7,3 kJ/mol, tBu 21…), cuál silla es más estable y por cuánto; `blank`, `blankRelation`, `blankStability` |
+| `fischer` | Proyección de Fischer | `top`, `bottom` y `centers` (de arriba hacia abajo: `left`, `right`, `blank` (`left`, `right` o `true`), `priorities`: los lugares `top`, `right`, `bottom`, `left` de mayor a menor prioridad); con un solo centro, R/S sale de las reglas CIP para los grupos comunes (OH, NH₂, CHO, COOH, CH₂OH, CH₃, halógenos…); la serie D/L, del último centro; `showConfig`, `blankConfig`, `blankSeries`, `blank` |
+
+**Química inorgánica.** Además de `orbitals` y `unit_cell`:
+
+| `type` | Qué dibuja | Claves principales |
+| :--- | :--- | :--- |
+| `crystal_field` | Desdoblamiento del campo cristalino | `geometry` (`octahedral`, `tetrahedral`, `square_planar`), `electrons` (los d) o `metal` y `oxidation`, `spin` (`high`, `low`) o `ligand` (de la serie espectroquímica: desde el NH₃, campo fuerte), `complex` (la fórmula, de título); calcula el llenado, los desapareados, μ de solo espín y la EECC; `blankElectrons`, `blank`, `blankConfig`, `blankSpin`, `blankUnpaired`, `blankMoment`, `blankCFSE` |
+| `complex` | Complejo de coordinación | `geometry`, `metal`, `ligands` (en orden: arriba, abajo, izquierda, derecha, adelante, atrás; en el cuadrado plano: izquierda, derecha, adelante, atrás), `charge`, `oxidation` (si un ligando no es de la tabla); calcula la fórmula, el estado de oxidación, la coordinación, los electrones d y el isómero (cis/trans, fac/mer); `blank` (`true` o una lista de `formula`, `oxidation`, `coordination`, `d`, `isomer`) |
+| `latimer` | Diagrama de Latimer | `species`, `oxidation` y `potentials` (de la más oxidada a la más reducida), `compute` (pares de índices: el E° entre dos especies cualesquiera, Σ nE° / Σ n), `showDisproportionation`; `blankPotentials` (índices), `blankComputed`, `blankDisproportionation` |
+| `frost` | Diagrama de Frost | las mismas claves que `latimer`: N·E° de cada especie respecto del estado 0; `showDisproportionation` marca las que quedan por encima de la recta entre sus vecinas; `blankLabels` |
+| `born_haber` | Ciclo de Born-Haber | `start`, `steps` (`to`, `dH`, `label`, `blank`: de los elementos a los iones gaseosos), `formation` (ΔHf), `product`; la energía de red sale por la ley de Hess; `blankLattice` |
+
 **Fórmulas.** En los rótulos, un número que sigue a un símbolo o a un paréntesis queda como subíndice
 (`H2SO4`, `[Cu(NH3)4]`), lo que sigue a `^` como superíndice (`SO4^2-`, `Fe^3+`, `e^-`) y `_` fuerza
-un subíndice (`K_a`, `pK_a1`, `σ^*_{2p}`). Un número al principio o después de un espacio es un
-coeficiente (`2 H2O`).
+un subíndice (`K_a`, `pK_a1`, `σ^*_{2p}`, `S_N`). Un número al principio o después de un espacio es un
+coeficiente (`2 H2O`), y `\2` es un dígito común (`S_N\2`). Los títulos de los diagramas de química
+también aceptan fórmulas.
 
 ```yaml
 type: titration

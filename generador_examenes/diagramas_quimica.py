@@ -62,6 +62,10 @@ def partes_formula(texto: Any) -> list[tuple[str, str]]:
     i, previo = 0, ""
     while i < len(texto):
         ch = texto[i]
+        if ch == "\\" and i + 1 < len(texto):          # \2: un dígito que no es subíndice (SN\2)
+            poner(texto[i + 1], "n")
+            previo, i = " ", i + 2
+            continue
         if ch in "^_":
             modo = "sup" if ch == "^" else "sub"
             i += 1
@@ -72,7 +76,7 @@ def partes_formula(texto: Any) -> list[tuple[str, str]]:
                     poner(x.replace("-", "−"), modo)
                 i = fin + 1
             else:
-                valido = _CARGA if modo == "sup" else set("0123456789abcdefghijklmnopqrstuvwxyzαβγ")
+                valido = _CARGA if modo == "sup" else set("0123456789abcdefghijklmnopqrstuvwxyzαβγABCDEFGHIJKLMNOPQRSTUVWXYZ")
                 while i < len(texto) and texto[i] in valido:
                     poner(texto[i].replace("-", "−"), modo)
                     i += 1
@@ -126,6 +130,18 @@ def _tq(c: d._Lienzo, x: float, y: float, texto: Any, size: float = 11, peso: in
     c.add(f'<text x="{x:.1f}" y="{y:.1f}" text-anchor="{ancla}" font-family="{fuente}" font-size="{size}" '
           f'font-weight="{peso}" fill="{c.pal[color]}">{"".join(piezas)}</text>')
     return ancho
+
+
+def _encabezado_q(c: d._Lienzo, bloque: dict) -> float:
+    """Como el encabezado de los diagramas, pero el título y el subtítulo aceptan fórmulas."""
+    titulo, subtitulo = bloque.get("title"), bloque.get("subtitle")
+    if not titulo and not subtitulo:
+        return 0
+    if titulo:
+        c.ancho_min = max(c.ancho_min, _tq(c, 0, 16, titulo, size=14, peso=700) + 4)
+    if subtitulo:
+        c.ancho_min = max(c.ancho_min, _tq(c, 0, 32 if titulo else 14, subtitulo, size=10.5, color="textMuted") + 4)
+    return 40 if titulo else 22
 
 
 def _caja_vacia(c: d._Lienzo, x: float, y: float, w: float = 28, h: float = 16) -> None:
@@ -498,7 +514,7 @@ def _dibujar_molecula(c: d._Lienzo, b: dict, donde: str = "molecule") -> tuple[f
 
 @_errores
 def _molecula(c: d._Lienzo, b: dict) -> Punto:
-    top = d._encabezado(c, b)
+    top = _encabezado_q(c, b)
     sub = d._Lienzo(c.pal, c.sufijo)
     w, h = _dibujar_molecula(sub, b)
     _incrustar(c, sub, 0, top)
@@ -575,7 +591,7 @@ def _reaccion(c: d._Lienzo, b: dict) -> Punto:
     pasos = b.get("steps")
     if not isinstance(pasos, list) or not pasos:
         raise d.ErrorDiagrama("reaction: 'steps' es una lista de fórmulas, '+', flechas y moléculas")
-    top = d._encabezado(c, b)
+    top = _encabezado_q(c, b)
     maximo = float(b.get("maxWidth", 640))
     piezas = [_pieza_reaccion(c, p, i) for i, p in enumerate(pasos)]
     filas: list[list[tuple[d._Lienzo, float, float]]] = [[]]
@@ -656,7 +672,7 @@ def _trepev(c: d._Lienzo, b: dict) -> Punto:
         ligandos = ["X"] * len(posiciones)
     if len(ligandos) != len(posiciones):
         raise d.ErrorDiagrama(f"vsepr: la geometría {clave} lleva {len(posiciones)} ligandos (hay {len(ligandos)})")
-    top = d._encabezado(c, b)
+    top = _encabezado_q(c, b)
     largo = 56.0
     cx, cy = 130.0, top + 84
     trazo = c.pal["strokeMain"]
@@ -773,7 +789,7 @@ def _orbitales_atomicos(c: d._Lienzo, b: dict) -> Punto:
     blanco = bool(b.get("blank"))
     nucleo = conf.nucleo() if b.get("core") else None
     subniveles = [(nl, e) for nl, e in conf.ocupacion.items() if not nucleo or nl not in nucleo[1]]
-    top = d._encabezado(c, b)
+    top = _encabezado_q(c, b)
     x, y, ancho = 0.0, top + 22, 0.0
     if nucleo:
         c.r(0, y, 44, 22, relleno="fillHeader", trazo=1.2)
@@ -820,7 +836,7 @@ def _orbitales_moleculares(c: d._Lienzo, b: dict) -> Punto:
     if not atomos:
         raise d.ErrorDiagrama("orbitals: kind molecular necesita atoms: [O, O] (o molecule: O)")
     om = q.orbitales_moleculares(atomos, int(b.get("charge", 0)))
-    top = d._encabezado(c, b)
+    top = _encabezado_q(c, b)
     izq, der = om.atomos
     en_izq = q.ELECTRONEGATIVIDAD.get(izq, 0)
     en_der = q.ELECTRONEGATIVIDAD.get(der, 0)
@@ -913,7 +929,7 @@ def _estados(lista: Any, donde: str) -> list[dict]:
 def _perfil(c: d._Lienzo, b: dict) -> Punto:
     estados = _estados(b.get("states"), "states")
     catal = _estados(b["catalyzed"], "catalyzed") if b.get("catalyzed") else None
-    top = d._encabezado(c, b)
+    top = _encabezado_q(c, b)
     x0, y0, w, h = 50.0, top + 16, 480.0, 250.0
     todas = [e["energy"] for e in estados + (catal or [])]
     lo, hi = min(todas), max(todas)
@@ -1024,7 +1040,7 @@ def _titulacion(c: d._Lienzo, b: dict) -> Punto:
         raise d.ErrorDiagrama("titration: 'titrant' es {conc, name}")
     t = q.titulacion(b.get("analyte"), titulante.get("conc", 0.1), b.get("vMax"))
     nombre = str(titulante.get("name") or ("NaOH" if t.analito.es_acido else "HCl"))
-    top = d._encabezado(c, b)
+    top = _encabezado_q(c, b)
     x0, y0, w, h = 58.0, top + 16, 460.0, 260.0
     ejes = _Ejes(c, x0, y0, w, h, (0.0, t.vmax), (0.0, 14.0), "", "pH", ypaso=2)
     _tq(c, x0 + w / 2, y0 + h + 30, f"V {nombre} (mL)", size=10, peso=600, ancla="middle")
@@ -1095,7 +1111,7 @@ def _especiacion(c: d._Lienzo, b: dict) -> Punto:
     if len(especies) != len(pkas) + 1:
         raise d.ErrorDiagrama(f"speciation: con {len(pkas)} pKa hay {len(pkas) + 1} especies (species tiene "
                               f"{len(especies)})")
-    top = d._encabezado(c, b)
+    top = _encabezado_q(c, b)
     x0, y0, w, h = 58.0, top + 20, 460.0, 230.0
     ejes = _Ejes(c, x0, y0, w, h, (0.0, 14.0), (0.0, 1.0), "pH", "fracción α", ypaso=0.2)
     kas = [10 ** -p for p in pkas]
@@ -1131,7 +1147,7 @@ def _especiacion(c: d._Lienzo, b: dict) -> Punto:
 
 @_errores
 def _cinetica(c: d._Lienzo, b: dict) -> Punto:
-    top = d._encabezado(c, b)
+    top = _encabezado_q(c, b)
     x0, y0, w, h = 64.0, top + 16, 450.0, 240.0
     modelo = str(b.get("model", "simple"))
     grafico = str(b.get("plot", "concentration"))
@@ -1259,7 +1275,7 @@ def _fases(c: d._Lienzo, b: dict) -> Punto:
     if str(b.get("kind", "single")) == "eutectic":
         return _eutectico(c, b)
     f = q.fases(b)
-    top = d._encabezado(c, b)
+    top = _encabezado_q(c, b)
     x0, y0, w, h = 60.0, top + 16, 440.0, 270.0
     esquematico = str(b.get("scale", "schematic")) != "log"
     tt, pt = f.triple
@@ -1371,7 +1387,7 @@ def _eutectico(c: d._Lienzo, b: dict) -> Punto:
         raise d.ErrorDiagrama("phase_diagram: el eutéctico está entre 0 y 100 % y por debajo de los dos puntos de "
                               "fusión")
     a, z = (str(v) for v in (b.get("components") or ["A", "B"]))
-    top = d._encabezado(c, b)
+    top = _encabezado_q(c, b)
     x0, y0, w, h = 64.0, top + 16, 420.0, 260.0
     t_lo = te - (max(ta, tb) - te) * 0.35
     t_hi = max(ta, tb) + (max(ta, tb) - te) * 0.12
@@ -1416,7 +1432,7 @@ def _eutectico(c: d._Lienzo, b: dict) -> Punto:
 @_errores
 def _calentamiento(c: d._Lienzo, b: dict) -> Punto:
     tramos = q.calentamiento(b)
-    top = d._encabezado(c, b)
+    top = _encabezado_q(c, b)
     x0, y0, w, h = 60.0, top + 16, 470.0, 250.0
     q_total = tramos[-1].q1
     t_lo, t_hi = tramos[0].t0, tramos[-1].t1
@@ -1477,7 +1493,7 @@ def _picos(b: dict, clave: str = "peaks") -> list[dict]:
 @_errores
 def _espectro(c: d._Lienzo, b: dict) -> Punto:
     tipo = str(b.get("kind", "ir"))
-    top = d._encabezado(c, b)
+    top = _encabezado_q(c, b)
     x0, y0, w, h = 58.0, top + 22, 480.0, 220.0
     blanco = bool(b.get("blankLabels"))
     puestos: list[tuple[float, float, float]] = []         # (x0, x1, y) de los rótulos ya escritos
@@ -1603,7 +1619,7 @@ def _pila(c: d._Lienzo, b: dict) -> Punto:
     if not isinstance(semis, list) or len(semis) != 2 or None in semis:
         raise d.ErrorDiagrama("galvanic_cell: halfCells (dos semiceldas {couple, E0, n})")
     p = q.pila([q.semicelda(s, f"halfCells[{i}]") for i, s in enumerate(semis)])
-    top = d._encabezado(c, b)
+    top = _encabezado_q(c, b)
     trazo = c.pal["strokeMain"]
     y_cable, y_boca, y_fondo, y_liq = top + 34, top + 110, top + 240, top + 140
     vasos = ((50.0, 200.0, p.anodo), (350.0, 500.0, p.catodo))
@@ -1708,7 +1724,7 @@ def _desglose(sitios: list[tuple[float, float, float, str]], especie: str) -> st
 @_errores
 def _celda(c: d._Lienzo, b: dict) -> Punto:
     celda = q.celda_unidad(str(b.get("lattice", "fcc")))
-    top = d._encabezado(c, b)
+    top = _encabezado_q(c, b)
     a = 150.0
     k = 0.42
     ox, oy = 30.0, top + 30 + a + a * k * 0.5

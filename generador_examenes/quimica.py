@@ -740,3 +740,303 @@ def multiplete(desplazamiento: float, vecinos: int, j_hz: float, mhz: float) -> 
     paso = j_hz / mhz
     centro = (len(intensidades) - 1) / 2
     return [(desplazamiento + (i - centro) * paso, v / total) for i, v in enumerate(intensidades)]
+
+
+# --- Orgánica: prioridades CIP, R/S, Newman y silla ------------------------------------------------------
+
+def _z(simbolo: str) -> int:
+    return Z_DE[simbolo]
+
+
+# Sustituyentes comunes: (Z del primer átomo, Z de lo que tiene unido, con los dobles enlaces duplicados).
+GRUPOS_CIP: dict[str, tuple[int, tuple[int, ...]]] = {
+    "H": (1, ()), "D": (1, (0,)),
+    "CH3": (6, (1, 1, 1)), "C2H5": (6, (6, 1, 1)), "CH2CH3": (6, (6, 1, 1)), "Et": (6, (6, 1, 1)),
+    "CH(CH3)2": (6, (6, 6, 1)), "iPr": (6, (6, 6, 1)), "C(CH3)3": (6, (6, 6, 6)), "tBu": (6, (6, 6, 6)),
+    "C6H5": (6, (6, 6, 6)), "Ph": (6, (6, 6, 6)),
+    "CH2OH": (6, (8, 1, 1)), "CHO": (6, (8, 8, 1)), "COOH": (6, (8, 8, 8)), "COCH3": (6, (8, 8, 6)),
+    "CN": (6, (7, 7, 7)), "CH2NH2": (6, (7, 1, 1)), "CONH2": (6, (8, 8, 7)), "CH2Cl": (6, (17, 1, 1)),
+    "CH2Br": (6, (35, 1, 1)), "CH2SH": (6, (16, 1, 1)), "CCl3": (6, (17, 17, 17)),
+    "OH": (8, (1,)), "OCH3": (8, (6,)), "NH2": (7, (1, 1)), "NHCH3": (7, (6, 1)), "N(CH3)2": (7, (6, 6)),
+    "NH3^+": (7, (1, 1, 1)), "NO2": (7, (8, 8, 8)), "SH": (16, (1,)), "F": (9, ()), "Cl": (17, ()),
+    "Br": (35, ()), "I": (53, ()),
+}
+
+
+def _clave_cip(grupo: str) -> tuple[int, tuple[int, ...]]:
+    clave = GRUPOS_CIP.get(str(grupo).strip())
+    if clave is None:
+        raise ErrorQuimica(f"no sé la prioridad CIP de {grupo!r}: indicá priorities (de mayor a menor)")
+    return clave[0], tuple(sorted(clave[1], reverse=True))
+
+
+def prioridades(grupos: list[str]) -> list[int]:
+    """El orden CIP (1 = mayor) de cada grupo, mirando el primer átomo y lo que tiene unido."""
+    claves = [_clave_cip(g) for g in grupos]
+    if len(set(claves)) != len(claves):
+        raise ErrorQuimica(f"dos grupos empatan en la primera esfera ({', '.join(grupos)}): indicá priorities")
+    orden = sorted(range(len(grupos)), key=lambda i: claves[i], reverse=True)
+    rango = [0] * len(grupos)
+    for puesto, i in enumerate(orden, 1):
+        rango[i] = puesto
+    return rango
+
+
+# En una proyección de Fischer: arriba, derecha, abajo, izquierda (los horizontales salen hacia uno).
+_FISCHER = {"top": (0, 1), "right": (1, 0), "bottom": (0, -1), "left": (-1, 0)}
+
+
+def configuracion_fischer(por_lugar: dict[str, int]) -> str:
+    """R o S, con la prioridad (1 a 4) de lo que hay arriba, a la derecha, abajo y a la izquierda."""
+    lugar = {p: k for k, p in por_lugar.items()}
+    if sorted(lugar) != [1, 2, 3, 4]:
+        raise ErrorQuimica("Fischer: las prioridades son 1, 2, 3 y 4, una por lugar")
+    (x1, y1), (x2, y2), (x3, y3) = (_FISCHER[lugar[k]] for k in (1, 2, 3))
+    giro = (x2 - x1) * (y3 - y1) - (y2 - y1) * (x3 - x1)        # > 0: antihorario
+    horario = giro < 0
+    if lugar[4] in ("left", "right"):                           # el menor hacia uno: se invierte
+        horario = not horario
+    return "R" if horario else "S"
+
+
+def conformacion_newman(diedro: float) -> str:
+    d = abs((diedro + 180) % 360 - 180)
+    if d < 15:
+        return "eclipsada (sinperiplanar)"
+    if abs(d - 60) < 15:
+        return "alternada gauche"
+    if abs(d - 120) < 15:
+        return "eclipsada (anticlinal)"
+    if d > 165:
+        return "alternada anti"
+    return f"diedro de {d:g}°"
+
+
+# Valores A (kJ/mol): lo que cuesta poner el grupo axial en lugar de ecuatorial.
+VALORES_A = {"CH3": 7.3, "C2H5": 7.5, "CH2CH3": 7.5, "Et": 7.5, "CH(CH3)2": 9.2, "iPr": 9.2, "C(CH3)3": 21.0,
+             "tBu": 21.0, "C6H5": 12.6, "Ph": 12.6, "OH": 3.9, "OCH3": 2.5, "NH2": 5.9, "F": 1.0, "Cl": 2.2,
+             "Br": 2.0, "I": 1.8, "CN": 0.8, "COOH": 5.9, "CHO": 3.0, "H": 0.0}
+
+
+def axial_arriba(carbono: int) -> bool:
+    """En la silla dibujada, el enlace axial de los carbonos impares apunta hacia arriba."""
+    return carbono % 2 == 1
+
+
+def cara(carbono: int, axial: bool) -> str:
+    """De qué lado del anillo queda el sustituyente: arriba o abajo."""
+    return "arriba" if axial == axial_arriba(carbono) else "abajo"
+
+
+def costo_axial(sustituyentes: list[dict]) -> float:
+    total = 0.0
+    for s in sustituyentes:
+        if s["axial"]:
+            if s["group"] not in VALORES_A:
+                raise ErrorQuimica(f"chair: no hay valor A para {s['group']!r}")
+            total += VALORES_A[s["group"]]
+    return total
+
+
+def relacion_cis_trans(sustituyentes: list[dict]) -> str | None:
+    distintos = [s for s in sustituyentes if s["group"] != "H"]
+    if len(distintos) != 2:
+        return None
+    a, b = distintos
+    return "cis" if cara(a["position"], a["axial"]) == cara(b["position"], b["axial"]) else "trans"
+
+
+# --- Inorgánica: campo cristalino, Latimer y Frost, Born-Haber y complejos ---------------------------------
+
+def electrones_d(metal: str, oxidacion: int) -> int:
+    """Los electrones d de un ion de transición: los del grupo menos la carga."""
+    z = numero_atomico(metal)
+    for inicio, fin, base in ((21, 30, 18), (39, 48, 36), (72, 80, 68)):
+        if inicio <= z <= fin:
+            n = z - base - oxidacion
+            if not 0 <= n <= 10:
+                raise ErrorQuimica(f"{metal} con estado de oxidación {oxidacion:+d} no queda con 0 a 10 electrones d")
+            return n
+    if z == 57:
+        return max(0, 1 - oxidacion + 2)
+    raise ErrorQuimica(f"{metal} no es un metal de transición del bloque d")
+
+
+# Serie espectroquímica, de campo débil a fuerte. Desde el NH3 se toma como campo fuerte (bajo espín).
+SERIE_ESPECTROQUIMICA = ["I^-", "Br^-", "S^2-", "SCN^-", "Cl^-", "NO3^-", "F^-", "OH^-", "C2O4^2-", "H2O", "NCS^-",
+                         "CH3CN", "NH3", "en", "bipy", "phen", "NO2^-", "PPh3", "CN^-", "CO"]
+CAMPO_FUERTE_DESDE = SERIE_ESPECTROQUIMICA.index("NH3")
+
+# Niveles de cada geometría, de abajo hacia arriba: (nombre, orbitales, energía en unidades de Δ).
+NIVELES_CAMPO = {
+    "octahedral": [("t2g", ["dxy", "dxz", "dyz"], -0.4), ("eg", ["dz²", "dx²−y²"], 0.6)],
+    "tetrahedral": [("e", ["dz²", "dx²−y²"], -0.6), ("t2", ["dxy", "dxz", "dyz"], 0.4)],
+    "square_planar": [("", ["dxz", "dyz"], -0.514), ("", ["dz²"], -0.428), ("", ["dxy"], 0.228),
+                      ("", ["dx²−y²"], 1.228)],
+}
+
+
+@dataclass
+class CampoCristalino:
+    geometria: str
+    electrones: int
+    alto_espin: bool
+    llenado: list[list[int]]            # por nivel, por orbital: 0, 1 (↑) o 2 (↑↓)
+
+    @property
+    def desapareados(self) -> int:
+        return sum(1 for nivel in self.llenado for e in nivel if e == 1)
+
+    @property
+    def momento(self) -> float:
+        """Momento magnético de solo espín, en magnetones de Bohr."""
+        n = self.desapareados
+        return math.sqrt(n * (n + 2))
+
+    @property
+    def eecc(self) -> float:
+        """La energía de estabilización del campo cristalino, en unidades de Δ (sin el apareamiento)."""
+        return sum(sum(nivel) * energia for nivel, (_, _, energia) in zip(self.llenado, NIVELES_CAMPO[self.geometria]))
+
+    @property
+    def pares(self) -> int:
+        return sum(1 for nivel in self.llenado for e in nivel if e == 2)
+
+
+def campo_cristalino(geometria: str, electrones: int, alto_espin: bool) -> CampoCristalino:
+    if geometria not in NIVELES_CAMPO:
+        raise ErrorQuimica(f"crystal_field: geometry {geometria!r} (vale octahedral, tetrahedral o square_planar)")
+    if not 0 <= electrones <= 10:
+        raise ErrorQuimica("crystal_field: de 0 a 10 electrones d")
+    niveles = NIVELES_CAMPO[geometria]
+    llenado = [[0] * len(orbitales) for _, orbitales, _ in niveles]
+    orden = [(i, j) for i, (_, orbitales, _) in enumerate(niveles) for j in range(len(orbitales))]
+    quedan = electrones
+    if alto_espin:
+        # Uno en cada orbital, de abajo hacia arriba, y después se aparean.
+        for vuelta in (1, 2):
+            for i, j in orden:
+                if quedan and llenado[i][j] < vuelta:
+                    llenado[i][j] += 1
+                    quedan -= 1
+    else:
+        # Se llena cada nivel (con Hund adentro) antes de subir al siguiente.
+        for i, (_, orbitales, _) in enumerate(niveles):
+            for vuelta in (1, 2):
+                for j in range(len(orbitales)):
+                    if quedan and llenado[i][j] < vuelta:
+                        llenado[i][j] += 1
+                        quedan -= 1
+    return CampoCristalino(geometria, electrones, alto_espin, llenado)
+
+
+def es_campo_fuerte(ligando: str) -> bool:
+    if ligando not in SERIE_ESPECTROQUIMICA:
+        raise ErrorQuimica(f"el ligando {ligando!r} no está en la serie espectroquímica: indicá spin")
+    return SERIE_ESPECTROQUIMICA.index(ligando) >= CAMPO_FUERTE_DESDE
+
+
+@dataclass
+class Latimer:
+    especies: list[str]
+    oxidacion: list[float]
+    potenciales: list[float]             # entre cada especie y la siguiente (reducción)
+
+    def electrones(self, i: int) -> float:
+        return self.oxidacion[i] - self.oxidacion[i + 1]
+
+    def potencial(self, i: int, j: int) -> float:
+        """E° entre dos especies cualesquiera (i más oxidada que j): Σ nE / Σ n."""
+        if i > j:
+            i, j = j, i
+        n = sum(self.electrones(k) for k in range(i, j))
+        return sum(self.electrones(k) * self.potenciales[k] for k in range(i, j)) / n
+
+    def frost(self) -> list[float]:
+        """N·E° de cada especie respecto de la de estado de oxidación 0 (o de la última)."""
+        ref = next((k for k, o in enumerate(self.oxidacion) if o == 0), len(self.especies) - 1)
+        salida = []
+        for k in range(len(self.especies)):
+            if k == ref:
+                salida.append(0.0)
+            elif k < ref:
+                salida.append(sum(self.electrones(m) * self.potenciales[m] for m in range(k, ref)))
+            else:
+                salida.append(-sum(self.electrones(m) * self.potenciales[m] for m in range(ref, k)))
+        return salida
+
+    def desproporcionan(self) -> list[int]:
+        """Las especies que desproporcionan: el E° de su reducción supera al de su oxidación."""
+        return [k for k in range(1, len(self.especies) - 1) if self.potenciales[k] > self.potenciales[k - 1]]
+
+
+def latimer(dato: dict) -> Latimer:
+    especies = [str(e) for e in _lista(dato.get("species"))]
+    oxidacion = [float(o) for o in _lista(dato.get("oxidation"))]
+    potenciales = [float(p) for p in _lista(dato.get("potentials"))]
+    if len(especies) < 2 or len(oxidacion) != len(especies) or len(potenciales) != len(especies) - 1:
+        raise ErrorQuimica("latimer: species y oxidation (uno por especie) y potentials (uno entre cada par), "
+                           "de la más oxidada a la más reducida")
+    if any(a <= b for a, b in zip(oxidacion, oxidacion[1:])):
+        raise ErrorQuimica("latimer: los estados de oxidación tienen que bajar de izquierda a derecha")
+    return Latimer(especies, oxidacion, potenciales)
+
+
+@dataclass
+class BornHaber:
+    pasos: list[tuple[str, float]]       # (estado al que llega, ΔH del paso)
+    formacion: float
+    producto: str
+    inicio: str
+
+    @property
+    def energia_red(self) -> float:
+        """ΔH de red (formación del sólido desde los iones gaseosos), por la ley de Hess."""
+        return self.formacion - sum(dh for _, dh in self.pasos)
+
+
+def born_haber(dato: dict) -> BornHaber:
+    pasos = []
+    for i, p in enumerate(_lista(dato.get("steps"))):
+        if not isinstance(p, dict) or "dH" not in p:
+            raise ErrorQuimica(f"born_haber: steps[{i}] es {{to: estado, dH: kJ/mol, label}}")
+        pasos.append((str(p.get("to", "")), _num(p["dH"], f"steps[{i}].dH")))
+    if not pasos or "formation" not in dato:
+        raise ErrorQuimica("born_haber: faltan steps (de los elementos a los iones gaseosos) y formation (ΔHf)")
+    return BornHaber(pasos, _num(dato["formation"], "formation"), str(dato.get("product", "MX(s)")),
+                     str(dato.get("start", "elementos")))
+
+
+CARGA_LIGANDOS = {"NH3": 0, "H2O": 0, "CO": 0, "en": 0, "py": 0, "PPh3": 0, "NO": 0, "Cl": -1, "Cl^-": -1,
+                  "Br": -1, "Br^-": -1, "I": -1, "I^-": -1, "F": -1, "F^-": -1, "CN": -1, "CN^-": -1, "OH": -1,
+                  "OH^-": -1, "NO2": -1, "NO2^-": -1, "SCN": -1, "SCN^-": -1, "NCS^-": -1, "ox": -2,
+                  "C2O4^2-": -2, "O^2-": -2}
+# Los sitios de cada geometría y cuáles quedan opuestos (a 180°).
+SITIOS_COMPLEJO = {"octahedral": 6, "square_planar": 4, "tetrahedral": 4}
+OPUESTOS = {"octahedral": {(0, 1), (2, 3), (4, 5)}, "square_planar": {(0, 1), (2, 3)}, "tetrahedral": set()}
+
+
+def isomero(geometria: str, ligandos: list[str]) -> str | None:
+    """cis/trans (MA4B2, MA2B2) o fac/mer (MA3B3), según dónde quedan los ligandos iguales."""
+    opuestos = OPUESTOS[geometria]
+    conteo: dict[str, list[int]] = {}
+    for i, lig in enumerate(ligandos):
+        conteo.setdefault(lig, []).append(i)
+    tamanos = sorted(len(v) for v in conteo.values())
+    if geometria in ("octahedral", "square_planar") and 2 in tamanos and len(conteo) == 2:
+        par = next(v for v in conteo.values() if len(v) == 2)
+        return "trans" if tuple(sorted(par)) in opuestos else "cis"
+    if geometria == "octahedral" and tamanos == [3, 3]:
+        tres = next(iter(conteo.values()))
+        alguno_opuesto = any(tuple(sorted((a, b))) in opuestos for a in tres for b in tres if a < b)
+        return "mer" if alguno_opuesto else "fac"
+    return None
+
+
+def oxidacion_metal(carga: int, ligandos: list[str]) -> int:
+    total = 0
+    for lig in ligandos:
+        if lig not in CARGA_LIGANDOS:
+            raise ErrorQuimica(f"complex: no sé la carga del ligando {lig!r}: indicá oxidation")
+        total += CARGA_LIGANDOS[lig]
+    return carga - total

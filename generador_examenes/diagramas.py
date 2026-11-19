@@ -2507,3 +2507,11 @@ from generador_examenes import diagramas_quimica as _quimica  # noqa: E402
 
 _RENDERIZADORES.update(_quimica.RENDERIZADORES)
 TIPOS = TIPOS + tuple(_quimica.RENDERIZADORES)
+
+# Orgánica (Newman, silla, Fischer) e inorgánica (campo cristalino, complejos, Latimer, Frost, Born-Haber).
+from generador_examenes import diagramas_inorganica as _inorganica  # noqa: E402
+from generador_examenes import diagramas_organica as _organica  # noqa: E402
+
+for _modulo in (_organica, _inorganica):
+    _RENDERIZADORES.update(_modulo.RENDERIZADORES)
+    TIPOS = TIPOS + tuple(_modulo.RENDERIZADORES)

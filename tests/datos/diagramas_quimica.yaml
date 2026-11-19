@@ -43,7 +43,7 @@
     - {id: f, el: F, from: c, angle: 270, length: 0.9, bond: {order: 1}}
 - id: mecanismo-sn2
   type: molecule
-  title: SN2 (flechas curvas)
+  title: "S_N\\2 (flechas curvas)"
   atoms:
     - {id: oh, el: HO, at: [-2.2, 0], charge: -1, lonePairs: 2}
     - {id: c, el: C, at: [0, 0]}
@@ -356,3 +356,161 @@
   type: unit_cell
   lattice: sc
   element: Po
+- id: newman-butano-anti
+  type: newman
+  title: Butano, mirando a lo largo de C2–C3
+  axis: C2–C3
+  front: [CH3, H, H]
+  back: [CH3, H, H]
+  dihedral: 180
+- id: newman-gauche-blanco
+  type: newman
+  front: [CH3, H, H]
+  back: [CH3, H, H]
+  dihedral: 60
+  blankName: true
+- id: newman-eclipsada
+  type: newman
+  front: [Br, H, H]
+  back: [Br, H, H]
+  dihedral: 0
+- id: silla-metil
+  type: chair
+  title: Metilciclohexano
+  substituents:
+    - {position: 1, group: CH3, axial: true}
+  flip: true
+- id: silla-dimetil-cis
+  type: chair
+  title: cis-1,2-dimetilciclohexano
+  substituents:
+    - {position: 1, group: CH3, axial: true}
+    - {position: 2, group: CH3, axial: false}
+  flip: true
+- id: silla-terbutil-blanco
+  type: chair
+  substituents:
+    - {position: 1, group: tBu, axial: false}
+    - {position: 4, group: CH3, axial: false}
+  flip: true
+  blank: true
+- id: fischer-gliceraldehido
+  type: fischer
+  title: D-gliceraldehído
+  top: CHO
+  bottom: CH2OH
+  centers:
+    - {left: H, right: OH}
+- id: fischer-alanina-blanco
+  type: fischer
+  title: Alanina
+  top: COOH
+  bottom: CH3
+  centers:
+    - {left: NH2, right: H}
+  blankConfig: true
+  blankSeries: true
+- id: fischer-glucosa
+  type: fischer
+  title: D-glucosa
+  top: CHO
+  bottom: CH2OH
+  centers:
+    - {left: H, right: OH, priorities: [right, top, bottom, left]}
+    - {left: HO, right: H, priorities: [left, top, bottom, right]}
+    - {left: H, right: OH, priorities: [right, top, bottom, left]}
+    - {left: H, right: OH, priorities: [right, top, bottom, left]}
+- id: campo-co-nh3
+  type: crystal_field
+  title: "[Co(NH3)6]^3+"
+  metal: Co
+  oxidation: 3
+  ligand: NH3
+- id: campo-fe-agua
+  type: crystal_field
+  complex: "[Fe(H2O)6]^3+"
+  metal: Fe
+  oxidation: 3
+  ligand: H2O
+- id: campo-tetraedrico
+  type: crystal_field
+  geometry: tetrahedral
+  complex: "[CoCl4]^2-"
+  metal: Co
+  oxidation: 2
+- id: campo-cuadrado-plano
+  type: crystal_field
+  geometry: square_planar
+  complex: "[Ni(CN)4]^2-"
+  metal: Ni
+  oxidation: 2
+- id: campo-blanco
+  type: crystal_field
+  metal: Fe
+  oxidation: 2
+  ligand: CN^-
+  blankElectrons: true
+  blank: true
+- id: complejo-trans
+  type: complex
+  title: trans-[Co(NH3)4Cl2]^+
+  metal: Co
+  charge: 1
+  ligands: [NH3, NH3, Cl, Cl, NH3, NH3]
+- id: complejo-fac-blanco
+  type: complex
+  metal: Co
+  ligands: [Cl, NH3, Cl, NH3, Cl, NH3]
+  blank: [isomer, oxidation]
+- id: complejo-cisplatino
+  type: complex
+  title: Cisplatino
+  geometry: square_planar
+  metal: Pt
+  ligands: [Cl, NH3, Cl, NH3]
+- id: latimer-manganeso
+  type: latimer
+  title: Manganeso en medio ácido
+  species: [MnO4^-, MnO4^2-, MnO2, Mn^3+, Mn^2+, Mn]
+  oxidation: [7, 6, 4, 3, 2, 0]
+  potentials: [0.56, 2.26, 0.95, 1.51, -1.18]
+  compute: [[0, 2], [0, 4]]
+  showDisproportionation: true
+- id: latimer-cobre-blanco
+  type: latimer
+  species: [Cu^2+, Cu^+, Cu]
+  oxidation: [2, 1, 0]
+  potentials: [0.16, 0.52]
+  compute: [[0, 2]]
+  blankComputed: true
+  showDisproportionation: true
+  blankDisproportionation: true
+- id: frost-manganeso
+  type: frost
+  title: Diagrama de Frost del manganeso
+  species: [MnO4^-, MnO4^2-, MnO2, Mn^3+, Mn^2+, Mn]
+  oxidation: [7, 6, 4, 3, 2, 0]
+  potentials: [0.56, 2.26, 0.95, 1.51, -1.18]
+  showDisproportionation: true
+- id: born-haber-nacl
+  type: born_haber
+  title: Ciclo de Born-Haber del NaCl
+  start: "Na(s) + ½ Cl2(g)"
+  product: "NaCl(s)"
+  formation: -411
+  steps:
+    - {to: "Na(g) + ½ Cl2(g)", dH: 107, label: "ΔH_sub"}
+    - {to: "Na^+(g) + ½ Cl2(g)", dH: 496, label: "EI"}
+    - {to: "Na^+(g) + Cl(g)", dH: 122, label: "½ D"}
+    - {to: "Na^+(g) + Cl^-(g)", dH: -349, label: "AE"}
+- id: born-haber-blanco
+  type: born_haber
+  start: "K(s) + ½ Br2(l)"
+  product: "KBr(s)"
+  formation: -394
+  steps:
+    - {to: "K(g)", dH: 89, label: "ΔH_sub"}
+    - {to: "K^+(g)", dH: 419, label: "EI"}
+    - {to: "K^+(g) + Br(g)", dH: 112, label: "½ D + vap"}
+    - {to: "K^+(g) + Br^-(g)", dH: -325, label: "AE"}
+  blankLattice: true
