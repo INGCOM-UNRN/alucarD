@@ -139,6 +139,12 @@ def test_lugar_de_las_raices_marca_kcritico():
     assert "Kcrít = 6" in _texto(renderizar({"type": "root_locus", "system": {"k": 1, "poles": [0, -1, -2]}}))
 
 
+def test_el_centroide_queda_en_blanco_con_blankmarks():
+    bloque = {"type": "root_locus", "system": {"k": 1, "poles": [0, -1, -2, -4], "zeros": [-3]}, "showCrossing": False}
+    assert "σa = −1,33" in _texto(renderizar(bloque)).replace("-", "−")
+    assert "1,33" not in _texto(renderizar({**bloque, "blankMarks": True}))
+
+
 def test_bloques_en_blanco_y_signos():
     svg = renderizar({"type": "block_diagram", "forward": [{"blank": True}, "Gp(s)"], "feedback": [], "blankSigns": True})
     texto = _texto(svg)

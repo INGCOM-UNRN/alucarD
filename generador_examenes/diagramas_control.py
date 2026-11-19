@@ -594,7 +594,9 @@ def _lugar(c: d._Lienzo, b: dict) -> Punto:
                 ejes.curva([(centro, 0), (centro + lejos * math.cos(math.radians(a)), lejos * math.sin(math.radians(a)))],
                            estilo=1, ancho=0.9, color="strokeMuted")
             c.punto(ejes.px(centro), ejes.py(0), color="strokeSub", radio=2.5)
-            c.t(ejes.px(centro), ejes.py(0) + 14, f"σa = {_g(centro)}", size=9, color="textSub", ancla="middle")
+            # Con blankMarks, el centroide también queda para completar.
+            _rotulo(c, ejes.px(centro), ejes.py(0) + 16, "σa", _g(centro), bool(b.get("blankMarks")), ancla="middle",
+                    size=9)
     for rama in ramas:
         puntos = [(r.real, r.imag) for r in rama]
         ejes.curva(puntos, ancho=2)
