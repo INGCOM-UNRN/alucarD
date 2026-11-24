@@ -78,6 +78,16 @@ def diagnosticar() -> List[Dict[str, Any]]:
         "sugerencia": "" if gcc_info["disponible"] else "sudo apt install build-essential  (Fedora: sudo dnf install gcc)",
     })
 
+    import os
+    dibu_cmd = os.environ.get("ALUCARD_DIBU") or os.environ.get("DIBU_BIN") or "dibu"
+    dibu_info = chequear_binario(dibu_cmd)
+    chequeos.append({
+        "nombre": "dibu", "requerido": True, "ok": dibu_info["disponible"],
+        "detalle": f"{dibu_info['version']} ({dibu_info['ruta']})" if dibu_info["disponible"] else "No encontrado en $PATH",
+        "proposito": "Render de diagramas SVG de los bloques ```estructura / ```statics",
+        "sugerencia": "" if dibu_info["disponible"] else "cargo install --path ../dibu/crates/dibu-cli  (o) ALUCARD_DIBU / DIBU_BIN",
+    })
+
     typst_bin = chequear_binario("typst")
     typst_mod = chequear_modulo_python("typst")
     # Un módulo instalado que no se puede importar no compila nada.

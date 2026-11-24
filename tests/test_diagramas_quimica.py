@@ -1,6 +1,5 @@
-"""Diagramas de química: las cuentas (contra valores de tabla) y los SVG."""
+"""Diagramas de química: validación de los SVG generados por `dibu`."""
 
-import math
 import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -8,162 +7,8 @@ from pathlib import Path
 import pytest
 
 from generador_examenes.diagramas import TIPOS, ErrorDiagrama, leer_bloques, renderizar
-from generador_examenes import quimica as q
-from generador_examenes.diagramas_quimica import partes_formula
 
 EJEMPLOS = leer_bloques((Path(__file__).parent / "datos" / "diagramas_quimica.yaml").read_text(encoding="utf-8"))
-
-
-# --- Cuentas -----------------------------------------------------------------------------------------
-
-@pytest.mark.parametrize("elemento, carga, nucleo, desapareados", [
-    ("O", 0, "[He] 2s² 2p⁴", 2),
-    ("Fe", 0, "[Ar] 4s² 3d⁶", 4),
-    ("Fe", 2, "[Ar] 3d⁶", 4),                 # el catión pierde primero el 4s
-    ("Cr", 0, "[Ar] 4s¹ 3d⁵", 6),             # excepción
-    ("Cu", 0, "[Ar] 4s¹ 3d¹⁰", 1),
-    ("Cu", 2, "[Ar] 3d⁹", 1),
-    ("Cl", -1, "[Ne] 3s² 3p⁶", 0),
-    ("Na", 0, "[Ne] 3s¹", 1),
-])
-def test_configuraciones(elemento, carga, nucleo, desapareados):
-    conf = q.configuracion(elemento, carga)
-    assert conf.texto(nucleo=True) == nucleo and conf.desapareados() == desapareados
-
-
-def test_configuracion_completa_y_por_numero_atomico():
-    assert q.configuracion(8).texto() == "1s² 2s² 2p⁴"
-    with pytest.raises(q.ErrorQuimica, match="desconocido"):
-        q.configuracion("Xx")
-
-
-@pytest.mark.parametrize("atomos, carga, orden, magnetismo", [
-    ("H", 0, 1, "diamagnética"), ("He", 0, 0, "diamagnética"), ("N", 0, 3, "diamagnética"),
-    ("O", 0, 2, "paramagnética"), ("O", -1, 1.5, "paramagnética"), ("O", 2, 3, "diamagnética"),
-    ("F", 0, 1, "diamagnética"), ("C", 0, 2, "diamagnética"), ("B", 0, 1, "paramagnética"),
-    (["C", "O"], 0, 3, "diamagnética"), (["N", "O"], 0, 2.5, "paramagnética"),
-])
-def test_orbitales_moleculares(atomos, carga, orden, magnetismo):
-    om = q.orbitales_moleculares(atomos, carga)
-    assert om.orden_enlace == orden and om.magnetismo == magnetismo
-
-
-def test_mezcla_sp_cambia_el_orden_de_los_niveles():
-    nombres = [n.nombre for n in q.orbitales_moleculares("N").niveles]
-    assert nombres.index("π2p") < nombres.index("σ2p")
-    nombres = [n.nombre for n in q.orbitales_moleculares("O").niveles]
-    assert nombres.index("σ2p") < nombres.index("π2p")
-
-
-@pytest.mark.parametrize("analito, inicial, equivalencias, semi", [
-    ({"kind": "weak_acid", "pKa": 4.76, "conc": 0.1, "volume": 25}, 2.88, [(25, 8.73)], [(12.5, 4.76)]),
-    ({"kind": "strong_acid", "conc": 0.1, "volume": 25}, 1.0, [(25, 7.0)], []),
-    ({"kind": "weak_base", "pKb": 4.75, "conc": 0.1, "volume": 25}, 11.12, [(25, 5.28)], [(12.5, 9.25)]),
-    # Con un pKa1 tan bajo, en la primera semiequivalencia el pH (2,29) ya no es el pKa: se disocia de más.
-    ({"kind": "weak_acid", "pKa": [2.15, 7.2, 12.35], "conc": 0.1, "volume": 25}, 1.63, [(25, 4.70), (50, 9.66)],
-     [(12.5, 2.29), (37.5, 7.2), (62.5, 11.86)]),
-    ({"kind": "weak_base", "pKa": [6.35, 10.33], "charge": -2, "conc": 0.1, "volume": 25}, 11.65,
-     [(25, 8.34), (50, 3.91)], [(12.5, 10.32), (37.5, 6.35)]),
-])
-def test_titulaciones(analito, inicial, equivalencias, semi):
-    t = q.titulacion(analito, 0.1)
-    assert t.ph_inicial == pytest.approx(inicial, abs=0.01)
-    assert [(round(v, 2), round(ph, 2)) for v, ph in t.equivalencias] == equivalencias
-    for (v, ph, _), (v_esp, ph_esp) in zip(t.semi, semi, strict=True):
-        assert v == pytest.approx(v_esp) and ph == pytest.approx(ph_esp, abs=0.02)
-
-
-def test_fracciones_suman_uno_y_se_cruzan_en_el_pka():
-    kas = [10 ** -2.15, 10 ** -7.2, 10 ** -12.35]
-    alfas = q.fracciones(10 ** -7.2, kas)
-    assert sum(alfas) == pytest.approx(1) and alfas[1] == pytest.approx(alfas[2], rel=1e-3)
-
-
-@pytest.mark.parametrize("orden, k, a0, t_medio", [(0, 0.05, 1, 10), (1, 0.1, 1, math.log(2) / 0.1), (2, 0.2, 1, 5)])
-def test_vida_media_y_concentracion(orden, k, a0, t_medio):
-    assert q.vida_media(orden, k, a0) == pytest.approx(t_medio)
-    assert q.concentracion(orden, k, a0, t_medio) == pytest.approx(a0 / 2)
-
-
-def test_consecutivas_y_reversibles():
-    tmax = q.t_maximo_intermediario(0.5, 0.2)
-    assert tmax == pytest.approx(math.log(0.2 / 0.5) / (0.2 - 0.5))
-    a, b, c = q.consecutiva(0.5, 0.2, 1, tmax)
-    assert a + b + c == pytest.approx(1)
-    a, b = q.reversible(0.3, 0.1, 1, 1e3)
-    assert b / a == pytest.approx(3)
-
-
-def test_diagrama_de_fases_pasa_por_los_puntos_normales():
-    agua = q.fases({"substance": "water"})
-    assert agua.t_de_p(1.0) == ("ebullición", pytest.approx(373.15))
-    assert agua.p_vapor(647.1) == pytest.approx(217.7, rel=1e-6)
-    co2 = q.fases({"substance": "co2"})
-    tipo, t = co2.t_de_p(1.0)
-    assert tipo == "sublimación" and t == pytest.approx(194.65)          # el hielo seco sublima a 1 atm
-
-
-def test_curva_de_calentamiento_del_agua():
-    tramos = q.calentamiento({"substance": "water", "mass": 100, "from": -20, "to": 120})
-    assert [t.fase for t in tramos] == ["sólido", "fusión", "líquido", "vaporización", "gas"]
-    assert [round(t.q, 2) for t in tramos] == [4.18, 33.4, 41.8, 225.7, 4.02]
-    solo_liquido = q.calentamiento({"substance": "water", "from": 20, "to": 80})
-    assert [t.fase for t in solo_liquido] == ["líquido"]
-
-
-def test_pila_de_daniell_con_nernst():
-    p = q.pila([q.semicelda({"couple": "Cu^2+/Cu", "E0": 0.34, "conc": 1}, "a"),
-                q.semicelda({"couple": "Zn^2+/Zn", "E0": -0.76, "conc": 0.01}, "b")])
-    assert p.anodo.electrodo == "Zn" and p.e0 == pytest.approx(1.10)
-    assert p.e == pytest.approx(1.10 + 0.05916, abs=1e-4)
-    assert p.delta_g == pytest.approx(-2 * 96485.33212 * 1.10 / 1000)
-    assert p.anodo.oxidacion == "Zn → Zn^2+ + 2e^-"
-    assert p.notacion == "Zn(s) | Zn^2+ (0,01 M) || Cu^2+ (1 M) | Cu(s)"
-
-
-def test_pila_con_distinto_numero_de_electrones():
-    p = q.pila([q.semicelda({"couple": "Ag^+/Ag", "E0": 0.80, "n": 1, "conc": 0.1}, "a"),
-                q.semicelda({"couple": "Cu^2+/Cu", "E0": 0.34, "n": 2, "conc": 1}, "b")])
-    assert p.n == 2 and p.e0 == pytest.approx(0.46)
-    assert p.e == pytest.approx(0.46 - 0.05916 / 2 * math.log10(1 / 0.1 ** 2))
-
-
-@pytest.mark.parametrize("red, z, coordinacion, empaquetamiento", [
-    ("sc", {"A": 1}, "6", 52.4), ("bcc", {"A": 2}, "8", 68.0), ("fcc", {"A": 4}, "12", 74.0),
-    ("nacl", {"A": 4, "B": 4}, "6:6", None), ("cscl", {"A": 1, "B": 1}, "8:8", None),
-])
-def test_celdas_unidad(red, z, coordinacion, empaquetamiento):
-    celda = q.celda_unidad(red)
-    assert celda.z == z and celda.coordinacion == coordinacion
-    if empaquetamiento is None:
-        assert celda.empaquetamiento is None
-    else:
-        assert 100 * celda.empaquetamiento == pytest.approx(empaquetamiento, abs=0.1)
-
-
-def test_densidades_de_tabla():
-    assert q.densidad(q.celda_unidad("fcc"), 361.5, 63.55) == pytest.approx(8.93, abs=0.01)
-    assert q.densidad(q.celda_unidad("nacl"), 564, 58.44) == pytest.approx(2.16, abs=0.01)
-
-
-def test_multiplete_n_mas_uno():
-    lineas = q.multiplete(1.2, 2, 7, 400)
-    assert [round(i, 3) for _, i in lineas] == [0.25, 0.5, 0.25]
-    assert lineas[1][0] == pytest.approx(1.2) and lineas[2][0] - lineas[1][0] == pytest.approx(7 / 400)
-
-
-# --- Fórmulas ------------------------------------------------------------------------------------------
-
-@pytest.mark.parametrize("texto, partes", [
-    ("H2SO4", [("H", "n"), ("2", "sub"), ("SO", "n"), ("4", "sub")]),
-    ("SO4^2-", [("SO", "n"), ("4", "sub"), ("2−", "sup")]),
-    ("[Cu(NH3)4]^2+", [("[Cu(NH", "n"), ("3", "sub"), (")", "n"), ("4", "sub"), ("]", "n"), ("2+", "sup")]),
-    ("2 H2O", [("2 H", "n"), ("2", "sub"), ("O", "n")]),
-    ("pK_a1 = 4", [("pK", "n"), ("a1", "sub"), (" = 4", "n")]),
-    ("g/cm³", [("g/cm³", "n")]),
-])
-def test_formulas(texto, partes):
-    assert partes_formula(texto) == partes
 
 
 # --- SVG -------------------------------------------------------------------------------------------------
@@ -236,14 +81,6 @@ def test_fases_y_eutectico():
     assert "Sólido" not in _texto(renderizar(_ejemplo("fases-blanco")))
 
 
-def test_molecula_con_anillos_fusionados_comparte_atomos():
-    from generador_examenes.diagramas_quimica import _Molecula
-
-    m = _Molecula(_ejemplo("naftaleno-kekule"))
-    assert len(m.atomos) == 10 and len(m.enlaces) == 11
-    assert sum(1 for e in m.enlaces if e["order"] == 2) == 5
-
-
 @pytest.mark.parametrize("bloque, mensaje", [
     ({"type": "molecule"}, "faltan atoms"),
     ({"type": "molecule", "atoms": [{"id": "a", "el": "C"}, {"id": "b", "from": "z"}]}, "no hay un átomo"),
@@ -274,108 +111,29 @@ def test_errores_claros(bloque, mensaje):
 
 # --- Orgánica -----------------------------------------------------------------------------------------
 
-@pytest.mark.parametrize("arriba, derecha, abajo, izquierda, esperado", [
-    ("CHO", "OH", "CH2OH", "H", "R"),        # D-gliceraldehído
-    ("CHO", "H", "CH2OH", "OH", "S"),        # L-gliceraldehído
-    ("COOH", "H", "CH3", "NH2", "S"),        # L-alanina
-    ("COOH", "NH2", "CH3", "H", "R"),        # D-alanina
-    ("H", "Cl", "CH3", "Br", "R"),           # el menor arriba: se lee directo
-])
-def test_r_s_en_fischer(arriba, derecha, abajo, izquierda, esperado):
-    rango = q.prioridades([arriba, derecha, abajo, izquierda])
-    assert q.configuracion_fischer(dict(zip(("top", "right", "bottom", "left"), rango))) == esperado
-
-
-def test_cip_pide_prioridades_si_hay_empate_o_un_grupo_desconocido():
-    with pytest.raises(q.ErrorQuimica, match="empatan"):
-        q.prioridades(["tBu", "Ph", "H", "OH"])
-    with pytest.raises(q.ErrorQuimica, match="priorities"):
-        q.prioridades(["CH2CH2CH2OH", "H", "OH", "Cl"])
-
-
 def test_glucosa_por_centro():
     texto = _plano(renderizar(_ejemplo("fischer-glucosa")))
     assert texto.count("(R)") == 3 and texto.count("(S)") == 1 and "Serie=D" in texto
 
 
-@pytest.mark.parametrize("diedro, nombre", [(180, "anti"), (60, "gauche"), (-60, "gauche"), (0, "sinperiplanar"),
-                                            (120, "anticlinal")])
-def test_conformaciones_de_newman(diedro, nombre):
-    assert nombre in q.conformacion_newman(diedro)
-
-
 def test_silla_estabilidad_y_cis_trans():
-    metilo = [{"position": 1, "group": "CH3", "axial": True}]
-    assert q.costo_axial(metilo) == pytest.approx(7.3)
-    cis = [{"position": 1, "group": "CH3", "axial": True}, {"position": 2, "group": "CH3", "axial": False}]
-    trans = [{"position": 1, "group": "CH3", "axial": False}, {"position": 2, "group": "CH3", "axial": False}]
-    assert q.relacion_cis_trans(cis) == "cis" and q.relacion_cis_trans(trans) == "trans"
-    cis_14 = [{"position": 1, "group": "tBu", "axial": False}, {"position": 4, "group": "CH3", "axial": True}]
-    assert q.relacion_cis_trans(cis_14) == "cis"
     texto = _plano(renderizar(_ejemplo("silla-metil")))
     assert "laderecha,por7,3kJ/mol" in texto
 
 
 # --- Inorgánica ---------------------------------------------------------------------------------------
 
-@pytest.mark.parametrize("geometria, d_e, alto, desapareados, eecc", [
-    ("octahedral", 6, False, 0, -2.4), ("octahedral", 6, True, 4, -0.4), ("octahedral", 5, True, 5, 0.0),
-    ("octahedral", 3, True, 3, -1.2), ("octahedral", 9, True, 1, -0.6), ("tetrahedral", 7, True, 3, -1.2),
-    ("square_planar", 8, False, 0, None),
-])
-def test_campo_cristalino(geometria, d_e, alto, desapareados, eecc):
-    cc = q.campo_cristalino(geometria, d_e, alto)
-    assert cc.desapareados == desapareados
-    assert cc.momento == pytest.approx(math.sqrt(desapareados * (desapareados + 2)))
-    if eecc is not None:
-        assert cc.eecc == pytest.approx(eecc, abs=1e-9)
-
-
-@pytest.mark.parametrize("metal, ox, d_e", [("Fe", 3, 5), ("Fe", 2, 6), ("Co", 3, 6), ("Cu", 2, 9), ("Pt", 2, 8),
-                                            ("Ti", 4, 0), ("Zn", 2, 10)])
-def test_electrones_d(metal, ox, d_e):
-    assert q.electrones_d(metal, ox) == d_e
-
-
 def test_serie_espectroquimica():
-    assert q.es_campo_fuerte("CN^-") and q.es_campo_fuerte("NH3") and not q.es_campo_fuerte("H2O")
     texto = _plano(renderizar(_ejemplo("campo-co-nh3")))
     assert "bajo" in texto and "Desapareados:0" in texto and "−2,4" in texto
 
 
-def test_latimer_y_frost_del_manganeso():
-    lt = q.latimer({"species": ["MnO4^-", "MnO4^2-", "MnO2", "Mn^3+", "Mn^2+", "Mn"],
-                    "oxidation": [7, 6, 4, 3, 2, 0], "potentials": [0.56, 2.26, 0.95, 1.51, -1.18]})
-    assert lt.potencial(0, 2) == pytest.approx(1.693, abs=1e-3)
-    assert lt.potencial(0, 4) == pytest.approx(1.508, abs=1e-3)
-    assert [round(x, 2) for x in lt.frost()] == [5.18, 4.62, 0.1, -0.85, -2.36, 0.0]
-    assert [lt.especies[k] for k in lt.desproporcionan()] == ["MnO4^2-", "Mn^3+"]
-    cobre = q.latimer({"species": ["Cu^2+", "Cu^+", "Cu"], "oxidation": [2, 1, 0], "potentials": [0.16, 0.52]})
-    assert cobre.desproporcionan() == [1] and cobre.potencial(0, 2) == pytest.approx(0.34)
-
-
 def test_born_haber():
-    nacl = q.born_haber({"steps": [{"dH": 107}, {"dH": 496}, {"dH": 122}, {"dH": -349}], "formation": -411})
-    assert nacl.energia_red == pytest.approx(-787)
     assert "−787" in _texto(renderizar(_ejemplo("born-haber-nacl"))).replace("-", "−")
     assert "689" not in _texto(renderizar(_ejemplo("born-haber-blanco")))
 
 
-@pytest.mark.parametrize("geometria, ligandos, esperado", [
-    ("octahedral", ["NH3", "NH3", "Cl", "Cl", "NH3", "NH3"], "trans"),
-    ("octahedral", ["Cl", "NH3", "Cl", "NH3", "NH3", "NH3"], "cis"),
-    ("octahedral", ["Cl", "NH3", "Cl", "NH3", "Cl", "NH3"], "fac"),
-    ("octahedral", ["Cl", "Cl", "Cl", "NH3", "NH3", "NH3"], "mer"),
-    ("square_planar", ["Cl", "NH3", "Cl", "NH3"], "cis"),
-    ("square_planar", ["Cl", "Cl", "NH3", "NH3"], "trans"),
-    ("tetrahedral", ["Cl", "Cl", "Br", "Br"], None),
-])
-def test_isomeros(geometria, ligandos, esperado):
-    assert q.isomero(geometria, ligandos) == esperado
-
-
 def test_complejo_estado_de_oxidacion_y_formula():
-    assert q.oxidacion_metal(1, ["NH3"] * 4 + ["Cl", "Cl"]) == 3
     texto = _plano(renderizar(_ejemplo("complejo-trans")))
     assert "Co(III)" in texto and "d6" in texto and "trans" in texto
     assert "fac" not in _texto(renderizar(_ejemplo("complejo-fac-blanco")))

@@ -898,26 +898,33 @@ def _diagrama(
     diagramas (texto, recortables) se saltean con un aviso. En las preguntas, el
     mismo bloque va en un bloque de código ```estructura.
     """
-    from generador_examenes.diagramas import TIPOS, ErrorDiagrama, leer_bloques, renderizar
+    from generador_examenes.diagramas import TIPOS, ErrorDiagrama, leer_bloques, renderizar_lote
 
     try:
         bloques = leer_bloques(archivo.read_text(encoding="utf-8"))
     except ErrorDiagrama as e:
         _usage_error(f"{archivo}: {e}")
     output_dir.mkdir(parents=True, exist_ok=True)
-    escritos = 0
+    validos = []
     for n, bloque in enumerate(bloques, 1):
         if bloque.get("type") not in TIPOS:
             print(f"Aviso: bloque {n} ({bloque.get('type')!r}) no es una estructura; se saltea.", file=sys.stderr)
             continue
-        destino = output_dir / f"{bloque.get('id') or f'{archivo.stem}_{n}'}.svg"
+        validos.append((n, bloque))
+    escritos = 0
+    if validos:
         try:
-            destino.write_text(renderizar(bloque, tinta=not color), encoding="utf-8")
+            resultados = renderizar_lote([b for _, b in validos], tinta=not color)
         except ErrorDiagrama as e:
-            print(f"Error: bloque {n}: {e}", file=sys.stderr)
-            continue
-        print(f"✓ {destino}")
-        escritos += 1
+            _usage_error(f"{archivo}: {e}")
+        for (n, bloque), (svg, err) in zip(validos, resultados):
+            if err is not None or svg is None:
+                print(f"Error: bloque {n}: {err}", file=sys.stderr)
+                continue
+            destino = output_dir / f"{bloque.get('id') or f'{archivo.stem}_{n}'}.svg"
+            destino.write_text(svg, encoding="utf-8")
+            print(f"✓ {destino}")
+            escritos += 1
     _ultimo_codigo_salida["code"] = 0 if escritos else 1
 
 

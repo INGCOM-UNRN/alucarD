@@ -106,3 +106,14 @@ def test_doctor_acepta_el_binario_sin_el_modulo(monkeypatch):
 def test_doctor_no_pide_weasyprint(monkeypatch):
     _, informe = _chequeo_typst(monkeypatch, SIN_BINARIO, {"disponible": True, "version": "1", "importable": True})
     assert "weasyprint" not in {c["nombre"] for c in informe["chequeos"]}
+
+
+def test_doctor_exige_dibu(monkeypatch):
+    monkeypatch.setattr(doctor, "chequear_binario", lambda c, *a: SIN_BINARIO if c == "dibu" else
+                        {"disponible": True, "version": "1", "ruta": "/bin/x"})
+    monkeypatch.setattr(doctor, "chequear_modulo_python", lambda m:
+                        {"disponible": True, "version": "1", "importable": True})
+    monkeypatch.setattr(doctor, "chequear_conectividad_languagetool", lambda: {"disponible": False, "detalle": "x"})
+    chequeos = doctor.diagnosticar()
+    dibu = next(c for c in chequeos if c["nombre"] == "dibu")
+    assert dibu["requerido"] and not dibu["ok"] and not doctor.informe_json(chequeos)["ok"]

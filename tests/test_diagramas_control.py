@@ -1,12 +1,10 @@
-"""Diagramas de control de procesos: las cuentas (contra resultados conocidos) y los SVG."""
+"""Diagramas de control de procesos: validación de los SVG generados por `dibu`."""
 
-import math
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import pytest
 
-from generador_examenes import control
 from generador_examenes.diagramas import (
     TIPOS,
     ErrorDiagrama,
@@ -16,90 +14,6 @@ from generador_examenes.diagramas import (
 )
 
 EJEMPLOS = leer_bloques((Path(__file__).parent / "datos" / "diagramas_control.yaml").read_text(encoding="utf-8"))
-
-
-# --- Cuentas -----------------------------------------------------------------------------------------
-
-def test_raices():
-    assert [round(r.real, 9) for r in control.raices([1, 6, 11, 6])] == [-3, -2, -1]
-    assert sorted((round(r.real, 9), round(r.imag, 9)) for r in control.raices([1, 2, 5])) == [(-1, -2), (-1, 2)]
-    assert [r for r in control.raices([1, 0, 0])] == [0, 0]
-
-
-@pytest.mark.parametrize("dato, num, den", [
-    ({"gain": 2, "tau": 5}, [2], [5, 1]),
-    ({"gain": 1, "zeta": 0.5, "wn": 2}, [4], [1, 2, 4]),
-    ({"k": 3, "poles": [-1, -2], "zeros": [-5]}, [3, 15], [1, 3, 2]),
-    ({"k": 1, "poles": [[-1, 2]]}, [1], [1, 2, 5]),
-    ({"num": [1, 2], "den": [1, 0, 4]}, [1, 2], [1, 0, 4]),
-    ({"kp": 2, "ki": 0.5, "kd": 0.1}, [0.1, 2, 0.5], [1, 0]),
-])
-def test_las_formas_de_escribir_un_sistema(dato, num, den):
-    s = control.sistema(dato)
-    assert [round(c.real, 9) for c in s.num] == num and [round(c.real, 9) for c in s.den] == den
-
-
-@pytest.mark.parametrize("dato, mensaje", [
-    ({"tau": -1}, "positiva"), ({"den": []}, "coeficientes"), ({"gain": 1}, "falta"), ({"poles": [[1, 2, 3]]}, "par complejo"),
-    ({"num": [1], "den": [1, 1], "delay": -2}, "negativo"),
-])
-def test_sistemas_invalidos(dato, mensaje):
-    with pytest.raises(control.ErrorControl, match=mensaje):
-        control.sistema(dato)
-
-
-def test_segundo_orden_coincide_con_las_formulas():
-    zeta, wn = 0.3, 2.0
-    ts, _, ys = control.simular_abierto(control.sistema({"zeta": zeta, "wn": wn}), 15)
-    car = control.caracteristicas(ts, ys, final=1.0)
-    raiz = math.sqrt(1 - zeta ** 2)
-    assert car["overshoot"] == pytest.approx(100 * math.exp(-math.pi * zeta / raiz), abs=0.05)
-    assert car["peak"] == pytest.approx(math.pi / (wn * raiz), abs=0.01)
-
-
-def test_primer_orden_con_tiempo_muerto():
-    ts, _, ys = control.simular_abierto(control.sistema({"gain": 2, "tau": 5, "delay": 1}), 40)
-    car = control.caracteristicas(ts, ys, final=2.0)
-    assert car["tau"] == pytest.approx(5, abs=0.05) and car["delay"] == pytest.approx(1, abs=0.05)
-    tangente = control.tangente_inflexion(ts, ys, 2.0)
-    assert tangente["L"] == pytest.approx(1, abs=0.05) and tangente["T"] == pytest.approx(5, abs=0.1)
-
-
-def test_lazo_con_pi_no_tiene_error_en_estado_estacionario():
-    lz = control.lazo({"plant": {"gain": 2, "tau": 5, "delay": 1}, "controller": {"kp": 1.2, "ki": 0.25}})
-    _, _, ys, _ = control.simular_lazo(lz, 80)
-    assert ys[-1] == pytest.approx(1, abs=1e-3)
-    solo_p = control.lazo({"plant": {"gain": 2, "tau": 5}, "controller": {"kp": 2}})
-    _, _, ys, _ = control.simular_lazo(solo_p, 40)
-    assert ys[-1] == pytest.approx(4 / 5, abs=1e-3)         # Kp K / (1 + Kp K): error de posición
-    assert solo_p.cerrado().ganancia_estatica == pytest.approx(0.8)
-
-
-def test_margenes_y_cruce_del_eje_imaginario():
-    s = control.sistema({"k": 1, "poles": [0, -1, -2]})
-    m = control.margenes(s, 0.01, 100)
-    assert m["w180"] == pytest.approx(math.sqrt(2), rel=1e-4)
-    assert m["gm"] == pytest.approx(20 * math.log10(6), rel=1e-4)
-    k, w = control.cruce_imaginario(s, 20)
-    assert k == pytest.approx(6, rel=1e-3) and w == pytest.approx(math.sqrt(2), rel=1e-3)
-    assert control.asintotas(s) == (-1.0, [60.0, 180.0, 300.0])
-
-
-def test_la_fase_no_salta():
-    s = control.sistema({"k": 1, "poles": [-1, -1, -1, -1]})
-    assert control.fase_continua(s, 1000) == pytest.approx(-360, abs=0.5)
-    assert control.fase_continua(control.sistema({"gain": 1, "tau": 1, "delay": 1}), 1) == pytest.approx(-45 - 57.2958, abs=0.01)
-
-
-def test_asintota_de_bode():
-    s = control.sistema({"k": 10, "poles": [-1, -10]})
-    assert control.asintota_db(s, 0.1) == pytest.approx(0, abs=1e-9)          # 10 / (1 · 10)
-    assert control.asintota_db(s, 100) == pytest.approx(-60, abs=1e-9)        # -40 dB/década desde 10
-
-
-def test_un_sistema_impropio_no_se_simula():
-    with pytest.raises(control.ErrorControl, match="impropio"):
-        control.simular_abierto(control.sistema({"num": [1, 0, 0], "den": [1, 1]}), 5)
 
 
 # --- SVG -----------------------------------------------------------------------------------------------

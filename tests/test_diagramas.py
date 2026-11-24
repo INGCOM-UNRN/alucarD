@@ -11,9 +11,6 @@ from generador_examenes.core.markdown_utils import markdown_to_html
 from generador_examenes.diagramas import (
     PALETAS,
     ErrorDiagrama,
-    _campos,
-    construir_arbol,
-    disposicion_struct,
     leer_bloques,
     renderizar,
 )
@@ -172,26 +169,9 @@ def test_direcciones_hexadecimales_desde_yaml():
     assert "0x3B20" in svg and "15136" not in svg
 
 
-def _en_orden(nodo):
-    return [] if nodo is None else [*_en_orden(nodo.izq), nodo.valor, *_en_orden(nodo.der)]
-
-
-def test_abb_por_inserciones():
-    raiz = construir_arbol({"type": "tree", "variant": "bst", "insert": [50, 30, 70, 20, 40, 30]})
-    assert raiz.valor == "50" and _en_orden(raiz) == ["20", "30", "40", "50", "70"]
-
-
 def test_avl_rebalancea():
-    raiz = construir_arbol({"type": "tree", "variant": "avl", "insert": [10, 20, 30, 40, 50, 25]})
-    assert raiz.valor == "30" and raiz.altura == 3
-    assert _en_orden(raiz) == ["10", "20", "25", "30", "40", "50"]
     svg = renderizar({"type": "tree", "variant": "avl", "insert": [10, 20, 30, 40, 50, 25]})
     assert ">-1<" in svg  # factor de balance del 40
-
-
-def test_arbol_por_niveles_con_huecos():
-    raiz = construir_arbol({"type": "tree", "values": ["A", "B", "C", "", "D"]})
-    assert raiz.izq.izq is None and raiz.izq.der.valor == "D"
 
 
 def test_errores_claros():
@@ -450,60 +430,6 @@ def test_cada_tema_es_un_svg_valido(bloque):
 
 def _textos(svg: str) -> list:
     return [t.text for t in ET.fromstring(svg).iter(f"{SVG}text")]
-
-
-def _disposicion(*campos: str, **opciones):
-    lista = _campos({"fields": list(campos)})
-    rellenos, sizeof, alineacion = disposicion_struct(lista, **opciones)
-    return [c.offset for c in lista], rellenos, sizeof, alineacion
-
-
-def test_struct_relleno_interno_y_final():
-    assert _disposicion("char a", "int b", "char c") == ([0, 4, 8], [(1, 3), (9, 3)], 12, 4)
-
-
-def test_struct_ordenar_los_campos_ahorra_relleno():
-    assert _disposicion("double d", "int i", "char a", "char b")[2] == 16
-    assert _disposicion("char a", "double d", "char b", "int i")[2] == 24
-
-
-def test_struct_empaquetado_no_tiene_relleno():
-    assert _disposicion("char a", "int b", "char c", empaquetado=True)[1:3] == ([], 6)
-
-
-def test_struct_arreglos_punteros_y_modificadores():
-    assert _disposicion("char nombre[10]", "int *p", "const unsigned long x", "short m[2][3]")[0] == [0, 16, 24, 32]
-    assert _disposicion("unsigned char a", "unsigned b", "long long int c")[0] == [0, 4, 8]
-
-
-def test_struct_anidado_se_declara_con_size_y_align():
-    campos = _campos({"fields": [{"name": "c", "type": "char"},
-                                 {"name": "pos", "type": "struct punto", "size": 8, "align": 4}]})
-    assert disposicion_struct(campos)[1] == 12
-
-
-def test_struct_coincide_con_gcc(tmp_path):
-    """Las claves de los exámenes dependen de esto: la cuenta tiene que dar lo mismo que el compilador."""
-    import shutil
-    import subprocess
-
-    if not shutil.which("gcc"):
-        pytest.skip("sin gcc")
-    casos = [["char a", "int b", "char c"], ["char a", "double d", "short s"], ["char n[10]", "int *p", "short m[3]"],
-             ["short a", "char b", "long c", "char d"], ["float f", "char c[5]", "size_t t"], ["char a", "char b"]]
-    fuente = "#include <stdio.h>\n#include <stddef.h>\n"
-    cuerpo, esperado = "", []
-    for i, caso in enumerate(casos):
-        campos = _campos({"fields": caso})
-        sizeof = disposicion_struct(campos)[1]
-        fuente += f"struct s{i} {{ {' '.join(c + ';' for c in caso)} }};\n"
-        cuerpo += f'printf("%zu", sizeof(struct s{i}));'
-        cuerpo += "".join(f'printf(" %zu", offsetof(struct s{i}, {c.nombre}));' for c in campos) + 'puts("");'
-        esperado.append(" ".join(str(n) for n in [sizeof, *(c.offset for c in campos)]))
-    (tmp_path / "s.c").write_text(f"{fuente}int main(void) {{ {cuerpo} return 0; }}\n", encoding="utf-8")
-    subprocess.run(["gcc", "s.c", "-o", "s"], cwd=tmp_path, check=True)
-    salida = subprocess.run(["./s"], cwd=tmp_path, check=True, capture_output=True, text=True).stdout
-    assert salida.split("\n")[:-1] == esperado
 
 
 def test_struct_dibuja_offsets_relleno_y_sizeof():

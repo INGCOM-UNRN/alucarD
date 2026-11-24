@@ -22,26 +22,56 @@ def _titulo_en(lines, numero):
 def revisar_diagramas(content):
     """Problemas de los bloques ```estructura: renglones en blanco o llaves (GIFT corta la pregunta
     ahí) y diagramas que no se pueden dibujar. Cada uno con su línea y su pregunta."""
-    from generador_examenes.diagramas import _FENCE, ErrorDiagrama, leer_bloques, renderizar
+    from generador_examenes.diagramas import _FENCE, ErrorDiagrama, leer_bloques, renderizar_lote
 
     lines = content.split("\n")
-    problemas = []
+    entradas = []  # lista de (donde, problemas_locales, cantidad_bloques)
+    lote = []
     for m in _FENCE.finditer(content):
         linea = content[:m.start()].count("\n") + 1
         titulo = _titulo_en(lines, linea)
         cuerpo = m.group("cuerpo")
         donde = f"Línea {linea} («{titulo}»)"
+        locales = []
         if any(not renglon.strip() for renglon in cuerpo.rstrip("\n").split("\n")):
-            problemas.append(f"{donde}: el bloque estructura tiene un renglón en blanco: en GIFT la pregunta se corta ahí")
+            locales.append(f"{donde}: el bloque estructura tiene un renglón en blanco: en GIFT la pregunta se corta ahí")
         if "{" in cuerpo or "}" in cuerpo:
-            problemas.append(f"{donde}: el bloque estructura tiene llaves: en GIFT abren las respuestas "
-                             "(escribí las listas con corchetes)")
+            locales.append(f"{donde}: el bloque estructura tiene llaves: en GIFT abren las respuestas "
+                           "(escribí las listas con corchetes)")
+            entradas.append((donde, locales, 0))
             continue
         try:
-            for bloque in leer_bloques(cuerpo):
-                renderizar(bloque)
+            bloques = leer_bloques(cuerpo)
         except ErrorDiagrama as e:
-            problemas.append(f"{donde}: diagrama inválido: {e}")
+            locales.append(f"{donde}: diagrama inválido: {e}")
+            entradas.append((donde, locales, 0))
+            continue
+        entradas.append((donde, locales, len(bloques)))
+        lote.extend(bloques)
+
+    resultados = []
+    error_global = None
+    if lote:
+        try:
+            resultados = renderizar_lote(lote)
+        except ErrorDiagrama as e:
+            error_global = str(e)
+
+    problemas = []
+    cursor = 0
+    for donde, locales, cantidad in entradas:
+        problemas.extend(locales)
+        if cantidad == 0:
+            continue
+        if error_global is not None:
+            problemas.append(f"{donde}: diagrama inválido: {error_global}")
+            continue
+        tramo = resultados[cursor:cursor + cantidad]
+        cursor += cantidad
+        for _, err in tramo:
+            if err is not None:
+                problemas.append(f"{donde}: diagrama inválido: {err}")
+                break
     return problemas
 
 
