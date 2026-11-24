@@ -58,7 +58,12 @@ def huella_codigo() -> str:
 
 
 def clave(archivo: Path) -> str:
+    """Contenido y nombre del banco, versión de alucard y cómo se dibujan los diagramas (el binario
+    `dibu` y el theme activo), porque las preguntas se guardan con sus SVG ya dibujados."""
+    from generador_examenes.diagramas import huella_render
+
     h = hashlib.sha256(huella_codigo().encode())
+    h.update(f"\0{huella_render()}".encode())
     h.update(f"\0{archivo.name}\0".encode())
     h.update(archivo.read_bytes())
     return h.hexdigest()

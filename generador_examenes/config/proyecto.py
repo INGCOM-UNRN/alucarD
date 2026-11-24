@@ -32,6 +32,7 @@ logo = "logo.png"
 logo_posicion = "derecha"                  # o "izquierda"
 logo_alto_mm = 12
 alto_contraste = true                      # texto negro, sin grises
+tema_diagramas = "high-contrast"           # theme de dibu: ink, color, high-contrast, dark o un .yaml
 ```
 """
 

@@ -612,7 +612,9 @@ def generar_examen(args, logger) -> int:
     logging.getLogger().addHandler(errores)
     codigo = 1
     try:
-        codigo = _generar_examen(args, logger, estado)
+        # En un contexto propio: el theme de diagramas que fija este examen no queda activo después.
+        import contextvars
+        codigo = contextvars.copy_context().run(_generar_examen, args, logger, estado)
     except BaseException as e:
         errores.mensajes.append(str(e) or type(e).__name__)
         raise
@@ -771,6 +773,17 @@ def _generar_examen(args, logger, estado: dict) -> int:
             estilo = definicion.estilo
             definicion = definicion.model_copy(update={"estilo": estilo.model_copy(update={
                 "tamano": max(estilo.tamano or 0, TAMANO_ACCESIBLE), "alto_contraste": True})})
+
+        # Theme de los diagramas para todo el examen (se dibujan al leer los bancos): el del estilo
+        # o, con alto contraste, el de dibu pensado para eso.
+        from generador_examenes import diagramas
+        try:
+            diagramas.fijar_tema(diagramas.resolver_tema(
+                definicion.estilo.tema_diagramas or ("high-contrast" if definicion.estilo.alto_contraste else None),
+                Path(args.definicion).parent))
+        except diagramas.ErrorDiagrama as e:
+            print(f"Error: estilo: {e}", file=sys.stderr)
+            return 1
 
         def del_yaml(campo):
             return getattr(definicion, campo) if campo in definicion.model_fields_set else None

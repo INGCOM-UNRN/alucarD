@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 
 from pydantic import BaseModel, Field, field_validator, model_validator
-from typing import List, Dict, Any, Literal, Optional
+from typing import List, Dict, Any, Literal, Optional, Union
 
 
 # El espacio para responder una pregunta de desarrollo. `pequeno` es el nombre anterior de `chico`.
@@ -129,6 +129,9 @@ class EstiloExamen(BaseModel):
     logo_posicion: Literal["izquierda", "derecha"] = "izquierda"
     logo_alto_mm: float = Field(default=12, ge=4, le=30)
     alto_contraste: bool = False                            # texto negro, sin grises; bordes negros
+    # Theme de dibu para los diagramas: "ink" (por omisión), "color", "high-contrast", "dark", un
+    # archivo YAML/JSON o {extends, colors, typography}. Con alto_contraste y sin esto, "high-contrast".
+    tema_diagramas: Optional[Union[str, Dict[str, Any]]] = None
     nombre_en_hojas: bool = True                            # renglón para el nombre en cada hoja (págs. impares desde la 3)
 
     @field_validator("fuente", "fuente_codigo", mode="before")

@@ -264,6 +264,7 @@ palabras = ["malloc", "struct", "printf"]
 # logo_posicion = "izquierda"    # o "derecha"
 # logo_alto_mm = 12
 alto_contraste = false           # true: texto negro, sin grises, y bordes negros
+# tema_diagramas = "ink"         # theme de dibu: ink, color, high-contrast, dark o un archivo .yaml
 ''', encoding='utf-8')
         logger.info("✓ Configuración del curso creada: alucard.toml")
 
@@ -857,21 +858,27 @@ def _diagramas_md(
     archivos: List[Path] = typer.Argument(..., exists=True, help="Archivos Markdown (o directorios) con bloques ```estructura."),
     verificar: bool = typer.Option(False, "--verificar", help="No escribe: falla si algún SVG falta, cambió o sobra."),
     color: bool = typer.Option(False, "--color", help="Paleta de color de statics (por omisión, ahorro de tinta)."),
+    theme: Optional[str] = typer.Option(None, "--theme", help="Theme de dibu: ink, color, high-contrast, dark o un archivo YAML/JSON."),
 ) -> None:
     """Dibuja los bloques ```estructura de los Markdown como SVG versionados, para publicarlos sin alucarD.
 
     Cada bloque de `<dir>/*.md` queda en `<dir>/diagramas/estructura-<hash>.svg` (el hash es del
     contenido del bloque) y se borran los SVG que ya no usa ningún bloque. Pensado como hook de
     pre-commit (`alucard-diagramas`): si escribe o borra algo, termina con código 1 para que se
-    agreguen al commit. Así `deckard export myst` publica el enunciado con su imagen.
+    agreguen al commit. Así `deckard export myst` publica el enunciado con sus diagramas.
     """
-    from generador_examenes.diagramas import sincronizar_svgs
+    from generador_examenes.diagramas import ErrorDiagrama, resolver_tema, sincronizar_svgs
+
+    try:
+        theme = resolver_tema(theme)
+    except ErrorDiagrama as e:
+        _usage_error(str(e))
 
     directorios = sorted({(a if a.is_dir() else a.parent).resolve() for a in archivos
                           if a.is_dir() or a.suffix.lower() == ".md"})
     cambios = errores = 0
     for directorio in directorios:
-        res = sincronizar_svgs(directorio, tinta=not color, escribir=not verificar)
+        res = sincronizar_svgs(directorio, tinta=not color, escribir=not verificar, theme=theme)
         for ruta in res.escritos:
             print(f"{'Desactualizado' if verificar else '✓ Escrito'}: {ruta}")
         for ruta in res.borrados:
@@ -891,6 +898,7 @@ def _diagrama(
                                    help="Bloque, lista de bloques o documento de statics, en YAML o JSON."),
     output_dir: Path = typer.Option(Path("output"), "-o", "--output-dir", help="Directorio de los SVG."),
     color: bool = typer.Option(False, "--color", help="Paleta de color de statics (por omisión, ahorro de tinta)."),
+    theme: Optional[str] = typer.Option(None, "--theme", help="Theme de dibu: ink, color, high-contrast, dark o un archivo YAML/JSON."),
 ) -> None:
     """Dibuja estructuras de datos y diagramas de algoritmos como SVG, con el formato de bloques de statics.
 
@@ -898,23 +906,26 @@ def _diagrama(
     diagramas (texto, recortables) se saltean con un aviso. En las preguntas, el
     mismo bloque va en un bloque de código ```estructura.
     """
-    from generador_examenes.diagramas import TIPOS, ErrorDiagrama, leer_bloques, renderizar_lote
+    from generador_examenes.diagramas import (ErrorDiagrama, leer_bloques, renderizar_lote, resolver_tema,
+                                              tipos_disponibles)
 
     try:
         bloques = leer_bloques(archivo.read_text(encoding="utf-8"))
+        theme = resolver_tema(theme)
     except ErrorDiagrama as e:
         _usage_error(f"{archivo}: {e}")
+    tipos = tipos_disponibles()
     output_dir.mkdir(parents=True, exist_ok=True)
     validos = []
     for n, bloque in enumerate(bloques, 1):
-        if bloque.get("type") not in TIPOS:
+        if bloque.get("type") not in tipos:
             print(f"Aviso: bloque {n} ({bloque.get('type')!r}) no es una estructura; se saltea.", file=sys.stderr)
             continue
         validos.append((n, bloque))
     escritos = 0
     if validos:
         try:
-            resultados = renderizar_lote([b for _, b in validos], tinta=not color)
+            resultados = renderizar_lote([b for _, b in validos], tinta=not color, theme=theme)
         except ErrorDiagrama as e:
             _usage_error(f"{archivo}: {e}")
         for (n, bloque), (svg, err) in zip(validos, resultados):

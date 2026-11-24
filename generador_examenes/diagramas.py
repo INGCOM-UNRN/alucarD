@@ -1,8 +1,13 @@
 """Adaptador de diagramas SVG de alucarD hacia el binario externo `dibu`.
 
-Delega el renderizado de los 44 tipos de diagramas (estructuras de datos/CS,
-control de procesos y química general/orgánica/inorgánica) a `dibu batch`
-(protocolo JSONL por stdin/stdout: 1 solo proceso por documento o directorio).
+Delega el renderizado de los diagramas (estructuras de datos, control de procesos, química,
+sistemas digitales, arquitectura, sistemas operativos, redes, bases de datos, señales,
+probabilidad y circuitos) a `dibu batch` (protocolo JSONL por stdin/stdout: 1 solo proceso por
+documento o directorio). Los tipos y los themes disponibles se le preguntan al binario.
+
+El theme de los diagramas (`ink`, `color`, `high-contrast`, `dark` o un diccionario con
+`extends`, `colors` y `typography`) se elige por llamada o, para todo un examen, con
+`fijar_tema`: lo usa `alucard generar` según el `[estilo]` (`tema_diagramas`, `alto_contraste`).
 """
 
 from __future__ import annotations
@@ -16,7 +21,9 @@ import re
 import shutil
 import subprocess
 import sys
+from contextvars import ContextVar
 from dataclasses import dataclass, field
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
@@ -36,14 +43,23 @@ PALETAS = {
     },
 }
 
+# Los tipos de dibu 0.1 (para documentación y como respaldo); los reales los informa el binario
+# con `tipos_disponibles()`.
 TIPOS: Tuple[str, ...] = (
-    "adt", "array", "block_diagram", "bode", "born_haber", "call_stack", "call_tree", "chair",
-    "complex", "complexity", "cost_table", "crystal_field", "energy_profile", "fischer", "flowchart",
-    "frost", "galvanic_cell", "grafcet", "heating_curve", "instrumentation", "kinetics", "ladder",
-    "latimer", "linked_list", "matrix", "molecule", "newman", "nyquist", "orbitals", "phase_diagram",
-    "pole_zero", "queue", "reaction", "root_locus", "speciation", "spectrum", "stack", "struct",
-    "time_response", "titration", "trace_table", "tree", "unit_cell", "vsepr",
+    "adt", "array", "avl", "block_diagram", "bode", "born_haber", "bplus_tree", "cache",
+    "call_stack", "call_tree", "chair", "circuit", "complex", "complexity", "convolution",
+    "cost_table", "cpu_scheduling", "crystal_field", "dijkstra", "distribution", "dp_table",
+    "energy_profile", "fischer", "flowchart", "fourier", "frost", "galvanic_cell", "grafcet",
+    "hash_table", "heap", "heating_curve", "ieee754", "instrumentation", "karnaugh", "kinetics",
+    "ladder", "latimer", "linked_list", "logic_circuit", "matrix", "molecule", "newman", "nyquist",
+    "orbitals", "page_replacement", "page_table", "phase_diagram", "phasor", "pipeline", "pole_zero",
+    "queue", "reaction", "root_locus", "sampling", "signal", "speciation", "spectrum", "stack",
+    "struct", "subnetting", "time_response", "titration", "trace_table", "transaction_schedule",
+    "tree", "truth_table", "turing", "unit_cell", "venn", "vsepr",
 )
+
+# Presets de theme de dibu.
+TEMAS: Tuple[str, ...] = ("ink", "color", "high-contrast", "dark")
 
 DIR_SVGS = "diagramas"
 
@@ -73,6 +89,102 @@ def binario_dibu() -> Optional[str]:
     return shutil.which("dibu")
 
 
+def _consultar(subcomando: str) -> Optional[Tuple[str, ...]]:
+    """Las líneas que imprime `dibu <subcomando>`, o None si no hay binario o el comando falla."""
+    ruta = binario_dibu()
+    if not ruta:
+        return None
+    try:
+        proc = subprocess.run([ruta, subcomando], capture_output=True, text=True, encoding="utf-8",
+                              check=False, timeout=30)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if proc.returncode != 0:
+        return None
+    return tuple(l.strip() for l in proc.stdout.splitlines() if l.strip())
+
+
+@lru_cache(maxsize=4)
+def _tipos_de(ruta: Optional[str], huella: str) -> Tuple[str, ...]:
+    return _consultar("list-types") or TIPOS
+
+
+def tipos_disponibles() -> Tuple[str, ...]:
+    """Los tipos que dibuja el binario `dibu` instalado (o `TIPOS` si no se puede preguntar)."""
+    return _tipos_de(binario_dibu(), huella_dibu())
+
+
+@lru_cache(maxsize=4)
+def _temas_de(ruta: Optional[str], huella: str) -> Tuple[str, ...]:
+    return _consultar("list-themes") or ("ink", "color")
+
+
+def temas_disponibles() -> Tuple[str, ...]:
+    """Los presets de theme del binario (un `dibu` anterior a los themes sólo tiene ink y color)."""
+    return _temas_de(binario_dibu(), huella_dibu())
+
+
+def huella_dibu() -> str:
+    """Identifica el binario `dibu` (ruta, tamaño y fecha): si se actualiza, cambia."""
+    ruta = binario_dibu()
+    if not ruta:
+        return "sin-dibu"
+    try:
+        st = Path(ruta).stat()
+    except OSError:
+        return f"{ruta}:?"
+    return f"{ruta}:{st.st_size}:{st.st_mtime_ns}"
+
+
+# ---------------------------------------------------------------------------
+# Theme activo
+# ---------------------------------------------------------------------------
+
+_TEMA: ContextVar[Optional[Any]] = ContextVar("alucard_tema_diagramas", default=None)
+
+
+def resolver_tema(tema: Optional[Any], base: Optional[Path] = None) -> Optional[Any]:
+    """Un theme listo para dibu: un preset, un diccionario o la ruta a un archivo YAML/JSON.
+
+    Una ruta relativa se busca primero junto a `base` (la carpeta de la definición o del curso).
+    """
+    if tema is None or isinstance(tema, dict):
+        return tema
+    texto = str(tema).strip()
+    if not texto:
+        return None
+    for candidato in ([base / texto] if base is not None else []) + [Path(texto)]:
+        if candidato.suffix.lower() in (".yaml", ".yml", ".json") and candidato.is_file():
+            try:
+                datos = yaml.safe_load(candidato.read_text(encoding="utf-8"))
+            except (OSError, yaml.YAMLError) as e:
+                raise ErrorDiagrama(f"no se pudo leer el theme {candidato}: {e}") from e
+            if not isinstance(datos, dict):
+                raise ErrorDiagrama(f"el theme {candidato} tiene que ser un diccionario")
+            return datos
+    if texto.lower().endswith((".yaml", ".yml", ".json")):
+        raise ErrorDiagrama(f"no se encontró el archivo de theme {texto}")
+    return texto
+
+
+def fijar_tema(tema: Optional[Any]) -> None:
+    """El theme que usan los diagramas que no piden otro (None: el de `tinta`)."""
+    _TEMA.set(tema)
+
+
+def tema_activo() -> Optional[Any]:
+    return _TEMA.get()
+
+
+def huella_render() -> str:
+    """Lo que, además del texto, decide cómo sale un diagrama: el binario y el theme activo.
+
+    La usa la caché de bancos, que guarda las preguntas con sus SVG ya dibujados.
+    """
+    tema = tema_activo()
+    return f"{huella_dibu()}|{json.dumps(_json_seguro(tema), sort_keys=True, ensure_ascii=False)}"
+
+
 def _clave_json(k: Any) -> str:
     if k is False:
         return "false"
@@ -96,13 +208,19 @@ def _json_seguro(valor: Any) -> Any:
 def renderizar_lote(
     bloques: Sequence[Any],
     tinta: bool = True,
+    theme: Optional[Any] = None,
 ) -> List[Tuple[Optional[str], Optional[str]]]:
     """Renderiza una secuencia de bloques en un único spawn de `dibu batch`.
 
+    `theme` puede ser el nombre de un preset (`"ink"`, `"color"`, `"high-contrast"`, `"dark"`)
+    o un diccionario parcial (`{"extends": ..., "colors": ..., "typography": ...}`); sin él, se usa
+    el de `fijar_tema`. Un bloque con su propio `theme` o `inkSaver` manda sobre ambos.
     Devuelve una lista paralela de `(svg, error)` del mismo largo que `bloques`.
     """
     if not bloques:
         return []
+    if theme is None:
+        theme = tema_activo()
     resultados: List[Tuple[Optional[str], Optional[str]]] = [(None, None)] * len(bloques)
     lineas_req: List[str] = []
     indices_enviados: List[int] = []
@@ -110,7 +228,9 @@ def renderizar_lote(
         if not isinstance(bloque, dict):
             resultados[idx] = (None, "el bloque tiene que ser un diccionario con 'type'")
             continue
-        req = {"id": str(idx), "block": _json_seguro(bloque), "tinta": bool(tinta)}
+        req: Dict[str, Any] = {"id": str(idx), "block": _json_seguro(bloque), "tinta": bool(tinta)}
+        if theme is not None:
+            req["theme"] = _json_seguro(theme)
         lineas_req.append(json.dumps(req, ensure_ascii=False, allow_nan=False))
         indices_enviados.append(idx)
 
@@ -157,12 +277,12 @@ def renderizar_lote(
     return resultados
 
 
-def renderizar(bloque: Dict[str, Any], tinta: bool = True) -> str:
+def renderizar(bloque: Dict[str, Any], tinta: bool = True, theme: Optional[Any] = None) -> str:
     """El bloque como un `<svg>` independiente (con su tamaño y sus marcadores de flecha).
 
     `tinta` usa la paleta de ahorro de tinta de statics (negro), para imprimir; False, la de color.
     """
-    svg, err = renderizar_lote([bloque], tinta=tinta)[0]
+    svg, err = renderizar_lote([bloque], tinta=tinta, theme=theme)[0]
     if err is not None or svg is None:
         raise ErrorDiagrama(err or "error desconocido al renderizar diagrama")
     return svg
@@ -182,7 +302,9 @@ def leer_bloques(texto: str) -> List[Dict[str, Any]]:
     return bloques
 
 
-def expandir_en_markdown(texto: str, tinta: bool = True) -> Tuple[str, Dict[str, str]]:
+def expandir_en_markdown(
+    texto: str, tinta: bool = True, theme: Optional[Any] = None
+) -> Tuple[str, Dict[str, str]]:
     """Reemplaza los bloques ```estructura por marcadores; devuelve el texto y el SVG de cada marcador.
 
     Usa un único spawn de `dibu batch` para todos los bloques del texto.
@@ -202,7 +324,7 @@ def expandir_en_markdown(texto: str, tinta: bool = True) -> Tuple[str, Dict[str,
         except ErrorDiagrama as e:
             fences_info.append((m, marcador, None, str(e)))
 
-    resultados_lote = renderizar_lote(lote_bloques, tinta=tinta) if lote_bloques else []
+    resultados_lote = renderizar_lote(lote_bloques, tinta=tinta, theme=theme) if lote_bloques else []
 
     svgs: Dict[str, str] = {}
     partes_texto: List[str] = []
@@ -268,10 +390,10 @@ def _apilar_svgs(svgs: Sequence[str]) -> str:
     )
 
 
-def renderizar_bloque_markdown(cuerpo: str, tinta: bool = True) -> str:
+def renderizar_bloque_markdown(cuerpo: str, tinta: bool = True, theme: Optional[Any] = None) -> str:
     """Todas las estructuras de un bloque ```estructura en un único `<svg>`, apiladas."""
     bloques = leer_bloques(cuerpo)
-    resultados = renderizar_lote(bloques, tinta=tinta)
+    resultados = renderizar_lote(bloques, tinta=tinta, theme=theme)
     svgs: List[str] = []
     for svg, err in resultados:
         if err is not None or svg is None:
@@ -287,7 +409,9 @@ class Sincronizacion:
     errores: List[str] = field(default_factory=list)
 
 
-def sincronizar_svgs(directorio: Path, tinta: bool = True, escribir: bool = True) -> Sincronizacion:
+def sincronizar_svgs(
+    directorio: Path, tinta: bool = True, escribir: bool = True, theme: Optional[Any] = None
+) -> Sincronizacion:
     """Deja `directorio/diagramas/` con exactamente un SVG al día por bloque de los `.md` del directorio.
 
     Escribe los que faltan o cambiaron y borra los `estructura-*.svg` que ningún bloque usa. Con
@@ -314,7 +438,7 @@ def sincronizar_svgs(directorio: Path, tinta: bool = True, escribir: bool = True
             pendientes.append((md, nombre, bloques))
             lote_bloques.extend(bloques)
 
-    resultados_lote = renderizar_lote(lote_bloques, tinta=tinta) if lote_bloques else []
+    resultados_lote = renderizar_lote(lote_bloques, tinta=tinta, theme=theme) if lote_bloques else []
 
     esperados: Dict[str, str] = {}
     cursor = 0
