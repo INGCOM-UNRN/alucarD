@@ -242,6 +242,7 @@ nombre_en_hojas = true                           # renglón para el nombre en ca
 | `logo` | — | Logotipo en el encabezado. Relativo al archivo que lo nombra (`alucard.toml` o la definición). |
 | `logo_posicion`, `logo_alto_mm` | `izquierda`, `12` | Dónde y de qué alto; si es alto, el margen superior crece. |
 | `alto_contraste` | `false` | Todo el texto en negro, sin grises (también en los diagramas y en el código, sin resaltado), y bordes negros. |
+| `tema_diagramas` | `ink` (o `high-contrast` con `alto_contraste`) | Theme de dibu para los diagramas: `ink`, `color`, `high-contrast`, `dark`, un archivo YAML/JSON (relativo a la definición) o `{extends, colors, typography}`. Ver [Themes de los diagramas](#themes-de-los-diagramas). |
 | `nombre_en_hojas` | `true` | En el PDF del examen, un renglón «Apellido y Nombre» debajo del encabezado de cada página impar desde la 3: cada hoja nueva impresa a doble faz. La primera ya tiene el cuadro de datos. Con logotipo, el margen superior crece 7 mm para que entre. No sale en la clave ni en HTML. |
 
 En el encabezado y el pie se puede escribir `{institucion}`, `{materia}`, `{examen}`, `{fecha}`,
@@ -433,7 +434,9 @@ Cuidados:
 Las preguntas (GIFT `[markdown]`, Markdown) y los enunciados de las consignas de deckard pueden
 incluir diagramas de arreglos, matrices, listas enlazadas, pilas, la pila y el árbol de llamadas,
 colas, árboles, structs, TADs, complejidad, flujo, costos y trazas, los de control de procesos
-(ver [Control de procesos](#control-de-procesos)) y los de química (ver [Química](#química)). Se escriben en un bloque de
+(ver [Control de procesos](#control-de-procesos)), los de química (ver [Química](#química)) y los de
+computación, señales, probabilidad y circuitos (ver [Computación, señales, probabilidad y
+circuitos](#computación-señales-probabilidad-y-circuitos)). Se escriben en un bloque de
 código `estructura`, en YAML o JSON, con el formato de bloques de
 statics (`estructuras.html`): un bloque exportado de statics se pega tal cual. alucarD lo
 dibuja como SVG, en línea en el HTML y como imagen en el PDF de Typst, sin navegador ni dependencias
@@ -797,7 +800,8 @@ Cuidados:
   bloque y no `{...}`, para no confundir las llaves con las de las respuestas.
 - En YAML, un texto con corchetes, llaves, `:` o `#` va entre comillas: `"max = v[0]"`, `"v[i]"`.
 - Por omisión, los diagramas usan la paleta de ahorro de tinta de statics (negro); `inkSaver: false`
-  en el bloque usa la de color.
+  en el bloque usa la de color, y `theme:` en el bloque, cualquier theme (ver
+  [Themes de los diagramas](#themes-de-los-diagramas)).
 - Un bloque inválido no corta la generación: el examen muestra «Diagrama inválido» con el motivo.
 
 #### Control de procesos
@@ -935,12 +939,67 @@ Una curva de titulación marca solo los puntos de equivalencia que tienen un sal
 la del H₃PO₄ no aparece el tercero. En la semiequivalencia, el dibujo muestra el pH calculado, que
 con un pKa bajo (el primero del fosfórico) ya no es igual al pKa.
 
+#### Computación, señales, probabilidad y circuitos
+
+Veintiséis tipos que parten de los datos del problema: alucarD (con dibu) calcula la solución, así
+que la misma pregunta se puede variar cambiando los datos. Todos admiten `blank: true`, que dibuja
+el enunciado con los casilleros de la respuesta vacíos.
+
+| Área | Tipos y qué calculan |
+|---|---|
+| Sistemas digitales | `truth_table` (tabla de verdad, columnas intermedias con `steps`, Σm/ΠM con `canonical`), `karnaugh` (de 2 a 4 variables, agrupamientos mínimos, SOP o POS, indiferentes), `logic_circuit` (compuertas a partir de la expresión) |
+| Arquitectura | `pipeline` (5 etapas, riesgos RAW, burbujas y CPI, con o sin `forwarding`), `ieee754` (campos de bits y pasos, de un valor o de los `bits`), `cache` (directa o asociativa, LRU/FIFO, aciertos y fallos forzosos, de capacidad y de conflicto) |
+| Sistemas operativos | `cpu_scheduling` (FCFS, SJF, SRTF, RR, prioridad: Gantt y tiempos), `page_table` (traducción de direcciones), `page_replacement` (FIFO, LRU, OPT y reloj) |
+| Redes y bases de datos | `subnetting` (VLSM o subredes iguales), `transaction_schedule` (conflictos, grafo de precedencia y serializabilidad) |
+| Estructuras y algoritmos | `heap`, `hash_table` (encadenamiento, sondeo lineal, cuadrático y doble), `avl` (rotaciones), `bplus_tree`, `dp_table` (LCS, edición, mochila, monedas), `dijkstra`, `turing` |
+| Señales | `signal` (continua o discreta, por expresión), `convolution` (paso a paso), `fourier` (DFT y series), `sampling` (aliasing y Nyquist) |
+| Probabilidad | `distribution` (normal, uniforme, exponencial, t, χ², binomial, Poisson, geométrica, con el área y la probabilidad exacta), `venn` (2 o 3 conjuntos) |
+| Circuitos | `circuit` (serie y paralelo, impedancia equivalente y corriente), `phasor` |
+
+Las claves de cada tipo están en el README de dibu. En un banco GIFT se escriben en YAML en bloque,
+sin llaves: en vez de `- { name: P1, burst: 8 }`, cada proceso en sus renglones:
+
+```estructura
+type: cpu_scheduling
+algorithm: rr
+quantum: 3
+processes:
+  - name: A
+    burst: 5
+  - name: B
+    arrival: 1
+    burst: 3
+blank: true
+```
+
+#### Themes de los diagramas
+
+Cada diagrama se dibuja con un theme de dibu: una paleta (fondo, trazos, rellenos, acento y textos)
+y una tipografía. Los presets son `ink` (el de siempre, para imprimir), `color`, `high-contrast`
+(todo negro sobre blanco) y `dark` (fondo oscuro, para pantallas).
+
+- Para todo el examen, `tema_diagramas` en `[estilo]` de `alucard.toml` o en `estilo` de la
+  definición. Con `alto_contraste` (o `--accessible`) y sin `tema_diagramas`, se usa `high-contrast`.
+- Para un diagrama, `theme:` en el bloque, que manda sobre el del examen (`inkSaver` también).
+- Un theme propio parte de un preset y cambia sólo lo que dice:
+
+```yaml
+# tema_unrn.yaml, junto a la definición: estilo.tema_diagramas = "tema_unrn.yaml"
+extends: ink
+colors:
+  accentPrimary: "#1b365d"
+  fillHighlight: "#dbe7f3"
+typography:
+  scale: 1.1          # letra más grande; los diagramas se acomodan
+```
+
 `alucard diagrama` dibuja un archivo suelto: un bloque, una lista de bloques o un documento de
 statics. Escribe un SVG por bloque y saltea los que no son diagramas (texto, recortables):
 
 ```bash
 alucard diagrama ~/dev/tools/statics/ejercicio_pila.json -o diagramas/
 alucard diagrama arbol.yaml --color
+alucard diagrama arbol.yaml --theme dark          # o --theme tema_unrn.yaml
 ```
 
 `alucard diagramas-md` deja los diagramas de los Markdown como SVG versionados, para que los publique
@@ -2074,6 +2133,7 @@ Va en `estilo` de la definición y en `[estilo]` de `alucard.toml`. Más detalle
 | `logo_posicion` | `izquierda` o `derecha` | `izquierda` | Dónde va el logotipo. |
 | `logo_alto_mm` | número, 4 a 30 | `12` | Alto del logotipo. |
 | `alto_contraste` | booleano | `false` | Texto negro, sin grises, y bordes negros. |
+| `tema_diagramas` | texto o tabla | `ink` (`high-contrast` con `alto_contraste`) | Theme de dibu para los diagramas: `ink`, `color`, `high-contrast`, `dark`, un archivo YAML/JSON o `{extends, colors, typography}`. |
 | `nombre_en_hojas` | booleano | `true` | Renglón para el nombre en las páginas impares desde la 3 (PDF del examen). |
 
 ### Configuración del curso (`alucard.toml`)
