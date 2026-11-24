@@ -40,9 +40,12 @@ dependencies = [
     "pypdf>=6.16",
     "typst>=0.11,<0.14",
     # Núcleo común del ecosistema (N-ECO-14): contrato de línea de comandos y textos en español.
-    "yutani @ git+https://github.com/INGCOM-UNRN-P1/yutani@cf49348fae40d264006fe07dee2cc9e88dd9c934",
+    "yutani @ git+https://github.com/INGCOM-UNRN/yutani@6e42d7ab8b89a1084381f8aea0999a498a844f6c",
     "segno>=1.6,<2",
     "jsonschema>=4.20,<5",
+    "pillow>=12.0",
+    # Generador de diagramas SVG en Rust (instalado como binario en .venv/bin/dibu vía maturin).
+    "dibu @ git+https://github.com/INGCOM-UNRN/dibu@d0a9944d9e0b656207f82aa6c6d691f68211f044",
 ]
 
 [project.optional-dependencies]
@@ -54,7 +57,7 @@ ecosistema = [
     "daedalus @ git+https://github.com/INGCOM-UNRN-P1/daedalus@0d3da518270cea8d6a0dff85d8cec61de2e89fff",
 ]
 languagetool = [
-    "myst-tools @ git+https://github.com/martinvilu/mystmd-tools@ce716491213a5b0c0e36ea08dfb3c31b7794d478",
+    "myst-tools @ git+https://github.com/INGCOM-UNRN/mystmd-tools@1e7c3fdc4436c24ac369ad0d8b90a969a5ea8f5b",
 ]
 
 [project.urls]
@@ -87,6 +90,12 @@ dev = [
     "types-PyYAML>=6.0",
     "types-Markdown>=3.5",
     "zxing-cpp>=2.2",
+]
+
+[tool.uv]
+# Puente temporal mientras daedalus y myst-tools aún referencian INGCOM-UNRN-P1/yutani.
+override-dependencies = [
+    "yutani @ git+https://github.com/INGCOM-UNRN/yutani@6e42d7ab8b89a1084381f8aea0999a498a844f6c",
 ]
 
 [tool.mypy]

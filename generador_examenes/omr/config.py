@@ -17,7 +17,7 @@ import json
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, TypeGuard
 
 import yaml
 
@@ -99,7 +99,7 @@ class ConfigExamen:
         return sum(e.max_points for e in self.rubric)
 
 
-def _numero(valor: Any) -> bool:
+def _numero(valor: Any) -> TypeGuard[int | float]:
     return isinstance(valor, (int, float)) and not isinstance(valor, bool)
 
 
@@ -176,6 +176,12 @@ def desde_dict(datos: dict, ruta: Path | None = None) -> ConfigExamen:
 
     if p:
         raise ErrorConfig(nombre, p)
+    assert (
+        isinstance(exam_id, str)
+        and isinstance(title, str)
+        and isinstance(layout_id, str)
+        and isinstance(version, int)
+    )
     return ConfigExamen(exam_id=exam_id, title=title.strip(), layout_id=layout_id, layout_version=version,
                         variants=tuple(variantes), grade_scale=escala, grade_map=curva, rubric=rubrica,
                         cloud_sync_default=cloud, definicion=ruta_definicion, seed=seed, origen=ruta)

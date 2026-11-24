@@ -37,6 +37,7 @@ from typing import Any, Literal
 
 from generador_examenes.omr import layout, nomina, notas, qr
 from generador_examenes.omr.config import ConfigExamen
+from generador_examenes.omr.nomina import Inscripto
 
 # Disposición de la página, en mm. El marco y sus burbujas salen del manifiesto; esto es dónde va el
 # marco en la hoja y lo que el manifiesto no describe (el QR, el texto de respaldo).
@@ -72,7 +73,7 @@ class Lote:
     config_qr_svg: Path
     calibracion: Path
     registro: Path
-    inscriptos: list[nomina.Inscripto]
+    inscriptos: list[Inscripto]
     modo_qr: str
     avisos: list[str] = field(default_factory=list)
     modo: str = "caratula"
@@ -178,11 +179,14 @@ def build(config: ConfigExamen, inscriptos: list[nomina.Inscripto], salida: Path
     margen_sup = float(contexto_estilo(cuerpo.definicion, 0)["estilo"]["margen_sup_mm"])
     temas = {letra: i for i, letra in enumerate(config.variants)}
     paginas_de: dict[str, int] = {}
-    pdfs, desbordes, avisos = [], set(), list(cuerpo.avisos)
+    pdfs: list[Path] = []
+    desbordes: set[str] = set()
+    avisos = list(cuerpo.avisos)
     for inscripto in inscriptos:
         variante = inscripto.variante
         paginas = paginas_de.get(variante, PAGINAS_PROBABLES)
         destino = temporal / f"{inscripto.student_id}.pdf"
+        marcas: list[dict[str, Any]] = []
         if modo == "planilla":
             extra = {"omr": _contexto_sin_franja(inscripto)}
             _, _, fuente = renderer.fuente_examen(cuerpo.variantes[variante], cuerpo.definicion, temas[variante], extra)
@@ -193,7 +197,7 @@ def build(config: ConfigExamen, inscriptos: list[nomina.Inscripto], salida: Path
             extra = {"omr": _contexto_omr(config, manifiesto, "/" + ruta_manifiesto.name, inscripto, clave, paginas,
                                           margen_sup)}
             _, _, fuente = renderer.fuente_examen(cuerpo.variantes[variante], cuerpo.definicion, temas[variante], extra)
-            marcas: list = []
+            marcas = []
             _compilar(fuente, destino, salida, marcas)
             reales = _paginas(destino)
             if reales <= paginas:
@@ -211,6 +215,8 @@ def build(config: ConfigExamen, inscriptos: list[nomina.Inscripto], salida: Path
     principal = qr.config_comprimida(config, clave, manifiesto)
     compacto = None if motivos else qr.config_compacta(config, clave)
     if modo_qr == "compact":
+        if compacto is None:
+            raise ErrorLote("--qr-config-mode compact no alcanza para esta configuración")
         principal, compacto = compacto, None
     svg = salida / f"config_qr_{config.exam_id}.svg"
     qr.qr_configuracion(principal).save(str(svg), kind="svg", scale=4, border=4, dark="#000000", light="#ffffff")
@@ -327,7 +333,8 @@ def hoja_docente(config: ConfigExamen, manifiesto: dict, huella: str, principal:
 def hoja_calibracion(manifiesto: dict, ruta_manifiesto: str, fuente: str) -> str:
     """La cabecera con las burbujas rellenas al 0, 25, 50 y 100 % (§8), para calibrar umbrales."""
     niveles = (0.0, 0.25, 0.5, 1.0)
-    rellenos, en_fila = {}, {}
+    rellenos: dict[str, float] = {}
+    en_fila: dict[str, int] = {}
     for campo, valor, _x, _y in layout.burbujas(manifiesto):
         n = en_fila[campo] = en_fila.get(campo, -1) + 1
         rellenos[f"{campo}={valor}"] = niveles[n % len(niveles)]
@@ -371,7 +378,7 @@ def hoja_planilla(config: ConfigExamen, manifiesto: dict, ruta_manifiesto: str, 
     posiciones = posiciones_planilla(manifiesto, len(inscriptos), por_hoja)
     hojas = posiciones[-1][0] if posiciones else 1
     bloques: dict[int, list[str]] = {}
-    for inscripto, (hoja, oy) in zip(inscriptos, posiciones):
+    for inscripto, (hoja, oy) in zip(inscriptos, posiciones, strict=True):
         contenido = qr.contenido_caratula(config, inscripto.student_id, inscripto.variante, clave)
         respaldo = ", ".join(_cadena(t) for t in (inscripto.nombre_completo,
                                                   f"{inscripto.student_id} · Variante {inscripto.variante}"))

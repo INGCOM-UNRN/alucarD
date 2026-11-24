@@ -476,7 +476,7 @@ def test_marcos_por_hoja_y_posiciones():
     alto = m["frame_mm"]["h"]
     assert all(oy + alto <= lote.LIMITE_PLANILLA for _, oy in posiciones)
     assert all(b - a >= alto + m["marker_mm"] + lote.SEPARACION_PLANILLA
-               for (_, a), (_, b) in zip(posiciones, posiciones[1:entran]))
+               for (_, a), (_, b) in zip(posiciones, posiciones[1:entran], strict=False))
 
 
 @CON_POPPLER

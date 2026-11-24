@@ -15,7 +15,7 @@ import logging
 import sys
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Optional
+from typing import Any, Optional
 
 from generador_examenes.cli_errors import usage_error as _usage_error
 
@@ -660,7 +660,9 @@ def _sin_las_ya_usadas(args, definicion, banco: dict, cfg) -> tuple[dict, list[s
     if not tabla:
         return banco, []
     fijadas = {pid for s in definicion.secciones_examen for pool in s.pools for pid in pool.preguntas_fijadas}
-    disponibles, excluidas, examenes = {}, [], set()
+    disponibles: dict[Any, Any] = {}
+    excluidas: list[str] = []
+    examenes: set[str] = set()
     for clave, pregunta in banco.items():
         usos = registro.usada(pregunta, tabla)
         if not usos:

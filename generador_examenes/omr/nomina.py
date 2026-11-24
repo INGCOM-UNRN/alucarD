@@ -92,9 +92,10 @@ def asignar(nombre: str, filas: list[dict], columnas: set[str], variantes: tuple
     for fila in filas:
         sid = valor(fila, "student_id").upper()
         if not sid:
-            sid = next(libres, None)
-            if sid is None:
+            siguiente = next(libres, None)
+            if siguiente is None:
                 raise ErrorNomina(nombre, [f"más de {MAXIMO_AUTOMATICO} inscriptos sin student_id"])
+            sid = siguiente
         var = valor(fila, "variante").upper()
         if not var:
             var = variantes[ronda % len(variantes)]

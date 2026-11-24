@@ -6,12 +6,14 @@ Se extrajo a su propio módulo para poder ser importada tanto desde
 ``cli_commands.py`` (validaciones de negocio equivalentes a las que
 antes hacía ``ArgumentParser.error``), evitando un import circular.
 """
+from typing import NoReturn
+
 from rich.console import Console
 
 console = Console()
 
 
-def usage_error(message: str) -> None:
+def usage_error(message: str) -> NoReturn:
     """Equivalente a ``ArgumentParser.error``: reporta y sale con código 2.
 
     Se implementa con ``SystemExit`` (en vez de una excepción propia) para

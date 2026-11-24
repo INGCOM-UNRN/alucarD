@@ -39,7 +39,7 @@ def f(t: float, k: float) -> float:
 
 def _tramos(curva: CurvaNotas, escala: EscalaNotas) -> list[tuple[float, float, float, float]]:
     """Los tramos de aprobados (y promocionados): (p0, p1, g0, g1)."""
-    if curva.promo_pct is None:
+    if curva.promo_pct is None or curva.promo_grade is None:
         return [(curva.pass_pct, 100.0, curva.pass_grade, escala.max)]
     return [(curva.pass_pct, curva.promo_pct, curva.pass_grade, curva.promo_grade),
             (curva.promo_pct, 100.0, curva.promo_grade, escala.max)]
@@ -81,7 +81,7 @@ def nota(p: float, config: ConfigExamen) -> float:
     unidad = escala.unidad
     if p < curva.pass_pct and g >= curva.pass_grade:
         g = redondear(curva.pass_grade - unidad, escala)
-    if curva.promo_pct is not None and p < curva.promo_pct and g >= curva.promo_grade:
+    if curva.promo_pct is not None and curva.promo_grade is not None and p < curva.promo_pct and g >= curva.promo_grade:
         g = redondear(curva.promo_grade - unidad, escala)
     return min(escala.max, max(escala.min, g))
 

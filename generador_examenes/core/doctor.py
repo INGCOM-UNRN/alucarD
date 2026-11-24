@@ -30,6 +30,7 @@ def chequear_binario(comando: str, args_version: str = "--version") -> Dict[str,
     from pathlib import Path
 
     junto_python = Path(sys.executable).parent / (f"{comando}.exe" if os.name == "nt" else comando)
+    ruta: str | None
     if junto_python.is_file() and os.access(junto_python, os.X_OK):
         ruta = str(junto_python)
     else:

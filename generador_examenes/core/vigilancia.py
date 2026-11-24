@@ -7,11 +7,12 @@ empieza a mirar. La carpeta de salida no se mira nunca, así lo generado no disp
 
 from __future__ import annotations
 
-import sys
+import logging
 import time
 from pathlib import Path
 from typing import Callable, Dict, Iterable, Optional, Tuple
 
+logger = logging.getLogger(__name__)
 Huella = Dict[Path, Tuple[float, int]]
 
 
@@ -44,7 +45,7 @@ def vigilar(rutas: Callable[[], Iterable[Path]], accion: Callable[[], int], excl
     excluir = list(excluir)
     codigo = accion()
     anterior = huella(rutas(), excluir)
-    print(f"\nMirando {len(anterior)} archivo(s); Ctrl+C para terminar.", file=sys.stderr)
+    logger.info("Mirando %d archivo(s); Ctrl+C para terminar.", len(anterior))
     n = 0
     try:
         while vueltas is None or n < vueltas:
@@ -55,9 +56,9 @@ def vigilar(rutas: Callable[[], Iterable[Path]], accion: Callable[[], int], excl
                 continue
             cambiados = sorted({*actual} ^ {*anterior} | {r for r in actual if actual[r] != anterior.get(r)})
             nombres = ", ".join(p.name for p in cambiados[:3]) + ("…" if len(cambiados) > 3 else "")
-            print(f"\n— Cambió {nombres}: generando de nuevo —", file=sys.stderr)
+            logger.info("— Cambió %s: generando de nuevo —", nombres)
             codigo = accion()
             anterior = huella(rutas(), excluir)
     except KeyboardInterrupt:
-        print("", file=sys.stderr)
+        logger.debug("Vigilancia interrumpida por teclado.")
     return codigo

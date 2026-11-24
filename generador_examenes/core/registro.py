@@ -245,7 +245,8 @@ def guardar(nuevo: dict[str, Any], ruta: Path, forzar: bool = False) -> tuple[di
 
 def todos(carpeta: Path, cuatrimestre: str | None = None) -> tuple[list[dict], list[str]]:
     """Los registros de la carpeta (de un cuatrimestre, si se pide) y los archivos que no se pudieron leer."""
-    registros, fallas = [], []
+    registros: list[dict] = []
+    fallas: list[str] = []
     if not carpeta.is_dir():
         return registros, fallas
     patron = f"{cuatrimestre}/*.json" if cuatrimestre else "*/*.json"
@@ -321,7 +322,9 @@ def importar_resultados(registro: dict, archivo: Path) -> tuple[dict, list[str]]
     col_est = next((columnas[c] for c in ("estudiante", "student_id", "legajo") if c in columnas), None)
     if col_est is None or "tema" not in columnas:
         raise ErrorRegistro(f"{archivo}: faltan las columnas estudiante (o student_id, legajo) y tema")
-    problemas_csv, estudiantes, avisos = [], [], []
+    problemas_csv: list[str] = []
+    estudiantes: list[dict[str, Any]] = []
+    avisos: list[str] = []
     for n, fila in enumerate(filas, 2):
         estudiante = (fila.get(col_est) or "").strip()
         try:
@@ -331,7 +334,7 @@ def importar_resultados(registro: dict, archivo: Path) -> tuple[dict, list[str]]
             problemas_csv.append(f"fila {n}: tema {fila.get(columnas['tema'])!r}: {e}")
             continue
         ausente = (fila.get(columnas.get("ausente", ""), "") or "").strip().lower() in ("si", "sí", "1", "true", "x")
-        respuestas = {}
+        respuestas: dict[str, dict[str, Any]] = {}
         for p in preguntas:
             celda = None
             for clave in (str(p["orden"]), p["id"]):
@@ -422,7 +425,7 @@ def _correlacion(xs: list[float], ys: list[float]) -> float | None:
 def analizar(registros: Iterable[dict]) -> tuple[list[Analisis], list[dict]]:
     """La calidad de cada pregunta (sumando los exámenes en que salió) y la confiabilidad de cada tema."""
     por_huella: dict[str, Analisis] = {}
-    datos: dict[str, dict[str, list]] = {}
+    datos: dict[str, dict[str, Any]] = {}
     temas_info = []
     for r in registros:
         resultados = (r.get("resultados") or {}).get("estudiantes") or []

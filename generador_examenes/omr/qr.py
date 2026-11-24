@@ -131,7 +131,11 @@ def config_compacta(config: ConfigExamen, hmac_key: str) -> str:
     if motivos:
         raise ValueError("el QR compacto OMRCFG/2 no alcanza: " + "; ".join(motivos))
     curva, escala = config.grade_map, config.grade_scale
-    promo = "NONE:0" if curva.promo_pct is None else f"{_n(curva.promo_pct)}:{_n(curva.promo_grade)}"
+    promo = (
+        "NONE:0"
+        if curva.promo_pct is None or curva.promo_grade is None
+        else f"{_n(curva.promo_pct)}:{_n(curva.promo_grade)}"
+    )
     paso = "" if escala.step is None else _n(escala.step)
     ejercicios = ",".join(f"{e.id}:{_n(e.max_points)}:{e.levels}:{quote_plus(e.label)}" for e in config.rubric)
     return "/".join(["OMRCFG", "2", config.exam_id, f"{config.layout_id}:{config.layout_version}", hmac_key,

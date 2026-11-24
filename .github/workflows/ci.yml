@@ -23,6 +23,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
           enable-cache: true
 
+      - name: Instalar toolchain Rust
+        uses: dtolnay/rust-toolchain@stable
+
       # --all-extras trae daedalus y myst-tools fijados (extras ecosistema y languagetool).
       - name: Sincronizar dependencias
         run: uv sync --all-extras
@@ -40,6 +43,9 @@ jobs:
         uses: astral-sh/setup-uv@v7
         with:
           python-version: "3.12"
+
+      - name: Instalar toolchain Rust
+        uses: dtolnay/rust-toolchain@stable
 
       # Solo reglas que indican errores reales: sintaxis (E9), comparaciones
       # inválidas (F63), sentencias fuera de lugar (F7) y nombres indefinidos (F82).

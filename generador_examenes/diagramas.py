@@ -331,17 +331,17 @@ def expandir_en_markdown(
     cursor_texto = 0
     cursor_lote = 0
 
-    for m, marcador, bloques, err_parse in fences_info:
+    for m, marcador, bloques_fence, err_parse in fences_info:
         partes_texto.append(texto[cursor_texto:m.start()])
         partes_texto.append(f"\n\n{marcador}\n\n")
         cursor_texto = m.end()
 
-        if err_parse is not None or bloques is None:
+        if err_parse is not None or bloques_fence is None:
             svgs[marcador] = f'<p class="estructura-error"><strong>Diagrama inválido:</strong> {_esc(err_parse)}</p>'
             continue
 
-        tramo = resultados_lote[cursor_lote:cursor_lote + len(bloques)]
-        cursor_lote += len(bloques)
+        tramo = resultados_lote[cursor_lote:cursor_lote + len(bloques_fence)]
+        cursor_lote += len(bloques_fence)
         error_bloque = next((err for _, err in tramo if err is not None), None)
         if error_bloque is not None:
             svgs[marcador] = f'<p class="estructura-error"><strong>Diagrama inválido:</strong> {_esc(error_bloque)}</p>'

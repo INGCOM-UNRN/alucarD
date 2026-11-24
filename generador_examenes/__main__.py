@@ -5,7 +5,7 @@ import inspect
 import sys
 from pathlib import Path
 from types import SimpleNamespace
-from typing import List, Optional
+from typing import List, Literal, Optional
 import shutil
 
 import typer
@@ -928,7 +928,7 @@ def _diagrama(
             resultados = renderizar_lote([b for _, b in validos], tinta=not color, theme=theme)
         except ErrorDiagrama as e:
             _usage_error(f"{archivo}: {e}")
-        for (n, bloque), (svg, err) in zip(validos, resultados):
+        for (n, bloque), (svg, err) in zip(validos, resultados, strict=True):
             if err is not None or svg is None:
                 print(f"Error: bloque {n}: {err}", file=sys.stderr)
                 continue
@@ -1203,11 +1203,23 @@ def _omr_build(
     from generador_examenes.omr.cuerpo import ErrorCuerpo
     from generador_examenes.omr.notas import texto_tabla
 
-    if qr_config_mode not in ("compressed", "compact"):
+    modo_qr_val: Literal["compressed", "compact"]
+    if qr_config_mode == "compressed":
+        modo_qr_val = "compressed"
+    elif qr_config_mode == "compact":
+        modo_qr_val = "compact"
+    else:
         _usage_error(f"--qr-config-mode: {qr_config_mode!r} (elegir entre 'compressed' y 'compact')")
-    if modo not in ("caratula", "planilla"):
+
+    modo_val: lote.Modo
+    if modo == "caratula":
+        modo_val = "caratula"
+    elif modo == "planilla":
+        modo_val = "planilla"
+    else:
         _usage_error(f"--modo: {modo!r} (elegir entre 'caratula' y 'planilla')")
-    if por_hoja is not None and modo != "planilla":
+
+    if por_hoja is not None and modo_val != "planilla":
         _usage_error("--por-hoja sólo tiene sentido con --modo planilla")
     cfg = _omr_config(config)
     if cfg is None:
@@ -1224,7 +1236,7 @@ def _omr_build(
         print(texto_tabla(cfg) + "\n")
     try:
         resultado = lote.build(cfg, inscriptos, out or Path("dist") / cfg.exam_id, questions,
-                               modo_qr=qr_config_mode, nueva_clave=nueva_clave, modo=modo, por_hoja=por_hoja)
+                               modo_qr=modo_qr_val, nueva_clave=nueva_clave, modo=modo_val, por_hoja=por_hoja)
     except (lote.ErrorLote, ErrorCuerpo) as e:
         print(f"Error: {e}", file=sys.stderr)
         _ultimo_codigo_salida["code"] = 1

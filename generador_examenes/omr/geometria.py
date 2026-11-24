@@ -154,26 +154,26 @@ def _marcador(imagen, px, caja, px_mm: float) -> Marcador | None:
     cx, cy = (caja[0] + caja[2]) // 2, (caja[1] + caja[3]) // 2
     # Adentro del marcador hay a lo sumo 2 celdas blancas seguidas (3,3 mm); afuera, la zona de silencio.
     silencio, limite = int(3.8 * px_mm), int(9 * px_mm)
-    bordes = []
+    bordes: list[tuple[int, int, int, int]] = []
     for desvio in (-int(1.5 * px_mm), 0, int(1.5 * px_mm)):
         izq = _borde(px, w, h, cx, cy + desvio, -1, 0, silencio, limite)
         der = _borde(px, w, h, cx, cy + desvio, 1, 0, silencio, limite)
         arr = _borde(px, w, h, cx + desvio, cy, 0, -1, silencio, limite)
         aba = _borde(px, w, h, cx + desvio, cy, 0, 1, silencio, limite)
-        if None in (izq, der, arr, aba):
+        if izq is None or der is None or arr is None or aba is None:
             return None
         bordes.append((izq, der, arr, aba))
-    izq = sorted(b[0] for b in bordes)[1]
-    der = sorted(b[1] for b in bordes)[1]
-    arr = sorted(b[2] for b in bordes)[1]
-    aba = sorted(b[3] for b in bordes)[1]
-    lado_x, lado_y = der - izq + 1, aba - arr + 1
+    x_izq = sorted(b[0] for b in bordes)[1]
+    x_der = sorted(b[1] for b in bordes)[1]
+    y_arr = sorted(b[2] for b in bordes)[1]
+    y_aba = sorted(b[3] for b in bordes)[1]
+    lado_x, lado_y = x_der - x_izq + 1, y_aba - y_arr + 1
     celda_x, celda_y = lado_x / 6, lado_y / 6
     filas = []
     for f in range(6):
         fila = ""
         for c in range(6):
-            x, y = int(izq + (c + 0.5) * celda_x), int(arr + (f + 0.5) * celda_y)
+            x, y = int(x_izq + (c + 0.5) * celda_x), int(y_arr + (f + 0.5) * celda_y)
             valores = [px[x + i, y + j] for i in (-2, 0, 2) for j in (-2, 0, 2)]
             fila += "0" if sum(valores) / len(valores) < OSCURO else "1"
         filas.append(fila)
@@ -184,7 +184,7 @@ def _marcador(imagen, px, caja, px_mm: float) -> Marcador | None:
         rotada = tuple(matriz)
         for giro in range(4):
             if interior == rotada:
-                return Marcador(id=id_, rotacion=giro, cx=(izq + der + 1) / 2, cy=(arr + aba + 1) / 2,
+                return Marcador(id=id_, rotacion=giro, cx=(x_izq + x_der + 1) / 2, cy=(y_arr + y_aba + 1) / 2,
                                 lado_mm=(lado_x + lado_y) / 2 / px_mm)
             rotada = _rotar(rotada)
     return None
@@ -266,7 +266,7 @@ def medir_burbuja(px, w: int, h: int, cx: float, cy: float, radio_px: float) -> 
         der = _cruce(px, w, h, cx, cy + desvio, 1, 0, limite)
         arr = _cruce(px, w, h, cx + desvio, cy, 0, -1, limite)
         aba = _cruce(px, w, h, cx + desvio, cy, 0, 1, limite)
-        if None in (izq, der, arr, aba):
+        if izq is None or der is None or arr is None or aba is None:
             return None
         xs.append((izq + der) / 2)
         ys.append((arr + aba) / 2)
