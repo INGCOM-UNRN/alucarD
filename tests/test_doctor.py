@@ -109,6 +109,9 @@ def test_doctor_no_pide_weasyprint(monkeypatch):
 
 
 def test_doctor_exige_dibu(monkeypatch):
+    # Sin ALUCARD_DIBU / DIBU_BIN, ni dibu en el .venv ni en el $PATH.
+    import generador_examenes.diagramas as diagramas
+    monkeypatch.setattr(diagramas, "binario_dibu", lambda: None)
     monkeypatch.setattr(doctor, "chequear_binario", lambda c, *a: SIN_BINARIO if c == "dibu" else
                         {"disponible": True, "version": "1", "ruta": "/bin/x"})
     monkeypatch.setattr(doctor, "chequear_modulo_python", lambda m:
@@ -117,3 +120,11 @@ def test_doctor_exige_dibu(monkeypatch):
     chequeos = doctor.diagnosticar()
     dibu = next(c for c in chequeos if c["nombre"] == "dibu")
     assert dibu["requerido"] and not dibu["ok"] and not doctor.informe_json(chequeos)["ok"]
+
+
+def test_doctor_informa_tipos_y_themes_de_dibu(monkeypatch):
+    monkeypatch.setattr(doctor, "chequear_modulo_python", lambda m:
+                        {"disponible": True, "version": "1", "importable": True})
+    monkeypatch.setattr(doctor, "chequear_conectividad_languagetool", lambda: {"disponible": False, "detalle": "x"})
+    dibu = next(c for c in doctor.diagnosticar() if c["nombre"] == "dibu")
+    assert dibu["ok"] and "tipos" in dibu["detalle"] and "high-contrast" in dibu["detalle"]

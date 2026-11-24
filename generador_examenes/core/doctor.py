@@ -86,12 +86,16 @@ def diagnosticar() -> List[Dict[str, Any]]:
         "sugerencia": "" if gcc_info["disponible"] else "sudo apt install build-essential  (Fedora: sudo dnf install gcc)",
     })
 
-    import os
-    dibu_cmd = os.environ.get("ALUCARD_DIBU") or os.environ.get("DIBU_BIN") or "dibu"
-    dibu_info = chequear_binario(dibu_cmd)
+    # Mismo orden de búsqueda que al dibujar: ALUCARD_DIBU / DIBU_BIN, el .venv y el $PATH.
+    from generador_examenes.diagramas import binario_dibu, temas_disponibles, tipos_disponibles
+    dibu_info = chequear_binario(binario_dibu() or "dibu")
+    detalle_dibu = "No encontrado en $PATH"
+    if dibu_info["disponible"]:
+        detalle_dibu = (f"{dibu_info['version']} ({dibu_info['ruta']}) · {len(tipos_disponibles())} tipos · "
+                        f"themes: {', '.join(temas_disponibles())}")
     chequeos.append({
         "nombre": "dibu", "requerido": True, "ok": dibu_info["disponible"],
-        "detalle": f"{dibu_info['version']} ({dibu_info['ruta']})" if dibu_info["disponible"] else "No encontrado en $PATH",
+        "detalle": detalle_dibu,
         "proposito": "Render de diagramas SVG de los bloques ```estructura / ```statics",
         "sugerencia": "" if dibu_info["disponible"] else "uv sync  (o) ALUCARD_DIBU / DIBU_BIN",
     })
