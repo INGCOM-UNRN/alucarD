@@ -24,13 +24,21 @@ from rich.table import Table
 
 
 def chequear_binario(comando: str, args_version: str = "--version") -> Dict[str, Any]:
-    """Verifica si un binario del sistema está disponible en el PATH."""
-    ruta = shutil.which(comando)
+    """Verifica si un binario del sistema está disponible en el venv o en el PATH."""
+    import os
+    import sys
+    from pathlib import Path
+
+    junto_python = Path(sys.executable).parent / (f"{comando}.exe" if os.name == "nt" else comando)
+    if junto_python.is_file() and os.access(junto_python, os.X_OK):
+        ruta = str(junto_python)
+    else:
+        ruta = shutil.which(comando)
     if not ruta:
         return {"disponible": False, "version": None, "ruta": None}
     try:
         res = subprocess.run(
-            [comando, args_version], capture_output=True, text=True, timeout=5
+            [ruta, args_version], capture_output=True, text=True, timeout=5
         )
         salida = (res.stdout or res.stderr).strip().splitlines()
         version = salida[0] if salida else "Detectada"
@@ -85,7 +93,7 @@ def diagnosticar() -> List[Dict[str, Any]]:
         "nombre": "dibu", "requerido": True, "ok": dibu_info["disponible"],
         "detalle": f"{dibu_info['version']} ({dibu_info['ruta']})" if dibu_info["disponible"] else "No encontrado en $PATH",
         "proposito": "Render de diagramas SVG de los bloques ```estructura / ```statics",
-        "sugerencia": "" if dibu_info["disponible"] else "cargo install --path ../dibu/crates/dibu-cli  (o) ALUCARD_DIBU / DIBU_BIN",
+        "sugerencia": "" if dibu_info["disponible"] else "uv sync  (o) ALUCARD_DIBU / DIBU_BIN",
     })
 
     typst_bin = chequear_binario("typst")

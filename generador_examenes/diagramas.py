@@ -15,6 +15,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
@@ -61,11 +62,14 @@ def _esc(valor: Any) -> str:
 
 
 def binario_dibu() -> Optional[str]:
-    """Ruta al binario `dibu` (respeta `ALUCARD_DIBU` / `DIBU_BIN` o busca en `$PATH`)."""
+    """Ruta al binario `dibu` (`ALUCARD_DIBU` / `DIBU_BIN`, `.venv/bin/dibu` o `$PATH`)."""
     for var in ("ALUCARD_DIBU", "DIBU_BIN"):
         candidato = os.environ.get(var)
         if candidato:
             return candidato
+    junto_python = Path(sys.executable).parent / ("dibu.exe" if os.name == "nt" else "dibu")
+    if junto_python.is_file() and os.access(junto_python, os.X_OK):
+        return str(junto_python)
     return shutil.which("dibu")
 
 
