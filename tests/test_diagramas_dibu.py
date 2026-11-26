@@ -125,3 +125,15 @@ def test_generar_usa_el_theme_del_estilo(tmp_path: Path, estilo, esperado, ausen
     assert "<svg" in html and esperado in html
     if ausente:
         assert ausente not in html
+
+
+def test_leer_bloques_entiende_blank_de_dibu():
+    """`!blank X` llega a dibu como "X.blank": lo usa para calcular y lo dibuja en blanco."""
+    from generador_examenes.diagramas import leer_bloques
+
+    b = leer_bloques(
+        "type: heap\nvalues: [50, !blank 40, !blank \"007\", x.blank]\nextra: !blank [1, true]\nobj: !blank {a: 2}"
+    )[0]
+    assert b["values"] == [50, "40.blank", "007.blank", "x.blank"]
+    assert b["extra"] == ["1.blank", "true.blank"]
+    assert b["obj"] == {"a": "2.blank"}

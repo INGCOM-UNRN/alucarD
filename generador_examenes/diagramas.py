@@ -288,10 +288,41 @@ def renderizar(bloque: Dict[str, Any], tinta: bool = True, theme: Optional[Any] 
     return svg
 
 
+class CargadorDibu(yaml.SafeLoader):
+    """`yaml.SafeLoader` que entiende `!blank X`, el valor en blanco de dibu: lo escribe como el
+    texto `"X.blank"`, que `dibu batch` lee igual (usa el valor para calcular y lo dibuja en blanco)."""
+
+
+def _con_sufijo_blank(valor: Any) -> Any:
+    if isinstance(valor, list):
+        return [_con_sufijo_blank(x) for x in valor]
+    if isinstance(valor, dict):
+        return {k: _con_sufijo_blank(x) for k, x in valor.items()}
+    if valor is None:
+        return None
+    if isinstance(valor, bool):
+        return f"{'true' if valor else 'false'}.blank"
+    return f"{valor}.blank"
+
+
+def _construir_blank(cargador: yaml.SafeLoader, nodo: yaml.Node) -> Any:
+    if isinstance(nodo, yaml.SequenceNode):
+        return _con_sufijo_blank(cargador.construct_sequence(nodo, deep=True))
+    if isinstance(nodo, yaml.MappingNode):
+        return _con_sufijo_blank(cargador.construct_mapping(nodo, deep=True))
+    return f"{nodo.value}.blank"
+
+
+CargadorDibu.add_constructor("!blank", _construir_blank)
+
+
 def leer_bloques(texto: str) -> List[Dict[str, Any]]:
-    """Los bloques de un texto YAML/JSON: un bloque, una lista de bloques o un documento de statics (`blocks`)."""
+    """Los bloques de un texto YAML/JSON: un bloque, una lista de bloques o un documento de statics (`blocks`).
+
+    `!blank X` (un valor que dibu usa para calcular y dibuja en blanco) llega como `"X.blank"`.
+    """
     try:
-        dato = yaml.safe_load(texto)
+        dato = yaml.load(texto, Loader=CargadorDibu)
     except yaml.YAMLError as e:
         raise ErrorDiagrama(f"el bloque no es YAML/JSON válido: {e}") from e
     if isinstance(dato, dict) and "blocks" in dato:
