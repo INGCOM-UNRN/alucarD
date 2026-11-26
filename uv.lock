@@ -196,7 +196,7 @@ dependencies = [
 [[package]]
 name = "dibu"
 version = "0.1.0"
-source = { git = "https://github.com/INGCOM-UNRN/dibu?rev=176374efa934f2a2d70718ffd39bf49f705f7fca#176374efa934f2a2d70718ffd39bf49f705f7fca" }
+source = { git = "https://github.com/INGCOM-UNRN/dibu?rev=bfd96da1e0caedd5aeeb2b63ed7abb69324d809f#bfd96da1e0caedd5aeeb2b63ed7abb69324d809f" }
 
 [[package]]
 name = "execnet"
@@ -267,7 +267,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "daedalus", marker = "extra == 'ecosistema'", git = "https://github.com/INGCOM-UNRN-P1/daedalus?rev=c2c589bce318b0d6d5d6b324fecc20f3b0f2a8ec" },
-    { name = "dibu", git = "https://github.com/INGCOM-UNRN/dibu?rev=176374efa934f2a2d70718ffd39bf49f705f7fca" },
+    { name = "dibu", git = "https://github.com/INGCOM-UNRN/dibu?rev=bfd96da1e0caedd5aeeb2b63ed7abb69324d809f" },
     { name = "jinja2", specifier = ">=3.1,<4.0" },
     { name = "jsonschema", specifier = ">=4.20,<5" },
     { name = "markdown", specifier = ">=3.5,<4.0" },

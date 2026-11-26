@@ -45,7 +45,7 @@ dependencies = [
     "jsonschema>=4.20,<5",
     "pillow>=12.0",
     # Generador de diagramas SVG en Rust (instalado como binario en .venv/bin/dibu vía maturin).
-    "dibu @ git+https://github.com/INGCOM-UNRN/dibu@176374efa934f2a2d70718ffd39bf49f705f7fca",
+    "dibu @ git+https://github.com/INGCOM-UNRN/dibu@bfd96da1e0caedd5aeeb2b63ed7abb69324d809f",
 ]
 
 [project.optional-dependencies]
