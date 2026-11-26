@@ -45,7 +45,7 @@ dependencies = [
     "jsonschema>=4.20,<5",
     "pillow>=12.0",
     # Generador de diagramas SVG en Rust (instalado como binario en .venv/bin/dibu vía maturin).
-    "dibu @ git+https://github.com/INGCOM-UNRN/dibu@2e1b7e85440c5eb621d735ab980269c9729bcc1a",
+    "dibu @ git+https://github.com/INGCOM-UNRN/dibu@176374efa934f2a2d70718ffd39bf49f705f7fca",
 ]
 
 [project.optional-dependencies]
@@ -54,10 +54,10 @@ dependencies = [
 # Sin `ecosistema`, la síntesis compila con gcc directo; sin `languagetool`, spellcheck
 # explica cómo instalarlo.
 ecosistema = [
-    "daedalus @ git+https://github.com/INGCOM-UNRN-P1/daedalus@0d3da518270cea8d6a0dff85d8cec61de2e89fff",
+    "daedalus @ git+https://github.com/INGCOM-UNRN-P1/daedalus@c2c589bce318b0d6d5d6b324fecc20f3b0f2a8ec",
 ]
 languagetool = [
-    "myst-tools @ git+https://github.com/INGCOM-UNRN/mystmd-tools@1e7c3fdc4436c24ac369ad0d8b90a969a5ea8f5b",
+    "myst-tools @ git+https://github.com/INGCOM-UNRN/mystmd-tools@88762bba9abe40efec2884939aa81cda19eba90a",
 ]
 
 [project.urls]
